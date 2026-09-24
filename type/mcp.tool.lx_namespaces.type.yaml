@@ -1,0 +1,15 @@
+extends: mcp.tool::au-mcp-sdk
+fields:
+  #: Optional namespace filter substring (default lists all lx-* namespaces).
+  filter?: String
+meta:
+  - type: plugin-runtime-meta::au-mcp-sdk
+    entry: ./src/tp/tool-lx-namespaces.ts
+    contractVersion: 0
+  - type: tool-access-meta::au-mcp-sdk
+    broker: none
+  - type: tool-presentation-meta::au-mcp-sdk
+    description: |
+      List turbopuffer namespaces backing this corpus with row counts and schema —
+      the index-health check for the retrieval layer.
+      Requires TURBOPUFFER_API_KEY and TURBOPUFFER_REGION in the daemon env.

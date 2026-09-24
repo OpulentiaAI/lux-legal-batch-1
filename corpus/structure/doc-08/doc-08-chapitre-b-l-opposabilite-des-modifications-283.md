@@ -1,0 +1,10 @@
+---
+type: lx.structure
+tldr: chapitre  B. L'OPPOSABILITÉ DES MODIFICATIONS
+document: '[[doc-08-precis-de-droit-des-societes]]'
+parent: '[[doc-08-titre-precis-de-droit-des-societes-278]]'
+level: chapitre
+heading: B. L'OPPOSABILITÉ DES MODIFICATIONS
+order: 283
+---
+# Chapitre  — B. L'OPPOSABILITÉ DES MODIFICATIONS

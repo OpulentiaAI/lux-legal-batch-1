@@ -1,0 +1,9 @@
+---
+type: lx.article
+tldr: Article 812
+document: '[[doc-09-manuel-de-droit-des-societes]]'
+parent: '[[doc-09-section-4-des-changements-dans-le-personnel-761]]'
+number: '812'
+order: 51
+---
+# Article 812 —

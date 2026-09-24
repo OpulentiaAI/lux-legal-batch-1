@@ -1,0 +1,9 @@
+---
+type: lx.article
+tldr: Article 604
+document: '[[doc-07-code-des-societes-cotees-luxembourg]]'
+parent: '[[doc-07-chapitre-a56-du-06-10-1934-p-949-1048]]'
+number: '604'
+order: 1390
+---
+# Article 604 —

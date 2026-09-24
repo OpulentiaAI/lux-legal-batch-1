@@ -1,0 +1,15 @@
+#: A numbered legal article — primarily the articles of the 1915 companies statute,
+#: but also numbered propositions/sections in treatises where detected.
+#: The body is the article's text (may be truncated at the chunk boundary).
+extends: node::au-base-types
+fields:
+  #: The document this article belongs to.
+  document: lx.document*
+  #: The enclosing structural division, when detected.
+  parent?: lx.structure*
+  #: The article number as printed (e.g. "100", "1-1", "710-26").
+  number: String
+  #: Rubric/heading of the article when present (e.g. "Société anonyme").
+  heading?: String
+  #: Order among sibling articles for stable listing.
+  order: Number{integer}

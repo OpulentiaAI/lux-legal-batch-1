@@ -1,0 +1,15 @@
+extends: mcp.tool::au-mcp-sdk
+fields:
+  #: Optional filter by document kind (statute, treatise, precis, manuel, code, monograph).
+  kind?: String
+meta:
+  - type: plugin-runtime-meta::au-mcp-sdk
+    entry: ./src/tp/tool-lx-documents.ts
+    contractVersion: 0
+  - type: tool-access-meta::au-mcp-sdk
+    broker: read
+  - type: tool-presentation-meta::au-mcp-sdk
+    description: |
+      List the corpus documents: doc_id, title, kind, authors, year, topics,
+      page count and how many chunks each contributes to the index.
+      Use to scope a search or cite the collection.

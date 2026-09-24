@@ -1,0 +1,8 @@
+#: A controlled legal topic used to classify documents, structures and chunks.
+#: Keep the set small; prefer broad domains over fine doctrines.
+extends: thing::au-base-types
+fields:
+  #: Canonical English label (e.g. "company law").
+  label: String
+  #: French label as used in the corpus (e.g. "droit des sociétés").
+  label_fr?: String

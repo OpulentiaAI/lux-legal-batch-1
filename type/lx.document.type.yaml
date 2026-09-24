@@ -1,0 +1,30 @@
+#: One work in the Luxembourg legal corpus — statute, treatise, précis, manuel, code or monograph.
+#: The body holds the document note (scope, provenance); the extracted full text lives
+#: under corpus/notes/<doc_id>.md and the raw PDF under corpus/raw/<file>.
+extends: source::au-base-types
+fields:
+  #: Stable corpus id, doc-01 .. doc-09 (matches the corpus inventory).
+  doc_id: String{/^doc-[0-9]{2}$/}
+  #: Bibliographic kind of the work.
+  kind: [statute, treatise, precis, manuel, code, monograph, report]
+  #: Title as printed (French).
+  title: String
+  #: Credited authors/editors.
+  authors?: lx.author&[]
+  #: Publication year of this edition.
+  year?: Number{integer}
+  publisher?: String
+  #: Corpus language (the batch is French).
+  language: [fr, en, de]
+  #: Subject classification.
+  topics?: lx.topic&[]
+  #: Path of the archived raw file inside the repo (corpus/raw/...).
+  raw_file: String
+  #: Day the file was captured into the corpus.
+  captured: Date
+  #: Page count of the raw, when known.
+  pages?: Number{integer}
+  #: For consolidated statutes: the version/consolidation date.
+  consolidated?: Date
+  #: Provenance and rights note (source, licensor, redistribution constraints).
+  rights?: String

@@ -1,0 +1,12 @@
+type: au.engine.repo::au-engine
+name: lux-legal-batch-1
+remote: git@github.com:OpulentiaAI/lux-legal-batch-1.git
+description: >
+  Luxembourg company-law corpus (Opulentia Batch 1, François Bernard) mapped as a
+  typed knowledge graph: documents, authors, topics, structure, statute articles and
+  retrieval chunks — plus the lx_* turbopuffer-backed discovery tools for au-mcp.
+  Text extraction stays local; licensed treatises are not redistributed.
+deps:
+  - name: au-base-types
+  - name: au-mcp-sdk
+  - name: au-ingest

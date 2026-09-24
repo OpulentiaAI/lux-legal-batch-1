@@ -1,0 +1,12 @@
+#: The corpus node itself — one instance (entities/lux-legal-corpus.md) describing
+#: the whole Batch 1 collection, its provenance, and its retrieval surfaces.
+extends: node::au-base-types
+fields:
+  #: Every document in the collection, in inventory order.
+  documents: lx.document&[]
+  #: Who provided the collection and under what understanding.
+  provider: String
+  #: Working notes on licensing/redistribution.
+  rights?: String
+  #: The turbopuffer namespaces indexing the corpus.
+  namespaces?: lx.namespace&[]

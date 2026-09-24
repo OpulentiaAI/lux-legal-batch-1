@@ -1,0 +1,10 @@
+#: A legal author, jurist or editor behind a corpus work.
+#: Business-context fields only — scholarship metadata, never private details.
+extends: thing::au-base-types
+fields:
+  #: Full name as printed on the work (e.g. "Patrick Corbisier du Prum").
+  full_name: String
+  #: How they relate to the corpus work(s).
+  role?: [author, editor, contributor, translator]
+  #: Institution or firm, when stated on the work.
+  affiliation?: String

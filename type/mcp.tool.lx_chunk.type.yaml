@@ -1,0 +1,15 @@
+extends: mcp.tool::au-mcp-sdk
+fields:
+  #: The chunk id from an lx_search hit (e.g. doc-06:art0100:c0).
+  chunk_id: String
+meta:
+  - type: plugin-runtime-meta::au-mcp-sdk
+    entry: ./src/tp/tool-lx-chunk.ts
+    contractVersion: 0
+  - type: tool-access-meta::au-mcp-sdk
+    broker: read
+  - type: tool-presentation-meta::au-mcp-sdk
+    description: |
+      Fetch one corpus chunk by id: full text plus its graph context
+      (document title, structure path, article, page span, turbopuffer namespace).
+      Use after lx_search to quote or inspect a hit.

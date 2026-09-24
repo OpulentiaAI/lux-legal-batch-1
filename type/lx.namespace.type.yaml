@@ -1,0 +1,16 @@
+#: A turbopuffer namespace used by this corpus — records the region, embedding model
+#: and vector dimensions so indexing and querying stay honest about compatibility.
+extends: node::au-base-types
+fields:
+  #: The namespace name on turbopuffer.
+  ns_name: String
+  #: Region slug (e.g. gcp-us-central1).
+  region: String
+  #: Embedding model that produced the vectors (e.g. text-embedding-3-large).
+  model: String
+  #: Vector dimension.
+  dimensions: Number{integer}
+  #: What the namespace holds.
+  holds: [chunks, documents]
+  #: Rows written at last verified index, when known.
+  row_count?: Number{integer}

@@ -1,0 +1,149 @@
+[
+  {
+    "doc_id": "doc-01",
+    "title": "Contrats et obligations — droit luxembourgeois",
+    "kind": "treatise",
+    "language": "fr",
+    "raw_file": "doc-01-ANCEL-Contrats-obligations-Lux-2025.pdf",
+    "authors": [
+      "ancel"
+    ],
+    "year": 2025,
+    "topics": [
+      "obligations-contracts"
+    ],
+    "note": "entities/documents/doc-01-contrats-et-obligations-droit-luxembourg.md",
+    "chunk_count": 984
+  },
+  {
+    "doc_id": "doc-02",
+    "title": "Les scissions transfrontalières",
+    "kind": "monograph",
+    "language": "fr",
+    "raw_file": "doc-02-BERNARD-Scissions-transfrontalieres.pdf",
+    "authors": [
+      "bernard-francois"
+    ],
+    "year": null,
+    "topics": [
+      "company-law",
+      "cross-border-reorg"
+    ],
+    "note": "entities/documents/doc-02-les-scissions-transfrontalieres.md",
+    "chunk_count": 1057
+  },
+  {
+    "doc_id": "doc-03",
+    "title": "Les commandites en droit luxembourgeois",
+    "kind": "treatise",
+    "language": "fr",
+    "raw_file": "doc-03-Commandites-droit-luxembourgeois-2013.pdf",
+    "authors": [],
+    "year": 2013,
+    "topics": [
+      "company-law",
+      "partnerships"
+    ],
+    "note": "entities/documents/doc-03-les-commandites-en-droit-luxembourgeois.md",
+    "chunk_count": 181
+  },
+  {
+    "doc_id": "doc-04",
+    "title": "Précis de droit comptable",
+    "kind": "precis",
+    "language": "fr",
+    "raw_file": "doc-04-COLLIN-Precis-droit-comptable-2020.pdf",
+    "authors": [
+      "collin"
+    ],
+    "year": 2020,
+    "topics": [
+      "accounting-law"
+    ],
+    "note": "entities/documents/doc-04-precis-de-droit-comptable.md",
+    "chunk_count": 677
+  },
+  {
+    "doc_id": "doc-05",
+    "title": "La réforme belge du droit des sociétés : implications pour le Luxembourg",
+    "kind": "monograph",
+    "language": "fr",
+    "raw_file": "doc-05-Corbisier-Prum-Reforme-belge-pour-Lux-2021.pdf",
+    "authors": [
+      "corbisier-du-prum"
+    ],
+    "year": 2021,
+    "topics": [
+      "company-law",
+      "comparative-law"
+    ],
+    "note": "entities/documents/doc-05-la-reforme-belge-du-droit-des-societes-i.md",
+    "chunk_count": 307
+  },
+  {
+    "doc_id": "doc-06",
+    "title": "Loi du 10 août 1915 concernant les sociétés commerciales",
+    "kind": "statute",
+    "language": "fr",
+    "raw_file": "doc-06-Loi-10-aout-1915-societes-commerciales-maj-2026-05-29.pdf",
+    "authors": [],
+    "year": 1915,
+    "topics": [
+      "company-law",
+      "primary-statute"
+    ],
+    "note": "entities/documents/doc-06-loi-du-10-aout-1915-concernant-les-socie.md",
+    "chunk_count": 871
+  },
+  {
+    "doc_id": "doc-07",
+    "title": "Code des sociétés cotées — Luxembourg",
+    "kind": "code",
+    "language": "fr",
+    "raw_file": "doc-07-Payen-Mbayi-Code-societes-cotees-Lux-2021.pdf",
+    "authors": [
+      "payen",
+      "mbayi"
+    ],
+    "year": 2021,
+    "topics": [
+      "company-law",
+      "listed-companies",
+      "securities-law"
+    ],
+    "note": "entities/documents/doc-07-code-des-societes-cotees-luxembourg.md",
+    "chunk_count": 2096
+  },
+  {
+    "doc_id": "doc-08",
+    "title": "Précis de droit des sociétés",
+    "kind": "precis",
+    "language": "fr",
+    "raw_file": "doc-08-STEICHEN-Precis-droit-des-societes-2018.pdf",
+    "authors": [
+      "steichen"
+    ],
+    "year": 2018,
+    "topics": [
+      "company-law"
+    ],
+    "note": "entities/documents/doc-08-precis-de-droit-des-societes.md",
+    "chunk_count": 1249
+  },
+  {
+    "doc_id": "doc-09",
+    "title": "Manuel de droit des sociétés",
+    "kind": "manuel",
+    "language": "fr",
+    "raw_file": "doc-09-WINANDY-Manuel-droit-des-societes.pdf",
+    "authors": [
+      "winandy"
+    ],
+    "year": null,
+    "topics": [
+      "company-law"
+    ],
+    "note": "entities/documents/doc-09-manuel-de-droit-des-societes.md",
+    "chunk_count": 1387
+  }
+]

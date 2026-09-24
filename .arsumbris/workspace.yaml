@@ -1,0 +1,6 @@
+type: au.engine.workspace::au-engine
+edit:
+  - lux-legal-batch-1
+discover:
+  - mcp-bundle
+  - host-bundle

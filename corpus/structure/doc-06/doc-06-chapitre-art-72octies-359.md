@@ -1,0 +1,10 @@
+---
+type: lx.structure
+tldr: chapitre  Art. 72octies.
+document: '[[doc-06-loi-du-10-aout-1915-concernant-les-socie]]'
+parent: '[[doc-06-titre-chapitre-iiter-du-rapport-sur-les-pa-349]]'
+level: chapitre
+heading: Art. 72octies.
+order: 359
+---
+# Chapitre  — Art. 72octies.
