@@ -1,0 +1,12 @@
+---
+type: lx.structure
+tldr: section 11 LA RUBRIQUE 609 – « RABAIS, REMISES ET RISTOURNES (RRR) OBTENUS ET
+  NON DIRECTEMENT DÉDUITS DES ACHATS »
+document: '[[doc-04-precis-de-droit-comptable]]'
+parent: '[[doc-04-titre-chapitre-5-538]]'
+level: section
+heading: LA RUBRIQUE 609 – « RABAIS, REMISES ET RISTOURNES (RRR) OBTENUS ET NON DIRECTEMENT
+  DÉDUITS DES ACHATS »
+order: 549
+---
+# Section 11 — LA RUBRIQUE 609 – « RABAIS, REMISES ET RISTOURNES (RRR) OBTENUS ET NON DIRECTEMENT DÉDUITS DES ACHATS »

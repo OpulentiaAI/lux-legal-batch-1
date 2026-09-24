@@ -1,0 +1,10 @@
+---
+type: lx.structure
+tldr: chapitre  a) Le statut de l’administrateur-délégué
+document: '[[doc-08-precis-de-droit-des-societes]]'
+parent: '[[doc-08-titre-precis-de-droit-des-societes-468]]'
+level: chapitre
+heading: a) Le statut de l’administrateur-délégué
+order: 480
+---
+# Chapitre  — a) Le statut de l’administrateur-délégué

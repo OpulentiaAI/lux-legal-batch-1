@@ -1,0 +1,94 @@
+# Corpus inventory — Opulentia Batch 1 (Luxembourg company law, François Bernard).
+# doc_id is the join key across files, chunks, turbopuffer attributes and polygres rows.
+# raw_file names must match the PDFs dropped into corpus/raw/.
+
+- doc_id: doc-01
+  raw_file: doc-01-ANCEL-Contrats-obligations-Lux-2025.pdf
+  title: "Contrats et obligations — droit luxembourgeois"
+  kind: treatise
+  authors: [ancel]
+  year: 2025
+  language: fr
+  topics: [obligations-contracts]
+  rights: "Commercial treatise — internal use for François Bernard engagement; no redistribution."
+
+- doc_id: doc-02
+  raw_file: doc-02-BERNARD-Scissions-transfrontalieres.pdf
+  title: "Les scissions transfrontalières"
+  kind: monograph
+  authors: [bernard-francois]
+  year: null
+  language: fr
+  topics: [company-law, cross-border-reorg]
+  rights: "Author-provided — François Bernard, Opulentia Lux legal AI partner."
+
+- doc_id: doc-03
+  raw_file: doc-03-Commandites-droit-luxembourgeois-2013.pdf
+  title: "Les commandites en droit luxembourgeois"
+  kind: treatise
+  authors: []
+  year: 2013
+  language: fr
+  topics: [company-law, partnerships]
+  rights: "Commercial treatise — internal use only."
+
+- doc_id: doc-04
+  raw_file: doc-04-COLLIN-Precis-droit-comptable-2020.pdf
+  title: "Précis de droit comptable"
+  kind: precis
+  authors: [collin]
+  year: 2020
+  language: fr
+  topics: [accounting-law]
+  rights: "Commercial treatise — internal use only."
+
+- doc_id: doc-05
+  raw_file: doc-05-Corbisier-Prum-Reforme-belge-pour-Lux-2021.pdf
+  title: "La réforme belge du droit des sociétés : implications pour le Luxembourg"
+  kind: monograph
+  authors: [corbisier-du-prum]
+  year: 2021
+  language: fr
+  topics: [company-law, comparative-law]
+  rights: "Commercial treatise — internal use only."
+
+- doc_id: doc-06
+  raw_file: doc-06-Loi-10-aout-1915-societes-commerciales-maj-2026-05-29.pdf
+  title: "Loi du 10 août 1915 concernant les sociétés commerciales"
+  kind: statute
+  authors: []
+  year: 1915
+  consolidated: 2026-05-29
+  language: fr
+  topics: [company-law, primary-statute]
+  rights: "Public statute — consolidated version of 29 May 2026 (legilux)."
+
+- doc_id: doc-07
+  raw_file: doc-07-Payen-Mbayi-Code-societes-cotees-Lux-2021.pdf
+  title: "Code des sociétés cotées — Luxembourg"
+  kind: code
+  authors: [payen, mbayi]
+  year: 2021
+  language: fr
+  topics: [company-law, listed-companies, securities-law]
+  rights: "Commercial treatise — internal use only."
+
+- doc_id: doc-08
+  raw_file: doc-08-STEICHEN-Precis-droit-des-societes-2018.pdf
+  title: "Précis de droit des sociétés"
+  kind: precis
+  authors: [steichen]
+  year: 2018
+  language: fr
+  topics: [company-law]
+  rights: "Commercial treatise — internal use only."
+
+- doc_id: doc-09
+  raw_file: doc-09-WINANDY-Manuel-droit-des-societes.pdf
+  title: "Manuel de droit des sociétés"
+  kind: manuel
+  authors: [winandy]
+  year: null
+  language: fr
+  topics: [company-law]
+  rights: "Commercial treatise — internal use only."

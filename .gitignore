@@ -1,0 +1,7 @@
+# Raw corpus binaries stay off the remote (licensed treatises — internal use).
+corpus/raw/*.pdf
+corpus/raw/*.zip
+# Generated index state (rebuilt by lx_index.py; chunks.jsonl is committed).
+corpus/index/state.json
+node_modules/
+__pycache__/

@@ -1,0 +1,33 @@
+extends: mcp.tool::au-mcp-sdk
+fields:
+  #: The natural-language query (French or English — the index is multilingual).
+  query: String
+  #: Retrieval mode: hybrid (vector ANN + BM25 fused, default), vector, or bm25.
+  mode?: [hybrid, vector, bm25]
+  #: Max hits to return (default 10, max 50).
+  limit?: Number{>=1 & <=50 & integer}
+  #: Restrict to one corpus document (doc-01 .. doc-09).
+  doc_id?: String
+  #: Restrict to a document kind (statute, treatise, precis, manuel, code, monograph).
+  kind?: String
+  #: Restrict to chunks carrying this article number (e.g. "100", "710-26").
+  article?: String
+  #: Restrict to chunks under a structure heading substring (e.g. "commandite").
+  under?: String
+  #: Re-rank the fused hits with the multilingual cross-encoder (default true).
+  rerank?: Boolean
+meta:
+  - type: plugin-runtime-meta::au-mcp-sdk
+    entry: ./src/tp/tool-lx-search.ts
+    contractVersion: 0
+  - type: tool-access-meta::au-mcp-sdk
+    broker: none
+  - type: tool-presentation-meta::au-mcp-sdk
+    description: |
+      Hybrid-search the Luxembourg legal corpus (Batch 1) indexed in turbopuffer.
+      Modes: hybrid (default; vector ANN fused with BM25 server-side), vector, bm25.
+      Filter with doc_id, kind, article or under (structure-path substring).
+      rerank (default true) reorders fused hits with the jina multilingual cross-encoder.
+      Returns chunk_id hits with scores, document, structure path and a text preview —
+      hydrate full text with lx_chunk.
+      Requires TURBOPUFFER_API_KEY, TURBOPUFFER_REGION and JINA_API_KEY in the daemon env.

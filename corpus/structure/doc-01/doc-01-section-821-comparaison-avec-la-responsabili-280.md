@@ -1,0 +1,10 @@
+---
+type: lx.structure
+tldr: section  821. Comparaison avec la responsabilité extracontractuelle.
+document: '[[doc-01-contrats-et-obligations-droit-luxembourg]]'
+parent: '[[doc-01-chapitre-chapitreii-lexecution-des-obligation-211]]'
+level: section
+heading: 821. Comparaison avec la responsabilité extracontractuelle.
+order: 280
+---
+# Section  — 821. Comparaison avec la responsabilité extracontractuelle.

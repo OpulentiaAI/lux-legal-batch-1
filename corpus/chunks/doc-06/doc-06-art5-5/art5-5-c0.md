@@ -1,0 +1,22 @@
+---
+type: lx.chunk
+tldr: Exigences relatives à la participation et au vote à l’assemblée générale  (1)
+  Le
+chunk_id: doc-06:art5-5:c0
+document: '[[doc-06-loi-du-10-aout-1915-concernant-les-socie]]'
+parent: '[[doc-06-chapitre-2007-36-ce-art-7-1-7-2-et-7-4-418]]'
+article: '[[doc-06-art5-5]]'
+ordinal: 0
+tokens: 457
+tp_namespace: lx-corpus
+hash: 'e53770bc5206090d'
+---
+Exigences relatives à la participation et au vote à l’assemblée générale
+
+(1) Les droits d’un actionnaire de participer à une assemblée générale et d’exercer le vote attaché à chacune de ses actions ne sont soumis à aucune exigence selon laquelle ses actions devraient, avant l’assemblée générale, être déposées auprès d’une autre personne physique ou morale ou transférées à celle-ci ou enregistrées au nom de celle-ci. Les droits d’un actionnaire de vendre ou de transférer de quelque manière que ce soit ses actions durant la période allant de la date d’enregistrement, telle que définie au paragraphe 2, à celle de l’assemblée générale à laquelle elle s’applique ne sont soumis à aucune limitation à laquelle ils ne sont pas soumis le reste du temps.
+
+(2) Les droits d’un actionnaire de participer à une assemblée générale et d’exercer le vote attaché à ses actions sont déterminés en fonction des actions détenues par cet actionnaire le quatorzième jour qui précède l’assemblée générale à vingt-quatre heures (heure de Luxembourg) (dénommée « date d’enregistrement »).
+
+(3) Au plus tard à la date d’enregistrement, l’actionnaire indique à la société sa volonté de participer à l’assemblée générale. La société fixe les modalités de cette déclaration. La société enregistre pour chaque actionnaire qui a signalé sa volonté de participer à l’assemblée générale, ses nom ou dénomination sociale et adresse ou siège social, le nombre d’actions qu’il détenait à la date de l’enregistrement et la description des documents qui établissent la détention des actions à cette date.
+
+(4) La preuve de la qualité d’actionnaire ne peut être soumise à d’autres exigences que celles qui sont nécessaires à l’identification des actionnaires, et ce uniquement dans la mesure où celles- ci sont proportionnées à la réalisation de cet objectif.

@@ -1,0 +1,9 @@
+---
+type: lx.article
+tldr: Article 430
+document: '[[doc-09-manuel-de-droit-des-societes]]'
+parent: '[[doc-09-titre-i-511]]'
+number: '430'
+order: 37
+---
+# Article 430 —

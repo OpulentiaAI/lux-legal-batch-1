@@ -1,0 +1,23 @@
+#: A retrieval chunk — the unit indexed in turbopuffer and returned by lx_search.
+#: The body is the exact chunk text embedded; fields carry provenance so a hit
+#: hydrates back into the graph (document > structure > article).
+extends: node::au-base-types
+fields:
+  #: Stable chunk id: <doc_id>:<locator>:c<ordinal> (e.g. doc-06:art0100:c0).
+  chunk_id: String
+  #: The document this chunk was cut from.
+  document: lx.document*
+  #: The enclosing structural division, when detected.
+  parent?: lx.structure*
+  #: The article this chunk belongs to, when detected.
+  article?: lx.article*
+  #: Order of this chunk within its parent scope.
+  ordinal: Number{integer}
+  #: Page span in the raw PDF, when known ("p. 123-124").
+  pages?: String
+  #: Approximate token count of the body.
+  tokens?: Number{integer}
+  #: The turbopuffer namespace holding this chunk's vector.
+  tp_namespace: String
+  #: SHA-256 of the chunk text; guards reindex.
+  hash: String

@@ -1,0 +1,15 @@
+#: A structural division inside a corpus document — livre, titre, chapitre, section, partie.
+#: Forms the navigation spine of the typed graph: parent chains give the full path
+#: (e.g. Livre II > Titre I > Chapitre III).
+extends: node::au-base-types
+fields:
+  #: The document this division belongs to.
+  document: lx.document*
+  #: The enclosing division, if any.
+  parent?: lx.structure*
+  #: The division level as printed in the work.
+  level: [livre, titre, chapitre, section, sous-section, partie]
+  #: Heading text as printed (e.g. "Des sociétés en commandite simple").
+  heading: String
+  #: Order among siblings for stable listing.
+  order: Number{integer}

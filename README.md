@@ -1,3 +1,24 @@
+---
+type: au.engine.readme::au-engine
+tldr: Luxembourg company-law corpus as a typed knowledge graph, turbopuffer-indexed, with lx_* discovery tools
+---
+
+# Repo Overview
+
+## What this is
+
+**Opulentia Batch 1** — a nine-work French-language Luxembourg company-law corpus (François Bernard, Lux legal AI partner, forwarded by Morgan Sep 2026) remapped as an arsumbris typed knowledge graph: `lx.document` / `lx.structure` / `lx.article` / `lx.chunk` nodes under `entities/` and `corpus/`, embeddings + BM25 in turbopuffer (`lx-documents`, `lx-corpus` namespaces), provenance tables in Polygres, and `lx_*` MCP tools for search and discovery.
+
+## How to use this
+
+- Corpus PDFs (gitignored): drop into `corpus/raw/`, then run `scripts/lx_pipeline.sh` (extract → structure/chunk → embed+index → Polygres).
+- Discovery: the `lx_search`, `lx_chunk`, `lx_documents`, `lx_namespaces` tools resolve through au-mcp once the workspace is mounted.
+- Graph reads: `au daemon start .` then `instances_of` / `subtypes` reads over the socket.
+
+## How to extend this
+
+Types live in `type/` — subtype `lx.*` for new node kinds, declare `mcp.tool.*` subtypes (with `plugin-runtime-meta`) for new tools; the pipeline scripts pick up structure heuristics from `lx_structure.py`'s boundary patterns.
+
 # lux-legal-batch-1
 
 Private index for **Opulentia Batch 1** — Luxembourg company-law essentials from François Bernard (Lux legal AI partner), forwarded by Morgan (Sep 22 2026).
@@ -6,6 +27,7 @@ Private index for **Opulentia Batch 1** — Luxembourg company-law essentials fr
 
 - OneDrive zip: `Opulentia Batch 1.zip`
 - Local copy (Mac): `/Users/agent/Downloads/Opulentia Batch 1/`
+- Expected drop point for this repo: `corpus/raw/` (gitignored); then run `scripts/lx_pipeline.sh`
 - Size on disk: ~74 MB · 9 PDFs · French-language corpus
 
 Binary PDFs are **not** committed here pending publisher license review (Stradalex / Larcier and similar commercial treatises).

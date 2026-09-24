@@ -1,0 +1,41 @@
+---
+type: lx.chunk
+tldr: Vote par procuration  (1) Chaque actionnaire a le droit de désigner comme mandat
+chunk_id: doc-06:art8:c0
+document: '[[doc-06-loi-du-10-aout-1915-concernant-les-socie]]'
+parent: '[[doc-06-chapitre-2007-36-ce-art-10-424]]'
+article: '[[doc-06-art8]]'
+ordinal: 0
+tokens: 834
+tp_namespace: lx-corpus
+hash: '2b848d7493fdc7f8'
+---
+Vote par procuration
+
+(1) Chaque actionnaire a le droit de désigner comme mandataire tout autre personne physique ou morale pour participer à l’assemblée générale et y voter en son nom. Le mandataire bénéficie des mêmes droits de prendre la parole et de poser des questions lors de l’assemblée générale que ceux dont bénéficierait l’actionnaire ainsi représenté. Sont réputées non écrites les clauses statutaires limitant la possibilité pour des personnes d’être désignées comme mandataires.
+
+388
+
+© Philippe Hoss, Elvinger Hoss Prussen. Tous droits réservés
+
+(2) Un actionnaire ne peut être représenté que par une seule personne pour une assemblée générale donnée. Par dérogation à l’alinéa 1er : a) si un actionnaire détient des actions d’une société sur plus d’un compte-titres, il peut désigner un mandataire distinct pour les actions détenues sur chaque compte-titres pour une assemblée générale donnée; b) la personne qualifiée d’actionnaire mais qui agit à titre professionnel pour le compte d’autres personnes physiques ou morales, peut donner procuration à chacune de ces autres personnes physiques ou morales ou à une tierce personne désignée par celles-ci.
+
+(3) En cas de conflits d’intérêts potentiels entre l’actionnaire et le mandataire qu’il a désigné: a) le mandataire doit divulguer certains faits précis qui sont pertinents pour permettre à l’actionnaire d’évaluer le risque éventuel que le mandataire puisse poursuivre un intérêt autre que l’intérêt de l’actionnaire; b) le mandataire n’est autorisé à exercer le droit de vote pour compte de l’actionnaire qu’à la condition qu’il dispose d’instructions de vote spécifiques pour chaque résolution sur laquelle le mandataire doit voter pour compte de l’actionnaire; c) le transfert d’une procuration à une autre personne est interdit sans préjudice de la possibilité pour un mandataire qui est une personne morale d’exercer par l’intermédiaire d’un membre de son organe d’administration ou de gestion ou d’un de ses employés les pouvoirs qui lui sont conférés.
+
+- Un conflit d’intérêts au sens du présent paragraphe peut notamment survenir lorsque le mandataire:
+
+i) est un actionnaire qui contrôle la société ou est une autre entité contrôlée par un tel actionnaire;
+
+ii) est un membre de l’organe d’administration, de gestion ou de surveillance de la société ou d’un actionnaire qui la contrôle ou d’une entité contrôlée visée au point i);
+
+iii) est un employé ou un contrôleur légal des comptes de la société, ou de l’actionnaire qui la contrôle ou d’une entité contrôlée visée au point i);
+
+iv) a un lien familial avec une personne physique visée aux points i) à iii).
+
+(4) Le mandataire vote conformément aux instructions de vote données par l’actionnaire qui l’a désigné. Il doit conserver une trace des instructions de vote pendant une période d’une année au moins à dater de la dernière exécution de l’instruction de vote et confirmer, sur demande, que les instructions de vote ont été exécutées.
+
+(5) Le nombre d’actionnaires qu’une personne agissant en qualité de mandataire peut représenter n’est pas limité. Au cas où un mandataire détient des procurations de plusieurs actionnaires, il peut exprimer pour un actionnaire donné des votes différents de ceux exprimés pour un autre actionnaire.
+
+389
+
+© Philippe Hoss, Elvinger Hoss Prussen. Tous droits réservés
