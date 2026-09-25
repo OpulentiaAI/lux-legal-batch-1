@@ -61,6 +61,31 @@ Filters compose with `And` semantics: `doc_id`, `kind`, `article`, `under`
 (path substring → Regex on the heading chain). Filters apply to every leg
 independently before fusion.
 
+### Auto-filter inference (`auto_filters`, default on)
+
+When no explicit filter is passed, `lx_search` parses the query for statute
+patterns and fills the filter for you:
+
+- `article`, `art.`, `art 450-1`, … → `article: "<n>"` (dashes normalized,
+  `bis`/`ter`/… suffixes preserved). Article tags exist on chunks across docs
+  (doc-06 articles, plus treatise sections analysing a specific article), so
+  the article filter alone already narrows correctly.
+- `loi du 10 août 1915` / `loi de 1915` → `doc_id: doc-06` (also applied on
+  top of an article hint).
+
+Explicit `doc_id`/`kind`/`article`/`under` always win and disable inference
+for that call; `auto_filters: false` disables it entirely. Inferred filters
+are echoed back in the response under `auto_filters`.
+
+### Weak-hit expansion (`expand`)
+
+When `expand: true` — or automatically when rerank is on and the top fused
+score falls below 0.45 — the top-2 hits get a `context` list: up to 4
+sibling chunks from the same document and section (`locator`), nearest by
+chunk ordinal. This widens a thin top hit to its chapter neighbourhood so
+answer composition sees surrounding text without a second query. The
+response reports `expanded: <n>` when it fired.
+
 Rerank defaults on; it reorders the fused candidate set with the
 cross-encoder and returns relevance scores (0–1). Disable with
 `rerank: false` for latency-sensitive or high-volume calls — the RRF scores
@@ -68,8 +93,8 @@ then stay small (~0.016 is normal for fused ranks).
 
 ## Choosing mode / filters in practice
 
-- Statute lookup ("what does Art. 426 say") → `mode: bm25` or hybrid +
-  `article: "426"` (often + `doc_id: doc-06`).
+- Statute lookup ("what does Art. 426 say") → just ask; `auto_filters`
+  detects the article. Say "loi de 1915" to also pin `doc-06`.
 - Doctrine ("say on pay in Luxembourg") → `hybrid`, rerank on.
 - Topic survey ("scission transfrontalière") → `bm25` first for the
   dedicated treatise, then `hybrid` for breadth.
@@ -117,3 +142,5 @@ re-embeds exactly the affected rows.
 | embedding model / dims | `EMBED_MODEL`/`DIMS` in `scripts/lx_index.py`, `EMBED_MODEL`/`DIMENSIONS` in `src/tp/client.ts` |
 | BM25 leg weights | `src/tp/tool-lx-search.ts` `Sum` weights |
 | rerank fan-out | `tool-lx-search.ts` `fetchLimit = limit*3` |
+| weak-hit threshold | `tool-lx-search.ts` `score < 0.45` gate before expansion |
+| expansion width | `tool-lx-search.ts` — top-2 hits, 4 nearest siblings each |

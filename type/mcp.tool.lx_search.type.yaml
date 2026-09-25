@@ -16,6 +16,12 @@ fields:
   under?: String
   #: Re-rank the fused hits with the multilingual cross-encoder (default true).
   rerank?: Boolean
+  #: Infer doc/article filters from the query (default true) — "article 100-1"
+  #: or "loi du 10 août 1915" pins the statute; explicit filters take precedence.
+  auto_filters?: Boolean
+  #: Attach sibling chunks from each top hit's section. Default: auto — only when
+  #: the top reranked hit is weak (score < 0.45).
+  expand?: Boolean
 meta:
   - type: plugin-runtime-meta::au-mcp-sdk
     entry: ./src/tp/tool-lx-search.ts
@@ -26,7 +32,10 @@ meta:
     description: |
       Hybrid-search the Luxembourg legal corpus (Batch 1) indexed in turbopuffer.
       Modes: hybrid (default; vector ANN fused with BM25 server-side), vector, bm25.
-      Filter with doc_id, kind, article or under (structure-path substring).
+      Filter with doc_id, kind, article or under (structure-path substring);
+      auto_filters (default true) infers doc_id/article from statute-style
+      queries ("article 100-1", "loi du 10 août 1915"). expand attaches
+      same-section sibling chunks — auto when the top hit scores < 0.45.
       rerank (default true) reorders fused hits with the jina multilingual cross-encoder.
       Returns chunk_id hits with scores, document, structure path and a text preview —
       hydrate full text with lx_chunk.
