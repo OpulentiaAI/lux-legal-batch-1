@@ -64,23 +64,24 @@ var r = "\n.dg { display:flex; flex-direction:column; height:100%; font-family:v
 	}
 	function b() {
 		if (!c) return;
+		let e = s.querySelector(".dg-filter"), t = e !== null && document.activeElement === e, n = t ? e.selectionStart ?? e.value.length : 0;
 		s.replaceChildren();
-		let e = document.createElement("div");
-		e.className = "dg";
-		let t = document.createElement("div");
-		t.className = "dg-toolbar";
-		let n = document.createElement("span");
-		n.className = "dg-title", n.textContent = i.config?.title || l.split("/").pop() || "data-grid";
-		let r = document.createElement("span");
-		r.className = "dg-file", r.textContent = l;
-		let a = document.createElement("input");
-		a.className = "dg-filter", a.placeholder = "Filter rows…", a.value = f, a.addEventListener("input", () => {
-			f = a.value, b();
-		}), t.append(n, r, a);
-		let o = document.createElement("div");
-		if (o.className = "dg-scroll", h) {
+		let r = document.createElement("div");
+		r.className = "dg";
+		let a = document.createElement("div");
+		a.className = "dg-toolbar";
+		let o = document.createElement("span");
+		o.className = "dg-title", o.textContent = i.config?.title || l.split("/").pop() || "data-grid";
+		let _ = document.createElement("span");
+		_.className = "dg-file", _.textContent = l;
+		let v = document.createElement("input");
+		v.className = "dg-filter", v.placeholder = "Filter rows…", v.value = f, v.addEventListener("input", () => {
+			f = v.value, b();
+		}), a.append(o, _, v);
+		let x = document.createElement("div");
+		if (x.className = "dg-scroll", h) {
 			let e = document.createElement("div");
-			e.className = "dg-empty", e.textContent = h, o.appendChild(e);
+			e.className = "dg-empty", e.textContent = h, x.appendChild(e);
 		} else if (m.header.length) {
 			let e = document.createElement("table"), t = document.createElement("thead"), n = document.createElement("tr");
 			m.header.forEach((e, t) => {
@@ -102,17 +103,17 @@ var r = "\n.dg { display:flex; flex-direction:column; height:100%; font-family:v
 						row: e
 					}), b();
 				}), r.appendChild(n);
-			}), e.append(t, r), o.appendChild(e);
+			}), e.append(t, r), x.appendChild(e);
 		} else {
 			let e = document.createElement("div");
-			e.className = "dg-empty", e.textContent = l ? `${l}: empty` : "no file configured — set the `file` field", o.appendChild(e);
+			e.className = "dg-empty", e.textContent = l ? `${l}: empty` : "no file configured — set the `file` field", x.appendChild(e);
 		}
-		let _ = document.createElement("div");
-		_.className = "dg-foot";
-		let v = document.createElement("span"), x = y().length;
-		v.textContent = `${x.toLocaleString()} row${x === 1 ? "" : "s"}${f ? ` (of ${m.rows.length.toLocaleString()})` : ""}`;
-		let S = document.createElement("span");
-		S.className = "dg-live", S.textContent = g ? `● live — refreshed ${g}` : "", _.append(v, S), e.append(t, o, _), s.appendChild(e), document.activeElement !== a && (s.querySelector(".dg-filter"), document.activeElement);
+		let S = document.createElement("div");
+		S.className = "dg-foot";
+		let C = document.createElement("span"), w = y().length;
+		C.textContent = `${w.toLocaleString()} row${w === 1 ? "" : "s"}${f ? ` (of ${m.rows.length.toLocaleString()})` : ""}`;
+		let T = document.createElement("span");
+		T.className = "dg-live", T.textContent = g ? `● live — refreshed ${g}` : "", S.append(C, T), r.append(a, x, S), s.appendChild(r), t && (v.focus(), v.setSelectionRange(n, n));
 	}
 	let x = setInterval(() => {
 		v();

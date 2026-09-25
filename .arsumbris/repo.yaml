@@ -10,3 +10,18 @@ deps:
   - name: au-base-types
   - name: au-mcp-sdk
   - name: au-ingest
+  # Host-side packages referenced by workspace-layout.yaml. Declared directly so
+  # the mount is self-describing instead of relying on discover: host-bundle.
+  - name: au-host-sdk
+  - name: aup-reader
+  - name: aup-workspace-sidebar
+  - name: bento
+  - name: column
+  - name: editor
+  - name: file-tree
+  - name: force-graph
+  - name: intent
+  - name: media-viewers
+  - name: placeholder-picker
+  - name: sandwich
+  - name: tabs

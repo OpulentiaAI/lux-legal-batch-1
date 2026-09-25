@@ -113,6 +113,9 @@ const mount: MountFn = (container, host) => {
 
   function render(): void {
     if (!alive) return
+    const prevFilter = body.querySelector('.dg-filter') as HTMLInputElement | null
+    const refocus = prevFilter !== null && document.activeElement === prevFilter
+    const caret = refocus ? (prevFilter.selectionStart ?? prevFilter.value.length) : 0
     body.replaceChildren()
     const wrap = document.createElement('div')
     wrap.className = 'dg'
@@ -192,8 +195,9 @@ const mount: MountFn = (container, host) => {
 
     wrap.append(bar, scroll, foot)
     body.appendChild(wrap)
-    if (document.activeElement !== inp && (body.querySelector('.dg-filter') as HTMLInputElement | null) !== document.activeElement) {
-      // keep focus if the user was typing in the filter
+    if (refocus) {
+      inp.focus()
+      inp.setSelectionRange(caret, caret)
     }
   }
 
