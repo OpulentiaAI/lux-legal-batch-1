@@ -16,6 +16,7 @@ article locators (art0100); treatises get section locators (s0042).
 """
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import re
@@ -301,7 +302,29 @@ def main() -> None:
     (INDEX_DIR / "chunks.jsonl").write_text(
         "\n".join(json.dumps(r, ensure_ascii=False) for r in chunk_rows) + "\n")
     (INDEX_DIR / "documents.json").write_text(json.dumps(manifest_docs, ensure_ascii=False, indent=2))
+    write_csv_indexes(chunk_rows, manifest_docs)
     print(f"chunk notes: {len(chunk_rows)} across {len(manifest_docs)} documents")
+
+
+def write_csv_indexes(chunk_rows: list[dict], manifest_docs: list[dict]) -> None:
+    """Flat CSV companions to the JSON index — browsable via the workspace data-grid."""
+    with (INDEX_DIR / "chunks.csv").open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["chunk_id", "doc_id", "doc_title", "kind", "article", "locator", "structure", "chars"])
+        for r in chunk_rows:
+            try:
+                chars = len(Path(r["path"]).read_text())
+            except OSError:
+                chars = 0
+            w.writerow([r["chunk_id"], r["doc_id"], r["doc_title"], r["kind"],
+                        r.get("article") or "", r["locator"], " › ".join(r.get("structure") or []), chars])
+    with (INDEX_DIR / "documents.csv").open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["doc_id", "title", "kind", "language", "authors", "year", "topics", "chunk_count", "raw_file"])
+        for d in manifest_docs:
+            w.writerow([d["doc_id"], d["title"], d["kind"], d.get("language", ""),
+                        "; ".join(d.get("authors") or []), d.get("year") or "",
+                        "; ".join(d.get("topics") or []), d.get("chunk_count") or "", d.get("raw_file", "")])
 
 
 if __name__ == "__main__":

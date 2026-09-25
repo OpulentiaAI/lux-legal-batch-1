@@ -1,0 +1,20 @@
+# data-grid IS a pane-projection: a live CSV table (sortable columns, filter row,
+# row-count footer) that re-reads its file on every engine change touching it, so a
+# pipeline write lands in the pane without a remount. Its instance IS its config:
+# `file` records the open vault file so a saved composition reopens where it left off.
+extends: pane-projection::au-host-sdk
+fields:
+  # Vault-relative path of the table's backing file (CSV/TSV). Absent = open prompt.
+  file?: String
+  # Optional display title over the file stem.
+  title?: String
+meta:
+  - type: projection-presentation-meta::au-host-sdk
+    title: Data Grid
+  - type: projection-runtime-meta::au-host-sdk
+    entry: ./projections/data-grid/dist/index.js
+    contractVersion: 7
+  - type: opens-meta::au-host-sdk
+    opens:
+      - csv
+      - tsv
