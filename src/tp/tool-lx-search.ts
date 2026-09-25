@@ -42,7 +42,17 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
     subqueries.push({ rank_by: ['vector', 'ANN', vec], filters, limit: fetchLimit, include_attributes: HIT_ATTRS })
   }
   if (mode === 'hybrid' || mode === 'bm25') {
-    subqueries.push({ rank_by: ['text', 'BM25', input.query], filters, limit: fetchLimit, include_attributes: HIT_ATTRS })
+    // Weighted lexical leg: a term hit in the document title or the structure path
+    // (PARTIE > TITRE > CHAPITRE headings, all French-FTS indexed) is stronger signal
+    // than a bare body match — Sum boosts those fields over plain text.
+    subqueries.push({
+      rank_by: ['Sum', [
+        ['Product', 3, ['doc_title', 'BM25', input.query]],
+        ['Product', 2, ['path', 'BM25', input.query]],
+        ['text', 'BM25', input.query],
+      ]],
+      filters, limit: fetchLimit, include_attributes: HIT_ATTRS,
+    })
   }
 
   const rows = await multiQuery(CHUNK_NS, subqueries, subqueries.length > 1)
