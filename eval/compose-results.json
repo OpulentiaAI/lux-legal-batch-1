@@ -1,0 +1,180 @@
+[
+ {
+  "id": "q01",
+  "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+  "n_srcs": 5,
+  "answer": "Les sources fournies indiquent l’existence et l’application de la loi modifiée du 10 août 1915 aux sociétés commerciales [doc-09:s0587:c0] et exposent les différences entre sociétés commerciales et civiles (compétence, comptabilité, immatriculation, faillite, régime fiscal) [doc-08:s0027:c3]. Elles ne donnent toutefois pas, dans les extraits fournis, une liste ou une définition précise des formes sociales qualifiées de « commerciales » par la loi de 1915. Par conséquent, les sources jointes sont insuffisantes pour énumérer quelles sociétés sont commerciales selon cette loi. [doc-09:s0587:c0][doc-08:s0027:c3]",
+  "verdict": "partial",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Sources fournies insuffisantes pour énumérer les formes commerciales."
+ },
+ {
+  "id": "q02",
+  "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+  "n_srcs": 5,
+  "answer": "L’article 7bis impose que la société établisse une politique de rémunération pour les dirigeants et la soumette au vote des actionnaires (consultatif sauf disposition statutaire contraire). La société ne paie que conformément à une politique ayant fait l’objet d’un tel vote ; en cas de rejet, une politique révisée doit être présentée. Des dérogations temporaires sont possibles si la politique prévoit les conditions procédurales. La politique doit contribuer à la stratégie et à la pérennité à long terme, décrire clairement les composantes fixes et variables (critères financiers/non-financiers, éventuels reports, restitution), expliquer le processus décisionnel et la prise en compte des conflits d’intérêts, être révisée au moins tous les quatre ans et publiée après le vote avec date et résultat [doc-07:s0578:c0][doc-06:s0314:c1][doc-07:s0578:c1][doc-06:s0315:c0].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Résumé fidèle et conforme aux sources citées."
+ },
+ {
+  "id": "q03",
+  "q": "Qu'est-ce que la scission par absorption ?",
+  "n_srcs": 5,
+  "answer": "La scission par absorption est l’opération par laquelle une société transfère son patrimoine à d’autres sociétés et, en contrepartie, ses associés reçoivent des actions (ou parts) des sociétés bénéficiaires et, éventuellement, une soulte en espèces (max. 10 % de la valeur nominale ou pair comptable). Elle peut se traduire soit par la dissolution sans liquidation et le transfert de l’ensemble du patrimoine à plusieurs sociétés, soit, sans dissolution, par le transfert d’une partie ou de l’ensemble du patrimoine à une ou plusieurs sociétés. Elle peut aussi intervenir si la société absorbée est en liquidation, pour autant que la répartition des actifs n’ait pas commencé [doc-07; doc-09; doc-02; doc-08].",
+  "verdict": "partial",
+  "citation_ok": true,
+  "grounded": false,
+  "note": "Contenu global OK mais mention '10 %' et quelques précisions semblent incertaines."
+ },
+ {
+  "id": "q04",
+  "q": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+  "n_srcs": 5,
+  "answer": "Le capital social minimum d'une société anonyme (SA) au Luxembourg est de 30 000 €; au jour de la constitution, au moins un quart de ce capital doit être libéré. [doc-08:s0452:c0]",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse exacte et conforme aux sources disponibles."
+ },
+ {
+  "id": "q05",
+  "q": "Une SARL-S peut-elle être constituée sans capital minimum ?",
+  "n_srcs": 5,
+  "answer": "Non. La SARL‑S ne peut pas être constituée sans capital : elle peut être créée avec un capital symbolique d’1 euro (capital devant rester inférieur au minimum de la SARL classique de 12.000 €). [852][855]",
+  "verdict": "unparsed",
+  "raw": ""
+ },
+ {
+  "id": "q06",
+  "q": "Qu'est-ce que le « say on pay » en droit luxembourgeois des sociétés ?",
+  "n_srcs": 5,
+  "answer": "Le « say on pay » en droit luxembourgeois impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote des actionnaires en assemblée. Ce vote est en principe consultatif : la société ne doit verser de rémunération qu’en conformité d’une politique ayant fait l’objet d’un tel vote; si l’assemblée rejette la politique, une version révisée doit être soumise à la suivante. Les statuts peuvent toutefois rendre ce vote contraignant; dans ce cas, la société ne paie les dirigeants que conformément à la politique approuvée. Par ailleurs, de manière générale, l’assemblée demeure compétente pour décider de la rémunération des dirigeants (les dirigeants ne peuvent s’auto‑attribuer de rémunération) [doc-07:s0578:c0][doc-08:s0179:c2].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse fidèle et conforme aux sources."
+ },
+ {
+  "id": "q07",
+  "q": "Qu'est-ce que la transmission universelle de patrimoine (TUP) dans une scission ?",
+  "n_srcs": 5,
+  "answer": "La transmission universelle de patrimoine (TUP) dans une scission est le transfert \"ut universi\" de l’universalité du patrimoine d’une société scindée — c’est‑à‑dire la transmission de l’ensemble des éléments actifs et passifs — à une ou plusieurs sociétés bénéficiaires. Elle résulte du fractionnement du patrimoine, de la transmission à titre universel des fractions ainsi créées et de la confusion entre ces fractions et le patrimoine des bénéficiaires ; elle implique généralement la dissolution sans liquidation de la société apporteuse (scission par absorption ou constitution) [doc-02:s0024:c1][doc-08:s0293:c0][doc-02:s0024:c2].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Définition fidèle et sourcée de la TUP dans une scission."
+ },
+ {
+  "id": "q08",
+  "q": "Comment est fixée la date de prise d'effet d'une scission transfrontalière ?",
+  "n_srcs": 5,
+  "answer": "La date de prise d’effet d’une scission transfrontalière est déterminée par la législation de l’État de la société scindée (règle de conflit posée par la directive/loi) [doc-06:s0159:c0]. Le droit européen précise aussi que cette date doit obligatoirement être postérieure à l’exécution des transferts d’actifs et de passifs (c.-à-d. après que les éléments aient été transférés) et encadre les conséquences comptables (dates comptables distinctes possibles sous conditions) [doc-02:s0043:c158][doc-02:s0043:c42].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse conforme et sourcée sur la fixation de la date d’effet."
+ },
+ {
+  "id": "q09",
+  "q": "Quelles formes de commandites connaît le droit luxembourgeois ?",
+  "n_srcs": 5,
+  "answer": "Le droit luxembourgeois reconnait trois principales formes de commandites : la société en commandite simple (SCS), la société en commandite par actions (SCA) et la société en commandite spéciale (SCSp) — cette dernière étant une commandite sans personnalité juridique. Ces formes offrent des options avec ou sans personnalité juridique selon les besoins (usage notamment pour fonds d’investissement) [doc-03:s0039:c0][doc-03:s0003:c0].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse complète et conforme aux sources disponibles."
+ },
+ {
+  "id": "q10",
+  "q": "À quelle date les dividendes doivent-ils être comptabilisés ?",
+  "n_srcs": 5,
+  "answer": "Les dividendes doivent être comptabilisés à la date de leur acquisition — c’est‑à‑dire à la date de l’assemblée générale qui décide leur attribution (et non à la date d’encaissement). Si la filiale décide la distribution après la clôture de la société mère, celle‑ci ne peut inscrire ces dividendes que dans les comptes de l’exercice suivant. [doc-04:s0240:c0]",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Conforme : comptabilisation à la date de décision (AG), pas d'encaissement."
+ },
+ {
+  "id": "q11",
+  "q": "La réforme belge a-t-elle supprimé l'obligation de capital social minimum ?",
+  "n_srcs": 5,
+  "answer": "Oui. La réforme belge a supprimé l’exigence d’un capital social minimum : la notion de capital a disparu et le capital minimum a été remplacé par l’obligation d’avoir des capitaux propres suffisants pour réaliser l’activité projetée et un plan financier détaillé, ainsi qu’une responsabilisation accrue des fondateurs [doc-05:s0049:c0][doc-05:s0050:c0][doc-05:s0079:c3].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse fidèle aux sources : capital minimum remplacé par capitaux propres suffisants."
+ },
+ {
+  "id": "q12",
+  "q": "L'assemblée générale peut-elle distribuer un dividende en cours d'exercice ?",
+  "n_srcs": 5,
+  "answer": "Oui. L’assemblée générale peut, à tout moment au cours de l’exercice, décider la distribution de dividendes prélevés sur les réserves disponibles (prudence: vérifier par bilan intérimaire que ces réserves ne sont pas entamées par des pertes) [doc-09:s0493:c0][doc-08:s0144:c1][doc-09:s0492:c1]. En revanche, elle ne peut pas distribuer d’acomptes sur dividendes (dividendes intérimaires) : cette faculté est réservée au conseil d’administration et soumise à des conditions légales strictes (état comptable, montants réalisés, vérification du commissaire, etc.) [doc-09:art461:c0][doc-09:s0493:c0].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse conforme aux sources : AG peut distribuer depuis les réserves en cours d’exercice."
+ },
+ {
+  "id": "q13",
+  "q": "Qu'est-ce que l'obligation contractuelle et quels sont ses éléments constitutifs ?",
+  "n_srcs": 5,
+  "answer": "L’obligation contractuelle est, selon le droit civil, le rapport juridique né d’un contrat par lequel une partie (le débiteur) s’oblige envers une autre (le créancier) à une prestation. Cette prestation prend classiquement trois formes : faire, ne pas faire ou donner quelque chose ; elle est destinée à être exécutoire (force obligatoire) et provient d’un accord visant à créer des effets juridiques contraignants [doc-01:s0016:c0][doc-01:s0017:c3][doc-01:s0016:c1]. Les éléments constitutifs essentiels sont donc : l’existence d’un débiteur et d’un créancier, l’objet de l’obligation (la prestation — faire/ne pas faire/donner) et le caractère obligatoire/enforceable découlant du contrat [doc-01:s0185:c0][doc-01:s0016:c0].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Définition et éléments conformes aux sources fournies."
+ },
+ {
+  "id": "q14",
+  "q": "Quelle majorité est requise pour une augmentation de capital décidée par l'assemblée ?",
+  "n_srcs": 5,
+  "answer": "L’augmentation de capital décidée en assemblée requiert, pour les modifications statutaires, une majorité qualifiée de deux tiers des voix valablement exprimées. [doc-06][doc-07]",
+  "verdict": "wrong",
+  "citation_ok": true,
+  "grounded": false,
+  "note": "La réponse contredit l'indice : il faut majorité absolue, pas deux tiers."
+ },
+ {
+  "id": "q15",
+  "q": "L'apport en industrie est-il admis dans les sociétés luxembourgeoises ?",
+  "n_srcs": 5,
+  "answer": "Oui. Le droit luxembourgeois reconnaît l’apport en industrie comme catégorie d’apport (distincte des apports en numéraire et en nature) et le Code/loi l’a introduit pour certaines sociétés ; par exemple la société en commandite simple peut recevoir des apports en industrie (art. 16(2) Loi de 1915) et le Code prévoit règles et évaluation pour ces apports [doc-09:s0119:c0][doc-03:s0034:c0][doc-05:s0055:c0]. En revanche, les sociétés par actions luxembourgeoises ne voient pas d’actions émises en contrepartie d’un apport en industrie : toute action doit représenter un apport en capital, de sorte qu’on n’émet pas d’actions «hors capital» pour un apport en industrie [doc-05:s0164:c4].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Fidèle aux sources; distinction et exclusion pour sociétés par actions correctement indiquées."
+ },
+ {
+  "id": "q16",
+  "q": "Quel est le capital minimum d'une SARL classique ?",
+  "n_srcs": 5,
+  "answer": "Le capital social minimum d’une SARL « classique » est de 12 000 euros. Il doit être intégralement souscrit et, pour la SARL, libéré immédiatement lors de la constitution [doc-08:s0406:c0][doc-08:s0443:c2].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Montant et libération conformes aux sources fournies."
+ },
+ {
+  "id": "q17",
+  "q": "What is the minimum share capital for a Luxembourg SARL?",
+  "n_srcs": 5,
+  "answer": "Le capital social minimum d’une SARL luxembourgeoise est de 12 000 euros. Il doit être intégralement souscrit et les parts entièrement libérées au moment de la constitution (dépot bancaire/certificat de blocage). [doc-08:s0406:c0][doc-09:s0598:c0]",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Montant et condition de souscription conformes aux sources citées."
+ },
+ {
+  "id": "q18",
+  "q": "Quel texte définit les sociétés commerciales au Luxembourg ?",
+  "n_srcs": 5,
+  "answer": "La définition figure dans la loi du 10 août 1915 concernant les sociétés commerciales (LSC) : « Les sociétés commerciales sont celles qui ont pour objet des actes de commerce... » (texte renuméroté par Règlement grand‑ducal du 5/12/2017) [doc-07:art1001:c0]. La même loi, à son article 100‑2, énumère les formes commerciales dotées de la personnalité juridique (SNC, SCS, SA, SAS, SCA, S.à r.l., SCoop, SE) [doc-08:s0027:c1].",
+  "verdict": "correct",
+  "citation_ok": true,
+  "grounded": true,
+  "note": "Réponse conforme : Loi du 10 août 1915, citations présentes dans les docs."
+ }
+]
