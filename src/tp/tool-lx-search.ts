@@ -19,6 +19,7 @@ interface SearchInput {
   rerank?: boolean
   auto_filters?: boolean
   expand?: boolean
+  signal?: AbortSignal
 }
 
 // Statute-lookup inference: "art. N"/"article N bis" yields an `article`
@@ -64,7 +65,7 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
   const execute = async (filters: Filter | undefined) => {
     const subqueries = [] as { rank_by: unknown; filters?: Filter; limit: number; include_attributes: string[] }[]
     if (mode === 'hybrid' || mode === 'vector') {
-      const [vec] = await embed([input.query])
+      const [vec] = await embed([input.query], input.signal)
       subqueries.push({ rank_by: ['vector', 'ANN', vec], filters, limit: fetchLimit, include_attributes: HIT_ATTRS })
     }
     if (mode === 'hybrid' || mode === 'bm25') {
@@ -80,7 +81,7 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
         filters, limit: fetchLimit, include_attributes: HIT_ATTRS,
       })
     }
-    return multiQuery(CHUNK_NS, subqueries, subqueries.length > 1)
+    return multiQuery(CHUNK_NS, subqueries, subqueries.length > 1, input.signal)
   }
 
   // Inferred filters are heuristic — when they yield an empty set, relax them
@@ -114,7 +115,7 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
       }
       return String(s.hit.text ?? '')
     })
-    const ranked = await rerank(input.query, texts)
+    const ranked = await rerank(input.query, texts, input.signal)
     scored = ranked.map((r) => ({ ...scored[r.index], score: r.relevance_score }))
   }
 

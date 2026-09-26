@@ -14,6 +14,7 @@ tldr: Luxembourg company-law corpus as a typed knowledge graph, turbopuffer-inde
 - Corpus PDFs (gitignored): drop into `corpus/raw/`, then run `scripts/lx_pipeline.sh` (extract → structure/chunk → embed+index → Polygres).
 - Discovery: the `lx_search`, `lx_chunk`, `lx_documents`, `lx_namespaces` tools resolve through au-mcp once the workspace is mounted — see `docs/mcp-tools.md` for the registration contract, env vars, and per-tool reference.
 - Retrieval tuning (hybrid legs, rerank, reindex flags, adding documents): `docs/retrieval.md`.
+- Legal answering harness: `src/harness/index.ts`; paired standard/parallel-reader evaluation: `node eval/compose.mjs --mode paired`. See `docs/retrieval.md` for credentials, reproducibility, and historical-score caveats, and `docs/devin-toolset.md` for the captured Devin toolset and supported integration boundary.
 - Graph reads: `au daemon start .` then `instances_of` / `subtypes` reads over the socket.
 
 ## How to extend this
