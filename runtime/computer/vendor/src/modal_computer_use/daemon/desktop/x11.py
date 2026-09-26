@@ -1,0 +1,1188 @@
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import os
+import shutil
+import subprocess
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import Literal, cast
+
+from PIL import Image, ImageDraw
+
+from modal_computer_use.actions import normalize_key, normalize_key_combo
+from modal_computer_use.artifacts import ArtifactStore
+from modal_computer_use.daemon.desktop.apps import X11AppController
+from modal_computer_use.daemon.desktop.browser import X11BrowserController
+from modal_computer_use.daemon.desktop.clipboard import X11ClipboardController
+from modal_computer_use.daemon.desktop.display import StaticDisplayController
+from modal_computer_use.daemon.desktop.keyboard import X11KeyboardController
+from modal_computer_use.daemon.desktop.mouse import X11MouseController
+from modal_computer_use.daemon.desktop.process_runner import (
+    AsyncioProcessRunner,
+    IsolatedAsyncioProcessRunner,
+    ProcessRunner,
+    ThreadedProcessRunner,
+)
+from modal_computer_use.daemon.desktop.screenshots import (
+    CapturedRawScreenshot,
+    CapturedScreenshot,
+    X11ScreenshotController,
+    encode_image,
+    scaled_dimension,
+    screenshot_from_capture,
+)
+from modal_computer_use.daemon.desktop.windows import X11WindowController
+from modal_computer_use.daemon.desktop.xtest import X11InputSession
+from modal_computer_use.daemon.process_environment import (
+    desktop_process_command,
+    desktop_process_environment,
+)
+from modal_computer_use.models import (
+    ActionResult,
+    CoordinateSpace,
+    DisplayGeometry,
+    DisplayInfo,
+    Point,
+    Recording,
+    Region,
+    Screenshot,
+    ScreenshotOptions,
+    X11Window,
+    sha256_bytes,
+)
+
+_RELEASE_FAILURE_LIMIT = 32
+
+
+class DesktopBackend(ABC):
+    width: int
+    height: int
+
+    @property
+    def input_backend(self) -> str | None:
+        return None
+
+    @property
+    def configured_input_backend(self) -> str | None:
+        return self.input_backend
+
+    @property
+    def supported_input_backends(self) -> tuple[str, ...]:
+        return (self.input_backend,) if self.input_backend is not None else ()
+
+    @property
+    def available_input_backends(self) -> tuple[str, ...]:
+        return (self.input_backend,) if self.input_backend is not None else ()
+
+    def close(self) -> None:
+        """Release persistent backend resources."""
+        return None
+
+    async def invalidate_display_generation(self) -> None:
+        """Release state bound to an X display before its supervisor restarts."""
+        return None
+
+    @abstractmethod
+    async def ready(self) -> tuple[bool, list[str]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_move(self, x: int, y: int) -> Point:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_click(
+        self,
+        x: int | None = None,
+        y: int | None = None,
+        *,
+        button: str = "left",
+        count: int = 1,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_drag(
+        self,
+        *,
+        start: Point | None = None,
+        end: Point | None = None,
+        path: Sequence[Point] | None = None,
+        button: str = "left",
+        duration_ms: int = 500,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_scroll(
+        self,
+        direction: str,
+        amount: int = 1,
+        x: int | None = None,
+        y: int | None = None,
+    ) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_down(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_up(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def mouse_position(self) -> Point:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def keyboard_type(
+        self, text: str, delay_ms: int = 10, method: str = "auto"
+    ) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def keyboard_press(
+        self,
+        key: str,
+        modifiers: Sequence[str] = (),
+        duration_ms: int = 0,
+    ) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def keyboard_hotkey(self, keys: Sequence[str], duration_ms: int = 0) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def key_down(self, key: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def key_up(self, key: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def clipboard_get(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def clipboard_set(self, text: str) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def clipboard_clear(self) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def screenshot(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        artifact_store: ArtifactStore | None = None,
+        call_id: str | None = None,
+        retention_class: str = "ephemeral",
+    ) -> Screenshot:
+        raise NotImplementedError
+
+    async def screenshot_bytes(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        include_cursor_position: bool = False,
+        prefer_native_png: bool = False,
+    ) -> CapturedScreenshot:
+        screenshot = await self.screenshot(options, region=region)
+        return CapturedScreenshot(
+            format=screenshot.format,
+            width=screenshot.width,
+            height=screenshot.height,
+            data=screenshot.as_bytes(),
+            sha256=screenshot.sha256 or sha256_bytes(screenshot.as_bytes()),
+            captured_at=screenshot.captured_at,
+            coordinate_space=screenshot.coordinate_space,
+            cursor_visible=screenshot.cursor_visible,
+            cursor_position=screenshot.cursor_position if include_cursor_position else None,
+            timings_ms={},
+        )
+
+    async def screenshot_raw_pixels(
+        self,
+        *,
+        region: Region | None = None,
+    ) -> CapturedRawScreenshot | None:
+        return None
+
+    @abstractmethod
+    async def display_info(self) -> DisplayInfo:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def windows(self) -> list[X11Window]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def active_window(self) -> X11Window | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def activate_window(self, window_id: str) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def close_window(self, window_id: str) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def release_all(self) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def launch(self, command: str, args: Sequence[str] = ()) -> ActionResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def open_url(self, url: str, wait_for_window: bool = True) -> ActionResult:
+        raise NotImplementedError
+
+    async def browser_render_metrics(
+        self,
+        url: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, object]:
+        return {
+            "ok": False,
+            "message": "browser render metrics are unavailable for this backend",
+            "url": url,
+            "timeout_seconds": timeout_seconds,
+        }
+
+    async def prewarm_browser(self) -> ActionResult:
+        return ActionResult(ok=True, message="browser prewarm not configured")
+
+    async def run_command(self, command: Sequence[str], timeout: float = 30.0) -> ActionResult:
+        stdout = (
+            "42\n"
+            if tuple(command)
+            in {
+                ("sh", "-c", "printf '42\\n'"),
+                ("sh", "-lc", "printf '42\\n'"),
+            }
+            else ""
+        )
+        return ActionResult(
+            ok=True,
+            message="command not executed by mock backend",
+            output={
+                "command": list(command),
+                "returncode": 0,
+                "stdout": stdout,
+                "stderr": "",
+            },
+        )
+
+
+class MockDesktopBackend(DesktopBackend):
+    def __init__(self, width: int = 1024, height: int = 768) -> None:
+        self.width = width
+        self.height = height
+        self.cursor = Point(x=0, y=0)
+        self.clipboard = ""
+        self.held_keys: set[str] = set()
+        self.held_buttons: set[str] = set()
+        self.recordings: dict[str, Recording] = {}
+
+    @property
+    def input_backend(self) -> str | None:
+        return "mock"
+
+    @property
+    def configured_input_backend(self) -> str:
+        return "mock"
+
+    @property
+    def supported_input_backends(self) -> tuple[str, ...]:
+        return ("mock",)
+
+    @property
+    def available_input_backends(self) -> tuple[str, ...]:
+        return ("mock",)
+
+    async def ready(self) -> tuple[bool, list[str]]:
+        return True, []
+
+    def _bound(self, x: int, y: int) -> Point:
+        return Point(x=min(max(x, 0), self.width - 1), y=min(max(y, 0), self.height - 1))
+
+    async def mouse_move(self, x: int, y: int) -> Point:
+        self.cursor = self._bound(x, y)
+        return self.cursor
+
+    async def mouse_click(
+        self,
+        x: int | None = None,
+        y: int | None = None,
+        *,
+        button: str = "left",
+        count: int = 1,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        if x is not None and y is not None:
+            self.cursor = self._bound(x, y)
+        return self.cursor
+
+    async def mouse_drag(
+        self,
+        *,
+        start: Point | None = None,
+        end: Point | None = None,
+        path: Sequence[Point] | None = None,
+        button: str = "left",
+        duration_ms: int = 500,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        if path:
+            self.cursor = self._bound(path[-1].x, path[-1].y)
+        elif end:
+            self.cursor = self._bound(end.x, end.y)
+        elif start:
+            self.cursor = self._bound(start.x, start.y)
+        return self.cursor
+
+    async def mouse_scroll(
+        self, direction: str, amount: int = 1, x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        if x is not None and y is not None:
+            self.cursor = self._bound(x, y)
+        return ActionResult(ok=True, output={"direction": direction, "amount": amount})
+
+    async def mouse_down(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        if x is not None and y is not None:
+            self.cursor = self._bound(x, y)
+        self.held_buttons.add(button)
+        return ActionResult(ok=True)
+
+    async def mouse_up(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        if x is not None and y is not None:
+            self.cursor = self._bound(x, y)
+        self.held_buttons.discard(button)
+        return ActionResult(ok=True)
+
+    async def mouse_position(self) -> Point:
+        return self.cursor
+
+    async def keyboard_type(
+        self, text: str, delay_ms: int = 10, method: str = "auto"
+    ) -> ActionResult:
+        return ActionResult(
+            ok=True, output={"length": len(text), "method": method, "delay_ms": delay_ms}
+        )
+
+    async def keyboard_press(
+        self, key: str, modifiers: Sequence[str] = (), duration_ms: int = 0
+    ) -> ActionResult:
+        return ActionResult(
+            ok=True, output={"key": normalize_key(key), "modifiers": list(modifiers)}
+        )
+
+    async def keyboard_hotkey(self, keys: Sequence[str], duration_ms: int = 0) -> ActionResult:
+        return ActionResult(ok=True, output={"keys": normalize_key_combo(keys)})
+
+    async def key_down(self, key: str) -> None:
+        self.held_keys.add(normalize_key(key))
+
+    async def key_up(self, key: str) -> None:
+        self.held_keys.discard(normalize_key(key))
+
+    async def clipboard_get(self) -> str:
+        return self.clipboard
+
+    async def clipboard_set(self, text: str) -> ActionResult:
+        self.clipboard = text
+        return ActionResult(ok=True, output={"length": len(text)})
+
+    async def clipboard_clear(self) -> ActionResult:
+        self.clipboard = ""
+        return ActionResult(ok=True)
+
+    async def screenshot(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        artifact_store: ArtifactStore | None = None,
+        call_id: str | None = None,
+        retention_class: str = "ephemeral",
+    ) -> Screenshot:
+        captured = await self.screenshot_bytes(
+            options,
+            region=region,
+            include_cursor_position=True,
+        )
+        return screenshot_from_capture(
+            captured,
+            options,
+            artifact_store=artifact_store,
+            call_id=call_id,
+            retention_class=retention_class,
+        )
+
+    async def screenshot_bytes(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        include_cursor_position: bool = False,
+        prefer_native_png: bool = False,
+    ) -> CapturedScreenshot:
+        source = region or Region(x=0, y=0, width=self.width, height=self.height)
+        image_width = scaled_dimension(source.width, options.scale)
+        image_height = scaled_dimension(source.height, options.scale)
+        img = Image.new("RGB", (image_width, image_height), (245, 246, 248))
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([0, 0, image_width - 1, image_height - 1], outline=(68, 84, 106))
+        if options.show_cursor:
+            cursor_in_source = (
+                source.x <= self.cursor.x < source.right
+                and source.y <= self.cursor.y < source.bottom
+            )
+            if cursor_in_source:
+                cursor_x = round((self.cursor.x - source.x) * image_width / source.width)
+                cursor_y = round((self.cursor.y - source.y) * image_height / source.height)
+                draw.line(
+                    [(cursor_x - 6, cursor_y), (cursor_x + 6, cursor_y)],
+                    fill=(220, 38, 38),
+                    width=2,
+                )
+                draw.line(
+                    [(cursor_x, cursor_y - 6), (cursor_x, cursor_y + 6)],
+                    fill=(220, 38, 38),
+                    width=2,
+                )
+        data = encode_image(img, options.format, options.quality)
+        coordinate_space = CoordinateSpace.from_dimensions(
+            desktop_width=self.width,
+            desktop_height=self.height,
+            image_width=image_width,
+            image_height=image_height,
+            source_region=region,
+        )
+        return CapturedScreenshot(
+            format=options.format,
+            width=image_width,
+            height=image_height,
+            data=data,
+            sha256=sha256_bytes(data),
+            captured_at=datetime.now(UTC),
+            coordinate_space=coordinate_space,
+            cursor_visible=options.show_cursor,
+            cursor_position=self.cursor if include_cursor_position else None,
+            timings_ms={},
+        )
+
+    async def screenshot_raw_pixels(
+        self,
+        *,
+        region: Region | None = None,
+    ) -> CapturedRawScreenshot | None:
+        return None
+
+    async def display_info(self) -> DisplayInfo:
+        display = DisplayGeometry(id=":99.0", x=0, y=0, width=self.width, height=self.height)
+        return DisplayInfo(primary_display=display, total_displays=1, displays=[display])
+
+    async def windows(self) -> list[X11Window]:
+        return [
+            X11Window(
+                id="mock-root",
+                title="Mock Desktop",
+                x=0,
+                y=0,
+                width=self.width,
+                height=self.height,
+                is_active=True,
+            )
+        ]
+
+    async def active_window(self) -> X11Window | None:
+        return (await self.windows())[0]
+
+    async def activate_window(self, window_id: str) -> ActionResult:
+        return ActionResult(ok=True, output={"window_id": window_id})
+
+    async def close_window(self, window_id: str) -> ActionResult:
+        return ActionResult(ok=True, output={"window_id": window_id})
+
+    async def release_all(self) -> ActionResult:
+        released = {"keys": sorted(self.held_keys), "buttons": sorted(self.held_buttons)}
+        self.held_keys.clear()
+        self.held_buttons.clear()
+        return ActionResult(ok=True, output=released)
+
+    async def launch(self, command: str, args: Sequence[str] = ()) -> ActionResult:
+        return ActionResult(
+            ok=True, message=f"launch requested: {command}", output={"args": list(args)}
+        )
+
+    async def open_url(self, url: str, wait_for_window: bool = True) -> ActionResult:
+        return ActionResult(
+            ok=True, message="url open requested", output={"url": url, "wait": wait_for_window}
+        )
+
+
+class X11DesktopBackend(MockDesktopBackend):
+    def __init__(
+        self,
+        width: int = 1024,
+        height: int = 768,
+        display: str = ":99",
+        browser: str | None = None,
+        browser_profile_dir: str | None = None,
+        browser_launch_args: Sequence[str] = (),
+        browser_gpu_mode: str = "auto",
+        input_backend: str = "auto",
+        subprocess_backend: str = "isolated-asyncio",
+        capture_source: str = "auto",
+        process_runner: ProcessRunner | None = None,
+    ) -> None:
+        super().__init__(width=width, height=height)
+        self.display = display
+        self.browser = browser
+        normalized_input_backend = _normalize_input_backend(input_backend)
+        self._configured_input_backend = normalized_input_backend
+        self._available_input_backends: tuple[str, ...] = ()
+        self._last_input_backend: str | None = None
+        self._input = X11InputSession(display=display)
+        self._subprocess_backend = _normalize_subprocess_backend(subprocess_backend)
+        self._process_runner = process_runner or _create_process_runner(self._subprocess_backend)
+        self._display = StaticDisplayController(width=width, height=height, display=display)
+        self._apps = X11AppController(spawn=lambda *args: self._spawn(*args))
+        self._windows = X11WindowController(
+            run=lambda *args, **kwargs: self._run(*args, **kwargs),
+            fallback_windows=_empty_windows,
+            display=display,
+        )
+        self._browser = X11BrowserController(
+            browser=browser,
+            launch=self._apps.launch,
+            windows=self._windows.list,
+            profile_dir=browser_profile_dir,
+            launch_args=browser_launch_args,
+            gpu_mode=browser_gpu_mode,
+        )
+        self._clipboard = X11ClipboardController(
+            run=lambda *args, **kwargs: self._run(*args, **kwargs),
+            spawn_owner=self._spawn_clipboard_owner,
+            get_state=super().clipboard_get,
+            set_state=super().clipboard_set,
+            clear_state=super().clipboard_clear,
+        )
+        self._keyboard = X11KeyboardController(
+            run=lambda *args, **kwargs: self._run(*args, **kwargs),
+            type_state=super().keyboard_type,
+            press_state=super().keyboard_press,
+            hotkey_state=super().keyboard_hotkey,
+            key_down_state=super().key_down,
+            key_up_state=super().key_up,
+            clipboard_get=self.clipboard_get,
+            clipboard_set=self.clipboard_set,
+            input_backend=normalized_input_backend,
+            xtest=self._input,
+        )
+        self._mouse = X11MouseController(
+            run=lambda *args, **kwargs: self._run(*args, **kwargs),
+            move_state=super().mouse_move,
+            position_state=super().mouse_position,
+            click_state=super().mouse_click,
+            drag_state=super().mouse_drag,
+            scroll_state=super().mouse_scroll,
+            button_down_state=super().mouse_down,
+            button_up_state=super().mouse_up,
+            key_down=self._keyboard.acquire,
+            key_up=self.key_up,
+            input_backend=normalized_input_backend,
+            xtest=self._input,
+        )
+        self._screenshots = X11ScreenshotController(
+            run=lambda *args, **kwargs: self._run(*args, **kwargs),
+            width=width,
+            height=height,
+            display=display,
+            cursor_position=self.mouse_position,
+            capture_source=capture_source,
+        )
+
+    @property
+    def input_backend(self) -> str | None:
+        return self._last_input_backend
+
+    @property
+    def configured_input_backend(self) -> str:
+        return self._configured_input_backend
+
+    @property
+    def supported_input_backends(self) -> tuple[str, ...]:
+        return ("xtest", "xdotool")
+
+    @property
+    def available_input_backends(self) -> tuple[str, ...]:
+        return self._available_input_backends
+
+    @property
+    def window_backend(self) -> str:
+        return self._windows.backend_name
+
+    def close(self) -> None:
+        first_error: Exception | None = None
+        for close in (
+            self._apps.close,
+            self._clipboard.close,
+            self._screenshots.close,
+            self._windows.close,
+            self._input.close,
+            self._process_runner.close,
+        ):
+            try:
+                close()
+            except Exception as exc:
+                if first_error is None:
+                    first_error = exc
+        if first_error is not None:
+            raise first_error
+
+    async def invalidate_display_generation(self) -> None:
+        first_error: Exception | None = None
+
+        async def attempt_async(operation) -> None:
+            nonlocal first_error
+            try:
+                await operation()
+            except Exception as exc:
+                if first_error is None:
+                    first_error = exc
+
+        def attempt_sync(operation) -> None:
+            nonlocal first_error
+            try:
+                operation()
+            except Exception as exc:
+                if first_error is None:
+                    first_error = exc
+
+        try:
+            release_result = await self.release_all()
+            if not release_result.ok and first_error is None:
+                first_error = RuntimeError(
+                    release_result.message or "failed to release all held input"
+                )
+        except Exception as exc:
+            first_error = exc
+
+        # The old server may disappear immediately after this seam returns. Clear
+        # logical ownership even when a best-effort release could not reach it.
+        self.held_keys.clear()
+        self.held_buttons.clear()
+        self._last_input_backend = None
+        self._available_input_backends = ()
+        await attempt_async(self._apps.invalidate_display_generation)
+        await attempt_async(self._clipboard.invalidate_display_generation)
+        await attempt_async(
+            lambda: asyncio.to_thread(self._screenshots.reset_capture_session)
+        )
+        attempt_sync(self._windows.invalidate_display_generation)
+        attempt_sync(self._keyboard.invalidate_display_generation)
+        attempt_sync(self._mouse.invalidate_display_generation)
+        attempt_sync(self._input.invalidate_display_generation)
+
+        if first_error is not None:
+            raise first_error
+
+    @property
+    def readiness_generation(self) -> int:
+        return self._screenshots.readiness_generation
+
+    @property
+    def subprocess_backend(self) -> str:
+        return self._subprocess_backend
+
+    async def ready(self) -> tuple[bool, list[str]]:
+        await self._cache_available_input_backends()
+        input_ready, input_error = self._mouse.probe_backend()
+        if not input_ready:
+            return False, [input_error or "input backend is not ready"]
+        if (
+            self._mouse.backend_name == "xdotool"
+            and "xdotool" not in self._available_input_backends
+        ):
+            return False, ["xdotool could not reach display"]
+        self._last_input_backend = self._mouse.backend_name
+        windows_ready, windows_error = await self._windows.probe_backend()
+        if not windows_ready:
+            return False, [windows_error or "window backend is not ready"]
+
+        required_tools = {"xclip", "xdotool", "xdpyinfo", "ffmpeg"}
+        if self._windows.backend_name != "xlib-ewmh":
+            required_tools.update(("wmctrl", "xdotool"))
+        missing = [tool for tool in sorted(required_tools) if shutil.which(tool) is None]
+        if missing:
+            return False, [f"missing required tools: {', '.join(missing)}"]
+        result = await self._run("xdpyinfo", timeout=2, check=False)
+        if result.returncode != 0:
+            return False, ["xdpyinfo could not reach display"]
+        screenshots_ready, screenshot_error = await self._screenshots.probe()
+        if not screenshots_ready:
+            return False, [screenshot_error or "screenshot capture failed"]
+        return True, []
+
+    async def _cache_available_input_backends(self) -> None:
+        available: list[str] = []
+        if self._input.available():
+            available.append("xtest")
+        if shutil.which("xdotool") is not None:
+            try:
+                probe = await self._run(
+                    "xdotool",
+                    "getmouselocation",
+                    "--shell",
+                    timeout=2,
+                    check=False,
+                )
+            except (OSError, TimeoutError):
+                pass
+            else:
+                if probe.returncode == 0:
+                    available.append("xdotool")
+        self._available_input_backends = tuple(available)
+
+    async def _run(
+        self,
+        *args: str,
+        timeout: float = 10.0,
+        input_text: str | None = None,
+        check: bool = True,
+        capture_output: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        env = desktop_process_environment(display=self.display)
+        return await self._process_runner.run(
+            *desktop_process_command(*args, environ=env),
+            env=env,
+            timeout=timeout,
+            input_text=input_text,
+            check=check,
+            capture_output=capture_output,
+        )
+
+    async def _spawn(self, *args: str) -> subprocess.Popen[str]:
+        env = desktop_process_environment(display=self.display)
+        return subprocess.Popen(  # noqa: S603 - daemon validates command shape before launch.
+            desktop_process_command(*args, environ=env),
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            start_new_session=True,
+        )
+
+    async def _spawn_clipboard_owner(self, text: str) -> subprocess.Popen[str]:
+        env = desktop_process_environment(display=self.display)
+        xclip = shutil.which("xclip")
+        if xclip is None:
+            raise FileNotFoundError("xclip is required for clipboard ownership")
+        process = subprocess.Popen(  # noqa: S603 - executable resolved through PATH.
+            desktop_process_command(
+                xclip,
+                "-selection",
+                "clipboard",
+                "-quiet",  # Keep the selection owner in the tracked foreground process.
+                environ=env,
+            ),
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            start_new_session=True,
+        )
+        assert process.stdin is not None
+
+        def supply_selection() -> None:
+            try:
+                process.stdin.write(text)
+                process.stdin.close()
+            except BaseException:
+                if process.poll() is None:
+                    process.terminate()
+                raise
+
+        await asyncio.to_thread(supply_selection)
+        return process
+
+    async def launch(self, command: str, args: Sequence[str] = ()) -> ActionResult:
+        return await self._apps.launch(command, args)
+
+    async def open_url(self, url: str, wait_for_window: bool = True) -> ActionResult:
+        self._browser.browser = self.browser
+        return await self._browser.open_url(url, wait_for_window=wait_for_window)
+
+    async def browser_render_metrics(
+        self,
+        url: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, object]:
+        return await self._browser.render_metrics(
+            url,
+            display=self.display,
+            timeout_seconds=timeout_seconds,
+        )
+
+    async def prewarm_browser(self) -> ActionResult:
+        return await self._browser.prewarm()
+
+    async def windows(self) -> list[X11Window]:
+        return await self._windows.list()
+
+    async def active_window(self) -> X11Window | None:
+        return await self._windows.active()
+
+    async def activate_window(self, window_id: str) -> ActionResult:
+        return await self._windows.activate(window_id)
+
+    async def close_window(self, window_id: str) -> ActionResult:
+        return await self._windows.close_window(window_id)
+
+    async def display_info(self) -> DisplayInfo:
+        return await self._display.info()
+
+    async def mouse_move(self, x: int, y: int) -> Point:
+        result = await self._mouse.move(x, y)
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_click(
+        self,
+        x: int | None = None,
+        y: int | None = None,
+        *,
+        button: str = "left",
+        count: int = 1,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        result = await self._mouse.click(
+            x,
+            y,
+            button=button,
+            count=count,
+            modifiers=modifiers,
+        )
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_drag(
+        self,
+        *,
+        start: Point | None = None,
+        end: Point | None = None,
+        path: Sequence[Point] | None = None,
+        button: str = "left",
+        duration_ms: int = 500,
+        modifiers: Sequence[str] = (),
+    ) -> Point:
+        result = await self._mouse.drag(
+            start=start,
+            end=end,
+            path=path,
+            button=button,
+            duration_ms=duration_ms,
+            modifiers=modifiers,
+        )
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_scroll(
+        self, direction: str, amount: int = 1, x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        result = await self._mouse.scroll(direction, amount=amount, x=x, y=y)
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_down(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        result = await self._mouse.down(button, x=x, y=y)
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_up(
+        self, button: str = "left", x: int | None = None, y: int | None = None
+    ) -> ActionResult:
+        result = await self._mouse.up(button, x=x, y=y)
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def mouse_position(self) -> Point:
+        result = await self._mouse.position()
+        self._last_input_backend = self._mouse.backend_name
+        return result
+
+    async def keyboard_type(
+        self, text: str, delay_ms: int = 10, method: str = "auto"
+    ) -> ActionResult:
+        result = await self._keyboard.type_text(text, delay_ms=delay_ms, method=method)
+        self._last_input_backend = self._keyboard.backend_name
+        return result
+
+    async def keyboard_press(
+        self, key: str, modifiers: Sequence[str] = (), duration_ms: int = 0
+    ) -> ActionResult:
+        result = await self._keyboard.press(
+            key,
+            modifiers=modifiers,
+            duration_ms=duration_ms,
+        )
+        self._last_input_backend = self._keyboard.backend_name
+        return result
+
+    async def keyboard_hotkey(self, keys: Sequence[str], duration_ms: int = 0) -> ActionResult:
+        result = await self._keyboard.hotkey(keys, duration_ms=duration_ms)
+        self._last_input_backend = self._keyboard.backend_name
+        return result
+
+    async def key_down(self, key: str) -> None:
+        await self._keyboard.down(key)
+        self._last_input_backend = self._keyboard.backend_name
+
+    async def key_up(self, key: str) -> None:
+        await self._keyboard.up(key)
+        self._last_input_backend = self._keyboard.backend_name
+
+    async def clipboard_get(self) -> str:
+        return await self._clipboard.get()
+
+    async def clipboard_set(self, text: str) -> ActionResult:
+        return await self._clipboard.set(text)
+
+    async def clipboard_clear(self) -> ActionResult:
+        return await self._clipboard.clear()
+
+    async def release_all(self) -> ActionResult:
+        keys = sorted(self.held_keys)
+        buttons = sorted(self.held_buttons)
+        released_keys: list[str] = []
+        failed_key_records: list[dict[str, str | None]] = []
+        key_outcome = await self._keyboard.release_all(keys)
+        released_keys = list(key_outcome.released)
+        failed_key_records = [
+            {
+                "kind": "key",
+                "value": failure.key,
+                "input_backend": failure.input_backend,
+                "code": "key_release_failed",
+            }
+            for failure in key_outcome.failures
+        ]
+        if key_outcome.released or key_outcome.failures:
+            self._last_input_backend = self._keyboard.backend_name
+        released_buttons: list[str] = []
+        failed_buttons: list[str] = []
+        failed_button_backends: dict[str, str | None] = {}
+        for button in reversed(buttons):
+            button_released = False
+            for _attempt in range(2):
+                with contextlib.suppress(Exception):
+                    await self._mouse.up(button)
+                    button_released = True
+                if button_released:
+                    break
+            if button_released:
+                released_buttons.append(button)
+            else:
+                failed_buttons.append(button)
+                failed_button_backends[button] = self._mouse.release_attempt_backend
+            self._last_input_backend = (
+                self._mouse.release_attempt_backend or self._mouse.backend_name
+            )
+        failed = bool(failed_key_records or failed_buttons)
+        if not failed:
+            return ActionResult(
+                ok=True,
+                output={
+                    "keys": sorted(released_keys),
+                    "buttons": sorted(released_buttons),
+                },
+            )
+        failures = failed_key_records
+        failures.extend(
+            {
+                "kind": "button",
+                "value": button,
+                "input_backend": failed_button_backends[button],
+                "code": "button_release_failed",
+            }
+            for button in sorted(failed_buttons)
+        )
+        return ActionResult(
+            ok=False,
+            message="failed to release all held input",
+            output={
+                "code": "release_all_incomplete",
+                "keys": sorted(released_keys),
+                "buttons": sorted(released_buttons),
+                "remaining": {
+                    "keys": sorted(
+                        {
+                            *self.held_keys,
+                            *(failure.key for failure in key_outcome.failures),
+                        }
+                    ),
+                    "buttons": sorted(self.held_buttons),
+                },
+                "failures": failures[:_RELEASE_FAILURE_LIMIT],
+            },
+        )
+
+    async def screenshot(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        artifact_store: ArtifactStore | None = None,
+        call_id: str | None = None,
+        retention_class: str = "ephemeral",
+    ) -> Screenshot:
+        return await self._screenshots.capture(
+            options,
+            region=region,
+            artifact_store=artifact_store,
+            call_id=call_id,
+            retention_class=retention_class,
+        )
+
+    async def screenshot_bytes(
+        self,
+        options: ScreenshotOptions,
+        *,
+        region: Region | None = None,
+        include_cursor_position: bool = False,
+        prefer_native_png: bool = False,
+    ) -> CapturedScreenshot:
+        return await self._screenshots.capture_bytes(
+            options,
+            region=region,
+            include_cursor_position=include_cursor_position,
+            prefer_native_png=prefer_native_png,
+        )
+
+    async def screenshot_raw_pixels(
+        self,
+        *,
+        region: Region | None = None,
+    ) -> CapturedRawScreenshot | None:
+        return await self._screenshots.capture_raw_pixels(region=region)
+
+    async def run_command(self, command: Sequence[str], timeout: float = 30.0) -> ActionResult:
+        result = await self._run(*command, timeout=timeout, check=False)
+        return ActionResult(
+            ok=result.returncode == 0,
+            message=None if result.returncode == 0 else result.stderr,
+            output={
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+            },
+        )
+
+
+def choose_backend(
+    kind: str,
+    *,
+    width: int,
+    height: int,
+    display: str,
+    browser: str | None = None,
+    browser_profile_dir: str | None = None,
+    browser_launch_args: Sequence[str] = (),
+    browser_gpu_mode: str = "auto",
+    input_backend: str = "auto",
+    subprocess_backend: str = "isolated-asyncio",
+    capture_source: str = "auto",
+) -> DesktopBackend:
+    if kind == "mock":
+        return MockDesktopBackend(width=width, height=height)
+    if kind == "x11":
+        return X11DesktopBackend(
+            width=width,
+            height=height,
+            display=display,
+            browser=browser,
+            browser_profile_dir=browser_profile_dir,
+            browser_launch_args=browser_launch_args,
+            browser_gpu_mode=browser_gpu_mode,
+            input_backend=input_backend,
+            subprocess_backend=subprocess_backend,
+            capture_source=capture_source,
+        )
+    if kind != "auto":
+        raise ValueError(f"unsupported desktop backend {kind!r}; expected one of: auto, mock, x11")
+    if os.name != "posix":
+        return MockDesktopBackend(width=width, height=height)
+    return X11DesktopBackend(
+        width=width,
+        height=height,
+        display=display,
+        browser=browser,
+        browser_profile_dir=browser_profile_dir,
+        browser_launch_args=browser_launch_args,
+        browser_gpu_mode=browser_gpu_mode,
+        input_backend=input_backend,
+        subprocess_backend=subprocess_backend,
+        capture_source=capture_source,
+    )
+
+
+def _normalize_input_backend(value: str) -> Literal["auto", "xtest", "xdotool"]:
+    if value in {"auto", "xtest", "xdotool"}:
+        return cast("Literal['auto', 'xtest', 'xdotool']", value)
+    raise ValueError(f"unsupported input backend {value!r}; expected one of: auto, xtest, xdotool")
+
+
+def _normalize_subprocess_backend(
+    value: str,
+) -> Literal["asyncio", "isolated-asyncio", "threaded"]:
+    if value in {"asyncio", "isolated-asyncio", "threaded"}:
+        return cast("Literal['asyncio', 'isolated-asyncio', 'threaded']", value)
+    raise ValueError(
+        "unsupported subprocess backend "
+        f"{value!r}; expected one of: asyncio, isolated-asyncio, threaded"
+    )
+
+
+def _create_process_runner(
+    backend: Literal["asyncio", "isolated-asyncio", "threaded"],
+) -> ProcessRunner:
+    if backend == "threaded":
+        return ThreadedProcessRunner()
+    if backend == "isolated-asyncio":
+        return IsolatedAsyncioProcessRunner()
+    return AsyncioProcessRunner()
+
+
+async def _empty_windows() -> list[X11Window]:
+    return []

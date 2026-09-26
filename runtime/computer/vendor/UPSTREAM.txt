@@ -1,0 +1,5 @@
+Source: https://github.com/OpulentiaAI/modal-computer-uses
+Revision: 6d8a2c86e6df3a51aac3c31a7cf1b1cd77ca22a9
+License: MIT (see LICENSE)
+Scope: upstream daemon, models, steps, and direct dependencies; excludes Modal orchestration, benchmarks, and model adapters. Dependencies are installed using modal-computer-use==2.0.2, but PYTHONPATH selects this exact vendored fork source at runtime.
+Local delta: recording start accepts hide_cursor and forwards it to ffmpeg's x11grab -draw_mouse option.

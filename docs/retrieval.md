@@ -106,29 +106,88 @@ then stay small (~0.016 is normal for fused ranks).
 - Narrow to a work → `doc_id`; narrow to a part of a work → `under` matches
   the heading chain, e.g. `under: "conventions réglementées"`.
 
-## Evaluation (LAB-style rubrics + optional RLM decomposition)
+## Evaluation (source-aware rubrics + bounded parallel review)
 
 `eval/gold.json` carries a `rubric` array per question — atomic pass/fail
 criteria in the style of Harvey's LAB benchmark (expected fact, citation
 into the right doc, no unsupported claims, plus kind-specific items).
 
 ```bash
-node --experimental-strip-types eval/run.mjs         # retrieval metrics
-node --experimental-strip-types eval/compose.mjs     # flat compose + rubric judge
-node --experimental-strip-types eval/compose.mjs --rlm   # depth-1: planner → 2–3 sub-queries → union sources → compose
+node eval/run.mjs --output eval/retrieval-new.json
+node eval/compose.mjs --mode paired --output eval/compose-paired-new.json
+node eval/compose.mjs --mode paired --output eval/compose-paired-new.json --resume
+node eval/compose.mjs --mode agent --output eval/compose-agent-new.json
+node --test tests/*.test.mjs
 ```
 
-The rubric judge returns per-criterion pass/fail, so `rubric_pass/total`
-is the per-question score and the summary reports corpus-level criteria
-pass rate plus a failure taxonomy (which criteria fail most).
+Use Node 24 and configure `AI_GATEWAY_API_KEY`, `TURBOPUFFER_API_KEY`,
+`TURBOPUFFER_REGION`, and `JINA_API_KEY` for live evaluation. Offline tests
+use injected services and measure implementation behavior, not legal quality.
+Existing result files are historical artifacts; new runs use separate output
+paths and refuse accidental overwrites. Keep runtime credentials out of files
+and logs.
 
-Findings on this corpus (n=50): RLM decomposition is roughly neutral
-(86.0% vs 87.1% criteria pass) — at 15.5M chars the corpus is searchable
-without fan-out, unlike the ~80M-token data rooms the technique was built
-for. It does rescue thin-coverage questions (art. 100-1/450-1 lookups went
-partial→correct). The real lever was filter relaxation: inferred pins
-that match no rows now relax instead of returning zero, and doc@5 is
-50/50.
+`src/harness/index.ts` implements two answering modes over the same corpus.
+`standard` hydrates the original query's top five hits. `rlm` retains that
+query, plans up to three additional searches, fairly allocates up to twelve
+unique sources including section siblings, and runs bounded depth-one readers
+in parallel before final synthesis. This is a small RLM-inspired harness,
+not arbitrary Python execution, exhaustive diligence, reinforcement learning,
+or a reproduction of Harvey's private system. The captured Devin toolset and
+the boundary between applicable patterns and unsupported hosted APIs are
+documented in [devin-toolset.md](devin-toolset.md).
+
+The judge receives the actual source text visible to the answering models,
+not just source IDs. Each rubric entry must match the frozen question's
+criterion and order exactly; malformed judgments are evaluation failures,
+not partial credit. Citation membership is checked deterministically as well
+as judged for relevance. Summaries retain every planned case in the
+denominator and report all-pass separately from individual criteria passes.
+`--mode paired` compares standard and RLM on the same question set and model
+configuration. `--limit` permits a smoke run; it is not a full 50-case score.
+`--model` and `--judge-model` select gateway models independently; both default
+to `openai/gpt-5-mini`. The model used to engineer the harness is independent
+of these evaluation models.
+
+`--mode agent` runs the standalone runtime's tool-calling model loop against
+only `lx_search`, `lx_chunk`, and `lx_documents`. The dispatcher rejects all
+other tools for this benchmark, even though they are available in the full
+runtime. Search and chunk tools record the exact hydrated text returned to
+the model so the same source-aware judge can evaluate its answer. This mode
+does not require an E2B sandbox because it cannot use execution/desktop tools.
+
+**Note for future evals:** this is a baseline policy, not a permanent harness
+restriction. New experiments may override it and add approved MCP/corpus
+tooling, with matching prompts, provenance and external-source evidence
+collection. Follow [eval/README.md](../eval/README.md); the existing CLI does
+not read a tool-policy override from `RUNTIME_CONFIG`.
+
+Run records pin the question set, implementation and corpus contents, Git
+revision, Node version, index namespace/region, model configuration, and
+concurrency. Resume rejects mismatches and retries failed/degraded cases.
+Provider timeouts propagate cancellation through the harness and retrieval
+requests. Persisted sources contain IDs, character counts, and hashes rather
+than full corpus text; keep generated answers private because they may still
+quote licensed material.
+
+Retrieval evidence scoring uses the versioned
+`normalized-apostrophe-whitespace-expected-doc-v2` protocol: Unicode
+normalization, apostrophe/whitespace normalization, and a match in one of the
+question's expected documents. This fixes punctuation-only false negatives
+without changing `gold.json`, but differs from the historical literal-match
+metric and must not be reported as a retrieval-quality gain.
+
+**Historical-score caveat:** the previous `compose-results*.json` files were
+graded with source IDs but no source content. Their reported 86.0%/87.1%
+criteria rates and grounding judgments cannot establish groundedness or be
+compared directly with this repaired judge. A fresh paired run is necessary
+before claiming an improvement. This 50-question development set is also not
+a held-out benchmark and cannot establish performance on full client matters.
+
+Design references: [Harvey's LAB methodology](https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark)
+motivates atomic criteria and all-pass reporting; [its RLM diligence research](https://www.harvey.ai/blog/post-training-rlm-agents-for-m-and-a-diligence)
+motivates bounded parallel reading and explicit coverage/cost accounting.
+Neither article's benchmark numbers are measurements of this repository.
 
 ## Re-indexing
 

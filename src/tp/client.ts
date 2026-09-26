@@ -26,14 +26,15 @@ function env(name: string): string {
   return v
 }
 
-async function post(url: string, key: string, body: unknown): Promise<unknown> {
+async function post(url: string, key: string, body: unknown, signal?: AbortSignal): Promise<unknown> {
   const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   })
   const text = await res.text()
-  if (!res.ok) throw new Error(`turbopuffer ${res.status}: ${text.slice(0, 400)}`)
+  if (!res.ok) throw new Error(`turbopuffer ${res.status}`)
   return text ? JSON.parse(text) : {}
 }
 
@@ -98,24 +99,26 @@ export async function multiQuery(
   ns: string,
   queries: SubQuery[],
   fuse: boolean,
+  signal?: AbortSignal,
 ): Promise<QueryHit[]> {
   const key = env('TURBOPUFFER_API_KEY')
   const body: Record<string, unknown> = { queries }
   if (fuse) body.rerank_by = ['RRF']
-  const out = (await post(`${tpBase()}/v2/namespaces/${encodeURIComponent(ns)}/query`, key, body)) as {
+  const out = (await post(`${tpBase()}/v2/namespaces/${encodeURIComponent(ns)}/query`, key, body, signal)) as {
     results?: { rows?: QueryHit[] }[]
   }
   return out.results?.[0]?.rows ?? []
 }
 
-export async function embed(texts: string[]): Promise<number[][]> {
+export async function embed(texts: string[], signal?: AbortSignal): Promise<number[][]> {
   const res = await fetch(`${GATEWAY_API}/embeddings`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env('AI_GATEWAY_API_KEY')}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: EMBED_MODEL, dimensions: DIMENSIONS, input: texts }),
+    signal,
   })
   const text = await res.text()
-  if (!res.ok) throw new Error(`ai-gateway embeddings ${res.status}: ${text.slice(0, 400)}`)
+  if (!res.ok) throw new Error(`ai-gateway embeddings ${res.status}`)
   const out = JSON.parse(text) as { data: { embedding: number[]; index: number }[] }
   return out.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)
 }
@@ -125,14 +128,15 @@ export interface RerankResult {
   relevance_score: number
 }
 
-export async function rerank(query: string, docs: string[]): Promise<RerankResult[]> {
+export async function rerank(query: string, docs: string[], signal?: AbortSignal): Promise<RerankResult[]> {
   const res = await fetch(`${JINA_API}/rerank`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env('JINA_API_KEY')}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: RERANK_MODEL, query, documents: docs }),
+    signal,
   })
   const text = await res.text()
-  if (!res.ok) throw new Error(`jina rerank ${res.status}: ${text.slice(0, 400)}`)
+  if (!res.ok) throw new Error(`jina rerank ${res.status}`)
   const out = JSON.parse(text) as { results: RerankResult[] }
   return out.results
 }

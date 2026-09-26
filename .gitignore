@@ -5,3 +5,5 @@ corpus/raw/*.zip
 corpus/index/state.json
 node_modules/
 __pycache__/
+.runtime/
+runtime.local.json
