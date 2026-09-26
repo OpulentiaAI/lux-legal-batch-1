@@ -1,0 +1,356 @@
+{
+  "provenance": {
+    "question_hash": "d63a028f9865c332e41b463229c81f94892f15cb25a932257bd36609778803fb",
+    "config": {
+      "modes": [
+        "agent"
+      ],
+      "model": "openai/gpt-6-luna",
+      "judgeModel": "openai/gpt-6-luna",
+      "timeoutMs": 12000,
+      "retries": 1,
+      "workspace": "/workspace/lux-legal-batch-1",
+      "git_head": "66c605a50af5d7085d00e133beb606859c0db7c2",
+      "implementation_hash": "71f70fd17d27a425ba7387698c67c27aaa6fd6c4452d68284ecfb5991974db12",
+      "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+      "region": "gcp-us-central1",
+      "chunk_namespace": "lx-corpus-voyage4-1024",
+      "document_namespace": "lx-documents-voyage4-1024",
+      "retrieval_profile": "voyage",
+      "embedding_model": "voyage/voyage-4-large",
+      "embedding_dimensions": 1024,
+      "embedding_query_input_type": "query",
+      "embedding_document_input_type": "document",
+      "rerank_model": "voyage/rerank-2.5"
+    },
+    "concurrency": 2,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "Selon l’article 100-2, sont reconnues comme sociétés commerciales dotées de la personnalité juridique : la société en nom collectif, la société en commandite simple, la société anonyme, la société par actions simplifiée, la société en commandite par actions, la société à responsabilité limitée (y compris simplifiée), la société coopérative et la société européenne (SE). [doc-06:art1002:c0]\n\nL’article 100-1 indique également que les sociétés ayant pour objet des actes de commerce sont commerciales ; il distingue les sociétés commerciales proprement dites, momentanées et en participation. [doc-06:art1001:c0]",
+      "sources": [
+        {
+          "id": "doc-08:s0027:c1",
+          "doc": "doc-08",
+          "chars": 3695,
+          "sha256": "eb64bb96f31b71d763a7a9fa312bd67d0c2188bc05e739475f265fe8327266a7"
+        },
+        {
+          "id": "doc-07:art1002:c0",
+          "doc": "doc-07",
+          "chars": 1830,
+          "sha256": "eb2714ee865dee23607116f4d3a1e04d4bb47d814f1116c75260321947531a27"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        },
+        {
+          "id": "doc-09:s0587:c0",
+          "doc": "doc-09",
+          "chars": 112,
+          "sha256": "b67d1cf37eb01c175ce25e9e56a484a9633d2543239a947341081f3295b5d370"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "doc": "doc-06",
+          "chars": 1791,
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-07:s0010:c0",
+          "doc": "doc-07",
+          "chars": 124,
+          "sha256": "84252ba49c0b41a0a1bcf3b8e900174a2e2eecb7510f857e3da7ba7e781e3f5c"
+        },
+        {
+          "id": "doc-08:s0027:c3",
+          "doc": "doc-08",
+          "chars": 4478,
+          "sha256": "a4d3694228676678b9994765d255670adfd1a0d0acb5f3eb60230a286218a59e"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "doc": "doc-07",
+          "chars": 727,
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "sourceCount": 8,
+        "toolCalls": 1,
+        "usage": {
+          "prompt_tokens": 4300,
+          "completion_tokens": 205,
+          "total_tokens": 4505,
+          "cost": 0.000629675,
+          "cache_creation_input_tokens": 3887,
+          "market_cost": 0.000629675,
+          "gateway_cost": 0.000629675
+        },
+        "latencyMs": 4451,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 6690,
+        "judge_usage": {
+          "prompt_tokens": 3708,
+          "completion_tokens": 263,
+          "total_tokens": 3971,
+          "cost": 0.000594925,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 3705,
+          "market_cost": 0.000594925,
+          "gateway_cost": 0.000594925
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique que les sociétés ayant pour objet des actes de commerce sont commerciales."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": true,
+          "note": "Elle cite doc-06:art1001:c0 et doc-06:art1002:c0."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les catégories citées et la distinction entre sociétés commerciales proprement dites, momentanées et en participation figurent dans les sources."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse reprend fidèlement la règle de l’article 100-1 selon laquelle les sociétés ayant pour objet des actes de commerce sont commerciales."
+        }
+      ],
+      "note": "La réponse contient la règle attendue sur les actes de commerce, mais s’étend aussi à la commercialité par la forme de l’article 100-2 ; le verdict est donc partial.",
+      "citations": [
+        "doc-06:art1002:c0",
+        "doc-06:art1001:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote des actionnaires. Ce vote est en principe consultatif, mais les statuts peuvent le rendre contraignant. La politique doit être revotée après toute modification importante et au moins tous les quatre ans. [doc-06:s0314:c0]\n\nElle doit soutenir la stratégie et la pérennité à long terme de la société, décrire les composantes de rémunération et leurs critères, ainsi que le processus de décision et la gestion des conflits d’intérêts. Des dérogations temporaires ne sont possibles que dans des circonstances exceptionnelles définies par le texte. Après le vote, la politique et le résultat doivent être publiés sur le site de la société. [doc-07:s0578:c0]",
+      "sources": [
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:s0258:c0",
+          "doc": "doc-06",
+          "chars": 156,
+          "sha256": "85b62bf30c7214d14af026bda4e95930daf85ecd9a059c983be8f81d91772053"
+        },
+        {
+          "id": "doc-07:s0707:c0",
+          "doc": "doc-07",
+          "chars": 234,
+          "sha256": "898048eb04f8e91949d88b6846c5f2b2baa6ebfe68e39c7e622fc90ab955708b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "sourceCount": 8,
+        "toolCalls": 1,
+        "usage": {
+          "prompt_tokens": 5278,
+          "completion_tokens": 248,
+          "total_tokens": 5526,
+          "cost": 0.0007733,
+          "cache_creation_input_tokens": 4860,
+          "market_cost": 0.0007733,
+          "gateway_cost": 0.0007733
+        },
+        "latencyMs": 5059,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 8890,
+        "judge_usage": {
+          "prompt_tokens": 4717,
+          "completion_tokens": 410,
+          "total_tokens": 5127,
+          "cost": 0.00079455,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 173,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 4714,
+          "market_cost": 0.00079455,
+          "gateway_cost": 0.00079455
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse décrit les règles de l’article 7bis relatives à la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-06:s0314:c0."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les affirmations sont étayées par les extraits cités et fournis."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "Le vote, la révision au moins tous les quatre ans, le contenu de la politique, les dérogations et la publication sont paraphrasés fidèlement."
+        }
+      ],
+      "note": "La réponse résume correctement les principales règles de l’article 7bis.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-07:s0578:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 2,
+      "completed": 2,
+      "evaluated": 2,
+      "errors": 0,
+      "degraded": 0,
+      "correct": 1,
+      "partial": 1,
+      "wrong": 0,
+      "all_pass": 1,
+      "failed_or_incomplete": 1,
+      "rubric_pass": 8,
+      "rubric_total": 8,
+      "citation_ok": 2,
+      "grounded": 2,
+      "p50_latency_ms": 8890
+    }
+  }
+}

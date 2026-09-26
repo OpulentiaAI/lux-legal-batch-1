@@ -46,6 +46,26 @@ node eval/compose.mjs --mode agent --output eval/compose-agent-baseline-new.json
 
 `paired` runs the existing standard/RLM answering paths. `agent` exercises the new runtime but deliberately uses the fixed `lx_search`, `lx_chunk`, `lx_documents` allowlist and closed-corpus prompts in `runtime/legal-eval.mjs`. These commands do not automatically include configured MCP servers.
 
+## Auditing and controlled tuning
+
+See [AUDIT.md](AUDIT.md) for the evidence-backed assessment, including answer omissions, reference-fragment/judge conflicts and the incomplete full run. `node eval/audit.mjs` audits every saved composition result against the current corpus hashes and frozen rubric without calling a model.
+
+The historical agent and judge remain the defaults. Select the completeness/citation policy explicitly:
+
+```sh
+npm run eval:agent:luna:voyage -- --agent-policy audited-v1 --limit 2 --concurrency 2 --output eval/compose-tuned-2.json
+```
+
+Advance to limits/concurrency 4 and 10 only after the prior operational gate succeeds. Keep `--judge-policy baseline` for an isolated agent-policy comparison. The named agent policy records its effective prompt, allowed tools, step budget and word instruction; it does not receive gold answers or rubrics. The new sanitized audit records corpus-tool arguments, returned IDs/counts and error flags. Failed sessions and failed judge calls retain available audit data and source hashes instead of discarding the agent's work.
+
+To evaluate judge policy without regenerating answers or retrieving new sources:
+
+```sh
+node eval/rejudge.mjs eval/compose-luna-voyage-10.json eval/compose-rejudge-v3-2.json --judge-model openai/gpt-6-luna --judge-policy evidence-v3 --limit 2 --concurrency 2
+```
+
+The replay verifies the input question hash and exact source hashes, pins the input artifact hash, preserves original answers and degraded status, and writes a separate result. Use separate outputs for 4/10-question replay gates too. `evidence-v3` treats reference snippets as contextual evidence rather than unquestionable legal conclusions; it retains the rubric and citation validator. A score change from replay is a grading change, never an accuracy improvement attributable to the agent. Neither policy change authorizes editing `gold.json` or overwriting historical results.
+
 ## Override the policy for a future evaluation
 
 Create a named evaluation runner using `createRuntime`, or extend `createAgentHarness` with an explicit policy input when adding the new experiment. **The current compose CLI has no tool-policy/config override flag, and `RUNTIME_CONFIG` is read by the runtime CLI, not by `eval/compose.mjs`.** Editing a config file alone will not change the existing `--mode agent` protocol.

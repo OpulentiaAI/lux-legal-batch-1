@@ -1,0 +1,1483 @@
+{
+  "provenance": {
+    "question_hash": "a6e42456701fa0d68ae53248a73eb9a1a164d7f5ac1dcd07fe8baef99d21efa6",
+    "config": {
+      "experiment_kind": "judge-only-replay",
+      "original_provenance": {
+        "question_hash": "a6e42456701fa0d68ae53248a73eb9a1a164d7f5ac1dcd07fe8baef99d21efa6",
+        "config": {
+          "modes": [
+            "agent"
+          ],
+          "model": "openai/gpt-6-luna",
+          "judgeModel": "openai/gpt-6-luna",
+          "timeoutMs": 12000,
+          "retries": 1,
+          "workspace": "/workspace/lux-legal-batch-1",
+          "git_head": "66c605a50af5d7085d00e133beb606859c0db7c2",
+          "implementation_hash": "71f70fd17d27a425ba7387698c67c27aaa6fd6c4452d68284ecfb5991974db12",
+          "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+          "region": "gcp-us-central1",
+          "chunk_namespace": "lx-corpus-voyage4-1024",
+          "document_namespace": "lx-documents-voyage4-1024",
+          "retrieval_profile": "voyage",
+          "embedding_model": "voyage/voyage-4-large",
+          "embedding_dimensions": 1024,
+          "embedding_query_input_type": "query",
+          "embedding_document_input_type": "document",
+          "rerank_model": "voyage/rerank-2.5"
+        },
+        "concurrency": 10,
+        "runtime": "v24.18.0"
+      },
+      "replay_input_sha256": "013935a2040e7f22cb825814b2a248cde121ba0a8a842b8ea6debd38c72cc59f",
+      "implementation_hash": "b62ed6ab09045a95c337b1840ae284eb095bfd208442faa53ec26cd257f6e26c",
+      "judgeModel": "openai/gpt-6-luna",
+      "judge_policy": "evidence-v3",
+      "timeoutMs": 12000,
+      "retries": 1,
+      "judge_prompt_sha256": "257355869dcf4b5c7d2d00f2d4b0acd5d37d73cc99b29999786861b257574108"
+    },
+    "concurrency": 10,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "La loi reconnaît comme sociétés commerciales dotées de la personnalité juridique :\n\n- la société en nom collectif ;\n- la société en commandite simple ;\n- la société anonyme et la société par actions simplifiée ;\n- la société en commandite par actions ;\n- la société à responsabilité limitée et la société à responsabilité limitée simplifiée ;\n- la société coopérative ;\n- la société européenne (SE). [doc-06:art1002:c0]\n\nElle prévoit également des sociétés commerciales momentanées, en participation et en commandite spéciale, qui n’ont pas de personnalité juridique distincte. [doc-06:art1002:c0]",
+      "sources": [
+        {
+          "id": "doc-08:s0027:c1",
+          "doc": "doc-08",
+          "chars": 3695,
+          "sha256": "eb64bb96f31b71d763a7a9fa312bd67d0c2188bc05e739475f265fe8327266a7"
+        },
+        {
+          "id": "doc-07:art1002:c0",
+          "doc": "doc-07",
+          "chars": 1830,
+          "sha256": "eb2714ee865dee23607116f4d3a1e04d4bb47d814f1116c75260321947531a27"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        },
+        {
+          "id": "doc-09:s0587:c0",
+          "doc": "doc-09",
+          "chars": 112,
+          "sha256": "b67d1cf37eb01c175ce25e9e56a484a9633d2543239a947341081f3295b5d370"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "doc": "doc-06",
+          "chars": 1791,
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-07:s0010:c0",
+          "doc": "doc-07",
+          "chars": 124,
+          "sha256": "84252ba49c0b41a0a1bcf3b8e900174a2e2eecb7510f857e3da7ba7e781e3f5c"
+        },
+        {
+          "id": "doc-08:s0027:c3",
+          "doc": "doc-08",
+          "chars": 4478,
+          "sha256": "a4d3694228676678b9994765d255670adfd1a0d0acb5f3eb60230a286218a59e"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "doc": "doc-07",
+          "chars": 727,
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 8117,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2599,
+        "judge_usage": {
+          "prompt_tokens": 3961,
+          "completion_tokens": 288,
+          "total_tokens": 4249,
+          "cost": 0.00018388,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 3958,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00018388,
+          "gateway_cost": 0.00018388
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": false,
+          "note": "La réponse énumère les formes de sociétés commerciales selon l’article 100-2, mais ne traite pas le critère des sociétés ayant pour objet des actes de commerce, énoncé à l’article 100-1."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": true,
+          "note": "Elle cite doc-06:art1002:c0."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les formes énumérées et la distinction concernant les sociétés momentanées, en participation et en commandite spéciale sont présentes dans doc-06:art1002:c0."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse restitue fidèlement la liste et la précision sur l’absence d’individualité juridique distincte."
+        }
+      ],
+      "note": "La réponse est étayée et reprend fidèlement l’article 100-2, mais elle ne répond pas au critère des actes de commerce évoqué dans la question et le fragment de référence.",
+      "citations": [
+        "doc-06:art1002:c0",
+        "doc-06:art1002:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote des actionnaires en assemblée générale. En principe, ce vote est consultatif, mais les statuts peuvent le rendre contraignant ; la rémunération doit respecter la politique applicable. [doc-06:s0314:c0]\n\nLa politique doit soutenir la stratégie et la pérennité à long terme, décrire les composantes et critères de rémunération, le processus de décision ainsi que la prise en compte des conditions des salariés. Elle est revotée lors de toute modification importante et au moins tous les quatre ans. [doc-06:s0314:c1]\n\nUne dérogation temporaire n’est permise que dans des circonstances exceptionnelles prévues par la politique. Après le vote, la politique et le résultat sont publiés sur le site de la société. [doc-07:s0578:c0] [doc-06:s0314:c1]",
+      "sources": [
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:s0258:c0",
+          "doc": "doc-06",
+          "chars": 156,
+          "sha256": "85b62bf30c7214d14af026bda4e95930daf85ecd9a059c983be8f81d91772053"
+        },
+        {
+          "id": "doc-07:s0707:c0",
+          "doc": "doc-07",
+          "chars": 234,
+          "sha256": "898048eb04f8e91949d88b6846c5f2b2baa6ebfe68e39c7e622fc90ab955708b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 9623,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 3760,
+        "judge_usage": {
+          "prompt_tokens": 5007,
+          "completion_tokens": 438,
+          "total_tokens": 5445,
+          "cost": 0.00026934,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 5004,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 163,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00026934,
+          "gateway_cost": 0.00026934
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "Elle résume les règles de l’article 7bis relatives à l’établissement, au vote et au contenu de la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite plusieurs chunks de doc-06."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les affirmations sont étayées par les sources. La dérogation temporaire est résumée : l’article exige aussi que la politique en précise les conditions procédurales et les éléments concernés."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse reprend fidèlement le vote consultatif, la possibilité statutaire d’un vote contraignant, le contenu et la fréquence du vote, ainsi que la dérogation temporaire et la publication."
+        }
+      ],
+      "note": "La réponse répond à la question et s’appuie sur des citations pertinentes.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c1",
+        "doc-07:s0578:c0",
+        "doc-06:s0314:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q03",
+      "mode": "agent",
+      "q": "Qu'est-ce que la scission par absorption ?",
+      "answer": "La scission par absorption est l’opération par laquelle une société transfère son patrimoine, après dissolution sans liquidation, à plusieurs sociétés existantes. Les associés de la société scindée reçoivent des actions ou parts des sociétés bénéficiaires ; une soulte en espèces peut éventuellement être versée, dans la limite de 10 % de la valeur nominale des titres attribués (ou de leur pair comptable en l’absence de valeur nominale). La loi prévoit aussi un transfert sans dissolution, portant sur une partie ou l’ensemble du patrimoine. [doc-07:art10303:c0]",
+      "sources": [
+        {
+          "id": "doc-07:art10303:c0",
+          "doc": "doc-07",
+          "chars": 1186,
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c"
+        },
+        {
+          "id": "doc-09:s0750:c0",
+          "doc": "doc-09",
+          "chars": 2877,
+          "sha256": "3ca0d50851d36c269402bc789aab0c03260ffa5ba9f6b95a96c1963b81873aed"
+        },
+        {
+          "id": "doc-08:s0293:c0",
+          "doc": "doc-08",
+          "chars": 4381,
+          "sha256": "d10ce8b2f9bc90fbfeb08af39048d724f6497b6d46237326979a687ad7dc0461"
+        },
+        {
+          "id": "doc-02:s0025:c0",
+          "doc": "doc-02",
+          "chars": 1279,
+          "sha256": "f6ece0e10f85078087c28a3db4df25ec986afb2d04ad40ff8575eec893d6d1a2"
+        },
+        {
+          "id": "doc-02:s0021:c0",
+          "doc": "doc-02",
+          "chars": 4569,
+          "sha256": "678c3f1bdaeabff6b5a2f196d16bf95d0116c2005ac798012ae463891a3e3a00"
+        },
+        {
+          "id": "doc-02:s0024:c1",
+          "doc": "doc-02",
+          "chars": 4149,
+          "sha256": "e6e23dd5267a26a7d18d2407d833022d3e0f8912e9078a2d36459e17a048ca54"
+        },
+        {
+          "id": "doc-07:art10302:c0",
+          "doc": "doc-07",
+          "chars": 283,
+          "sha256": "aee7095bc1d08b8793b16504c8141f854e066a3386f74a2f771e52ac67c5e740"
+        },
+        {
+          "id": "doc-09:s0755:c0",
+          "doc": "doc-09",
+          "chars": 2415,
+          "sha256": "fcd558786a71c61cc33dfaf8bd05843f5a3b91f3068a0877fe89064f542c6cea"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 66339,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 5308,
+        "judge_usage": {
+          "prompt_tokens": 6320,
+          "completion_tokens": 515,
+          "total_tokens": 6835,
+          "cost": 0.00032097,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 6317,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 274,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00032097,
+          "gateway_cost": 0.00032097
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « scission par absorption est l’opération » (le fait attendu).",
+          "pass": true,
+          "note": "Elle donne une définition de la scission par absorption."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-07.",
+          "pass": true,
+          "note": "Elle cite doc-07:art10303:c0."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les éléments énoncés sont étayés par l’article 1030-3."
+        },
+        {
+          "item": "La définition est complète (pas seulement une occurrence du terme).",
+          "pass": false,
+          "note": "La réponse ne précise pas complètement la seconde modalité : le transfert sans dissolution à une ou plusieurs sociétés, avec attribution de titres aux associés et soulte éventuelle."
+        }
+      ],
+      "note": "La définition répond à la question et reprend correctement la modalité avec dissolution sans liquidation, mais elle omet des éléments de la définition légale pour la modalité sans dissolution.",
+      "citations": [
+        "doc-07:art10303:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q04",
+      "mode": "agent",
+      "q": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+      "answer": "Le capital social minimum d’une société anonyme (SA) au Luxembourg est de **30 000 euros**. [doc-07:art4201:c0]",
+      "sources": [
+        {
+          "id": "doc-08:s0452:c0",
+          "doc": "doc-08",
+          "chars": 1801,
+          "sha256": "b05b534dfb0e73990266ef4e0dd06eea365c8d74119a547a35f4a1c6ed85bc73"
+        },
+        {
+          "id": "doc-07:art4201:c0",
+          "doc": "doc-07",
+          "chars": 1218,
+          "sha256": "0cb34608b8754c2b1aa39301e716e5a0071a2d44a01d63c7ca2f3257f052fd7a"
+        },
+        {
+          "id": "doc-08:s0540:c0",
+          "doc": "doc-08",
+          "chars": 1363,
+          "sha256": "72a73f5f068bb4fac56dff0dd699ca3e7f36dc4337214655fae16b8bd76fd8f8"
+        },
+        {
+          "id": "doc-07:art7204:c0",
+          "doc": "doc-07",
+          "chars": 621,
+          "sha256": "672578720e7b61fd27a239367be8d5fc2168ce5d935f54af2b51010d55e6583e"
+        },
+        {
+          "id": "doc-09:s0598:c0",
+          "doc": "doc-09",
+          "chars": 3277,
+          "sha256": "575be2b39f0b30289c370206ae0a6ce8959577ab19cf0da4daf2434e35916b29"
+        },
+        {
+          "id": "doc-09:s0025:c2",
+          "doc": "doc-09",
+          "chars": 2079,
+          "sha256": "76847fae27bd8d203eb3d8e6bcf2e56815893c845a6f0d6ce7ae190aa7542d64"
+        },
+        {
+          "id": "doc-06:s0095:c0",
+          "doc": "doc-06",
+          "chars": 4104,
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+        },
+        {
+          "id": "doc-09:s0401:c0",
+          "doc": "doc-09",
+          "chars": 4026,
+          "sha256": "84ef7a715f1d2a07b3d242b20032c178a664836f4d8dada26627f635ebb99c2e"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 5187,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2401,
+        "judge_usage": {
+          "prompt_tokens": 5421,
+          "completion_tokens": 165,
+          "total_tokens": 5586,
+          "cost": 0.00013698,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 5418,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00013698,
+          "gateway_cost": 0.00013698
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « 30.000 » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique un capital social minimum de 30 000 euros."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-07 / doc-09.",
+          "pass": true,
+          "note": "Elle cite doc-07."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "doc-07 confirme explicitement le minimum de 30 000 euros pour la constitution d’une SA."
+        }
+      ],
+      "note": "La réponse est exacte et étayée par la source citée.",
+      "citations": [
+        "doc-07:art4201:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q05",
+      "mode": "agent",
+      "q": "Une SARL-S peut-elle être constituée sans capital minimum ?",
+      "answer": "Non. Une SARL-S peut être constituée avec un capital très faible, mais pas sans capital : celui-ci doit être compris entre 1 € et 12 000 € [doc-08:s0443:c1]. Le minimum est donc de 1 € [doc-08:s0443:c1].",
+      "sources": [
+        {
+          "id": "doc-08:s0443:c0",
+          "doc": "doc-08",
+          "chars": 4540,
+          "sha256": "286c65d2a71562a835c0cea4018ad334b94402005d983552ff5d5e049472c48d"
+        },
+        {
+          "id": "doc-08:s0443:c1",
+          "doc": "doc-08",
+          "chars": 4480,
+          "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4"
+        },
+        {
+          "id": "doc-05:s0050:c0",
+          "doc": "doc-05",
+          "chars": 1900,
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad"
+        },
+        {
+          "id": "doc-09:s0622:c0",
+          "doc": "doc-09",
+          "chars": 3392,
+          "sha256": "f10491d7b33db2de0b77454321fa8018ed55e707ac02693d086b16f542beb39d"
+        },
+        {
+          "id": "doc-05:s0080:c0",
+          "doc": "doc-05",
+          "chars": 4554,
+          "sha256": "884fddbfcd5aeba4d1beb544fd07e0f8beb40c53f75b509be5fdda0fc6fbea4a"
+        },
+        {
+          "id": "doc-05:s0049:c0",
+          "doc": "doc-05",
+          "chars": 1504,
+          "sha256": "69d301ec24177845e542f52880a54b4ecc2e271aecddcf638a16066955ce9516"
+        },
+        {
+          "id": "doc-09:s0598:c0",
+          "doc": "doc-09",
+          "chars": 3277,
+          "sha256": "575be2b39f0b30289c370206ae0a6ce8959577ab19cf0da4daf2434e35916b29"
+        },
+        {
+          "id": "doc-08:s0443:c2",
+          "doc": "doc-08",
+          "chars": 1580,
+          "sha256": "de3519bd54ff448dfc9a89af6c68dae75cd1b3ab8dc86043a4e4ddb41fda7422"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 13608,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2366,
+        "judge_usage": {
+          "prompt_tokens": 6922,
+          "completion_tokens": 202,
+          "total_tokens": 7124,
+          "cost": 0.000966175,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 6919,
+          "market_cost": 0.000966175,
+          "gateway_cost": 0.000966175
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « sans capital minimum » (le fait attendu).",
+          "pass": true,
+          "note": "Elle répond qu’une SARL-S ne peut pas être constituée sans capital et précise le minimum applicable."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-08:s0443:c1."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "La source indique que le capital doit être compris entre 1 € et 12 000 €."
+        }
+      ],
+      "note": "La réponse distingue correctement l’objectif législatif de permettre une constitution sans capital minimum du droit positif décrit dans la source : le capital de la SARL-S doit être d’au moins 1 €. Le verdict « Non » répond à la question posée.",
+      "citations": [
+        "doc-08:s0443:c1",
+        "doc-08:s0443:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q06",
+      "mode": "agent",
+      "q": "Qu'est-ce que le « say on pay » en droit luxembourgeois des sociétés ?",
+      "answer": "Le « say on pay » désigne le droit des actionnaires de se prononcer en assemblée générale sur la rémunération des dirigeants. Pour les sociétés concernées par ces dispositions, la politique de rémunération est soumise au vote, en principe consultatif ; les statuts peuvent toutefois rendre ce vote contraignant. La politique doit être revotée lors de toute modification importante et au moins tous les quatre ans. [doc-07:s0578:c0]\n\nLe terme peut aussi désigner, au sens plus général relevé par une source doctrinale, le principe selon lequel, sauf disposition statutaire, seule l’assemblée des associés décide d’allouer une rémunération aux dirigeants. [doc-08:s0179:c2]",
+      "sources": [
+        {
+          "id": "doc-08:s0179:c2",
+          "doc": "doc-08",
+          "chars": 4510,
+          "sha256": "f1a2d52e45bef616fe6559ea5dda584fd2482a8b4403f96a608275c5be916e98"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-05:s0134:c0",
+          "doc": "doc-05",
+          "chars": 3109,
+          "sha256": "51428e3aacf1cd9e7ca4a43caa99a7276e8ce2a49dd3f7e886e9497f870b7ad0"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0142:c0",
+          "doc": "doc-07",
+          "chars": 4506,
+          "sha256": "42c0347eba60ff070b29d7b7d89932752c42ab6947cc63e7e9402f2fc3767f42"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 8304,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 4908,
+        "judge_usage": {
+          "prompt_tokens": 7386,
+          "completion_tokens": 443,
+          "total_tokens": 7829,
+          "cost": 0.001144675,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 182,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 7383,
+          "market_cost": 0.001144675,
+          "gateway_cost": 0.001144675
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « say on pay » (le fait attendu).",
+          "pass": true,
+          "note": "Elle présente le vote des actionnaires sur la politique de rémunération et ajoute le sens doctrinal plus général du principe."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-08:s0179:c2."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les éléments relatifs au vote consultatif ou statutairement contraignant et à la périodicité du vote figurent dans doc-07 ; le principe attribué à la doctrine correspond à doc-08."
+        },
+        {
+          "item": "La règle ou le principe est correctement attribué à sa source.",
+          "pass": true,
+          "note": "Le vote sur la politique est référencé à doc-07 et le principe doctrinal est explicitement attribué à une source doctrinale citée en doc-08."
+        }
+      ],
+      "note": "La réponse distingue correctement le régime du vote sur la politique de rémunération du sens doctrinal plus général de « say on pay ».",
+      "citations": [
+        "doc-07:s0578:c0",
+        "doc-08:s0179:c2"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q07",
+      "mode": "agent",
+      "q": "Qu'est-ce que la transmission universelle de patrimoine (TUP) dans une scission ?",
+      "answer": "La TUP est le transfert de plein droit, simultané et à titre universel du patrimoine actif et passif de la société scindée aux sociétés bénéficiaires. Le patrimoine est réparti entre elles conformément au projet de scission ; le mécanisme évite, en principe, de transférer individuellement chaque actif et passif ou d’obtenir l’accord préalable de chaque tiers. [doc-07:art103116:c0] [doc-02:s0024:c1]",
+      "sources": [
+        {
+          "id": "doc-02:s0024:c1",
+          "doc": "doc-02",
+          "chars": 4149,
+          "sha256": "e6e23dd5267a26a7d18d2407d833022d3e0f8912e9078a2d36459e17a048ca54"
+        },
+        {
+          "id": "doc-08:s0293:c1",
+          "doc": "doc-08",
+          "chars": 4324,
+          "sha256": "d6393886018b2494c4547c125374d2dd8d4ad837dcc59dda90ddeaf7318c0a31"
+        },
+        {
+          "id": "doc-02:s0024:c3",
+          "doc": "doc-02",
+          "chars": 4148,
+          "sha256": "96692198d68488fb6c371132484956900301521cb4bcbeabd897e706c7ab9aa3"
+        },
+        {
+          "id": "doc-06:s0173:c0",
+          "doc": "doc-06",
+          "chars": 4339,
+          "sha256": "288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f"
+        },
+        {
+          "id": "doc-02:s0024:c2",
+          "doc": "doc-02",
+          "chars": 3071,
+          "sha256": "70dca1a8033a3679c94e4b2f67e26b5c5a822455fd2fd24389626935fa60a364"
+        },
+        {
+          "id": "doc-08:s0293:c0",
+          "doc": "doc-08",
+          "chars": 4381,
+          "sha256": "d10ce8b2f9bc90fbfeb08af39048d724f6497b6d46237326979a687ad7dc0461"
+        },
+        {
+          "id": "doc-07:art103116:c0",
+          "doc": "doc-07",
+          "chars": 1495,
+          "sha256": "07e6ed5ee89e2b92b8722c60dc6a103a527ee92310bc0dcb095351ac58a62ffb"
+        },
+        {
+          "id": "doc-02:s0024:c9",
+          "doc": "doc-02",
+          "chars": 2490,
+          "sha256": "60f8d41315180335cabf6e1aa9b59a179323498187a2a7f6700e9f5ce85a0989"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 6323,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2419,
+        "judge_usage": {
+          "prompt_tokens": 8388,
+          "completion_tokens": 229,
+          "total_tokens": 8617,
+          "cost": 0.001162925,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 8385,
+          "market_cost": 0.001162925,
+          "gateway_cost": 0.001162925
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « transmission universelle de patrimoine » (le fait attendu).",
+          "pass": true,
+          "note": "Elle explique le transfert universel du patrimoine dans une scission."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-02 / doc-06 / doc-07.",
+          "pass": true,
+          "note": "Elle cite doc-02 et doc-07."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Le transfert de plein droit et simultané, la répartition selon le projet de scission et l’absence, en principe, d’accord préalable de chaque tiers sont étayés par les sources."
+        },
+        {
+          "item": "La définition est complète (pas seulement une occurrence du terme).",
+          "pass": true,
+          "note": "La réponse précise les parties concernées, l’étendue actif et passif du transfert, sa répartition et son effet pratique."
+        }
+      ],
+      "note": "La réponse donne une définition complète et fidèle aux sources.",
+      "citations": [
+        "doc-07:art103116:c0",
+        "doc-02:s0024:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q08",
+      "mode": "agent",
+      "q": "Comment est fixée la date de prise d'effet d'une scission transfrontalière ?",
+      "answer": "La date de prise d’effet d’une scission transfrontalière est déterminée par la législation de l’État de la société scindée [doc-06:s0159:c0]. La source précise aussi que cette date ne peut être antérieure à l’exécution des contrôles de légalité [doc-02:s0043:c158].",
+      "sources": [
+        {
+          "id": "doc-06:s0159:c0",
+          "doc": "doc-06",
+          "chars": 338,
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+        },
+        {
+          "id": "doc-02:s0043:c158",
+          "doc": "doc-02",
+          "chars": 4064,
+          "sha256": "898492a05c99033aede09cf6867a32499bc5140f6b259919747ad30178dcad13"
+        },
+        {
+          "id": "doc-02:s0033:c18",
+          "doc": "doc-02",
+          "chars": 3404,
+          "sha256": "e878e5ed6fd817f6f0924df331acaae6b1544c53229aee2691de1e24575c0b6e"
+        },
+        {
+          "id": "doc-02:s0034:c6",
+          "doc": "doc-02",
+          "chars": 2724,
+          "sha256": "b99420c3de9140fb30525b98b6b9f211c616b90359c3332daf71daf076ef833e"
+        },
+        {
+          "id": "doc-02:s0043:c42",
+          "doc": "doc-02",
+          "chars": 4560,
+          "sha256": "588dbec95ed476e1842f1da9e3647f907a04f60be8290408640eb05f1e2878f1"
+        },
+        {
+          "id": "doc-02:s0033:c13",
+          "doc": "doc-02",
+          "chars": 3880,
+          "sha256": "cc2cc3ab7623082e3296ca6263ef6fd8a12fc4348dbe5224dc71e540d5b7612c"
+        },
+        {
+          "id": "doc-02:s0033:c31",
+          "doc": "doc-02",
+          "chars": 4561,
+          "sha256": "87bb744a58f19beec25d0261d2cf5efc92227c86e43309e2f6fc38c116a3ec23"
+        },
+        {
+          "id": "doc-02:s0043:c38",
+          "doc": "doc-02",
+          "chars": 4384,
+          "sha256": "6969c9ea2a606eff8728f71a34ce7ce4334419e5ab2bdfe6f84934c16bc233f9"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 7003,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 5258,
+        "judge_usage": {
+          "prompt_tokens": 8757,
+          "completion_tokens": 560,
+          "total_tokens": 9317,
+          "cost": 0.00137455,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 294,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 8754,
+          "market_cost": 0.00137455,
+          "gateway_cost": 0.00137455
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": false,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « date de prise d'effet » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique par quelle législation la date est déterminée et mentionne une limite temporelle."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+          "pass": true,
+          "note": "Elle cite un chunk de chacun des deux documents."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": false,
+          "note": "La condition relative aux contrôles de légalité est présentée comme générale, alors que le passage cité l’énonce dans le contexte des scissions transfrontalières par constitution de nouvelles sociétés."
+        },
+        {
+          "item": "Les étapes ou exigences essentielles sont couvertes.",
+          "pass": true,
+          "note": "La réponse donne la règle de détermination de la date et la condition liée aux contrôles de légalité, bien que cette dernière soit formulée trop largement."
+        }
+      ],
+      "note": "La règle principale est correctement rapportée, mais la portée générale attribuée à la condition des contrôles de légalité n’est pas étayée pour tous les types de scissions transfrontalières.",
+      "citations": [
+        "doc-06:s0159:c0",
+        "doc-02:s0043:c158"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q09",
+      "mode": "agent",
+      "q": "Quelles formes de commandites connaît le droit luxembourgeois ?",
+      "answer": "Le droit luxembourgeois connaît trois formes de sociétés en commandite : la société en commandite simple (SCS), la société en commandite par actions (SCA) et la société en commandite spéciale (SCSp). Cette dernière est dépourvue de personnalité juridique [doc-03:s0039:c0].",
+      "sources": [
+        {
+          "id": "doc-03:s0039:c0",
+          "doc": "doc-03",
+          "chars": 4527,
+          "sha256": "561f5ca319fd76212f5bb1cf470e3f5b094d12302dd08a9881fd7984cb7ca10d"
+        },
+        {
+          "id": "doc-03:s0002:c0",
+          "doc": "doc-03",
+          "chars": 1617,
+          "sha256": "53dcf46c809a371b913426e0a47124101de1573f9b8874ff6f82ab0e891140e4"
+        },
+        {
+          "id": "doc-03:s0001:c0",
+          "doc": "doc-03",
+          "chars": 1925,
+          "sha256": "6e0313939e16e4099313b913376deab7191ae91a930df290422bfcc0860788ae"
+        },
+        {
+          "id": "doc-07:art19-15:c48",
+          "doc": "doc-07",
+          "chars": 3449,
+          "sha256": "8f58e9fabe1582d4ef36eff3c2b30cffc0e01f5c1216acc617f8c80d2220b924"
+        },
+        {
+          "id": "doc-03:s0020:c0",
+          "doc": "doc-03",
+          "chars": 4014,
+          "sha256": "99436b87e8e050b898261490e5253150148ae874ba27c026ddbe8bcaea04ab5e"
+        },
+        {
+          "id": "doc-08:s0370:c1",
+          "doc": "doc-08",
+          "chars": 4360,
+          "sha256": "376d30b13363254b8f0dfb60c3d0eabd5a38e4a2cbb1b4760af9a82609902998"
+        },
+        {
+          "id": "doc-03:s0048:c0",
+          "doc": "doc-03",
+          "chars": 2017,
+          "sha256": "52f5d52324ab9ba9926dbc30be5a2616593187b51b38409df64fbd9a516dd1f3"
+        },
+        {
+          "id": "doc-03:s0024:c0",
+          "doc": "doc-03",
+          "chars": 3856,
+          "sha256": "4d0d4264a6a7b84841fd47b608e9423a754bec199b5f6daf850456c959721cf7"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 6079,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2499,
+        "judge_usage": {
+          "prompt_tokens": 7052,
+          "completion_tokens": 270,
+          "total_tokens": 7322,
+          "cost": 0.001016425,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 73,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 7049,
+          "market_cost": 0.001016425,
+          "gateway_cost": 0.001016425
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « société en commandite simple » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse nomme explicitement la société en commandite simple (SCS)."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-03:s0039:c0, qui décrit les formes de commandite et précise que la SCSp est dépourvue de personnalité juridique."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les trois formes énumérées et l’absence de personnalité juridique de la SCSp sont étayées par les sources."
+        }
+      ],
+      "note": "La réponse répond à la question et ses affirmations sont étayées.",
+      "citations": [
+        "doc-03:s0039:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q10",
+      "mode": "agent",
+      "q": "À quelle date les dividendes doivent-ils être comptabilisés ?",
+      "answer": "Les dividendes sont comptabilisés à la date de leur acquisition, généralement à la date de l’assemblée générale qui décide leur attribution — et non à leur date d’encaissement. [doc-04:s0240:c0]",
+      "sources": [
+        {
+          "id": "doc-04:s0240:c0",
+          "doc": "doc-04",
+          "chars": 483,
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+        },
+        {
+          "id": "doc-04:s0247:c0",
+          "doc": "doc-04",
+          "chars": 317,
+          "sha256": "d4e9a01d2ec8c7ed68ac37b910f1639694803677576c422fbc1d227937c6ba2e"
+        },
+        {
+          "id": "doc-04:s0403:c0",
+          "doc": "doc-04",
+          "chars": 1575,
+          "sha256": "002d37d2e692c742bab9fa3fee7d02d957ba55e141780c38a29a4c8ffc73bf31"
+        },
+        {
+          "id": "doc-08:s0143:c2",
+          "doc": "doc-08",
+          "chars": 2389,
+          "sha256": "1a9e6b9614706d30114a8989acbd8a22a7a96f704ad3dc1aa1018d3bf59a19be"
+        },
+        {
+          "id": "doc-08:s0145:c3",
+          "doc": "doc-08",
+          "chars": 3116,
+          "sha256": "e7dc937ae9b37a8cbdc27911a048060d3f2c3a48be50ceeb32e53efd20701703"
+        },
+        {
+          "id": "doc-07:art4613:c0",
+          "doc": "doc-07",
+          "chars": 1844,
+          "sha256": "feb4d4b9f4b219b28335ce7f85364dd5417e13eff286dfd0aa668ba47f6241e6"
+        },
+        {
+          "id": "doc-07:art71025:c0",
+          "doc": "doc-07",
+          "chars": 1370,
+          "sha256": "d45ec60e136e29c44f71975d4801c02bdc411b9cb8e7d970df244bc654cc8b0f"
+        },
+        {
+          "id": "doc-08:s0144:c0",
+          "doc": "doc-08",
+          "chars": 4300,
+          "sha256": "e9c1cd4083a79d50245a30eb08c37e928874c8a2cb30594463d95c2070a7f17b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 5919,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 1928,
+        "judge_usage": {
+          "prompt_tokens": 4490,
+          "completion_tokens": 196,
+          "total_tokens": 4686,
+          "cost": 0.000659175,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 4487,
+          "market_cost": 0.000659175,
+          "gateway_cost": 0.000659175
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « comptabilisés à la date » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique que les dividendes sont comptabilisés à la date de leur acquisition, généralement à la date de l’assemblée générale qui décide leur attribution."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-04.",
+          "pass": true,
+          "note": "La réponse cite [doc-04:s0240:c0]."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "La date d’acquisition, le rôle de l’assemblée générale et la distinction avec la date d’encaissement sont explicitement étayés par la source citée."
+        }
+      ],
+      "note": "La réponse reprend fidèlement la règle exposée dans doc-04.",
+      "citations": [
+        "doc-04:s0240:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 10,
+      "completed": 10,
+      "evaluated": 10,
+      "errors": 0,
+      "degraded": 0,
+      "correct": 7,
+      "partial": 3,
+      "wrong": 0,
+      "all_pass": 7,
+      "failed_or_incomplete": 3,
+      "rubric_pass": 33,
+      "rubric_total": 36,
+      "citation_ok": 10,
+      "grounded": 9,
+      "p50_latency_ms": 2599
+    }
+  }
+}
