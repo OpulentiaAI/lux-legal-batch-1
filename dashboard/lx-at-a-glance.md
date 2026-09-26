@@ -28,11 +28,16 @@ tldr: Build state for the Opulentia Batch 1 Luxembourg legal corpus
 
 ## Eval snapshot (eval/)
 
+Gold set: 50 questions (evidence strings verified against chunk files).
+
 | Mode | ev@1 | ev@5 | doc@5 | MRR | p50 |
 |---|---|---|---|---|---|
-| hybrid + rerank | 10/18 | 13/18 | 18/18 | .630 | 1.13s |
-| vector | 7/18 | 14/18 | 16/18 | .506 | 0.65s |
-| hybrid (RRF) | 4/18 | 11/18 | 17/18 | .407 | 0.82s |
-| bm25 | 3/18 | 8/18 | 14/18 | .269 | 0.24s |
+| hybrid + rerank | 28/50 | 39/50 | 49/50 | .658 | 1.05s |
+| vector | 25/50 | 40/50 | 46/50 | .614 | 0.53s |
+| hybrid (RRF) | 25/50 | 36/50 | 46/50 | .603 | 0.71s |
+| bm25 | 19/50 | 28/50 | 41/50 | .451 | 0.24s |
 
-Composition: 14 correct / 2 partial / 1 wrong / 1 unparsed judge; grounded 15/18; citations 17/18.
+Composition: 44 correct / 2 partial / 4 wrong; grounded 45/50; citations 48/50.
+
+Search levers live: `auto_filters` (article + "loi de 1915" → doc-06
+inference) and `expand` (weak-hit section widening, top score < 0.45).

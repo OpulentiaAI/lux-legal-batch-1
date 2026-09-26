@@ -85,13 +85,22 @@ Set them in the daemon's environment before `au daemon start`.
   "kind": "treatise",          // optional
   "article": "426",            // optional — statute article number
   "under": "conventions réglementées",  // optional structure-path substring
-  "rerank": true }             // default true
+  "rerank": true,              // default true
+  "auto_filters": true,        // default true — infer filters from the query
+  "expand": true }             // default auto — widen weak top hits
 ```
 
-Returns `{ namespace, mode, reranked, count, results[] }` where each result
-has `chunk_id`, `score`, `doc`, `doc_title`, `article`, `path[]`,
-`preview`. Reranked scores are 0–1 relevance; RRF-only scores are small
-(~0.016) but ordered.
+Returns `{ namespace, mode, reranked, count, results[], auto_filters?,
+expanded? }` where each result has `chunk_id`, `score`, `doc`, `doc_title`,
+`article`, `path[]`, `preview` and, on weak hits, `context[]` (sibling
+chunks from the same section). Reranked scores are 0–1 relevance; RRF-only
+scores are small (~0.016) but ordered.
+
+`auto_filters` parses the query for statute patterns — `art. 100-1` sets
+`article`, `loi de 1915` pins `doc-06` — when no explicit filter was
+passed. `expand` attaches up to 4 neighbouring chunks (`same doc + same
+locator`, nearest by ordinal) to the top-2 hits; it fires automatically
+when the top reranked score is below 0.45.
 
 ### `lx_chunk` — hydrate a hit
 

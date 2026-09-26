@@ -14,6 +14,8 @@ export interface ChunkRow {
   doc_title: string
   structure: string[]
   article?: string
+  locator?: string
+  ordinal?: number
   pages?: string
   ns: string
 }
