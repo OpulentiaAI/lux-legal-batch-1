@@ -1,3 +1,4 @@
+import { withLegacyNames } from './names.mjs';
 import { randomUUID } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
@@ -103,7 +104,7 @@ export function createTools(ctx) {
       if (args.action === 'update') row('knowledge', required(args.knowledge_id, 'knowledge_id'));
       return suggestion('knowledge_suggestions', { action: args.action, value: args.value, trigger: args.trigger, knowledge_id: args.knowledge_id });
     },
-    devin_knowledge_manage: async args => {
+    opulent_knowledge_manage: async args => {
       if (args.action === 'folders') {
         const counts = {};
         for (const note of store.list('knowledge')) counts[note.folder_path || '/'] = (counts[note.folder_path || '/'] || 0) + 1;
@@ -121,8 +122,8 @@ export function createTools(ctx) {
       }
       return manage('knowledge', { ...args, id: args.note_id }, ['name', 'content', 'trigger', 'pinned_repo', 'folder_path']);
     },
-    devin_playbook_manage: async args => manage('playbooks', { ...args, id: args.playbook_id }, ['title', 'content', 'macro', 'structured_output_schema']),
-    devin_mcp_server_manage: async args => {
+    opulent_playbook_manage: async args => manage('playbooks', { ...args, id: args.playbook_id }, ['title', 'content', 'macro', 'structured_output_schema']),
+    opulent_mcp_server_manage: async args => {
       const mode = action(args);
       if (['install', 'update', 'delete'].includes(mode)) {
         const proposed = suggestion('mcp_server_requests', Object.fromEntries(['action', 'installation_id', 'marketplace_server_slug', 'name', 'slug', 'description', 'transport', 'url', 'command', 'auth_method', 'installation_scope'].filter(key => args[key] !== undefined).map(key => [key, args[key]])));
@@ -250,7 +251,7 @@ export function createTools(ctx) {
       if (args.urls) return Promise.all(args.urls.map(download));
       return download(required(args.url, 'url'));
     },
-    devin_billing_tag_manage: async args => {
+    opulent_billing_tag_manage: async args => {
       if (args.action === 'list' || args.action === 'get' || args.action === 'create') return manage('billing_tags', { ...args, id: args.billing_tag_id }, ['name', 'description']);
       const tag = row('billing_tags', args.billing_tag_id);
       if (args.action === 'list_members') return tag.members || [];
@@ -260,14 +261,14 @@ export function createTools(ctx) {
         return row('billing_tags', tag.id);
       }
       if (args.action === 'assign_session') {
-        const sessionId = required(args.devin_id, 'devin_id');
+        const sessionId = required(args.opulent_id ?? args.devin_id, 'opulent_id');
         const session = row('sessions', sessionId);
         return store.put('sessions', sessionId, { ...session, billing_tag_id: tag.id });
       }
       throw new Error(`Unknown billing tag action: ${args.action}`);
     },
   };
-  return tools;
+  return withLegacyNames(tools);
 }
 
 export async function approveResource(ctx, { kind, id: requestId, approve, value, repo, base, branch, title }) {

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { posix as path } from 'node:path';
+import { withLegacyNames } from './names.mjs';
 
 const running = new Map();
 const terminal = new Set(['completed', 'failed', 'cancelled', 'terminated', 'stopped', 'sleeping', 'blocked']);
@@ -9,6 +10,7 @@ const requireText = (value, name) => {
   return value;
 };
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const bareSessionId = id => String(id).replace(/^(?:opulent|devin)-/, '');
 const bounded = (value, fallback, max) => {
   const number = value === undefined || value === null ? fallback : Number(value);
   if (!Number.isFinite(number) || number < 0 || number > max) throw new Error(`timeout must be between 0 and ${max}`);
@@ -23,7 +25,7 @@ export function createTools(ctx) {
     return row;
   };
   const child = id => {
-    const row = store.get('sessions', String(id).replace(/^devin-/, ''));
+    const row = store.get('sessions', bareSessionId(id));
     if (!row || row.parent_session_id !== sessionId) throw new Error(`child session ${id} not found`);
     return row;
   };
@@ -142,7 +144,7 @@ export function createTools(ctx) {
       return { title };
     },
     async noop() { return {}; },
-    async devin_session_create({ sessions, ...defaults }) {
+    async opulent_session_create({ sessions, ...defaults }) {
       if (!Array.isArray(sessions) || !sessions.length) throw new Error('sessions are required');
       for (const item of sessions) {
         requireText(item.prompt, 'prompt');
@@ -156,14 +158,14 @@ export function createTools(ctx) {
       }
       return { sessions: rows.map(row => ({ session_id: row.id, title: row.title, status: row.status })) };
     },
-    async devin_session_search(args = {}) {
+    async opulent_session_search(args = {}) {
       let rows = children();
-      if (args.session_ids) rows = rows.filter(row => args.session_ids.some(id => id.replace(/^devin-/, '') === row.id));
+      if (args.session_ids) rows = rows.filter(row => args.session_ids.some(id => bareSessionId(id) === row.id));
       if (args.tags) rows = rows.filter(row => args.tags.every(tag => row.tags?.includes(tag)));
       if (args.playbook_id) rows = rows.filter(row => row.playbook_id === args.playbook_id);
       if (args.origins) rows = rows.filter(row => args.origins.includes(row.origin));
       if (args.schedule_id) rows = rows.filter(row => row.schedule_id === args.schedule_id);
-      if (args.parent_session_id && args.parent_session_id.replace(/^devin-/, '') !== sessionId) return { sessions: [], total: 0 };
+      if (args.parent_session_id && String(args.parent_session_id).replace(/^(?:opulent|devin)-/, '') !== sessionId) return { sessions: [], total: 0 };
       if (args.created_after) rows = rows.filter(row => Date.parse(row.created_at) >= args.created_after * 1000);
       if (args.created_before) rows = rows.filter(row => Date.parse(row.created_at) <= args.created_before * 1000);
       if (args.updated_after) rows = rows.filter(row => Date.parse(row.updated_at) >= args.updated_after * 1000);
@@ -173,7 +175,7 @@ export function createTools(ctx) {
       const sessions = rows.slice(start, start + Math.min(args.first ?? 20, 100));
       return { sessions, total, end_cursor: sessions.at(-1)?.id ?? null, has_next_page: start + sessions.length < total };
     },
-    async devin_session_interact(args) {
+    async opulent_session_interact(args) {
       const row = child(args.session_id);
       switch (args.action) {
         case 'get': return { ...row, child_session_ids: store.list('sessions').filter(x => x.parent_session_id === row.id).map(x => x.id) };
@@ -215,7 +217,7 @@ export function createTools(ctx) {
         default: throw new Error(`unknown session action ${args.action}`);
       }
     },
-    async devin_session_events(args) {
+    async opulent_session_events(args) {
       const row = child(args.session_id);
       const events = store.list('events').filter(event => event.session_id === row.id);
       let filtered = args.event_types ? events.filter(event => args.event_types.includes(event.type)) : events;
@@ -389,7 +391,7 @@ export function createTools(ctx) {
     runRow(run_id);
     const agent = store.get('workflow_agents', agent_id);
     if (!agent || agent.run_id !== run_id) throw new Error('workflow agent not found');
-    return tools.devin_session_interact({ action: 'message', session_id: agent.session_id, message: body ?? 'Please report current status.' });
+    return tools.opulent_session_interact({ action: 'message', session_id: agent.session_id, message: body ?? 'Please report current status.' });
   };
   tools.set_workflow_agent_soft_time_limit = async ({ run_id, agent_id, phase, soft_time_limit_minutes }) => {
     runRow(run_id);
@@ -400,5 +402,5 @@ export function createTools(ctx) {
     if (phase) store.put('workflow_phase_limits', `${run_id}:${phase}`, { owner_session_id: sessionId, run_id, phase, soft_time_limit_minutes });
     return { run_id, agent_id: agent_id ?? null, phase: phase ?? null, soft_time_limit_minutes, updated: agents.length };
   };
-  return tools;
+  return withLegacyNames(tools);
 }

@@ -105,6 +105,14 @@ export function createRuntime(options = {}) {
     ctx.tools = tools;
     ctx.invoke = async (requestedName, args = {}) => {
       const name = catalog.aliases[requestedName] ?? requestedName;
+      if (requestedName !== name && catalog.tools[name]) {
+        const normalize = value => {
+          if (Array.isArray(value)) return value.map(normalize);
+          if (!value || typeof value !== 'object') return value;
+          return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key.replace(/^devin_/, 'opulent_').replace(/^target_devin_id$/, 'target_opulent_id'), key === 'agent' && entry === 'devin' ? 'opulent' : normalize(entry)]));
+        };
+        args = normalize(args);
+      }
       if (allowed && !allowed.has(name)) throw new Error(`Tool forbidden by execution policy: ${name}`);
       if (invocationPolicy.getStore()?.blocked.has(name)) throw new Error('Script broker authorization failed');
       if (!tools[name] || catalog.excluded[name]) throw new Error(`Tool is not in the configured runtime: ${name}`);

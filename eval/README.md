@@ -4,6 +4,40 @@ The harness supports broader tool use than the original legal benchmark. **For f
 
 ## Existing baseline commands
 
+### GPT-6 Luna experiment
+
+Run the agent and judge through AI Gateway using the explicit model ID `openai/gpt-6-luna`:
+
+```sh
+npm run eval:agent:luna -- --output eval/compose-agent-gpt6-luna.json
+```
+
+This command pins both model roles without changing the historical baseline defaults. It uses the existing secure `AI_GATEWAY_API_KEY`, `TURBOPUFFER_API_KEY`, `TURBOPUFFER_REGION` and `JINA_API_KEY` environment variables. Keep outputs separate from the committed historical runs. The runner records both model IDs in provenance; changing the answerer and judge means these results are a new experiment, not an isolated harness improvement. Do not substitute another model if access fails.
+
+The gateway model catalog confirmed this exact ID on September 26, 2026. After the initial HTTP 402 funding blocker was resolved, authenticated Luna inference returned HTTP 200. A subsequent historical-profile run was stopped because Jina reranking returned HTTP 401; its partial checkpoint is not a completed accuracy measurement.
+
+### Voyage retrieval and staged Luna evaluation
+
+The Voyage experiment uses `LX_RETRIEVAL_PROFILE=voyage`, `voyage/voyage-4-large` embeddings at 1024 dimensions and `voyage/rerank-2.5` reranking through AI Gateway. It requires no Jina credential. Both Voyage endpoints passed authenticated smoke checks. This is a new retrieval experiment: build the separate Voyage index before querying it, and never mix Voyage query vectors with the historical OpenAI document vectors.
+
+```sh
+LX_RETRIEVAL_PROFILE=voyage node scripts/lx_index_voyage.mjs --batch=64 --state=/absolute/path/to/voyage-full-state.json
+```
+
+The migration writes only `lx-corpus-voyage4-1024` and `lx-documents-voyage4-1024`; the Voyage profile ignores legacy namespace overrides. It embeds corpus text with `input_type: document` and searches with `input_type: query`. Rerunning the same command resumes its atomic checkpoint, which pins provider configuration, selection and corpus content. A changed selection or source text requires a new checkpoint. Optional `--max-docs=1 --max-chunks=2` performs a sample upload, but must use a separate state path and never marks the corpus complete. Wait for the full checkpoint's `complete: true` and verify remote row counts before evaluating. Keep migration checkpoints outside the repository.
+
+Run the first two questions, then four, then ten, using distinct outputs:
+
+```sh
+npm run eval:agent:luna:voyage -- --limit 2 --concurrency 2 --output eval/compose-luna-voyage-2.json
+npm run eval:agent:luna:voyage -- --limit 4 --concurrency 4 --output eval/compose-luna-voyage-4.json
+npm run eval:agent:luna:voyage -- --limit 10 --concurrency 10 --output eval/compose-luna-voyage-10.json
+```
+
+Run each command only after checking the preceding result: every planned question must finish with zero errors and zero degraded cases. Inspect correctness, citations and grounding separately; operational success is not 99% accuracy. These are overlapping prefix smoke batches, not 16 independent questions or a full 50-question result. Do not aggregate their numerators or denominators. A provider failure stops the progression rather than silently switching models or disabling reranking. The existing rubric and gold remain unchanged, and provenance records the retrieval profile, namespaces, embedding dimensions and both retrieval model IDs as well as the answerer and judge.
+
+### Historical model defaults
+
 ```sh
 node eval/run.mjs --output eval/retrieval-baseline-new.json
 node eval/compose.mjs --mode paired --output eval/compose-paired-new.json
@@ -11,6 +45,28 @@ node eval/compose.mjs --mode agent --output eval/compose-agent-baseline-new.json
 ```
 
 `paired` runs the existing standard/RLM answering paths. `agent` exercises the new runtime but deliberately uses the fixed `lx_search`, `lx_chunk`, `lx_documents` allowlist and closed-corpus prompts in `runtime/legal-eval.mjs`. These commands do not automatically include configured MCP servers.
+
+## Auditing and controlled tuning
+
+See [AUDIT.md](AUDIT.md) for the evidence-backed assessment, including answer omissions, reference-fragment/judge conflicts and the incomplete full run. `node eval/audit.mjs` audits every saved composition result against the current corpus hashes and frozen rubric without calling a model.
+
+The historical agent and judge remain the defaults. Select the completeness/citation policy explicitly:
+
+```sh
+npm run eval:agent:luna:voyage -- --agent-policy audited-v1 --limit 2 --concurrency 2 --output eval/compose-tuned-2.json
+```
+
+Advance to limits/concurrency 4 and 10 only after the prior operational gate succeeds. Keep `--judge-policy baseline` for an isolated agent-policy comparison. The named agent policy records its effective prompt, allowed tools, step budget and word instruction; it does not receive gold answers or rubrics. The new sanitized audit records corpus-tool arguments, returned IDs/counts and error flags. Failed sessions and failed judge calls retain available audit data and source hashes instead of discarding the agent's work.
+
+To evaluate judge policy without regenerating answers or retrieving new sources:
+
+```sh
+node eval/rejudge.mjs eval/compose-luna-voyage-10.json eval/compose-rejudge-v3-2.json --judge-model openai/gpt-6-luna --judge-policy evidence-v3 --limit 2 --concurrency 2
+```
+
+The replay verifies the input question hash and exact source hashes, pins the input artifact hash, preserves original answers and degraded status, and writes a separate result. Use separate outputs for 4/10-question replay gates too. `evidence-v3` treats reference snippets as contextual evidence rather than unquestionable legal conclusions; it retains the rubric and citation validator. A score change from replay is a grading change, never an accuracy improvement attributable to the agent. Neither policy change authorizes editing `gold.json` or overwriting historical results.
+
+For the separately recorded higher-budget judge calibration, add `--judge-effort high --judge-max-tokens 4000 --timeout-ms 60000`. Defaults remain low reasoning, 1,200 judge output tokens and a 12-second request timeout. Provenance pins these settings. This changes the evaluator budget, not the generated answers; compare both baseline and tuned answers under identical judge settings and retain all results.
 
 ## Override the policy for a future evaluation
 

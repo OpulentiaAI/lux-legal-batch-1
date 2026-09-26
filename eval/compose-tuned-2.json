@@ -1,0 +1,439 @@
+{
+  "provenance": {
+    "question_hash": "d63a028f9865c332e41b463229c81f94892f15cb25a932257bd36609778803fb",
+    "config": {
+      "modes": [
+        "agent"
+      ],
+      "model": "openai/gpt-6-luna",
+      "judgeModel": "openai/gpt-6-luna",
+      "timeoutMs": 12000,
+      "retries": 1,
+      "workspace": "/workspace/lux-legal-batch-1",
+      "git_head": "4f61aa81d62ba68055c1bb1760aa80c5832f232a",
+      "implementation_hash": "971559d75cfc5e4cdd113568cccb15d7d89f9d7ec3b6fe22b603dd55f926dfad",
+      "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+      "agent_policy": "audited-v1",
+      "agent_policy_config": {
+        "systemPrompt": "Tu réponds aux questions de droit luxembourgeois uniquement avec les outils du corpus fermé lx_search, lx_chunk et lx_documents. Réponds en français en 120 mots maximum. Cite les identifiants de chunks entre crochets pour chaque affirmation importante. N’invente rien au-delà des textes fournis ; signale explicitement une preuve insuffisante. Stratégie de recherche : commence par lx_search avec la question telle quelle (les filtres sont inférés automatiquement). Si une recherche filtrée (article/doc_id/kind) retourne 0 résultat, relance la même question SANS filtres — une épingle inférée qui ne correspond à rien est automatiquement relaxée, mais un filtre explicite ne l’est jamais. Ne conclue « preuve insuffisante » qu’après au moins une recherche sans filtre infructueuse. Réponds à chaque partie de la question : énonce la définition ou règle applicable et les alternatives ou conditions pertinentes que les sources établissent. Pour une question de définition ou de classification, donne le critère déterminant, pas seulement une liste d'exemples ou de catégories. Distingue la règle de droit de l'intention du législateur et d'une hypothèse ; qualifie la forme de société si la question est ambiguë. Cite chaque identifiant séparément dans ses propres crochets, par exemple [chunk-a] [chunk-b], jamais deux identifiants dans les mêmes crochets. Avant de conclure, vérifie que la réponse couvre chaque partie demandée et que chaque affirmation est étayée par les textes retrouvés. Si les sources sont insuffisantes, réessaie lx_search avec auto_filters:false et des termes reformulés sans filtre explicite, puis signale ce qui reste non établi.",
+        "allowedTools": [
+          "lx_search",
+          "lx_chunk",
+          "lx_documents"
+        ],
+        "maxSteps": 8,
+        "maxWords": 120
+      },
+      "judge_policy": "baseline",
+      "judge_prompt_sha256": "4eddeb7d99922c2650a6b505eacc3b8ee3ec50b7669e21942ba3b6642dd6dadc",
+      "region": "gcp-us-central1",
+      "chunk_namespace": "lx-corpus-voyage4-1024",
+      "document_namespace": "lx-documents-voyage4-1024",
+      "retrieval_profile": "voyage",
+      "embedding_model": "voyage/voyage-4-large",
+      "embedding_dimensions": 1024,
+      "embedding_query_input_type": "query",
+      "embedding_document_input_type": "document",
+      "rerank_model": "voyage/rerank-2.5"
+    },
+    "concurrency": 2,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "La loi distingue deux critères : sont commerciales les sociétés ayant pour objet des actes de commerce [doc-07:art1001:c0] ; sont également commerciales, quelle que soit leur forme d’activité, les sociétés en nom collectif, en commandite simple, anonymes, par actions simplifiées, en commandite par actions, à responsabilité limitée (y compris simplifiée), coopératives et européennes (SE) [doc-07:art1002:c0]. La loi mentionne aussi les sociétés commerciales momentanées, en participation et en commandite spéciale, sans personnalité juridique distincte de celle des associés [doc-07:art1002:c0].",
+      "sources": [
+        {
+          "id": "doc-08:s0027:c1",
+          "doc": "doc-08",
+          "chars": 3695,
+          "sha256": "eb64bb96f31b71d763a7a9fa312bd67d0c2188bc05e739475f265fe8327266a7"
+        },
+        {
+          "id": "doc-07:art1002:c0",
+          "doc": "doc-07",
+          "chars": 1830,
+          "sha256": "eb2714ee865dee23607116f4d3a1e04d4bb47d814f1116c75260321947531a27"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        },
+        {
+          "id": "doc-09:s0587:c0",
+          "doc": "doc-09",
+          "chars": 112,
+          "sha256": "b67d1cf37eb01c175ce25e9e56a484a9633d2543239a947341081f3295b5d370"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "doc": "doc-06",
+          "chars": 1791,
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-07:s0010:c0",
+          "doc": "doc-07",
+          "chars": 124,
+          "sha256": "84252ba49c0b41a0a1bcf3b8e900174a2e2eecb7510f857e3da7ba7e781e3f5c"
+        },
+        {
+          "id": "doc-08:s0027:c3",
+          "doc": "doc-08",
+          "chars": 4478,
+          "sha256": "a4d3694228676678b9994765d255670adfd1a0d0acb5f3eb60230a286218a59e"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "doc": "doc-07",
+          "chars": 727,
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-08:s0027:c1",
+                "doc-07:art1002:c0",
+                "doc-06:art1001:c0",
+                "doc-09:s0587:c0",
+                "doc-06:art1002:c0",
+                "doc-07:s0010:c0",
+                "doc-08:s0027:c3",
+                "doc-07:art1001:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "La loi distingue deux critères : sont commerciales les sociétés ayant pour objet des actes de commerce [doc-07:art1001:c0] ; sont également commerciales, quelle que soit leur forme d’activité, les sociétés en nom collectif, en commandite simple, anonymes, par actions simplifiées, en commandite par actions, à responsabilité limitée (y compris simplifiée), coopératives et européennes (SE) [doc-07:art1002:c0]. La loi mentionne aussi les sociétés commerciales momentanées, en participation et en commandite spéciale, sans personnalité juridique distincte de celle des associés [doc-07:art1002:c0]."
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "sourceCount": 8,
+        "toolCalls": 1,
+        "usage": {
+          "prompt_tokens": 4682,
+          "completion_tokens": 296,
+          "total_tokens": 4978,
+          "cost": 0.0007181500000000001,
+          "cache_creation_input_tokens": 4078,
+          "market_cost": 0.0007181500000000001,
+          "gateway_cost": 0.0007181500000000001
+        },
+        "latencyMs": 6104,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 10031,
+        "judge_usage": {
+          "prompt_tokens": 3706,
+          "completion_tokens": 393,
+          "total_tokens": 4099,
+          "cost": 0.000659675,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 167,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 3703,
+          "market_cost": 0.000659675,
+          "gateway_cost": 0.000659675
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique que les sociétés ayant pour objet des actes de commerce sont commerciales."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": false,
+          "note": "Les citations renvoient uniquement à doc-07."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les critères de commercialité et les formes de sociétés mentionnées sont étayés par les sources."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse restitue fidèlement la règle relative à l’objet d’actes de commerce et celle liée aux formes sociales."
+        }
+      ],
+      "note": "La réponse est substantiellement correcte, mais ne cite pas le chunk exigé de doc-06.",
+      "citations": [
+        "doc-07:art1001:c0",
+        "doc-07:art1002:c0",
+        "doc-07:art1002:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 3
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote de l’assemblée générale. Le vote est consultatif, sauf si les statuts le rendent contraignant ; des règles particulières s’appliquent en cas de rejet. [doc-06:s0314:c0]\n\nLa politique peut prévoir une dérogation temporaire uniquement dans des circonstances exceptionnelles, nécessaires aux intérêts et à la pérennité à long terme de la société ou à sa viabilité. Elle doit être soumise au vote à chaque modification importante et au moins tous les quatre ans. [doc-06:s0314:c0]\n\nElle doit notamment exposer ses objectifs, les composantes de la rémunération et, s’il y a lieu, les critères de rémunération variable ou en actions, ainsi que le processus décisionnel. Après le vote, elle et son résultat sont publiés sur le site de la société. [doc-06:s0314:c1]",
+      "sources": [
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:s0258:c0",
+          "doc": "doc-06",
+          "chars": 156,
+          "sha256": "85b62bf30c7214d14af026bda4e95930daf85ecd9a059c983be8f81d91772053"
+        },
+        {
+          "id": "doc-07:s0707:c0",
+          "doc": "doc-07",
+          "chars": 234,
+          "sha256": "898048eb04f8e91949d88b6846c5f2b2baa6ebfe68e39c7e622fc90ab955708b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-06:s0315:c0",
+                "doc-07:s0579:c0",
+                "doc-06:s0314:c0",
+                "doc-07:s0578:c0",
+                "doc-06:s0314:c1",
+                "doc-07:s0578:c1",
+                "doc-06:s0258:c0",
+                "doc-07:s0707:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote de l’assemblée générale. Le vote est consultatif, sauf si les statuts le rendent contraignant ; des règles particulières s’appliquent en cas de rejet. [doc-06:s0314:c0]\n\nLa politique peut prévoir une dérogation temporaire uniquement dans des circonstances exceptionnelles, nécessaires aux intérêts et à la pérennité à long terme de la société ou à sa viabilité. Elle doit être soumise au vote à chaque modification importante et au moins tous les quatre ans. [doc-06:s0314:c0]\n\nElle doit notamment exposer ses objectifs, les composantes de la rémunération et, s’il y a lieu, les critères de rémunération variable ou en actions, ainsi que le processus décisionnel. Après le vote, elle et son résultat sont publiés sur le site de la société. [doc-06:s0314:c1]"
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "sourceCount": 8,
+        "toolCalls": 1,
+        "usage": {
+          "prompt_tokens": 5660,
+          "completion_tokens": 377,
+          "total_tokens": 6037,
+          "cost": 0.000880775,
+          "cache_creation_input_tokens": 5051,
+          "market_cost": 0.000880775,
+          "gateway_cost": 0.000880775
+        },
+        "latencyMs": 6554,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 9687,
+        "judge_usage": {
+          "prompt_tokens": 4751,
+          "completion_tokens": 358,
+          "total_tokens": 5109,
+          "cost": 0.0007728,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 123,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 4748,
+          "market_cost": 0.0007728,
+          "gateway_cost": 0.0007728
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse décrit les règles de l’article 7bis relatives à la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-06:s0314:c0 et doc-06:s0314:c1."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les éléments exposés sont étayés par les chunks cités."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse reprend fidèlement les règles sur le vote, les dérogations, la révision et la publication."
+        }
+      ],
+      "note": "La réponse résume fidèlement les principales dispositions fournies de l’article 7bis.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 2,
+      "completed": 2,
+      "evaluated": 2,
+      "errors": 0,
+      "degraded": 0,
+      "correct": 1,
+      "partial": 1,
+      "wrong": 0,
+      "all_pass": 1,
+      "failed_or_incomplete": 1,
+      "rubric_pass": 7,
+      "rubric_total": 8,
+      "citation_ok": 2,
+      "grounded": 2,
+      "p50_latency_ms": 10031
+    }
+  }
+}

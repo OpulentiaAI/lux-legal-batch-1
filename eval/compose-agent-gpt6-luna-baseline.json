@@ -1,0 +1,799 @@
+{
+  "provenance": {
+    "question_hash": "5bd7d2374c92b5fbb68580e4c6f16659d8f9b6021630bf577fd51e56e181d6df",
+    "config": {
+      "modes": [
+        "agent"
+      ],
+      "model": "openai/gpt-6-luna",
+      "judgeModel": "openai/gpt-6-luna",
+      "timeoutMs": 12000,
+      "retries": 1,
+      "workspace": "/workspace/lux-legal-batch-1",
+      "git_head": "fc6563c60d9f7b1e4965f30f18093cd4d7727312",
+      "implementation_hash": "8092c44fd75c7850b381d8622fd476faea359e64146bc153b9f599c70f3f2f91",
+      "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+      "region": "gcp-us-central1",
+      "chunk_namespace": "lx-corpus",
+      "document_namespace": "lx-documents"
+    },
+    "concurrency": 2,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "Selon l’article 100-1, sont commerciales les sociétés ayant pour objet des actes de commerce. La loi les répartit en sociétés commerciales proprement dites, sociétés momentanées et sociétés en participation. [doc-06:art1001:c0]",
+      "sources": [
+        {
+          "id": "doc-06:s0339:c2",
+          "doc": "doc-06",
+          "chars": 3070,
+          "sha256": "1eb9c05c4e57a377e5986b37e39c8cc6df673bb67d8c14d028ae88acb27b5580"
+        },
+        {
+          "id": "doc-06:s0339:c0",
+          "doc": "doc-06",
+          "chars": 3930,
+          "sha256": "5139b00a77fc6be23de28137130e961e363891bf810f9f9f83c7be67e7833085"
+        },
+        {
+          "id": "doc-06:art24-2:c0",
+          "doc": "doc-06",
+          "chars": 4316,
+          "sha256": "50821556a29d77fca12194838e7e050f987be1b794be4fe995d3f5ade5003a5e"
+        },
+        {
+          "id": "doc-06:art24-2:c1",
+          "doc": "doc-06",
+          "chars": 3738,
+          "sha256": "12b0c3625b7a01149191fc28b027acb5e0502afdede0d43eb099883a8c7ae139"
+        },
+        {
+          "id": "doc-06:s0339:c1",
+          "doc": "doc-06",
+          "chars": 4406,
+          "sha256": "07eb4073c1a16a8f358dc0c9e00482b146ca2f83bb0939da930a1adcd16d6fbb"
+        },
+        {
+          "id": "doc-06:art24-2:c2",
+          "doc": "doc-06",
+          "chars": 3781,
+          "sha256": "fe6c12645d92cabf7b51764737a195912a134ba9c6351e133ad4480b5594c833"
+        },
+        {
+          "id": "doc-06:art215-2:c10",
+          "doc": "doc-06",
+          "chars": 4429,
+          "sha256": "ff33373fb1927f0442b433799c53103be194cb46cda7c40e03668161c82a08f1"
+        },
+        {
+          "id": "doc-06:art97:c0",
+          "doc": "doc-06",
+          "chars": 3865,
+          "sha256": "14bfe21df6e18bc0742ddf63dcd8819f246754e76c7b3ea1da221d9fd44cb2f4"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": true,
+      "metrics": {
+        "errors": 2,
+        "sourceCount": 9,
+        "toolCalls": 4,
+        "usage": {
+          "prompt_tokens": 47422,
+          "completion_tokens": 606,
+          "total_tokens": 48028,
+          "cost": 0.002667165,
+          "cache_creation_input_tokens": 15719,
+          "market_cost": 0.002667165,
+          "gateway_cost": 0.002667165
+        },
+        "latencyMs": 11761,
+        "source_count": 9,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 14561,
+        "judge_usage": {
+          "prompt_tokens": 14952,
+          "completion_tokens": 264,
+          "total_tokens": 15216,
+          "cost": 0.002000925,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 46,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 14949,
+          "market_cost": 0.002000925,
+          "gateway_cost": 0.002000925
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique que les sociétés commerciales ont pour objet des actes de commerce."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": true,
+          "note": "La réponse cite [doc-06:art1001:c0]."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "La définition et les catégories mentionnées figurent dans la source citée."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse reprend fidèlement la règle selon laquelle les sociétés commerciales ont pour objet des actes de commerce."
+        }
+      ],
+      "note": "La réponse est fidèle à l’article 100-1 tel que reproduit dans la source.",
+      "citations": [
+        "doc-06:art1001:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote de l’assemblée générale. Le vote est en principe consultatif, sauf si les statuts le rendent contraignant. La société doit soumettre la politique au vote à chaque modification importante et au moins tous les quatre ans. [doc-06:s0314:c0]\n\nLa politique doit notamment soutenir la stratégie et la pérennité à long terme de la société, détailler les composantes fixes et variables de la rémunération, les critères de performance, les éventuelles rémunérations en actions, ainsi que le processus de décision et la gestion des conflits d’intérêts. [doc-06:s0314:c1]\n\nAprès le vote, la politique, la date et le résultat du vote sont publiés sans retard sur le site de la société et restent accessibles gratuitement pendant sa période d’application. [doc-07:s0578:c1]",
+      "sources": [
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0315:c1",
+          "doc": "doc-06",
+          "chars": 1022,
+          "sha256": "788327c589a50dbbe87a0c6e54c13eed0a38eeeeeb329c02b1ff47d14b538a84"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:art215-2:c10",
+          "doc": "doc-06",
+          "chars": 4429,
+          "sha256": "ff33373fb1927f0442b433799c53103be194cb46cda7c40e03668161c82a08f1"
+        },
+        {
+          "id": "doc-06:art215-2:c12",
+          "doc": "doc-06",
+          "chars": 3406,
+          "sha256": "08045b6aecf6685e1d6eb6f8ada233b2b00526a3b6143e63d125379d8b43d9e8"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": true,
+      "metrics": {
+        "errors": 1,
+        "sourceCount": 8,
+        "toolCalls": 2,
+        "usage": {
+          "prompt_tokens": 6766,
+          "completion_tokens": 422,
+          "total_tokens": 7188,
+          "cost": 0.001033675,
+          "cache_creation_input_tokens": 5843,
+          "market_cost": 0.001033675,
+          "gateway_cost": 0.001033675
+        },
+        "latencyMs": 6697,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 10970,
+        "judge_usage": {
+          "prompt_tokens": 5602,
+          "completion_tokens": 410,
+          "total_tokens": 6012,
+          "cost": 0.000905175,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 165,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 5599,
+          "market_cost": 0.000905175,
+          "gateway_cost": 0.000905175
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse décrit l’établissement, le vote et le contenu de la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite deux chunks de doc-06."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les affirmations sont étayées par les sources fournies, notamment la publication après le vote par doc-07:s0578:c1."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "Le caractère consultatif du vote, l’exception statutaire, la fréquence du vote et les éléments de contenu sont fidèlement paraphrasés."
+        }
+      ],
+      "note": "La réponse rend compte de façon fidèle des principales règles de l’article 7bis.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c1",
+        "doc-07:s0578:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q03",
+      "mode": "agent",
+      "q": "Qu'est-ce que la scission par absorption ?",
+      "answer": "La scission par absorption est une opération où une société transfère son patrimoine — en totalité ou en partie, activement et passivement — à une ou plusieurs sociétés déjà existantes. En contrepartie, les associés de la société scindée reçoivent des actions ou parts des sociétés bénéficiaires ; une soulte en espèces peut éventuellement être versée, dans la limite légale de 10 %. La société scindée peut être dissoute sans liquidation si elle transfère l’ensemble de son patrimoine, ou subsister si elle n’en transfère qu’une partie. [doc-07:art10303:c0]",
+      "sources": [
+        {
+          "id": "doc-02:s0054:c19",
+          "doc": "doc-02",
+          "chars": 4295,
+          "sha256": "c274b212b9030dbb4678baac19bd82c2c3584fe83371349be78044b4b7d37602"
+        },
+        {
+          "id": "doc-02:s0039:c4",
+          "doc": "doc-02",
+          "chars": 4597,
+          "sha256": "61d4087737e21ff9ce0e87ef2562335b951c0daa1951d499cc28f44ba07cde9c"
+        },
+        {
+          "id": "doc-02:s0043:c152",
+          "doc": "doc-02",
+          "chars": 3707,
+          "sha256": "2fe56bafa790ceb5a03bba38f291b545b2334f434b7444503ccd15a5ed57d22a"
+        },
+        {
+          "id": "doc-02:s0043:c157",
+          "doc": "doc-02",
+          "chars": 3931,
+          "sha256": "2ae6eef9d8ce311ef64a274c6e71f12ff429c46c87580a4ccebc292c8ebc095e"
+        },
+        {
+          "id": "doc-02:s0039:c6",
+          "doc": "doc-02",
+          "chars": 4271,
+          "sha256": "12b98b8b823a75d7b0b340d7a15c827bd110e771a9d857e7b797f6efba23f2c4"
+        },
+        {
+          "id": "doc-02:s0025:c0",
+          "doc": "doc-02",
+          "chars": 1279,
+          "sha256": "f6ece0e10f85078087c28a3db4df25ec986afb2d04ad40ff8575eec893d6d1a2"
+        },
+        {
+          "id": "doc-02:s0055:c34",
+          "doc": "doc-02",
+          "chars": 3603,
+          "sha256": "fea7de9cdc4cc956807ea8a0327cf7cfa48180f7efe8f1e53e78fd4ed3b669af"
+        },
+        {
+          "id": "doc-02:s0055:c37",
+          "doc": "doc-02",
+          "chars": 3881,
+          "sha256": "00ea2d0dd83e732d4721cad3133cb93cdebdb3a89192021279607d0b7b81aa45"
+        },
+        {
+          "id": "doc-02:s0084:c0",
+          "doc": "doc-02",
+          "chars": 924,
+          "sha256": "238452492bd1e56e7943cff85bf484f0ef26ab74683f3ecb328884c392d370ef"
+        },
+        {
+          "id": "doc-07:art10311:c0",
+          "doc": "doc-07",
+          "chars": 2449,
+          "sha256": "98b8f8a6ca958d4fe7581f7147df587200c56e5874900df8f0cdcfa385301f3a"
+        },
+        {
+          "id": "doc-07:art10303:c0",
+          "doc": "doc-07",
+          "chars": 1186,
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c"
+        },
+        {
+          "id": "doc-02:s0024:c9",
+          "doc": "doc-02",
+          "chars": 2490,
+          "sha256": "60f8d41315180335cabf6e1aa9b59a179323498187a2a7f6700e9f5ce85a0989"
+        },
+        {
+          "id": "doc-07:art10315:c0",
+          "doc": "doc-07",
+          "chars": 1630,
+          "sha256": "d30b5c1a6a4c6e6eac5e0fbf31174d0d0ad425ae4c6c4fa83fb88292fa7c21c3"
+        },
+        {
+          "id": "doc-07:art103110:c0",
+          "doc": "doc-07",
+          "chars": 3437,
+          "sha256": "30593193b21ff7132f0eb7b27c43e277f10d76854c49280a349edbed382fd3ae"
+        },
+        {
+          "id": "doc-07:art10314:c0",
+          "doc": "doc-07",
+          "chars": 1524,
+          "sha256": "19f9eb851b49832c1af60ccbe7df17dddf8938766dc1fbf129d8bdaa58f64fe6"
+        },
+        {
+          "id": "doc-07:art10313:c0",
+          "doc": "doc-07",
+          "chars": 1940,
+          "sha256": "a7301cc64871dc9a11ca495e0875a5d85fbe3a9fdaaa506fe98af38470e02a5f"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": true,
+      "metrics": {
+        "errors": 2,
+        "sourceCount": 16,
+        "toolCalls": 4,
+        "usage": {
+          "prompt_tokens": 32358,
+          "completion_tokens": 487,
+          "total_tokens": 32845,
+          "cost": 0.002201025,
+          "cache_creation_input_tokens": 13507,
+          "market_cost": 0.002201025,
+          "gateway_cost": 0.002201025
+        },
+        "latencyMs": 10339,
+        "source_count": 16,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 12844,
+        "judge_usage": {
+          "prompt_tokens": 12911,
+          "completion_tokens": 250,
+          "total_tokens": 13161,
+          "cost": 0.0017388,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 12908,
+          "market_cost": 0.0017388,
+          "gateway_cost": 0.0017388
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « scission par absorption est l’opération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse définit directement la scission par absorption comme une opération de transfert de patrimoine."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-07.",
+          "pass": true,
+          "note": "Elle cite [doc-07:art10303:c0]."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Le transfert du patrimoine, l’attribution de titres, la soulte plafonnée à 10 % et les modalités avec ou sans dissolution reprennent l’article 1031-3 fourni."
+        },
+        {
+          "item": "La définition est complète (pas seulement une occurrence du terme).",
+          "pass": true,
+          "note": "La réponse présente les éléments essentiels de la définition légale."
+        }
+      ],
+      "note": "La réponse est fidèle à la définition de l’article cité. Elle omet le cas particulier d’une société en liquidation prévu au paragraphe 2, mais cela ne contredit pas la définition donnée.",
+      "citations": [
+        "doc-07:art10303:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q04",
+      "mode": "agent",
+      "q": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+      "answer": "Le capital social minimum d’une société anonyme (SA) au Luxembourg est de **30 000 €**. [doc-08:s0452:c0]",
+      "sources": [
+        {
+          "id": "doc-05:s0085:c0",
+          "doc": "doc-05",
+          "chars": 3309,
+          "sha256": "e69c5e672b4fbe24eb1e92f0e44f6fd1c8645c45f7a15e6ff0ddf1326e6d2982"
+        },
+        {
+          "id": "doc-05:s0085:c2",
+          "doc": "doc-05",
+          "chars": 2563,
+          "sha256": "eba8ab20c44098b95f8624eff3d7639b5feec9344438907cbf5a96e0997a7f7d"
+        },
+        {
+          "id": "doc-05:s0080:c0",
+          "doc": "doc-05",
+          "chars": 4554,
+          "sha256": "884fddbfcd5aeba4d1beb544fd07e0f8beb40c53f75b509be5fdda0fc6fbea4a"
+        },
+        {
+          "id": "doc-05:s0085:c1",
+          "doc": "doc-05",
+          "chars": 4245,
+          "sha256": "09a18a18efdef8a9dd50b6ee587b1b839f980db6a9ff90dbeea08d2200101fd6"
+        },
+        {
+          "id": "doc-05:s0084:c0",
+          "doc": "doc-05",
+          "chars": 1730,
+          "sha256": "6ce052c19b49f05f50d8574b33fcee5bd82ce78d2c1e46c7509a1ac2db89a307"
+        },
+        {
+          "id": "doc-08:s0452:c0",
+          "doc": "doc-08",
+          "chars": 1801,
+          "sha256": "b05b534dfb0e73990266ef4e0dd06eea365c8d74119a547a35f4a1c6ed85bc73"
+        },
+        {
+          "id": "doc-05:s0080:c2",
+          "doc": "doc-05",
+          "chars": 1484,
+          "sha256": "62e34386373004a3847879b60e09ab06bd5a6c4293fbc237d22baa1ea2f6ecdd"
+        },
+        {
+          "id": "doc-08:s0110:c2",
+          "doc": "doc-08",
+          "chars": 4417,
+          "sha256": "a3dff57a0ef64c8fb6818ed3ccaa6f1af08c7414e3a5592443cbda59bf9b471b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": false
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": true,
+      "metrics": {
+        "errors": 1,
+        "sourceCount": 8,
+        "toolCalls": 2,
+        "usage": {
+          "prompt_tokens": 7282,
+          "completion_tokens": 183,
+          "total_tokens": 7465,
+          "cost": 0.00097935,
+          "cache_creation_input_tokens": 6386,
+          "market_cost": 0.00097935,
+          "gateway_cost": 0.00097935
+        },
+        "latencyMs": 5572,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 8057,
+        "judge_usage": {
+          "prompt_tokens": 5990,
+          "completion_tokens": 213,
+          "total_tokens": 6203,
+          "cost": 0.000855175,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 32,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 5987,
+          "market_cost": 0.000855175,
+          "gateway_cost": 0.000855175
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « 30.000 » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse indique un capital minimum de 30 000 €."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-07 / doc-09.",
+          "pass": true,
+          "note": "Elle cite doc-08:s0452:c0, qui confirme le montant."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Le montant et le fait qu’il s’agit du minimum du capital social d’une SA sont étayés par la source citée."
+        }
+      ],
+      "note": "La réponse est conforme au fait attendu et à la source.",
+      "citations": [
+        "doc-08:s0452:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 50,
+      "completed": 4,
+      "evaluated": 4,
+      "errors": 0,
+      "degraded": 4,
+      "correct": 4,
+      "partial": 0,
+      "wrong": 0,
+      "all_pass": 0,
+      "failed_or_incomplete": 50,
+      "rubric_pass": 15,
+      "rubric_total": 178,
+      "citation_ok": 4,
+      "grounded": 4,
+      "p50_latency_ms": 12844
+    }
+  }
+}

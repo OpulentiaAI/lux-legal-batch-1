@@ -1,6 +1,6 @@
 # Resource tool contracts
 
-The startup JSON and later MCP schemas define the knowledge, secret, attachment, and management actions in `resources.mjs`. The catalog only names `install_personal_plugin`, `manage_personal_plugin`, and `suggest_skill_pr`; it does not capture their callable input schema. This runtime defines these local inputs explicitly rather than claiming a Devin-compatible schema:
+The startup JSON and later MCP schemas define the knowledge, secret, attachment, and management actions in `resources.mjs`. The catalog only names `install_personal_plugin`, `manage_personal_plugin`, and `suggest_skill_pr`; it does not capture their callable input schema. This runtime defines these local inputs explicitly rather than claiming exact compatibility with the historical source schemas:
 
 - `install_personal_plugin({url})` downloads a public HTTPS JSON manifest with `name`, `version`, `kind` (`tool` or `skill`), and `download_url`. It downloads the referenced payload into the E2B sandbox. A tool payload is a Node ESM program stored as `entry.mjs`; a skill payload is Markdown stored as `SKILL.md`. Neither is run on the control-plane host.
 - `manage_personal_plugin({action,id,input?})` supports `list`, `get`, `invoke`, and `remove`. `invoke` runs only a tool payload in E2B as `node entry.mjs <base64-json-input>`; the program writes one JSON value to stdout. A nonzero exit or invalid JSON fails the call. `skill({command:'invoke',skill:<installed plugin name>})` reads an installed skill payload.

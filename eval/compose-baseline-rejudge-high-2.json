@@ -1,0 +1,357 @@
+{
+  "provenance": {
+    "question_hash": "d63a028f9865c332e41b463229c81f94892f15cb25a932257bd36609778803fb",
+    "config": {
+      "experiment_kind": "judge-only-replay",
+      "original_provenance": {
+        "question_hash": "a6e42456701fa0d68ae53248a73eb9a1a164d7f5ac1dcd07fe8baef99d21efa6",
+        "config": {
+          "modes": [
+            "agent"
+          ],
+          "model": "openai/gpt-6-luna",
+          "judgeModel": "openai/gpt-6-luna",
+          "timeoutMs": 12000,
+          "retries": 1,
+          "workspace": "/workspace/lux-legal-batch-1",
+          "git_head": "66c605a50af5d7085d00e133beb606859c0db7c2",
+          "implementation_hash": "71f70fd17d27a425ba7387698c67c27aaa6fd6c4452d68284ecfb5991974db12",
+          "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+          "region": "gcp-us-central1",
+          "chunk_namespace": "lx-corpus-voyage4-1024",
+          "document_namespace": "lx-documents-voyage4-1024",
+          "retrieval_profile": "voyage",
+          "embedding_model": "voyage/voyage-4-large",
+          "embedding_dimensions": 1024,
+          "embedding_query_input_type": "query",
+          "embedding_document_input_type": "document",
+          "rerank_model": "voyage/rerank-2.5"
+        },
+        "concurrency": 10,
+        "runtime": "v24.18.0"
+      },
+      "replay_input_sha256": "013935a2040e7f22cb825814b2a248cde121ba0a8a842b8ea6debd38c72cc59f",
+      "implementation_hash": "3dc62ee13737ece55b0154851df17e3933838070ec6a5a02a00aed98c40c6e78",
+      "judgeModel": "openai/gpt-6-luna",
+      "judge_policy": "evidence-v3",
+      "timeoutMs": 60000,
+      "retries": 1,
+      "judge_reasoning_effort": "high",
+      "judge_max_tokens": 4000,
+      "judge_prompt_sha256": "257355869dcf4b5c7d2d00f2d4b0acd5d37d73cc99b29999786861b257574108"
+    },
+    "concurrency": 2,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "La loi reconnaît comme sociétés commerciales dotées de la personnalité juridique :\n\n- la société en nom collectif ;\n- la société en commandite simple ;\n- la société anonyme et la société par actions simplifiée ;\n- la société en commandite par actions ;\n- la société à responsabilité limitée et la société à responsabilité limitée simplifiée ;\n- la société coopérative ;\n- la société européenne (SE). [doc-06:art1002:c0]\n\nElle prévoit également des sociétés commerciales momentanées, en participation et en commandite spéciale, qui n’ont pas de personnalité juridique distincte. [doc-06:art1002:c0]",
+      "sources": [
+        {
+          "id": "doc-08:s0027:c1",
+          "doc": "doc-08",
+          "chars": 3695,
+          "sha256": "eb64bb96f31b71d763a7a9fa312bd67d0c2188bc05e739475f265fe8327266a7"
+        },
+        {
+          "id": "doc-07:art1002:c0",
+          "doc": "doc-07",
+          "chars": 1830,
+          "sha256": "eb2714ee865dee23607116f4d3a1e04d4bb47d814f1116c75260321947531a27"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        },
+        {
+          "id": "doc-09:s0587:c0",
+          "doc": "doc-09",
+          "chars": 112,
+          "sha256": "b67d1cf37eb01c175ce25e9e56a484a9633d2543239a947341081f3295b5d370"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "doc": "doc-06",
+          "chars": 1791,
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-07:s0010:c0",
+          "doc": "doc-07",
+          "chars": 124,
+          "sha256": "84252ba49c0b41a0a1bcf3b8e900174a2e2eecb7510f857e3da7ba7e781e3f5c"
+        },
+        {
+          "id": "doc-08:s0027:c3",
+          "doc": "doc-08",
+          "chars": 4478,
+          "sha256": "a4d3694228676678b9994765d255670adfd1a0d0acb5f3eb60230a286218a59e"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "doc": "doc-07",
+          "chars": 727,
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 8117,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 7042,
+        "judge_usage": {
+          "prompt_tokens": 3961,
+          "completion_tokens": 987,
+          "total_tokens": 4948,
+          "cost": 0.00098855,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 722,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 3958,
+          "market_cost": 0.00098855,
+          "gateway_cost": 0.00098855
+        }
+      },
+      "verdict": "partial",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": false,
+          "note": "Elle énumère les formes de sociétés visées à l’article 1002, mais ne traite pas du critère de l’objet constitué d’actes de commerce."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": true,
+          "note": "Elle cite doc-06:art1002:c0."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les formes sociales et l’absence de personnalité juridique distincte pour les sociétés mentionnées en complément sont étayées par l’article 1002."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": false,
+          "note": "La règle de l’article 1001 — les sociétés commerciales sont celles ayant pour objet des actes de commerce — n’est pas paraphrasée."
+        }
+      ],
+      "note": "La réponse fournit des éléments exacts sur les formes sociales, mais omet le critère des actes de commerce attendu.",
+      "citations": [
+        "doc-06:art1002:c0",
+        "doc-06:art1002:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 2
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote des actionnaires en assemblée générale. En principe, ce vote est consultatif, mais les statuts peuvent le rendre contraignant ; la rémunération doit respecter la politique applicable. [doc-06:s0314:c0]\n\nLa politique doit soutenir la stratégie et la pérennité à long terme, décrire les composantes et critères de rémunération, le processus de décision ainsi que la prise en compte des conditions des salariés. Elle est revotée lors de toute modification importante et au moins tous les quatre ans. [doc-06:s0314:c1]\n\nUne dérogation temporaire n’est permise que dans des circonstances exceptionnelles prévues par la politique. Après le vote, la politique et le résultat sont publiés sur le site de la société. [doc-07:s0578:c0] [doc-06:s0314:c1]",
+      "sources": [
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:s0258:c0",
+          "doc": "doc-06",
+          "chars": 156,
+          "sha256": "85b62bf30c7214d14af026bda4e95930daf85ecd9a059c983be8f81d91772053"
+        },
+        {
+          "id": "doc-07:s0707:c0",
+          "doc": "doc-07",
+          "chars": 234,
+          "sha256": "898048eb04f8e91949d88b6846c5f2b2baa6ebfe68e39c7e622fc90ab955708b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 9623,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 5112,
+        "judge_usage": {
+          "prompt_tokens": 5007,
+          "completion_tokens": 685,
+          "total_tokens": 5692,
+          "cost": 0.0009683,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 424,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 5004,
+          "market_cost": 0.0009683,
+          "gateway_cost": 0.0009683
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "Elle résume l’établissement, le contenu, le vote et la publication de la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite doc-06:s0314:c0 et doc-06:s0314:c1."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les affirmations sont étayées par les dispositions citées; les détails omis ne rendent pas le résumé inexact."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "Le vote, les conditions de dérogation, le contenu général et la périodicité de quatre ans sont fidèlement paraphrasés."
+        }
+      ],
+      "note": "La réponse restitue fidèlement les principales règles de l’article 7bis et s’appuie sur des citations pertinentes.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c1",
+        "doc-07:s0578:c0",
+        "doc-06:s0314:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 2,
+      "completed": 2,
+      "evaluated": 2,
+      "errors": 0,
+      "degraded": 0,
+      "correct": 1,
+      "partial": 1,
+      "wrong": 0,
+      "all_pass": 1,
+      "failed_or_incomplete": 1,
+      "rubric_pass": 6,
+      "rubric_total": 8,
+      "citation_ok": 2,
+      "grounded": 2,
+      "p50_latency_ms": 7042
+    }
+  }
+}

@@ -22,7 +22,21 @@
     "devin_generate_wiki": "generate_wiki",
     "devin_list_available_repos": "list_available_repos",
     "devin_read_wiki_contents": "read_wiki_contents",
-    "devin_read_wiki_structure": "read_wiki_structure"
+    "devin_read_wiki_structure": "read_wiki_structure",
+    "devin_automation_manage": "opulent_automation_manage",
+    "devin_billing_tag_manage": "opulent_billing_tag_manage",
+    "devin_code_scan_manage": "opulent_code_scan_manage",
+    "devin_knowledge_manage": "opulent_knowledge_manage",
+    "devin_mcp": "opulent_mcp",
+    "devin_mcp_server_manage": "opulent_mcp_server_manage",
+    "devin_oncall_manage": "opulent_oncall_manage",
+    "devin_playbook_manage": "opulent_playbook_manage",
+    "devin_review_manage": "opulent_review_manage",
+    "devin_schedule_manage": "opulent_schedule_manage",
+    "devin_session_create": "opulent_session_create",
+    "devin_session_events": "opulent_session_events",
+    "devin_session_interact": "opulent_session_interact",
+    "devin_session_search": "opulent_session_search"
   },
   "tools": {
     "MultiEdit": {
@@ -330,9 +344,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_automation_manage": {
-      "name": "devin_automation_manage",
-      "description": "devin automation manage",
+    "opulent_automation_manage": {
+      "name": "opulent_automation_manage",
+      "description": "opulent automation manage",
       "inputSchema": {
         "$defs": {
           "AutomationCodeScanRepoSpec": {
@@ -624,13 +638,13 @@
           },
           "AutomationMessageSessionActionSpec": {
             "additionalProperties": true,
-            "description": "Messages an existing Devin session per triggering event.",
+            "description": "Messages an existing Opulent session per triggering event.",
             "properties": {
               "type": {
                 "const": "message_session",
                 "type": "string"
               },
-              "target_devin_id": {
+              "target_opulent_id": {
                 "anyOf": [
                   {
                     "type": "string"
@@ -732,7 +746,7 @@
                 "type": "string"
               },
               "source": {
-                "description": "The script source. Write it to a file and pass 'file:///absolute/path' (Devin's client resolves file URIs before the call); other MCP clients must pass the text inline.",
+                "description": "The script source. Write it to a file and pass 'file:///absolute/path' (Opulent's client resolves file URIs before the call); other MCP clients must pass the text inline.",
                 "type": "string"
               },
               "timeout_seconds": {
@@ -834,7 +848,7 @@
                   }
                 ],
                 "default": null,
-                "description": "The existing code scan (scan-...) to extend; must belong to the org and have a completed run, otherwise each fire fails. Find it with devin_code_scan_manage action='list_scans'. Required when creating or adding this action; on a merge-semantics update, omit it to keep the stored value (null is invalid)."
+                "description": "The existing code scan (scan-...) to extend; must belong to the org and have a completed run, otherwise each fire fails. Find it with opulent_code_scan_manage action='list_scans'. Required when creating or adding this action; on a merge-semantics update, omit it to keep the stored value (null is invalid)."
               }
             },
             "required": [
@@ -907,7 +921,7 @@
           "AutomationSessionSettingsSpec": {
             "description": "Settings applied to every session the automation spawns.",
             "properties": {
-              "devin_mode": {
+              "opulent_mode": {
                 "anyOf": [
                   {
                     "enum": [
@@ -924,7 +938,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Devin agent mode for spawned sessions; set it here, not inside a start_session action. null = org default."
+                "description": "Opulent agent mode for spawned sessions; set it here, not inside a start_session action. null = org default."
               },
               "net_policy": {
                 "anyOf": [
@@ -1038,7 +1052,7 @@
           },
           "AutomationStartCodeScanActionSpec": {
             "additionalProperties": true,
-            "description": "Starts a fresh code scan (no Devin session) each time the automation\nfires, e.g. a weekly security scan of a repo. Scans can be very expensive:\nonly create one when the user explicitly asked for a recurring or\nevent-driven scan. Requires code scanning to be enabled for the org. Use\nscan_new_commits instead to keep an existing scan up to date.",
+            "description": "Starts a fresh code scan (no Opulent session) each time the automation\nfires, e.g. a weekly security scan of a repo. Scans can be very expensive:\nonly create one when the user explicitly asked for a recurring or\nevent-driven scan. Requires code scanning to be enabled for the org. Use\nscan_new_commits instead to keep an existing scan up to date.",
             "properties": {
               "type": {
                 "const": "start_code_scan",
@@ -1109,7 +1123,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Scan profile (csprof-...) defining the scan's objective; find one with devin_code_scan_manage action='list_profiles'. Required for every non-security scan_type; optional for 'security'."
+                "description": "Scan profile (csprof-...) defining the scan's objective; find one with opulent_code_scan_manage action='list_profiles'. Required for every non-security scan_type; optional for 'security'."
               },
               "scan_type": {
                 "anyOf": [
@@ -1159,7 +1173,7 @@
           },
           "AutomationStartSessionActionSpec": {
             "additionalProperties": true,
-            "description": "Starts a new Devin session per triggering event.",
+            "description": "Starts a new Opulent session per triggering event.",
             "properties": {
               "type": {
                 "const": "start_session",
@@ -1207,7 +1221,7 @@
               },
               "slack_channels": {
                 "default": [],
-                "description": "Channels the session's Slack tools may post to: [team_id, channel_id] pairs of channels the Devin bot has joined, or the single sentinel entry {'team_id': '*', 'channel_id': '*'} granting every public channel in the org's connected workspaces. The sentinel can't be mixed with explicit channels and is rejected when the automation watches a private channel. Explicit entries may mix public and private channels, but this session cannot see private channels to find or verify their IDs \u2014 point the user to the web UI for those.",
+                "description": "Channels the session's Slack tools may post to: [team_id, channel_id] pairs of channels the Opulent bot has joined, or the single sentinel entry {'team_id': '*', 'channel_id': '*'} granting every public channel in the org's connected workspaces. The sentinel can't be mixed with explicit channels and is rejected when the automation watches a private channel. Explicit entries may mix public and private channels, but this session cannot see private channels to find or verify their IDs \u2014 point the user to the web UI for those.",
                 "items": {
                   "$ref": "#/$defs/AutomationSlackChannelSpec"
                 },
@@ -1416,7 +1430,7 @@
               }
             ],
             "default": null,
-            "description": "What the automation does. Required for 'create'; replaces all existing actions when passed to 'update'. Most automations use a single start_session action; scheduled/event-driven code scans use start_code_scan (fresh scan) or scan_new_commits (re-scan an existing scan) instead of a session. Long prompts render as BEGIN/END PROMPT <label> blocks: extract only the text between those two lines (excluding both) into a local file, edit it, and update with the full actions array and 'prompt': 'file:///absolute/path' (Devin's client resolves file URIs; other MCP clients must pass the text inline). Never retype a long prompt; extraction may add one trailing newline."
+            "description": "What the automation does. Required for 'create'; replaces all existing actions when passed to 'update'. Most automations use a single start_session action; scheduled/event-driven code scans use start_code_scan (fresh scan) or scan_new_commits (re-scan an existing scan) instead of a session. Long prompts render as BEGIN/END PROMPT <label> blocks: extract only the text between those two lines (excluding both) into a local file, edit it, and update with the full actions array and 'prompt': 'file:///absolute/path' (Opulent's client resolves file URIs; other MCP clients must pass the text inline). Never retype a long prompt; extraction may add one trailing newline."
           },
           "enabled": {
             "anyOf": [
@@ -1559,7 +1573,7 @@
               }
             ],
             "default": null,
-            "description": "For 'create'/'update' (and their validate_ dry-runs): the automation's Preflight check \u2014 a script run before the actions that decides per trigger event whether to proceed, skip, or fan out. For 'preflight_test': the script to run (need not be saved). Pass the source as 'file:///absolute/path' (Devin's client resolves file URIs). On update the whole group replaces the stored one; omitted keeps it. Only when action='schemas' reports the Preflight check available."
+            "description": "For 'create'/'update' (and their validate_ dry-runs): the automation's Preflight check \u2014 a script run before the actions that decides per trigger event whether to proceed, skip, or fan out. For 'preflight_test': the script to run (need not be saved). Pass the source as 'file:///absolute/path' (Opulent's client resolves file URIs). On update the whole group replaces the stored one; omitted keeps it. Only when action='schemas' reports the Preflight check available."
           },
           "queued_event_id": {
             "anyOf": [
@@ -1693,9 +1707,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_billing_tag_manage": {
-      "name": "devin_billing_tag_manage",
-      "description": "devin billing tag manage",
+    "opulent_billing_tag_manage": {
+      "name": "opulent_billing_tag_manage",
+      "description": "opulent billing tag manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -1758,7 +1772,7 @@
             "default": null,
             "description": "ID of the organization member to add. Required for 'add_member'. User ids can be found via the organization members listing (they are not email addresses)."
           },
-          "devin_id": {
+          "opulent_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -1768,7 +1782,7 @@
               }
             ],
             "default": null,
-            "description": "ID of the Devin session to assign. Required for 'assign_session'. Assigning replaces the session's current billing tag."
+            "description": "ID of the Opulent session to assign. Required for 'assign_session'. Assigning replaces the session's current billing tag."
           },
           "first": {
             "anyOf": [
@@ -1802,9 +1816,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_code_scan_manage": {
-      "name": "devin_code_scan_manage",
-      "description": "devin code scan manage",
+    "opulent_code_scan_manage": {
+      "name": "opulent_code_scan_manage",
+      "description": "opulent code scan manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -2194,9 +2208,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_knowledge_manage": {
-      "name": "devin_knowledge_manage",
-      "description": "devin knowledge manage",
+    "opulent_knowledge_manage": {
+      "name": "opulent_knowledge_manage",
+      "description": "opulent knowledge manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -2429,14 +2443,14 @@
       },
       "schemaSource": "captured"
     },
-    "devin_mcp": {
-      "name": "devin_mcp",
-      "description": "Tool for interacting with the Devin MCP server: codebase exploration (wiki docs, semantic search), Devin session management (propose, search, interact with, wait on, inspect), playbooks, knowledge notes, schedules, event-driven automations, and the org's integration/MCP status. Commands: 'list_tools' (discover available tools and their parameters), 'call_tool' (execute a tool with JSON arguments).",
+    "opulent_mcp": {
+      "name": "opulent_mcp",
+      "description": "Tool for interacting with the Opulent MCP server: codebase exploration (wiki docs, semantic search), Opulent session management (propose, search, interact with, wait on, inspect), playbooks, knowledge notes, schedules, event-driven automations, and the org's integration/MCP status. Commands: 'list_tools' (discover available tools and their parameters), 'call_tool' (execute a tool with JSON arguments).",
       "inputSchema": {
         "type": "object",
         "properties": {
           "command": {
-            "description": "The Devin MCP operation to perform.",
+            "description": "The Opulent MCP operation to perform.",
             "type": "string",
             "enum": [
               "list_tools",
@@ -2458,9 +2472,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_mcp_server_manage": {
-      "name": "devin_mcp_server_manage",
-      "description": "devin mcp server manage",
+    "opulent_mcp_server_manage": {
+      "name": "opulent_mcp_server_manage",
+      "description": "opulent mcp server manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -2655,9 +2669,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_oncall_manage": {
-      "name": "devin_oncall_manage",
-      "description": "devin oncall manage",
+    "opulent_oncall_manage": {
+      "name": "opulent_oncall_manage",
+      "description": "opulent oncall manage",
       "inputSchema": {
         "$defs": {
           "AutomationConditionGroupSpec": {
@@ -2991,7 +3005,7 @@
           "OncallSessionSettingsSpec": {
             "description": "Settings applied to the sessions a responder / incident spawns.",
             "properties": {
-              "devin_mode": {
+              "opulent_mode": {
                 "anyOf": [
                   {
                     "enum": [
@@ -3007,7 +3021,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Mode for spawned sessions. Omit on create to get the server default: the best of ultra > fusion > normal the organization can use (schemas.default_devin_mode). Ultra is recommended for Oncall investigation."
+                "description": "Mode for spawned sessions. Omit on create to get the server default: the best of ultra > fusion > normal the organization can use (schemas.default_opulent_mode). Ultra is recommended for Oncall investigation."
               },
               "net_policy": {
                 "anyOf": [
@@ -3359,7 +3373,7 @@
               }
             ],
             "default": null,
-            "description": "Responder / incident_settings: devin_mode (omit on create for the server default \u2014 the best of ultra > fusion > normal the org can use; Ultra is recommended for Oncall) and net_policy (omit on create for the deployment default Git Manager-only policy from 'schemas'; explicit null = unrestricted, only when the user asks). On update, preserve unless asked."
+            "description": "Responder / incident_settings: opulent_mode (omit on create for the server default \u2014 the best of ultra > fusion > normal the org can use; Ultra is recommended for Oncall) and net_policy (omit on create for the deployment default Git Manager-only policy from 'schemas'; explicit null = unrestricted, only when the user asks). On update, preserve unless asked."
           },
           "session": {
             "anyOf": [
@@ -3407,7 +3421,7 @@
               }
             ],
             "default": null,
-            "description": "incident_settings: whether Devin auto-joins new public channels matching the prefix (default true \u2014 keep it on unless the user wants to invite Devin manually)."
+            "description": "incident_settings: whether Opulent auto-joins new public channels matching the prefix (default true \u2014 keep it on unless the user wants to invite Opulent manually)."
           },
           "slack_team_id": {
             "anyOf": [
@@ -3550,9 +3564,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_playbook_manage": {
-      "name": "devin_playbook_manage",
-      "description": "devin playbook manage",
+    "opulent_playbook_manage": {
+      "name": "opulent_playbook_manage",
+      "description": "opulent playbook manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -3671,13 +3685,13 @@
       },
       "schemaSource": "captured"
     },
-    "devin_review_manage": {
-      "name": "devin_review_manage",
-      "description": "devin review manage",
+    "opulent_review_manage": {
+      "name": "opulent_review_manage",
+      "description": "opulent review manage",
       "inputSchema": {
         "properties": {
           "action": {
-            "description": "'trigger' starts a Devin Review for the PR; 'get_status' fetches the latest review status for the PR; 'get_findings' fetches the findings of a completed review. By default, only the severities the org delivers to sessions are returned; the rest remain available on the Devin Review page and can be fetched by passing the severity explicitly.",
+            "description": "'trigger' starts a Opulent Review for the PR; 'get_status' fetches the latest review status for the PR; 'get_findings' fetches the findings of a completed review. By default, only the severities the org delivers to sessions are returned; the rest remain available on the Opulent Review page and can be fetched by passing the severity explicitly.",
             "enum": [
               "trigger",
               "get_status",
@@ -3711,7 +3725,7 @@
               }
             ],
             "default": null,
-            "description": "get_findings only: filter findings to one severity ('bug', 'security', 'flag', or 'info'). Bug means a concrete correctness, regression, or repo-rule violation; security means a vulnerability or hardening gap; flag means something needing further investigation that may or may not be a bug; info means an informational note. Omit to return only the severities the org delivers to sessions; the remaining severities stay available on the Devin Review page and can be fetched by passing the severity explicitly."
+            "description": "get_findings only: filter findings to one severity ('bug', 'security', 'flag', or 'info'). Bug means a concrete correctness, regression, or repo-rule violation; security means a vulnerability or hardening gap; flag means something needing further investigation that may or may not be a bug; info means an informational note. Omit to return only the severities the org delivers to sessions; the remaining severities stay available on the Opulent Review page and can be fetched by passing the severity explicitly."
           }
         },
         "required": [
@@ -3722,9 +3736,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_schedule_manage": {
-      "name": "devin_schedule_manage",
-      "description": "devin schedule manage",
+    "opulent_schedule_manage": {
+      "name": "opulent_schedule_manage",
+      "description": "opulent schedule manage",
       "inputSchema": {
         "properties": {
           "action": {
@@ -3771,7 +3785,7 @@
               }
             ],
             "default": null,
-            "description": "The prompt Devin will run on each trigger. Required for 'create'."
+            "description": "The prompt Opulent will run on each trigger. Required for 'create'."
           },
           "playbook_id": {
             "anyOf": [
@@ -3858,7 +3872,7 @@
             "anyOf": [
               {
                 "enum": [
-                  "devin",
+                  "opulent",
                   "data_analyst",
                   "advanced"
                 ],
@@ -3869,7 +3883,7 @@
               }
             ],
             "default": null,
-            "description": "Which agent to run: 'devin', 'data_analyst', or 'advanced'."
+            "description": "Which agent to run: 'opulent', 'data_analyst', or 'advanced'."
           },
           "bypass_approval": {
             "anyOf": [
@@ -3883,7 +3897,7 @@
             "default": null,
             "description": "Skip MCP tool permission checks for created sessions."
           },
-          "target_devin_id": {
+          "target_opulent_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -3893,7 +3907,7 @@
               }
             ],
             "default": null,
-            "description": "Devin session ID to send the prompt to instead of starting a new session. Only valid for one_time schedules. Use this to schedule a message to be sent to an existing session at a future time (e.g. to wake yourself up later)."
+            "description": "Opulent session ID to send the prompt to instead of starting a new session. Only valid for one_time schedules. Use this to schedule a message to be sent to an existing session at a future time (e.g. to wake yourself up later)."
           },
           "platform": {
             "anyOf": [
@@ -3939,13 +3953,13 @@
       },
       "schemaSource": "captured"
     },
-    "devin_session_create": {
-      "name": "devin_session_create",
-      "description": "devin session create",
+    "opulent_session_create": {
+      "name": "opulent_session_create",
+      "description": "opulent session create",
       "inputSchema": {
         "$defs": {
           "SessionSpec": {
-            "description": "A single session to create. Only 'prompt' is required; the per-session\nfields override the batch-level arguments for that session. Agent mode\n(`devin_mode`) is batch-level only and cannot be set per session.",
+            "description": "A single session to create. Only 'prompt' is required; the per-session\nfields override the batch-level arguments for that session. Agent mode\n(`opulent_mode`) is batch-level only and cannot be set per session.",
             "properties": {
               "prompt": {
                 "description": "Initial prompt for the session.",
@@ -4057,7 +4071,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Devin Boards ticket ids this session is started to work on (from devin_ticket_manage). Per-session override of the batch-level board_ticket_ids arg. The child session claims the tickets itself; the caller must not claim them."
+                "description": "Opulent Boards ticket ids this session is started to work on (from opulent_ticket_manage). Per-session override of the batch-level board_ticket_ids arg. The child session claims the tickets itself; the caller must not claim them."
               },
               "additional_args": {
                 "anyOf": [
@@ -4183,7 +4197,7 @@
               }
             ],
             "default": null,
-            "description": "JSON Schema (Draft 7) applied to ALL sessions that don't specify their own. Only pass this when you need a task-specific result from the child; without it no structured output is requested. The child reports output conforming to the schema via provide_structured_output; poll it via devin_session_interact(action='get') \u2014 the structured_output field is populated without interrupting the child."
+            "description": "JSON Schema (Draft 7) applied to ALL sessions that don't specify their own. Only pass this when you need a task-specific result from the child; without it no structured output is requested. The child reports output conforming to the schema via provide_structured_output; poll it via opulent_session_interact(action='get') \u2014 the structured_output field is populated without interrupting the child."
           },
           "repos": {
             "anyOf": [
@@ -4240,9 +4254,9 @@
               }
             ],
             "default": null,
-            "description": "Devin Boards ticket ids (from devin_ticket_manage) that ALL created sessions are dispatched to work on. Each session spec can also include a 'board_ticket_ids' key to override this value for that session. The server validates the ids against the org, persists them on the child and tags it 'board'; the CHILD claims the tickets itself on its first turn, so do not claim them before dispatching."
+            "description": "Opulent Boards ticket ids (from opulent_ticket_manage) that ALL created sessions are dispatched to work on. Each session spec can also include a 'board_ticket_ids' key to override this value for that session. The server validates the ids against the org, persists them on the child and tags it 'board'; the CHILD claims the tickets itself on its first turn, so do not claim them before dispatching."
           },
-          "devin_mode": {
+          "opulent_mode": {
             "anyOf": [
               {
                 "type": "string"
@@ -4252,7 +4266,7 @@
               }
             ],
             "default": null,
-            "description": "Devin agent mode for ALL created sessions. One of 'normal' (default Agent mode), 'fast' (Fast mode, Opus-backed), 'lite' (Devin Lite \u2014 cheaper, smaller-scope sessions), 'ultra' (Devin Ultra \u2014 smartest, most capable model), or 'fusion' (Fusion \u2014 multi-model routing). Batch-level only \u2014 a 'devin_mode' key inside a session spec is rejected with guidance to move it to this batch-level field. When omitted, the org/user default is used. 'fast', 'lite', 'ultra', and 'fusion' are gated by the same feature flags / enterprise agent-preview restrictions as the web app \u2014 the server rejects the call with a 400 if the mode is not available for the org."
+            "description": "Opulent agent mode for ALL created sessions. One of 'normal' (default Agent mode), 'fast' (Fast mode, Opus-backed), 'lite' (Opulent Lite \u2014 cheaper, smaller-scope sessions), 'ultra' (Opulent Ultra \u2014 smartest, most capable model), or 'fusion' (Fusion \u2014 multi-model routing). Batch-level only \u2014 a 'opulent_mode' key inside a session spec is rejected with guidance to move it to this batch-level field. When omitted, the org/user default is used. 'fast', 'lite', 'ultra', and 'fusion' are gated by the same feature flags / enterprise agent-preview restrictions as the web app \u2014 the server rejects the call with a 400 if the mode is not available for the org."
           }
         },
         "required": [
@@ -4262,9 +4276,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_session_events": {
-      "name": "devin_session_events",
-      "description": "devin session events",
+    "opulent_session_events": {
+      "name": "opulent_session_events",
+      "description": "opulent session events",
       "inputSchema": {
         "properties": {
           "action": {
@@ -4277,7 +4291,7 @@
             "type": "string"
           },
           "session_id": {
-            "description": "Target Devin session ID (must include 'devin-' prefix).",
+            "description": "Target Opulent session ID (must include 'opulent-' prefix).",
             "type": "string"
           },
           "event_types": {
@@ -4446,9 +4460,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_session_interact": {
-      "name": "devin_session_interact",
-      "description": "devin session interact",
+    "opulent_session_interact": {
+      "name": "opulent_session_interact",
+      "description": "opulent session interact",
       "inputSchema": {
         "properties": {
           "action": {
@@ -4467,7 +4481,7 @@
             "type": "string"
           },
           "session_id": {
-            "description": "Target Devin session ID, e.g. 'devin-abc123...' (the 'devin-' prefix is optional \u2014 bare IDs, such as the ones in child_session_ids, also work).",
+            "description": "Target Opulent session ID, e.g. 'opulent-abc123...' (the 'opulent-' prefix is optional \u2014 bare IDs, such as the ones in child_session_ids, also work).",
             "type": "string"
           },
           "message": {
@@ -4562,9 +4576,9 @@
       },
       "schemaSource": "captured"
     },
-    "devin_session_search": {
-      "name": "devin_session_search",
-      "description": "devin session search",
+    "opulent_session_search": {
+      "name": "opulent_session_search",
+      "description": "opulent session search",
       "inputSchema": {
         "properties": {
           "session_ids": {
@@ -4580,7 +4594,7 @@
               }
             ],
             "default": null,
-            "description": "Filter to specific session IDs (must include the 'devin-' prefix, e.g. 'devin-abc123...')."
+            "description": "Filter to specific session IDs (must include the 'opulent-' prefix, e.g. 'opulent-abc123...')."
           },
           "tags": {
             "anyOf": [
@@ -4709,7 +4723,7 @@
               }
             ],
             "default": null,
-            "description": "Filter to child sessions spawned by this parent session (accepts the 'devin-' prefix)."
+            "description": "Filter to child sessions spawned by this parent session (accepts the 'opulent-' prefix)."
           },
           "first": {
             "anyOf": [
@@ -4742,16 +4756,16 @@
     },
     "download_attachment": {
       "name": "download_attachment",
-      "description": "Download a Devin attachment URL to the box and get its local file path. Attachment URLs require webapp authentication, so fetching them with shell commands or browser tools will fail; this tool downloads them through Devin's storage layer instead.",
+      "description": "Download a Opulent attachment URL to the box and get its local file path. Attachment URLs require webapp authentication, so fetching them with shell commands or browser tools will fail; this tool downloads them through Opulent's storage layer instead.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "url": {
-            "description": "The Devin attachment URL to download. The file will be downloaded to the box and its local path returned.",
+            "description": "The Opulent attachment URL to download. The file will be downloaded to the box and its local path returned.",
             "type": "string"
           },
           "urls": {
-            "description": "A list of Devin attachment URLs to download. Use this instead of url when downloading multiple attachments at once.",
+            "description": "A list of Opulent attachment URLs to download. Use this instead of url when downloading multiple attachments at once.",
             "type": "array",
             "items": {
               "type": "string"
@@ -5749,7 +5763,7 @@
     },
     "message_user": {
       "name": "message_user",
-      "description": "Send a message to the user. Optionally attach files by providing a list of absolute file paths or Devin attachment URLs. Use this tool to send important updates to the user, respond to user questions, ask for clarification from the user, or report completion of a task. This is the only way to send messages to the user; the user will NOT see your normal messages unless you use this tool. You must u",
+      "description": "Send a message to the user. Optionally attach files by providing a list of absolute file paths or Opulent attachment URLs. Use this tool to send important updates to the user, respond to user questions, ask for clarification from the user, or report completion of a task. This is the only way to send messages to the user; the user will NOT see your normal messages unless you use this tool. You must u",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5762,7 +5776,7 @@
             "type": "boolean"
           },
           "attachments": {
-            "description": "Files to deliver to the user, as a list of absolute file paths (e.g. `/path/to/file.pdf`) or Devin attachment URLs (e.g. `https://<webapp-host>/attachments/abc123/screenshot.png`). Always set this field explicitly: list every file your message references or promises (the user cannot access paths on your machine), or set it to an empty list [] when there is nothing to attach.",
+            "description": "Files to deliver to the user, as a list of absolute file paths (e.g. `/path/to/file.pdf`) or Opulent attachment URLs (e.g. `https://<webapp-host>/attachments/abc123/screenshot.png`). Always set this field explicitly: list every file your message references or promises (the user cannot access paths on your machine), or set it to an empty list [] when there is nothing to attach.",
             "type": "array",
             "items": {
               "type": "string"
@@ -6056,7 +6070,7 @@
     },
     "report_blocker": {
       "name": "report_blocker",
-      "description": "Report operational blockers that impede Devin's ability to perform. This tool is ONLY for issues that affect Devin's ability to operate \u2014 NOT for bugs or issues you found in the user's code during your task.",
+      "description": "Report operational blockers that impede Opulent's ability to perform. This tool is ONLY for issues that affect Opulent's ability to operate \u2014 NOT for bugs or issues you found in the user's code during your task.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6134,7 +6148,7 @@
             ]
           },
           "should_save": {
-            "description": "If true, the secret will be saved and available for future Devin sessions (not just this session).",
+            "description": "If true, the secret will be saved and available for future Opulent sessions (not just this session).",
             "type": "boolean"
           },
           "save_scope": {
@@ -6167,7 +6181,7 @@
     },
     "run_workflow": {
       "name": "run_workflow",
-      "description": "Run a dynamic workflow: a deterministic Python script that orchestrates multiple child Devin sessions.",
+      "description": "Run a dynamic workflow: a deterministic Python script that orchestrates multiple child Opulent sessions.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6295,7 +6309,7 @@
     },
     "skill": {
       "name": "skill",
-      "description": "Invoke or discover skills. Modes: 'invoke' (default) activates a skill by name, 'list' discovers skills registered in a project at the given path (scans skill directories like .devin/skills/ at the project root, does not recurse into subdirectories), and 'search' recursively scans for model-invocable skills under a given path and filters them by optional keywords. Skills provide context-specific g",
+      "description": "Invoke or discover skills. Modes: 'invoke' (default) activates a skill by name, 'list' discovers skills registered in a project at the given path (scans skill directories like .agents/skills/ at the project root, does not recurse into subdirectories), and 'search' recursively scans for model-invocable skills under a given path and filters them by optional keywords. Skills provide context-specific g",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6313,7 +6327,7 @@
             "type": "string"
           },
           "path": {
-            "description": "Project path to discover skills in (required for 'list' and 'search' commands). Scans skill directories (e.g. .devin/skills/) at the project root; list does not recurse into subdirectories, while search does.",
+            "description": "Project path to discover skills in (required for 'list' and 'search' commands). Scans skill directories (e.g. .agents/skills/) at the project root; list does not recurse into subdirectories, while search does.",
             "type": "string"
           },
           "keywords": {
@@ -6383,7 +6397,7 @@
     },
     "suggest_save_secret": {
       "name": "suggest_save_secret",
-      "description": "Suggest to the user that they save a secret so it persists for future Devin sessions. This emits a prompt to the frontend where the user can choose to save the secret.",
+      "description": "Suggest to the user that they save a secret so it persists for future Opulent sessions. This emits a prompt to the frontend where the user can choose to save the secret.",
       "inputSchema": {
         "type": "object",
         "properties": {

@@ -5,20 +5,30 @@
  *
  * Env (read at call time, never stored):
  *   TURBOPUFFER_API_KEY, TURBOPUFFER_REGION  — vector/FTS index
- *   AI_GATEWAY_API_KEY                       — query embeddings (text-embedding-3-large)
- *   JINA_API_KEY                             — rerank
- *   LX_TP_NAMESPACE                          — chunk namespace (default lx-corpus)
- *   LX_TP_DOC_NAMESPACE                      — doc-level namespace (default lx-documents)
+ *   AI_GATEWAY_API_KEY                       — embeddings; Voyage rerank when selected
+ *   JINA_API_KEY                             — legacy rerank
+ *   LX_RETRIEVAL_PROFILE                     — unset (legacy) or voyage
+ *   LX_TP_NAMESPACE / LX_TP_DOC_NAMESPACE    — legacy namespace overrides only
  */
 
 const TP_API = 'https://{region}.turbopuffer.com'
 const JINA_API = 'https://api.jina.ai/v1'
 const GATEWAY_API = 'https://ai-gateway.vercel.sh/v1'
-export const EMBED_MODEL = 'openai/text-embedding-3-large'
-export const RERANK_MODEL = 'jina-reranker-v2-base-multilingual'
-export const DIMENSIONS = 3072
-export const CHUNK_NS = process.env.LX_TP_NAMESPACE ?? 'lx-corpus'
-export const DOC_NS = process.env.LX_TP_DOC_NAMESPACE ?? 'lx-documents'
+const profile = process.env.LX_RETRIEVAL_PROFILE
+if (profile !== undefined && profile !== '' && profile !== 'voyage') {
+  throw new Error(`unsupported LX_RETRIEVAL_PROFILE (expected voyage or unset)`)
+}
+export const RETRIEVAL_PROFILE = profile === 'voyage' ? 'voyage' : 'legacy'
+export const EMBED_MODEL = RETRIEVAL_PROFILE === 'voyage' ? 'voyage/voyage-4-large' : 'openai/text-embedding-3-large'
+export const RERANK_MODEL = RETRIEVAL_PROFILE === 'voyage' ? 'voyage/rerank-2.5' : 'jina-reranker-v2-base-multilingual'
+export const DIMENSIONS = RETRIEVAL_PROFILE === 'voyage' ? 1024 : 3072
+export const EMBED_QUERY_INPUT_TYPE = RETRIEVAL_PROFILE === 'voyage' ? 'query' : null
+export const EMBED_DOCUMENT_INPUT_TYPE = RETRIEVAL_PROFILE === 'voyage' ? 'document' : null
+export const CHUNK_NS = RETRIEVAL_PROFILE === 'voyage' ? 'lx-corpus-voyage4-1024' : process.env.LX_TP_NAMESPACE ?? 'lx-corpus'
+export const DOC_NS = RETRIEVAL_PROFILE === 'voyage' ? 'lx-documents-voyage4-1024' : process.env.LX_TP_DOC_NAMESPACE ?? 'lx-documents'
+export const REQUIRED_ENV = RETRIEVAL_PROFILE === 'voyage'
+  ? ['TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']
+  : ['TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY', 'JINA_API_KEY']
 
 function env(name: string): string {
   const v = process.env[name]
@@ -41,7 +51,7 @@ async function post(url: string, key: string, body: unknown, signal?: AbortSigna
 async function get(url: string, key: string): Promise<unknown> {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } })
   const text = await res.text()
-  if (!res.ok) throw new Error(`GET ${url} -> ${res.status}: ${text.slice(0, 400)}`)
+  if (!res.ok) throw new Error(`turbopuffer GET ${res.status}`)
   return text ? JSON.parse(text) : {}
 }
 
@@ -110,11 +120,13 @@ export async function multiQuery(
   return out.results?.[0]?.rows ?? []
 }
 
-export async function embed(texts: string[], signal?: AbortSignal): Promise<number[][]> {
+export async function embed(texts: string[], signal?: AbortSignal, inputType: 'query' | 'document' = 'query'): Promise<number[][]> {
+  const body: Record<string, unknown> = { model: EMBED_MODEL, dimensions: DIMENSIONS, input: texts }
+  if (RETRIEVAL_PROFILE === 'voyage') body.input_type = inputType === 'query' ? EMBED_QUERY_INPUT_TYPE : EMBED_DOCUMENT_INPUT_TYPE
   const res = await fetch(`${GATEWAY_API}/embeddings`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env('AI_GATEWAY_API_KEY')}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: EMBED_MODEL, dimensions: DIMENSIONS, input: texts }),
+    body: JSON.stringify(body),
     signal,
   })
   const text = await res.text()
@@ -129,14 +141,15 @@ export interface RerankResult {
 }
 
 export async function rerank(query: string, docs: string[], signal?: AbortSignal): Promise<RerankResult[]> {
-  const res = await fetch(`${JINA_API}/rerank`, {
+  const voyage = RETRIEVAL_PROFILE === 'voyage'
+  const res = await fetch(voyage ? 'https://ai-gateway.vercel.sh/v2/rerank' : `${JINA_API}/rerank`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${env('JINA_API_KEY')}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${env(voyage ? 'AI_GATEWAY_API_KEY' : 'JINA_API_KEY')}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: RERANK_MODEL, query, documents: docs }),
     signal,
   })
   const text = await res.text()
-  if (!res.ok) throw new Error(`jina rerank ${res.status}`)
+  if (!res.ok) throw new Error(`${voyage ? 'ai-gateway' : 'jina'} rerank ${res.status}`)
   const out = JSON.parse(text) as { results: RerankResult[] }
   return out.results
 }

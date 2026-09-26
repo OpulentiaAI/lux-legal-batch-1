@@ -7,6 +7,8 @@
     "node": ">=24"
   },
   "scripts": {
+    "eval:agent:luna": "node eval/compose.mjs --mode agent --model openai/gpt-6-luna --judge-model openai/gpt-6-luna",
+    "eval:agent:luna:voyage": "LX_RETRIEVAL_PROFILE=voyage node eval/compose.mjs --mode agent --model openai/gpt-6-luna --judge-model openai/gpt-6-luna",
     "test": "node --test tests/*.test.mjs runtime/tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "runtime": "node runtime/cli.mjs"
