@@ -4,6 +4,20 @@ The harness supports broader tool use than the original legal benchmark. **For f
 
 ## Existing baseline commands
 
+### GPT-6 Luna experiment
+
+Run the agent and judge through AI Gateway using the explicit model ID `openai/gpt-6-luna`:
+
+```sh
+npm run eval:agent:luna -- --output eval/compose-agent-gpt6-luna.json
+```
+
+This command pins both model roles without changing the historical baseline defaults. It uses the existing secure `AI_GATEWAY_API_KEY`, `TURBOPUFFER_API_KEY`, `TURBOPUFFER_REGION` and `JINA_API_KEY` environment variables. Keep outputs separate from the committed historical runs. The runner records both model IDs in provenance; changing the answerer and judge means these results are a new experiment, not an isolated harness improvement. Do not substitute another model if access fails.
+
+The gateway model catalog confirmed this exact ID on September 26, 2026. The initial authenticated inference probe returned HTTP 402 (`insufficient_funds`), so model execution and accuracy remain unverified until gateway funding/access is restored.
+
+### Historical model defaults
+
 ```sh
 node eval/run.mjs --output eval/retrieval-baseline-new.json
 node eval/compose.mjs --mode paired --output eval/compose-paired-new.json
