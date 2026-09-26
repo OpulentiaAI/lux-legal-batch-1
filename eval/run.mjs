@@ -8,8 +8,9 @@ import { SCORING_PROTOCOL, evidenceIndex } from './scoring.mjs'
 import { implementationHash } from './compose.mjs'
 import * as search from '../src/tp/tool-lx-search.ts'
 import { loadChunks, chunkText } from '../src/tp/manifest.ts'
+import { RETRIEVAL_PROFILE, EMBED_MODEL, RERANK_MODEL, DIMENSIONS, CHUNK_NS, DOC_NS, REQUIRED_ENV, EMBED_QUERY_INPUT_TYPE, EMBED_DOCUMENT_INPUT_TYPE } from '../src/tp/client.ts'
 
-const missing = ['AI_GATEWAY_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'JINA_API_KEY'].filter((key) => !process.env[key])
+const missing = REQUIRED_ENV.filter((key) => !process.env[key])
 if (missing.length) throw new Error(`Missing required evaluation environment variables: ${missing.join(', ')}`)
 const WS = process.cwd()
 const args = process.argv.slice(2)
@@ -27,7 +28,9 @@ const gold = JSON.parse(readFileSync(new URL('./gold.json', import.meta.url))).s
 const provenance = { question_hash: createHash('sha256').update(JSON.stringify(gold)).digest('hex'), runtime: process.version,
   scoring_protocol: SCORING_PROTOCOL, git_head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   implementation_hash: implementationHash(WS), region: process.env.TURBOPUFFER_REGION,
-  chunk_namespace: process.env.LX_TP_NAMESPACE ?? 'lx-corpus', document_namespace: process.env.LX_TP_DOC_NAMESPACE ?? 'lx-documents',
+  chunk_namespace: CHUNK_NS, document_namespace: DOC_NS,
+  retrieval_profile: RETRIEVAL_PROFILE, embedding_model: EMBED_MODEL, embedding_dimensions: DIMENSIONS, rerank_model: RERANK_MODEL,
+  embedding_query_input_type: EMBED_QUERY_INPUT_TYPE, embedding_document_input_type: EMBED_DOCUMENT_INPUT_TYPE,
   modes: [
     { name: 'hybrid+rerank', args: { mode: 'hybrid', rerank: true } },
     { name: 'hybrid-rrf', args: { mode: 'hybrid', rerank: false } },

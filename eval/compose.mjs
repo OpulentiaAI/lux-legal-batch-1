@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { SCORING_PROTOCOL, normalizeEvidence } from './scoring.mjs'
+import { RETRIEVAL_PROFILE, EMBED_MODEL, RERANK_MODEL, DIMENSIONS, CHUNK_NS, DOC_NS, REQUIRED_ENV, EMBED_QUERY_INPUT_TYPE, EMBED_DOCUMENT_INPUT_TYPE } from '../src/tp/client.ts'
 
 const GATEWAY = 'https://ai-gateway.vercel.sh/v1/chat/completions'
 const JUDGE_SYS = `Tu évalues une réponse juridique uniquement contre les sources intégrales fournies. Réponds en JSON strict: {"verdict":"correct"|"partial"|"wrong","citation_ok":boolean,"grounded":boolean,"rubric":[{"item":string,"pass":boolean,"note":string}],"note":string}. Reproduis chaque critère exactement dans le même ordre, une seule fois. pass=true uniquement si le critère est entièrement satisfait. Une affirmation non soutenue rend grounded=false. Une citation non pertinente rend citation_ok=false.`
@@ -217,7 +218,7 @@ export function parseOptions(args) {
 
 async function main() {
   const options = parseOptions(process.argv.slice(2))
-  const missing = ['AI_GATEWAY_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'JINA_API_KEY'].filter((key) => !process.env[key])
+  const missing = REQUIRED_ENV.filter((key) => !process.env[key])
   if (missing.length) throw new Error(`Missing required evaluation environment variables: ${missing.join(', ')}`)
   const gold = JSON.parse(readFileSync(new URL('./gold.json', import.meta.url), 'utf8')).slice(0, options.limit)
   const modes = options.mode === 'paired' ? ['standard', 'rlm'] : [options.mode]
@@ -230,8 +231,10 @@ async function main() {
     config: { modes, model: options.model, judgeModel: options.judgeModel, timeoutMs: options.timeoutMs, retries: options.retries,
       workspace: process.cwd(), git_head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
       implementation_hash: implementationHash(process.cwd()), scoring_protocol: SCORING_PROTOCOL,
-      region: process.env.TURBOPUFFER_REGION, chunk_namespace: process.env.LX_TP_NAMESPACE ?? 'lx-corpus',
-      document_namespace: process.env.LX_TP_DOC_NAMESPACE ?? 'lx-documents' },
+      region: process.env.TURBOPUFFER_REGION, chunk_namespace: CHUNK_NS, document_namespace: DOC_NS,
+      retrieval_profile: RETRIEVAL_PROFILE, embedding_model: EMBED_MODEL, embedding_dimensions: DIMENSIONS,
+      embedding_query_input_type: EMBED_QUERY_INPUT_TYPE, embedding_document_input_type: EMBED_DOCUMENT_INPUT_TYPE,
+      rerank_model: RERANK_MODEL },
     harness: agent ?? createHarness({ workspace: process.cwd(), chat }), chat })
   console.log(JSON.stringify({ output, summary: data.summary }, null, 2))
   if (Object.values(data.summary).some((stats) => stats.errors || stats.degraded || stats.completed !== stats.planned)) process.exitCode = 1

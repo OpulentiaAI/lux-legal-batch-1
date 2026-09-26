@@ -14,7 +14,27 @@ npm run eval:agent:luna -- --output eval/compose-agent-gpt6-luna.json
 
 This command pins both model roles without changing the historical baseline defaults. It uses the existing secure `AI_GATEWAY_API_KEY`, `TURBOPUFFER_API_KEY`, `TURBOPUFFER_REGION` and `JINA_API_KEY` environment variables. Keep outputs separate from the committed historical runs. The runner records both model IDs in provenance; changing the answerer and judge means these results are a new experiment, not an isolated harness improvement. Do not substitute another model if access fails.
 
-The gateway model catalog confirmed this exact ID on September 26, 2026. The initial authenticated inference probe returned HTTP 402 (`insufficient_funds`), so model execution and accuracy remain unverified until gateway funding/access is restored.
+The gateway model catalog confirmed this exact ID on September 26, 2026. After the initial HTTP 402 funding blocker was resolved, authenticated Luna inference returned HTTP 200. A subsequent historical-profile run was stopped because Jina reranking returned HTTP 401; its partial checkpoint is not a completed accuracy measurement.
+
+### Voyage retrieval and staged Luna evaluation
+
+The Voyage experiment uses `LX_RETRIEVAL_PROFILE=voyage`, `voyage/voyage-4-large` embeddings at 1024 dimensions and `voyage/rerank-2.5` reranking through AI Gateway. It requires no Jina credential. Both Voyage endpoints passed authenticated smoke checks. This is a new retrieval experiment: build the separate Voyage index before querying it, and never mix Voyage query vectors with the historical OpenAI document vectors.
+
+```sh
+LX_RETRIEVAL_PROFILE=voyage node scripts/lx_index_voyage.mjs --batch=64 --state=/absolute/path/to/voyage-full-state.json
+```
+
+The migration writes only `lx-corpus-voyage4-1024` and `lx-documents-voyage4-1024`; the Voyage profile ignores legacy namespace overrides. It embeds corpus text with `input_type: document` and searches with `input_type: query`. Rerunning the same command resumes its atomic checkpoint, which pins provider configuration, selection and corpus content. A changed selection or source text requires a new checkpoint. Optional `--max-docs=1 --max-chunks=2` performs a sample upload, but must use a separate state path and never marks the corpus complete. Wait for the full checkpoint's `complete: true` and verify remote row counts before evaluating. Keep migration checkpoints outside the repository.
+
+Run the first two questions, then four, then ten, using distinct outputs:
+
+```sh
+npm run eval:agent:luna:voyage -- --limit 2 --concurrency 2 --output eval/compose-luna-voyage-2.json
+npm run eval:agent:luna:voyage -- --limit 4 --concurrency 4 --output eval/compose-luna-voyage-4.json
+npm run eval:agent:luna:voyage -- --limit 10 --concurrency 10 --output eval/compose-luna-voyage-10.json
+```
+
+Run each command only after checking the preceding result: every planned question must finish with zero errors and zero degraded cases. Inspect correctness, citations and grounding separately; operational success is not 99% accuracy. These are overlapping prefix smoke batches, not 16 independent questions or a full 50-question result. Do not aggregate their numerators or denominators. A provider failure stops the progression rather than silently switching models or disabling reranking. The existing rubric and gold remain unchanged, and provenance records the retrieval profile, namespaces, embedding dimensions and both retrieval model IDs as well as the answerer and judge.
 
 ### Historical model defaults
 
