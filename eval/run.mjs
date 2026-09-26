@@ -32,8 +32,8 @@ for (const mode of MODES) {
     const ms = performance.now() - t0
     if (r.isError) { rows.push({ id: g.id, err: String(r.content).slice(0, 120) }); continue }
     const res = r.content.results ?? []
-    const texts = res.map((h) => textOf(h))
-    const evIdx = texts.findIndex((t) => t.includes(g.evidence))
+    const texts = res.map((h) => textOf(h).toLowerCase())
+    const evIdx = texts.findIndex((t) => t.includes(g.evidence.toLowerCase()))
     const docHit = res.slice(0, 5).some((h) => g.docs.includes(h.doc))
     rows.push({
       id: g.id, ms: Math.round(ms), ev1: evIdx === 0, ev5: evIdx !== -1,

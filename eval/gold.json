@@ -6,7 +6,13 @@
   "docs": [
    "doc-06"
   ],
-  "kind": "statute-lookup"
+  "kind": "statute-lookup",
+  "rubric": [
+   "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais)."
+  ]
  },
  {
   "id": "q02",
@@ -16,7 +22,13 @@
    "doc-06",
    "doc-08"
   ],
-  "kind": "statute-lookup"
+  "kind": "statute-lookup",
+  "rubric": [
+   "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais)."
+  ]
  },
  {
   "id": "q03",
@@ -26,7 +38,13 @@
    "doc-06",
    "doc-07"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « scission par absorption est l’opération » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06 / doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q04",
@@ -38,7 +56,12 @@
    "doc-07",
    "doc-09"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « 30.000 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-07 / doc-09.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q05",
@@ -47,7 +70,12 @@
   "docs": [
    "doc-08"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « sans capital minimum » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q06",
@@ -56,7 +84,13 @@
   "docs": [
    "doc-08"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « say on pay » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q07",
@@ -67,7 +101,13 @@
    "doc-06",
    "doc-07"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « transmission universelle de patrimoine » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02 / doc-06 / doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q08",
@@ -77,7 +117,13 @@
    "doc-02",
    "doc-06"
   ],
-  "kind": "procedure"
+  "kind": "procedure",
+  "rubric": [
+   "La réponse porte effectivement sur « date de prise d'effet » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "Les étapes ou exigences essentielles sont couvertes."
+  ]
  },
  {
   "id": "q09",
@@ -88,7 +134,12 @@
    "doc-06",
    "doc-08"
   ],
-  "kind": "survey"
+  "kind": "survey",
+  "rubric": [
+   "La réponse porte effectivement sur « société en commandite simple » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q10",
@@ -97,7 +148,12 @@
   "docs": [
    "doc-04"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « comptabilisés à la date » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-04.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q11",
@@ -106,7 +162,13 @@
   "docs": [
    "doc-05"
   ],
-  "kind": "comparative"
+  "kind": "comparative",
+  "rubric": [
+   "La réponse porte effectivement sur « suppression du capital » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-05.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La réponse met explicitement en contraste les régimes visés."
+  ]
  },
  {
   "id": "q12",
@@ -116,7 +178,13 @@
    "doc-09",
    "doc-08"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « tout moment au cours de l’exercice » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-09 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q13",
@@ -125,7 +193,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « obligation contractuelle » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q14",
@@ -137,7 +211,12 @@
    "doc-06",
    "doc-07"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « majorité absolue » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06 / doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q15",
@@ -149,7 +228,12 @@
    "doc-09",
    "doc-03"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « apport en industrie » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09 / doc-03.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q16",
@@ -161,7 +245,12 @@
    "doc-09",
    "doc-07"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « 12.000 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-09 / doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q17",
@@ -173,7 +262,12 @@
    "doc-09",
    "doc-07"
   ],
-  "kind": "multilingual"
+  "kind": "multilingual",
+  "rubric": [
+   "La réponse porte effectivement sur « 12.000 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-09 / doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q18",
@@ -182,7 +276,12 @@
   "docs": [
    "doc-06"
   ],
-  "kind": "provenance"
+  "kind": "provenance",
+  "rubric": [
+   "La réponse porte effectivement sur « Loi du 10 août 2 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q19",
@@ -191,7 +290,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « bonne foi » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q20",
@@ -200,7 +305,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « réticence dolosive » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q21",
@@ -209,7 +320,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « exécution en nature » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q22",
@@ -218,7 +335,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « conception consensualiste » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q23",
@@ -227,7 +350,12 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "provenance"
+  "kind": "provenance",
+  "rubric": [
+   "La réponse porte effectivement sur « ordonnance de 2016 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q24",
@@ -237,7 +365,13 @@
    "doc-02",
    "doc-06"
   ],
-  "kind": "procedure"
+  "kind": "procedure",
+  "rubric": [
+   "La réponse porte effectivement sur « projet commun de scission » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "Les étapes ou exigences essentielles sont couvertes."
+  ]
  },
  {
   "id": "q25",
@@ -246,7 +380,12 @@
   "docs": [
    "doc-02"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « neutralité fiscale » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q26",
@@ -257,7 +396,12 @@
    "doc-06",
    "doc-08"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « associé commandité » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q27",
@@ -268,7 +412,13 @@
    "doc-08",
    "doc-06"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « commandite par actions » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-03 / doc-08 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q28",
@@ -277,7 +427,12 @@
   "docs": [
    "doc-04"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « plan comptable normalisé » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-04.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q29",
@@ -286,7 +441,12 @@
   "docs": [
    "doc-04"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « compte de profits et pertes » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-04.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q30",
@@ -295,7 +455,12 @@
   "docs": [
    "doc-04"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « centrale des bilans » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-04.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q31",
@@ -304,7 +469,13 @@
   "docs": [
    "doc-05"
   ],
-  "kind": "comparative"
+  "kind": "comparative",
+  "rubric": [
+   "La réponse porte effectivement sur « société à responsabilité limitée » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-05.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La réponse met explicitement en contraste les régimes visés."
+  ]
  },
  {
   "id": "q32",
@@ -313,7 +484,13 @@
   "docs": [
    "doc-05"
   ],
-  "kind": "comparative"
+  "kind": "comparative",
+  "rubric": [
+   "La réponse porte effectivement sur « capital minimum » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-05.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La réponse met explicitement en contraste les régimes visés."
+  ]
  },
  {
   "id": "q33",
@@ -324,7 +501,12 @@
    "doc-08",
    "doc-09"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « nullité » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q34",
@@ -335,7 +517,12 @@
    "doc-08",
    "doc-09"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « dissolution » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q36",
@@ -344,7 +531,12 @@
   "docs": [
    "doc-07"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « 33,33 » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-07.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q37",
@@ -355,7 +547,13 @@
    "doc-06",
    "doc-09"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « droits de vote » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-07 / doc-06 / doc-09.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q39",
@@ -365,7 +563,12 @@
    "doc-08",
    "doc-06"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « un euro » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q40",
@@ -376,7 +579,13 @@
    "doc-09",
    "doc-06"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « société en participation » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q41",
@@ -387,7 +596,12 @@
    "doc-09",
    "doc-06"
   ],
-  "kind": "fact"
+  "kind": "fact",
+  "rubric": [
+   "La réponse porte effectivement sur « deux tiers » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q42",
@@ -398,7 +612,13 @@
    "doc-09",
    "doc-06"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « quorum » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q43",
@@ -409,7 +629,13 @@
    "doc-06",
    "doc-08"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « société coopérative » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-09 / doc-06 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q44",
@@ -419,7 +645,13 @@
    "doc-09",
    "doc-08"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « tout moment au cours » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-09 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q45",
@@ -428,7 +660,12 @@
   "docs": [
    "doc-06"
   ],
-  "kind": "multilingual"
+  "kind": "multilingual",
+  "rubric": [
+   "La réponse porte effectivement sur « dissolution » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q47",
@@ -439,7 +676,13 @@
    "doc-06",
    "doc-08"
   ],
-  "kind": "definition"
+  "kind": "definition",
+  "rubric": [
+   "La réponse porte effectivement sur « commanditaire » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La définition est complète (pas seulement une occurrence du terme)."
+  ]
  },
  {
   "id": "q48",
@@ -448,7 +691,12 @@
   "docs": [
    "doc-05"
   ],
-  "kind": "multilingual"
+  "kind": "multilingual",
+  "rubric": [
+   "La réponse porte effectivement sur « capital minimum » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-05.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies."
+  ]
  },
  {
   "id": "q49",
@@ -457,7 +705,13 @@
   "docs": [
    "doc-01"
   ],
-  "kind": "doctrine"
+  "kind": "doctrine",
+  "rubric": [
+   "La réponse porte effectivement sur « obligation de moyens » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-01.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle ou le principe est correctement attribué à sa source."
+  ]
  },
  {
   "id": "q50",
@@ -466,16 +720,29 @@
   "docs": [
    "doc-02"
   ],
-  "kind": "procedure"
+  "kind": "procedure",
+  "rubric": [
+   "La réponse porte effectivement sur « scission transfrontalière » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "Les étapes ou exigences essentielles sont couvertes."
+  ]
  },
  {
   "id": "q35",
-  "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
-  "evidence": "actes de commerce",
+  "q": "Comment les titres des associés sont-ils échangés lors d'une scission ?",
+  "evidence": "échange de titres",
   "docs": [
+   "doc-02",
    "doc-06"
   ],
-  "kind": "statute-lookup"
+  "kind": "procedure",
+  "rubric": [
+   "La réponse porte effectivement sur « échange de titres » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "Les étapes ou exigences essentielles sont couvertes."
+  ]
  },
  {
   "id": "q46",
@@ -484,7 +751,13 @@
   "docs": [
    "doc-06"
   ],
-  "kind": "statute-lookup"
+  "kind": "statute-lookup",
+  "rubric": [
+   "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-06.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais)."
+  ]
  },
  {
   "id": "q51",
@@ -494,6 +767,12 @@
    "doc-07",
    "doc-08"
   ],
-  "kind": "statute-lookup"
+  "kind": "statute-lookup",
+  "rubric": [
+   "La réponse porte effectivement sur « pouvoirs les plus étendus » (le fait attendu).",
+   "La réponse cite au moins un chunk issu de doc-07 / doc-08.",
+   "Aucune affirmation n'est inventée au-delà des sources fournies.",
+   "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais)."
+  ]
  }
 ]

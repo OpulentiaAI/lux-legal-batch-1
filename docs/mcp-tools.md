@@ -91,7 +91,7 @@ Set them in the daemon's environment before `au daemon start`.
 ```
 
 Returns `{ namespace, mode, reranked, count, results[], auto_filters?,
-expanded? }` where each result has `chunk_id`, `score`, `doc`, `doc_title`,
+filters_relaxed?, expanded? }` where each result has `chunk_id`, `score`, `doc`, `doc_title`,
 `article`, `path[]`, `preview` and, on weak hits, `context[]` (sibling
 chunks from the same section). Reranked scores are 0–1 relevance; RRF-only
 scores are small (~0.016) but ordered.
@@ -100,7 +100,9 @@ scores are small (~0.016) but ordered.
 `article`, `loi de 1915` pins `doc-06` — when no explicit filter was
 passed. `expand` attaches up to 4 neighbouring chunks (`same doc + same
 locator`, nearest by ordinal) to the top-2 hits; it fires automatically
-when the top reranked score is below 0.45.
+when the top reranked score is below 0.45. When inferred filters return an
+empty result set they are relaxed (article pin first, then doc pin) and the
+response reports `filters_relaxed`; explicit filters keep exact semantics.
 
 ### `lx_chunk` — hydrate a hit
 
