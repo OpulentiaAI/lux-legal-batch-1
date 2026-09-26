@@ -1,0 +1,497 @@
+from __future__ import annotations
+
+import asyncio
+import logging
+import time
+from collections import OrderedDict
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from modal_computer_use._version import __version__
+from modal_computer_use.artifacts import ArtifactStore
+from modal_computer_use.daemon.auth import AuthMiddleware
+from modal_computer_use.daemon.budget_policy import BudgetPolicy
+from modal_computer_use.daemon.desktop import choose_backend
+from modal_computer_use.daemon.desktop.recordings import RecordingRegistry
+from modal_computer_use.daemon.desktop.screenshot_capture import (
+    SCREENSHOT_CAPTURE_TIMEOUT_ORIGINS,
+    ScreenshotCaptureTimedOut,
+)
+from modal_computer_use.daemon.desktop.xtest import (
+    X11InputInjectionError,
+    X11InputStateConflictError,
+    X11InputUnavailableError,
+)
+from modal_computer_use.daemon.errors import DaemonError, public_input_error
+from modal_computer_use.daemon.input_rate_limit import InputTokenBucket
+from modal_computer_use.daemon.leases import LeaseCoordinator
+from modal_computer_use.daemon.logging import configure_logging
+from modal_computer_use.daemon.openapi import openapi_schema
+from modal_computer_use.daemon.readiness import ReadinessCache
+from modal_computer_use.daemon.receipts import ReceiptJournal
+from modal_computer_use.daemon.request_limits import (
+    RequestBodyLimitMiddleware,
+    RequestBodyTooLarge,
+)
+from modal_computer_use.daemon.routes.validation import backend_readiness, mark_desktop_ready
+from modal_computer_use.daemon.settings import DaemonSettings, get_settings
+from modal_computer_use.daemon.supervisor import Supervisor
+from modal_computer_use.daemon.tunnel_sessions import TunnelSessionStore
+from modal_computer_use.daemon.websocket_admission import WebSocketAdmission
+from modal_computer_use.errors import ArtifactPathError, BudgetExceededError
+from modal_computer_use.models import ActionResult
+from modal_computer_use.observability import get_tracer
+from modal_computer_use.redaction import safe_exception_payload, sanitize_payload, sanitize_text
+
+from .routes import (
+    actions,
+    apps,
+    artifacts,
+    browser,
+    clipboard,
+    commands,
+    debug,
+    display,
+    health,
+    hot_session,
+    input,
+    keyboard,
+    leases,
+    lifecycle,
+    mouse,
+    observations,
+    processes,
+    recordings,
+    recovery,
+    screenshots,
+    session,
+    steps,
+    windows,
+)
+
+logger = logging.getLogger("modal_computer_use.daemon.app")
+
+
+async def _startup_browser(app: FastAPI, recovery_status: dict[str, object]) -> ActionResult | None:
+    if recovery_status["recovery_required"]:
+        return ActionResult(
+            ok=False,
+            message="browser startup skipped while target recovery is required",
+            output={"code": "recovery_required"},
+        )
+
+    startup_url = app.state.settings.browser_open_url_on_start
+    try:
+        if startup_url:
+            return await app.state.backend.open_url(startup_url, wait_for_window=True)
+        if app.state.settings.browser_prewarm:
+            return await app.state.backend.prewarm_browser()
+    except Exception as exc:
+        logger.warning("browser startup failed", exc_info=True)
+        message = "browser startup url failed" if startup_url else "browser prewarm failed"
+        return ActionResult(
+            ok=False,
+            message=message,
+            output={"error": type(exc).__name__},
+        )
+    return None
+
+
+async def _startup_readiness(app: FastAPI) -> tuple[bool, list[str]]:
+    try:
+        return await backend_readiness(app.state)
+    except Exception as exc:
+        logger.warning("startup readiness probe failed", exc_info=True)
+        return False, [f"startup readiness probe failed: {type(exc).__name__}"]
+
+
+async def _cancel_startup_tasks(tasks: list[asyncio.Task[object]]) -> None:
+    for task in tasks:
+        if not task.done():
+            task.cancel()
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def _shutdown_lifespan_resources(app: FastAPI) -> BaseException | None:
+    """Close every lifespan resource while retaining the first cleanup error."""
+
+    first_error: BaseException | None = None
+
+    lease_expiry_task = app.state.lease_expiry_task
+    if lease_expiry_task is not None:
+        lease_expiry_task.cancel()
+        try:
+            await lease_expiry_task
+        except asyncio.CancelledError:
+            pass
+        except BaseException as exc:
+            first_error = exc
+
+    async def attempt(operation) -> None:
+        nonlocal first_error
+        try:
+            await operation()
+        except BaseException as exc:
+            if first_error is None:
+                first_error = exc
+
+    await attempt(lambda: asyncio.to_thread(app.state.recordings.shutdown))
+    await attempt(lambda: _close_backend(app))
+    await attempt(app.state.supervisor.stop)
+    await attempt(app.state.receipt_journal.close)
+    return first_error
+
+
+async def _close_backend(app: FastAPI) -> None:
+    app.state.backend.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    supervisor: Supervisor = app.state.supervisor
+    primary_error: BaseException | None = None
+    try:
+        await app.state.receipt_journal.start()
+        await supervisor.start()
+        app.state.browser_prewarm = None
+        recovery_status = await app.state.receipt_journal.recovery_status()
+        startup_configured = bool(
+            app.state.settings.browser_open_url_on_start or app.state.settings.browser_prewarm
+        )
+        if startup_configured:
+            readiness_task = asyncio.create_task(_startup_readiness(app))
+            browser_task = asyncio.create_task(_startup_browser(app, recovery_status))
+            startup_tasks: list[asyncio.Task[object]] = [readiness_task, browser_task]
+            try:
+                readiness, app.state.browser_prewarm = await asyncio.gather(
+                    readiness_task,
+                    browser_task,
+                )
+            finally:
+                await _cancel_startup_tasks(startup_tasks)
+            if readiness[0]:
+                # The cache records the backend's current readiness generation. This
+                # explicit seed keeps startup and the first /readyz request on the
+                # same generation-aware snapshot.
+                mark_desktop_ready(app.state)
+        else:
+            app.state.browser_prewarm = await _startup_browser(app, recovery_status)
+        yield
+    except BaseException as exc:
+        primary_error = exc
+        raise
+    finally:
+        cleanup_error = await _shutdown_lifespan_resources(app)
+        if cleanup_error is not None:
+            if primary_error is not None:
+                primary_error.add_note(
+                    "lifespan cleanup also failed: " f"{type(cleanup_error).__name__}"
+                )
+            else:
+                raise cleanup_error
+
+
+def create_app(settings: DaemonSettings | None = None) -> FastAPI:
+    configure_logging()
+    settings = settings or get_settings()
+    app = FastAPI(
+        title="modal-computer-use daemon",
+        version=__version__,
+        lifespan=lifespan,
+    )
+    app.state.settings = settings
+    app.state.supervisor = Supervisor(settings)
+    app.state.backend = choose_backend(
+        settings.backend,
+        width=settings.desktop_width,
+        height=settings.desktop_height,
+        display=settings.display,
+        browser=settings.browser,
+        browser_profile_dir=settings.browser_profile_dir,
+        browser_launch_args=settings.browser_launch_args,
+        browser_gpu_mode=settings.browser_gpu_mode,
+        input_backend=settings.input_backend,
+        subprocess_backend=settings.subprocess_backend,
+        capture_source=settings.screenshot_capture_source,
+    )
+    app.state.input_lock = asyncio.Lock()
+    app.state.lease_lock = asyncio.Lock()
+    app.state.lease_coordinator = LeaseCoordinator()
+    app.state.lease_expiry_task = None
+    app.state.receipt_journal = ReceiptJournal(settings.runtime_dir)
+    app.state.readiness_cache = ReadinessCache(settings.readiness_cache_ttl_ms)
+    app.state.artifacts = ArtifactStore(
+        settings.artifacts_dir,
+        persistent=settings.artifacts_persistent,
+        persistent_verified=settings.artifacts_volume_mounted,
+        max_total_bytes=settings.max_artifact_bytes,
+    )
+    app.state.recordings = RecordingRegistry(settings, artifact_store=app.state.artifacts)
+    app.state.idempotency_cache = OrderedDict()
+    app.state.tunnel_sessions = TunnelSessionStore(max_sessions=settings.max_tunnel_sessions)
+    app.state.websocket_admission = WebSocketAdmission(
+        hot_limit=settings.max_hot_session_connections,
+        observation_limit=settings.max_observation_connections,
+    )
+    app.state.active_http_observe_changes = 0
+    app.state.display_restart_in_progress = False
+    app.state.display_reconstruction_failed = False
+    app.state.action_count = 0
+    app.state.screenshot_count = 0
+    app.state.last_activity_at = time.monotonic()
+    app.state.input_token_bucket = InputTokenBucket(
+        refill_rate=settings.input_rate_limit_per_sec,
+        capacity=settings.input_rate_limit_burst,
+    )
+    app.state.budget_policy = BudgetPolicy(app.state)
+    app.state.tracer = get_tracer(
+        enabled=settings.otel_enabled,
+        name="modal_computer_use.daemon",
+    )
+    app.add_middleware(RequestBodyLimitMiddleware, max_bytes=settings.max_json_body_bytes)
+    app.add_middleware(AuthMiddleware, settings=settings)
+
+    @app.middleware("http")
+    async def trace_route(request: Request, call_next):
+        with app.state.tracer.span(
+            "daemon.route",
+            {
+                "http.method": request.method,
+            },
+        ) as span:
+            try:
+                response = await call_next(request)
+            except Exception as exc:
+                span.set_attribute("http.route", _route_template(request))
+                span.record_exception(exc)
+                raise
+            span.set_attribute("http.route", _route_template(request))
+            span.set_attribute("http.status_code", response.status_code)
+            error_code = response.headers.get("x-computer-use-error-code")
+            if error_code:
+                span.set_attribute("error.code", error_code)
+            return response
+
+    @app.exception_handler(DaemonError)
+    async def daemon_error_handler(_request: Request, exc: DaemonError) -> JSONResponse:
+        details = sanitize_payload(exc.details)
+        if isinstance(details, dict) and isinstance(exc.details.get("budgets"), dict):
+            details["budgets"] = exc.details["budgets"]
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            headers=exc.headers,
+            content={
+                "code": exc.code,
+                "message": sanitize_text(exc.message),
+                "details": details,
+            },
+        )
+
+    @app.exception_handler(X11InputUnavailableError)
+    @app.exception_handler(X11InputInjectionError)
+    @app.exception_handler(X11InputStateConflictError)
+    async def native_input_error_handler(_request: Request, exc: Exception) -> JSONResponse:
+        mapped_error = public_input_error(exc)
+        if mapped_error is None:  # pragma: no cover - decorators constrain the exception types.
+            raise exc
+        return _error_response(
+            status_code=mapped_error.status_code,
+            code=mapped_error.code,
+            content={
+                "code": mapped_error.code,
+                "message": mapped_error.message,
+                "details": mapped_error.details,
+            },
+        )
+
+    @app.exception_handler(ArtifactPathError)
+    async def artifact_path_error_handler(
+        _request: Request, exc: ArtifactPathError
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=400,
+            code="unsafe_artifact_path",
+            content={
+                "code": "unsafe_artifact_path",
+                "message": sanitize_text(str(exc)),
+                "details": {},
+            },
+        )
+
+    @app.exception_handler(BudgetExceededError)
+    async def budget_exceeded_error_handler(
+        _request: Request, exc: BudgetExceededError
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=429,
+            code="budget_exceeded",
+            content={
+                "code": "budget_exceeded",
+                "message": sanitize_text(str(exc)),
+                "details": {},
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        code = (
+            "action_validation_failed"
+            if _is_action_payload_validation_error(request, exc)
+            else "validation_error"
+        )
+        message = (
+            "action validation failed"
+            if code == "action_validation_failed"
+            else "request validation failed"
+        )
+        return _error_response(
+            status_code=422,
+            code=code,
+            content={
+                "code": code,
+                "message": message,
+                "details": {"errors": _validation_errors_without_inputs(exc)},
+            },
+        )
+
+    @app.exception_handler(RequestBodyTooLarge)
+    async def request_body_too_large_handler(
+        _request: Request, exc: RequestBodyTooLarge
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=413,
+            code="request_body_too_large",
+            content={
+                "code": "request_body_too_large",
+                "message": "request body exceeds the configured byte limit",
+                "details": {"max_bytes": exc.max_bytes},
+            },
+        )
+
+    @app.exception_handler(FileNotFoundError)
+    async def not_found_handler(_request: Request, _exc: FileNotFoundError) -> JSONResponse:
+        return _error_response(
+            status_code=404,
+            code="not_found",
+            content={"code": "not_found", "message": "resource not found", "details": {}},
+        )
+
+    @app.exception_handler(Exception)
+    async def unhandled_error_handler(_request: Request, exc: Exception) -> JSONResponse:
+        mapped_error = public_input_error(exc)
+        if mapped_error is not None:
+            return _error_response(
+                status_code=mapped_error.status_code,
+                code=mapped_error.code,
+                content={
+                    "code": mapped_error.code,
+                    "message": mapped_error.message,
+                    "details": mapped_error.details,
+                },
+            )
+        details = safe_exception_payload(exc)
+        if (
+            isinstance(exc, ScreenshotCaptureTimedOut)
+            and exc.timeout_origin in SCREENSHOT_CAPTURE_TIMEOUT_ORIGINS
+        ):
+            details["timeout_origin"] = exc.timeout_origin
+        return _error_response(
+            status_code=500,
+            code="internal_error",
+            content={
+                "code": "internal_error",
+                "message": "internal server error",
+                "details": details,
+            },
+        )
+
+    for router in (
+        health.router,
+        leases.router,
+        recovery.router,
+        lifecycle.router,
+        processes.router,
+        mouse.router,
+        observations.router,
+        keyboard.router,
+        clipboard.router,
+        screenshots.router,
+        recordings.router,
+        display.router,
+        windows.router,
+        actions.router,
+        steps.router,
+        artifacts.router,
+        browser.router,
+        apps.router,
+        input.router,
+        commands.router,
+        debug.router,
+        session.router,
+        hot_session.router,
+        recordings.dashboard_router,
+    ):
+        app.include_router(router)
+
+    app.openapi = lambda: openapi_schema(app)
+    return app
+
+
+def _validation_errors_without_inputs(exc: RequestValidationError) -> list[dict[str, object]]:
+    errors: list[dict[str, object]] = []
+    for item in exc.errors():
+        errors.append(
+            {
+                "loc": item.get("loc", ()),
+                "msg": item.get("msg", "validation error"),
+                "type": item.get("type", "value_error"),
+            }
+        )
+    return errors
+
+
+def _is_action_payload_validation_error(request: Request, exc: RequestValidationError) -> bool:
+    if request.scope.get("path") not in {
+        "/v1/actions/run",
+        "/v1/actions/validate",
+        "/v1/steps",
+    }:
+        return False
+    for item in exc.errors():
+        loc = item.get("loc", ())
+        if len(loc) >= 2 and loc[0] == "body" and loc[1] == "actions":
+            return True
+    return False
+
+
+def _error_response(
+    *,
+    status_code: int,
+    code: str,
+    content: dict[str, object],
+    headers: dict[str, str] | None = None,
+) -> JSONResponse:
+    response_headers = {
+        "x-computer-use-error-code": code,
+        "cache-control": "no-store",
+    }
+    response_headers.update(headers or {})
+    return JSONResponse(
+        status_code=status_code,
+        content=content,
+        headers=response_headers,
+    )
+
+
+def _route_template(request: Request) -> str:
+    route = request.scope.get("route")
+    path = getattr(route, "path", None)
+    return str(path) if path else "unmatched"

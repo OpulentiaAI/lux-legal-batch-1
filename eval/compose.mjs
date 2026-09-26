@@ -24,18 +24,18 @@ export function safeError(error) {
 export function implementationHash(workspace) {
   const hash = createHash('sha256')
   const files = []
-  for (const dir of ['src/harness', 'src/tp', 'eval']) {
+  for (const dir of ['src/harness', 'src/tp', 'eval', 'runtime']) {
     function visit(folder) {
       for (const entry of readdirSync(resolve(workspace, folder), { withFileTypes: true })) {
         const path = join(folder, entry.name)
         if (entry.isDirectory()) visit(path)
-        else if (dir === 'eval' ? entry.name.endsWith('.mjs') : entry.name.endsWith('.ts')) files.push(path)
+        else if (dir === 'eval' || dir === 'runtime' ? entry.name.endsWith('.mjs') : entry.name.endsWith('.ts')) files.push(path)
       }
     }
     visit(dir)
   }
   const manifest = 'corpus/index/chunks.jsonl'
-  files.push(manifest)
+  files.push(manifest, 'runtime/catalog.json')
   for (const line of readFileSync(resolve(workspace, manifest), 'utf8').split('\n')) {
     if (line.trim()) {
       const path = JSON.parse(line).path
@@ -208,7 +208,7 @@ export function parseOptions(args) {
       options[key] = ['limit', 'concurrency', 'timeoutMs', 'retries'].includes(key) ? Number(args[++i]) : args[++i]
     } else throw new Error(`Unknown or incomplete argument: ${arg}`)
   }
-  if (!['standard', 'rlm', 'paired'].includes(options.mode)) throw new Error('mode must be standard, rlm or paired')
+  if (!['standard', 'rlm', 'paired', 'agent'].includes(options.mode)) throw new Error('mode must be standard, rlm, paired or agent')
   if (options.limit !== undefined && (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 50)) throw new Error('limit must be 1..50')
   if (!Number.isInteger(options.concurrency) || options.concurrency < 1 || options.concurrency > 16) throw new Error('concurrency must be 1..16')
   if (!Number.isInteger(options.timeoutMs) || options.timeoutMs < 1 || !Number.isInteger(options.retries) || options.retries < 0 || options.retries > 5) throw new Error('Invalid timeout or retry count')
@@ -223,6 +223,7 @@ async function main() {
   const modes = options.mode === 'paired' ? ['standard', 'rlm'] : [options.mode]
   const output = resolve(options.output ?? `eval/compose-${options.mode}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
   const { createHarness } = await import('../src/harness/index.ts')
+  const agent = options.mode === 'agent' ? (await import('../runtime/legal-eval.mjs')).createAgentHarness({ workspace: process.cwd(), model: options.model }) : null
   const chat = async ({ role, ...request }) => gatewayChat({ key: process.env.AI_GATEWAY_API_KEY,
     model: role === 'judge' ? options.judgeModel : options.model, timeoutMs: options.timeoutMs, retries: options.retries })(request)
   const data = await evaluate({ gold, modes, output, resume: options.resume, concurrency: options.concurrency,
@@ -231,7 +232,7 @@ async function main() {
       implementation_hash: implementationHash(process.cwd()), scoring_protocol: SCORING_PROTOCOL,
       region: process.env.TURBOPUFFER_REGION, chunk_namespace: process.env.LX_TP_NAMESPACE ?? 'lx-corpus',
       document_namespace: process.env.LX_TP_DOC_NAMESPACE ?? 'lx-documents' },
-    harness: createHarness({ workspace: process.cwd(), chat }), chat })
+    harness: agent ?? createHarness({ workspace: process.cwd(), chat }), chat })
   console.log(JSON.stringify({ output, summary: data.summary }, null, 2))
   if (Object.values(data.summary).some((stats) => stats.errors || stats.degraded || stats.completed !== stats.planned)) process.exitCode = 1
 }

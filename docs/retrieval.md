@@ -116,6 +116,7 @@ into the right doc, no unsupported claims, plus kind-specific items).
 node eval/run.mjs --output eval/retrieval-new.json
 node eval/compose.mjs --mode paired --output eval/compose-paired-new.json
 node eval/compose.mjs --mode paired --output eval/compose-paired-new.json --resume
+node eval/compose.mjs --mode agent --output eval/compose-agent-new.json
 node --test tests/*.test.mjs
 ```
 
@@ -147,6 +148,13 @@ configuration. `--limit` permits a smoke run; it is not a full 50-case score.
 `--model` and `--judge-model` select gateway models independently; both default
 to `openai/gpt-5-mini`. The model used to engineer the harness is independent
 of these evaluation models.
+
+`--mode agent` runs the standalone runtime's tool-calling model loop against
+only `lx_search`, `lx_chunk`, and `lx_documents`. The dispatcher rejects all
+other tools for this benchmark, even though they are available in the full
+runtime. Search and chunk tools record the exact hydrated text returned to
+the model so the same source-aware judge can evaluate its answer. This mode
+does not require an E2B sandbox because it cannot use execution/desktop tools.
 
 Run records pin the question set, implementation and corpus contents, Git
 revision, Node version, index namespace/region, model configuration, and
