@@ -156,6 +156,12 @@ runtime. Search and chunk tools record the exact hydrated text returned to
 the model so the same source-aware judge can evaluate its answer. This mode
 does not require an E2B sandbox because it cannot use execution/desktop tools.
 
+**Note for future evals:** this is a baseline policy, not a permanent harness
+restriction. New experiments may override it and add approved MCP/corpus
+tooling, with matching prompts, provenance and external-source evidence
+collection. Follow [eval/README.md](../eval/README.md); the existing CLI does
+not read a tool-policy override from `RUNTIME_CONFIG`.
+
 Run records pin the question set, implementation and corpus contents, Git
 revision, Node version, index namespace/region, model configuration, and
 concurrency. Resume rejects mismatches and retries failed/degraded cases.

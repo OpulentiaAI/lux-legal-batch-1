@@ -6,6 +6,10 @@ This service implements the in-scope Devin-style tool surface without a Devin ac
 
 All included names have handlers. **This is not a claim that all remote-provider paths have passed live end-to-end validation.** Tests using injected providers validate contracts, not E2B, GitHub, code.storage or model service availability.
 
+## Future evaluation policy
+
+The corpus-only allowlist in `legal-eval.mjs` is specific to the original benchmark. Future harness evaluations should explicitly override it when broader capabilities are needed, including approved MCP and additional corpus tools. See [the evaluation README](../eval/README.md) for the actual configuration path, integration provisioning, external-evidence collection and score-comparability requirements. The current compose CLI does not offer a tool-policy override flag; use a new named runner or add an explicit policy input rather than assuming `RUNTIME_CONFIG` changes that wrapper. Repository instructions in [AGENTS.md](../AGENTS.md) preserve this distinction for future work.
+
 ## Install and run
 
 ```sh

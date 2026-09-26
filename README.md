@@ -16,6 +16,7 @@ tldr: Luxembourg company-law corpus as a typed knowledge graph, turbopuffer-inde
 - Retrieval tuning (hybrid legs, rerank, reindex flags, adding documents): `docs/retrieval.md`.
 - Legal answering harness: `src/harness/index.ts`; paired standard/parallel-reader evaluation: `node eval/compose.mjs --mode paired`. See `docs/retrieval.md` for credentials, reproducibility, and historical-score caveats, and `docs/devin-toolset.md` for the captured Devin toolset and supported integration boundary.
 - Standalone Devin-style runtime on E2B and code.storage: `runtime/README.md`. It includes the computer-use port, authenticated tool API, model workers, workflow brokers, and durable orchestration; live provider verification is separate from handler coverage.
+- Future evaluation policies, including overriding the baseline's corpus-only restriction and adding approved MCP/corpus tools: `eval/README.md`; persistent repository instructions are in `AGENTS.md`.
 - Graph reads: `au daemon start .` then `instances_of` / `subtypes` reads over the socket.
 
 ## How to extend this
