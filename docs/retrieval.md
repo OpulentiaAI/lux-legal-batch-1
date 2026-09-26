@@ -77,6 +77,11 @@ Explicit `doc_id`/`kind`/`article`/`under` always win and disable inference
 for that call; `auto_filters: false` disables it entirely. Inferred filters
 are echoed back in the response under `auto_filters`.
 
+Inferred filters are heuristic, not binding: when they produce an empty
+result set the tool relaxes them — article pin first, then doc pin — and
+reports `filters_relaxed: <n>` (explicit filters are never relaxed; a real
+zero stays a real zero).
+
 ### Weak-hit expansion (`expand`)
 
 When `expand: true` — or automatically when rerank is on and the top fused
@@ -100,6 +105,30 @@ then stay small (~0.016 is normal for fused ranks).
   dedicated treatise, then `hybrid` for breadth.
 - Narrow to a work → `doc_id`; narrow to a part of a work → `under` matches
   the heading chain, e.g. `under: "conventions réglementées"`.
+
+## Evaluation (LAB-style rubrics + optional RLM decomposition)
+
+`eval/gold.json` carries a `rubric` array per question — atomic pass/fail
+criteria in the style of Harvey's LAB benchmark (expected fact, citation
+into the right doc, no unsupported claims, plus kind-specific items).
+
+```bash
+node --experimental-strip-types eval/run.mjs         # retrieval metrics
+node --experimental-strip-types eval/compose.mjs     # flat compose + rubric judge
+node --experimental-strip-types eval/compose.mjs --rlm   # depth-1: planner → 2–3 sub-queries → union sources → compose
+```
+
+The rubric judge returns per-criterion pass/fail, so `rubric_pass/total`
+is the per-question score and the summary reports corpus-level criteria
+pass rate plus a failure taxonomy (which criteria fail most).
+
+Findings on this corpus (n=50): RLM decomposition is roughly neutral
+(86.0% vs 87.1% criteria pass) — at 15.5M chars the corpus is searchable
+without fan-out, unlike the ~80M-token data rooms the technique was built
+for. It does rescue thin-coverage questions (art. 100-1/450-1 lookups went
+partial→correct). The real lever was filter relaxation: inferred pins
+that match no rows now relax instead of returning zero, and doc@5 is
+50/50.
 
 ## Re-indexing
 

@@ -32,12 +32,15 @@ Gold set: 50 questions (evidence strings verified against chunk files).
 
 | Mode | ev@1 | ev@5 | doc@5 | MRR | p50 |
 |---|---|---|---|---|---|
-| hybrid + rerank | 28/50 | 39/50 | 49/50 | .658 | 1.05s |
-| vector | 25/50 | 40/50 | 46/50 | .614 | 0.53s |
-| hybrid (RRF) | 25/50 | 36/50 | 46/50 | .603 | 0.71s |
-| bm25 | 19/50 | 28/50 | 41/50 | .451 | 0.24s |
+| hybrid + rerank | 29/50 | 40/50 | 50/50 | .678 | 1.02s |
+| vector | 25/50 | 39/50 | 47/50 | .604 | 0.50s |
+| hybrid (RRF) | 24/50 | 36/50 | 47/50 | .597 | 0.71s |
+| bm25 | 20/50 | 29/50 | 42/50 | .471 | 0.24s |
 
-Composition: 44 correct / 2 partial / 4 wrong; grounded 45/50; citations 48/50.
+Composition (rubric judge, 178 criteria): flat 87.1% criteria pass
+(36 correct / 11 partial / 3 wrong) · RLM depth-1 86.0% — decomposition is
+neutral at this corpus size but rescues thin-coverage statute lookups.
 
 Search levers live: `auto_filters` (article + "loi de 1915" → doc-06
-inference) and `expand` (weak-hit section widening, top score < 0.45).
+inference, relaxed when they return zero), `expand` (weak-hit section
+widening, top score < 0.45).

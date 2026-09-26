@@ -60,28 +60,41 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
   const doRerank = input.rerank ?? true
   const fetchLimit = doRerank ? Math.min(limit * 3, 50) : limit
   const inferred = inferAutoFilters(input)
-  const filters = buildFilters(input, inferred)
 
-  const subqueries = [] as { rank_by: unknown; filters?: Filter; limit: number; include_attributes: string[] }[]
-  if (mode === 'hybrid' || mode === 'vector') {
-    const [vec] = await embed([input.query])
-    subqueries.push({ rank_by: ['vector', 'ANN', vec], filters, limit: fetchLimit, include_attributes: HIT_ATTRS })
-  }
-  if (mode === 'hybrid' || mode === 'bm25') {
-    // Weighted lexical leg: a term hit in the document title or the structure path
-    // (PARTIE > TITRE > CHAPITRE headings, all French-FTS indexed) is stronger signal
-    // than a bare body match — Sum boosts those fields over plain text.
-    subqueries.push({
-      rank_by: ['Sum', [
-        ['Product', 3, ['doc_title', 'BM25', input.query]],
-        ['Product', 2, ['path', 'BM25', input.query]],
-        ['text', 'BM25', input.query],
-      ]],
-      filters, limit: fetchLimit, include_attributes: HIT_ATTRS,
-    })
+  const execute = async (filters: Filter | undefined) => {
+    const subqueries = [] as { rank_by: unknown; filters?: Filter; limit: number; include_attributes: string[] }[]
+    if (mode === 'hybrid' || mode === 'vector') {
+      const [vec] = await embed([input.query])
+      subqueries.push({ rank_by: ['vector', 'ANN', vec], filters, limit: fetchLimit, include_attributes: HIT_ATTRS })
+    }
+    if (mode === 'hybrid' || mode === 'bm25') {
+      // Weighted lexical leg: a term hit in the document title or the structure path
+      // (PARTIE > TITRE > CHAPITRE headings, all French-FTS indexed) is stronger signal
+      // than a bare body match — Sum boosts those fields over plain text.
+      subqueries.push({
+        rank_by: ['Sum', [
+          ['Product', 3, ['doc_title', 'BM25', input.query]],
+          ['Product', 2, ['path', 'BM25', input.query]],
+          ['text', 'BM25', input.query],
+        ]],
+        filters, limit: fetchLimit, include_attributes: HIT_ATTRS,
+      })
+    }
+    return multiQuery(CHUNK_NS, subqueries, subqueries.length > 1)
   }
 
-  const rows = await multiQuery(CHUNK_NS, subqueries, subqueries.length > 1)
+  // Inferred filters are heuristic — when they yield an empty set, relax them
+  // rather than return nothing: drop the article pin first, then the doc pin.
+  // Explicit caller filters keep their exact semantics (a real zero).
+  let filters = buildFilters(input, inferred)
+  let relaxed = 0
+  let rows = await execute(filters)
+  while (rows.length === 0 && (inferred.article || inferred.doc_id)) {
+    if (inferred.article) { inferred.article = undefined } else { inferred.doc_id = undefined }
+    relaxed++
+    filters = buildFilters(input, inferred)
+    rows = await execute(filters)
+  }
 
   const manifest = loadChunks(workspace)
   let scored = rows.map((hit: QueryHit) => ({
@@ -151,7 +164,8 @@ async function run(input: SearchInput, workspace: string): Promise<CallableResul
   }
 
   const content: Record<string, unknown> = { namespace: CHUNK_NS, mode, reranked: doRerank, count: results.length, results }
-  if (inferred.doc_id || inferred.article) content.auto_filters = inferred
+  if (inferred.doc_id || inferred.article || relaxed) content.auto_filters = inferred
+  if (relaxed) content.filters_relaxed = relaxed
   if (expanded) content.expanded = expanded
 
   return { content }
