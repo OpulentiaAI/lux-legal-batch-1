@@ -152,7 +152,7 @@ export async function evaluate({ gold, modes, output, resume = false, concurrenc
             !result.metrics || typeof result.metrics !== 'object') throw new Error('Invalid harness result')
         const rubric = g.rubric ?? []
         failureStage = 'judge'
-        const judged = await chat({ role: 'judge', maxTokens: 1200, messages: [
+        const judged = await chat({ role: 'judge', maxTokens: config.judge_max_tokens ?? 1200, messages: [
           { role: 'system', content: JUDGE_POLICIES[judgePolicy] },
           { role: 'user', content: `QUESTION: ${g.q}\n${judgePolicy === 'baseline' ? 'FAIT ATTENDU' : 'FRAGMENT DE RÉFÉRENCE (à interpréter dans son contexte)'}: ${g.evidence}\nRUBRIQUE: ${JSON.stringify(rubric)}\nRÉPONSE: ${result.answer}\nSOURCES INTÉGRALES: ${JSON.stringify(result.sources)}` },
         ] })
@@ -192,7 +192,7 @@ export async function evaluate({ gold, modes, output, resume = false, concurrenc
   return data
 }
 
-export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, fetchImpl = fetch }) {
+export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, reasoningEffort = 'low', fetchImpl = fetch }) {
   if (!key) throw new Error('AI_GATEWAY_API_KEY is required before starting evaluation')
   return async ({ messages, maxTokens = 900, signal }) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -201,7 +201,7 @@ export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, fetchI
         const response = await fetchImpl(GATEWAY, {
           method: 'POST', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, messages, max_completion_tokens: maxTokens, reasoning_effort: 'low' }),
+          body: JSON.stringify({ model, messages, max_completion_tokens: maxTokens, reasoning_effort: reasoningEffort }),
         })
         if (!response.ok) {
           if (response.status < 500 && response.status !== 429) throw new Error(`gateway ${response.status}`)
@@ -219,19 +219,20 @@ export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, fetchI
 }
 
 export function parseOptions(args) {
-  const options = { mode: 'standard', concurrency: 1, model: process.env.EVAL_MODEL || 'openai/gpt-5-mini', judgeModel: process.env.EVAL_JUDGE_MODEL || process.env.EVAL_MODEL || 'openai/gpt-5-mini', timeoutMs: 12000, retries: 1, agentPolicy: 'baseline', judgePolicy: 'baseline' }
+  const options = { mode: 'standard', concurrency: 1, model: process.env.EVAL_MODEL || 'openai/gpt-5-mini', judgeModel: process.env.EVAL_JUDGE_MODEL || process.env.EVAL_MODEL || 'openai/gpt-5-mini', timeoutMs: 12000, retries: 1, agentPolicy: 'baseline', judgePolicy: 'baseline', judgeEffort: 'low', judgeMaxTokens: 1200 }
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     if (arg === '--resume') options.resume = true
     else if (arg === '--rlm') options.mode = 'rlm'
-    else if (['--mode', '--limit', '--output', '--concurrency', '--model', '--judge-model', '--timeout-ms', '--retries', '--agent-policy', '--judge-policy'].includes(arg) && args[i + 1]) {
-      const key = { '--judge-model': 'judgeModel', '--timeout-ms': 'timeoutMs', '--agent-policy': 'agentPolicy', '--judge-policy': 'judgePolicy' }[arg] ?? arg.slice(2)
-      options[key] = ['limit', 'concurrency', 'timeoutMs', 'retries'].includes(key) ? Number(args[++i]) : args[++i]
+    else if (['--mode', '--limit', '--output', '--concurrency', '--model', '--judge-model', '--timeout-ms', '--retries', '--agent-policy', '--judge-policy', '--judge-effort', '--judge-max-tokens'].includes(arg) && args[i + 1]) {
+      const key = { '--judge-model': 'judgeModel', '--timeout-ms': 'timeoutMs', '--agent-policy': 'agentPolicy', '--judge-policy': 'judgePolicy', '--judge-effort': 'judgeEffort', '--judge-max-tokens': 'judgeMaxTokens' }[arg] ?? arg.slice(2)
+      options[key] = ['limit', 'concurrency', 'timeoutMs', 'retries', 'judgeMaxTokens'].includes(key) ? Number(args[++i]) : args[++i]
     } else throw new Error(`Unknown or incomplete argument: ${arg}`)
   }
   if (!['standard', 'rlm', 'paired', 'agent'].includes(options.mode)) throw new Error('mode must be standard, rlm, paired or agent')
   if (!['baseline', 'audited-v1'].includes(options.agentPolicy) || !Object.hasOwn(JUDGE_POLICIES, options.judgePolicy)) throw new Error('Invalid agent or judge policy')
   if (options.mode !== 'agent' && options.agentPolicy !== 'baseline') throw new Error('Agent policy requires agent mode')
+  if (!['none', 'low', 'medium', 'high', 'xhigh', 'max'].includes(options.judgeEffort) || !Number.isInteger(options.judgeMaxTokens) || options.judgeMaxTokens < 256 || options.judgeMaxTokens > 16000) throw new Error('Invalid judge reasoning or token budget')
   if (options.limit !== undefined && (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 50)) throw new Error('limit must be 1..50')
   if (!Number.isInteger(options.concurrency) || options.concurrency < 1 || options.concurrency > 16) throw new Error('concurrency must be 1..16')
   if (!Number.isInteger(options.timeoutMs) || options.timeoutMs < 1 || !Number.isInteger(options.retries) || options.retries < 0 || options.retries > 5) throw new Error('Invalid timeout or retry count')
@@ -249,7 +250,8 @@ async function main() {
   const agentModule = options.mode === 'agent' ? await import('../runtime/legal-eval.mjs') : null
   const agent = agentModule?.createAgentHarness({ workspace: process.cwd(), model: options.model, policy: options.agentPolicy })
   const chat = async ({ role, ...request }) => gatewayChat({ key: process.env.AI_GATEWAY_API_KEY,
-    model: role === 'judge' ? options.judgeModel : options.model, timeoutMs: options.timeoutMs, retries: options.retries })(request)
+    model: role === 'judge' ? options.judgeModel : options.model, timeoutMs: options.timeoutMs, retries: options.retries,
+    reasoningEffort: role === 'judge' ? options.judgeEffort : 'low' })(request)
   const data = await evaluate({ gold, modes, output, resume: options.resume, concurrency: options.concurrency,
     config: { modes, model: options.model, judgeModel: options.judgeModel, timeoutMs: options.timeoutMs, retries: options.retries,
       workspace: process.cwd(), git_head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
@@ -257,6 +259,7 @@ async function main() {
       agent_policy: options.mode === 'agent' ? options.agentPolicy : null,
       agent_policy_config: agentModule?.AGENT_POLICIES[options.agentPolicy] ?? null,
       judge_policy: options.judgePolicy, judge_prompt_sha256: createHash('sha256').update(JUDGE_POLICIES[options.judgePolicy]).digest('hex'),
+      judge_reasoning_effort: options.judgeEffort, judge_max_tokens: options.judgeMaxTokens,
       region: process.env.TURBOPUFFER_REGION, chunk_namespace: CHUNK_NS, document_namespace: DOC_NS,
       retrieval_profile: RETRIEVAL_PROFILE, embedding_model: EMBED_MODEL, embedding_dimensions: DIMENSIONS,
       embedding_query_input_type: EMBED_QUERY_INPUT_TYPE, embedding_document_input_type: EMBED_DOCUMENT_INPUT_TYPE,

@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, unlinkSync, symlinkSync 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { evaluate, parseOptions, JUDGE_POLICIES } from '../eval/compose.mjs'
+import { evaluate, parseOptions, JUDGE_POLICIES, gatewayChat } from '../eval/compose.mjs'
 import { replayHarness } from '../eval/rejudge.mjs'
 
 test('audited policies are explicit and historical defaults remain unchanged', () => {
@@ -14,6 +14,22 @@ test('audited policies are explicit and historical defaults remain unchanged', (
   assert.throws(() => parseOptions(['--judge-policy', 'unknown']))
   assert.throws(() => parseOptions(['--agent-policy', 'audited-v1']))
   assert.match(JUDGE_POLICIES['evidence-v3'], /pas une proposition juridique nécessairement vraie/)
+  assert.equal(parseOptions([]).judgeEffort, 'low')
+  assert.equal(parseOptions([]).judgeMaxTokens, 1200)
+  assert.equal(parseOptions(['--judge-effort', 'high', '--judge-max-tokens', '4000']).judgeMaxTokens, 4000)
+  assert.throws(() => parseOptions(['--judge-effort', 'unknown']))
+  assert.throws(() => parseOptions(['--judge-max-tokens', '999999']))
+})
+
+test('gateway applies the explicit judge reasoning and output budgets', async () => {
+  const chat = gatewayChat({ key: 'fixture', model: 'openai/gpt-6-luna', reasoningEffort: 'high', fetchImpl: async (_, options) => {
+    const body = JSON.parse(options.body)
+    assert.equal(body.model, 'openai/gpt-6-luna')
+    assert.equal(body.reasoning_effort, 'high')
+    assert.equal(body.max_completion_tokens, 4000)
+    return new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }))
+  } })
+  assert.equal((await chat({ messages: [], maxTokens: 4000 })).text, 'ok')
 })
 
 test('evidence judge retains exact rubric and flags reference fragments as contextual', async () => {

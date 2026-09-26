@@ -44,13 +44,14 @@ async function main() {
   }
   const selected = originalSelection.slice(0, options.limit)
   const chat = gatewayChat({ key: process.env.AI_GATEWAY_API_KEY, model: options.judgeModel,
-    timeoutMs: options.timeoutMs, retries: options.retries })
+    timeoutMs: options.timeoutMs, retries: options.retries, reasoningEffort: options.judgeEffort })
   const result = await evaluate({ gold: selected, modes: ['agent'], output: resolve(output),
     resume: options.resume, concurrency: options.concurrency, harness: replayHarness(data, process.cwd()), chat,
     config: { experiment_kind: 'judge-only-replay', original_provenance: data.provenance,
       replay_input_sha256: createHash('sha256').update(raw).digest('hex'),
       implementation_hash: implementationHash(process.cwd()), judgeModel: options.judgeModel,
       judge_policy: options.judgePolicy, timeoutMs: options.timeoutMs, retries: options.retries,
+      judge_reasoning_effort: options.judgeEffort, judge_max_tokens: options.judgeMaxTokens,
       judge_prompt_sha256: createHash('sha256').update(JUDGE_POLICIES[options.judgePolicy]).digest('hex') } })
   console.log(JSON.stringify(result.summary, null, 2))
   if (result.summary.agent.errors || result.summary.agent.degraded) process.exitCode = 1

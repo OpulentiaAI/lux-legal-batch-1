@@ -59,3 +59,27 @@ Keep the gold and historical artifacts frozen. Compare the named `audited-v1` ag
 Independently, replay unchanged saved answers and hash-verified sources through `evidence-v3`, retaining the original verdicts in their original files. This isolates grading policy changes. A replay cannot repair an answer or count as a new retrieval test. New checkpoints record policy names, effective prompts/budgets, hashes and model IDs and reject cross-policy resume.
 
 Use 2 → 4 → 10 operational gates before any broader run. Report rubric rate, verdicts, strict all-pass, grounding, citation validity, errors and degradation separately. These examples are the tuning set, not an independent holdout. A defensible general accuracy claim will require reviewed gold and unseen questions after tuning is frozen.
+
+## First tuning results: controlled ten-question comparison
+
+The original and tuned answers were generated once per gate, then replayed unchanged for judge-only comparisons. Every gate completed with zero errors and zero degraded rows. All model roles remain `openai/gpt-6-luna`.
+
+| Judge configuration | Baseline answers | Audited-v1 answers | Interpretation |
+| --- | --- | --- | --- |
+| Historical prompt, low reasoning, 1,200 output-token budget | 31/36; 7 correct, 1 partial, 2 wrong | 31/36; 6 correct, 3 partial, 1 wrong | No measured rubric gain under the original judge. |
+| Evidence-v3, low reasoning, 1,200 output-token budget | 33/36; 7 correct, 3 partial | 33/36; 7 correct, 3 partial | Regrading changed scores; no measured agent-policy gain here. |
+| Evidence-v3, high reasoning, 4,000 output-token budget | 31/36; 7 correct, 3 partial | **35/36 (97.2%); 9 correct, 1 partial** | A promising same-judge comparison on ten development questions, not a 99% or full-benchmark claim. |
+
+The high-reasoning tuned replay has 10/10 valid citations and grounded answers, and 9/10 strict all-pass answers. The remaining failure is q06: a substantively supported answer cites statute documents but not the rubric-required `doc-08`. That constraint remains enforced. The historical 50-question 93.8% result is not the denominator for this comparison.
+
+The high-reasoning control catches omissions or overstatements in the original answers (q01 definition, q02 exceptional-derogation condition, q08 scope), while accepting the corresponding tuned answers. This provides a useful candidate operating point, but one small comparison is not enough to promote an “optimal” harness. Both the high-reasoning budget and the revised judge policy must be disclosed with its score.
+
+Low-reasoning evidence-v3 still made demonstrably false source claims: it said `doc-06:art1002:c0` omitted SARL-S, although item 5 explicitly includes it. It also assigned all four criteria and grounding to an identical q01 answer while returning `partial`; the high-reasoning prefix replays accepted that answer. Judge variation remains visible in the saved files rather than being reconciled by cherry-picking verdicts. The high-reasoning tests use a 60-second request timeout; the original tests used 12 seconds. These are evaluation-budget changes, not changes to the answerer's eight-step budget.
+
+The 120-word requirement is an instruction, not an enforced validator: excluding bracketed citations and counting whitespace-separated words, q02 has 122 words in the original ten-question run and 131 in the tuned run. This remains an explicit harness limitation; the rubric does not score it, and no answer was truncated or rewritten after generation.
+
+No further full 50-question run was started after the user's stop request. The defaults remain historical; audited-v1 and evidence-v3 are explicit experiments. Before claiming progress toward 99%, adjudicate disputed rubric items, calibrate the judge against reviewed answers, then validate a frozen candidate on independent questions. Do not hardcode required documents or reference fragments into the agent.
+
+## Final verification
+
+The final artifact audit covers 313 answer records across 24 files, including repeated gates and judge-only replays; these are not 313 independent questions. It found zero stored-source hash mismatches. All 28 focused evaluation/Voyage/audit tests and TypeScript passed. The full suite passed on rerun with 120 passing tests and four credential-gated E2B skips. An earlier full-suite run exposed the existing order-sensitive GitHub connector test at `runtime/tests/connectors.test.mjs:56`; its concurrent GET requests arrived in the opposite order. That unrelated production/test code was not modified. Historical result files and `gold.json` are unchanged.

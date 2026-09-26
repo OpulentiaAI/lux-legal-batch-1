@@ -66,6 +66,8 @@ node eval/rejudge.mjs eval/compose-luna-voyage-10.json eval/compose-rejudge-v3-2
 
 The replay verifies the input question hash and exact source hashes, pins the input artifact hash, preserves original answers and degraded status, and writes a separate result. Use separate outputs for 4/10-question replay gates too. `evidence-v3` treats reference snippets as contextual evidence rather than unquestionable legal conclusions; it retains the rubric and citation validator. A score change from replay is a grading change, never an accuracy improvement attributable to the agent. Neither policy change authorizes editing `gold.json` or overwriting historical results.
 
+For the separately recorded higher-budget judge calibration, add `--judge-effort high --judge-max-tokens 4000 --timeout-ms 60000`. Defaults remain low reasoning, 1,200 judge output tokens and a 12-second request timeout. Provenance pins these settings. This changes the evaluator budget, not the generated answers; compare both baseline and tuned answers under identical judge settings and retain all results.
+
 ## Override the policy for a future evaluation
 
 Create a named evaluation runner using `createRuntime`, or extend `createAgentHarness` with an explicit policy input when adding the new experiment. **The current compose CLI has no tool-policy/config override flag, and `RUNTIME_CONFIG` is read by the runtime CLI, not by `eval/compose.mjs`.** Editing a config file alone will not change the existing `--mode agent` protocol.

@@ -1,0 +1,788 @@
+{
+  "provenance": {
+    "question_hash": "96487fddb46a438607e139a4a9931a3fc09c2cd862b65ac5cb878de80c14c6e2",
+    "config": {
+      "experiment_kind": "judge-only-replay",
+      "original_provenance": {
+        "question_hash": "a6e42456701fa0d68ae53248a73eb9a1a164d7f5ac1dcd07fe8baef99d21efa6",
+        "config": {
+          "modes": [
+            "agent"
+          ],
+          "model": "openai/gpt-6-luna",
+          "judgeModel": "openai/gpt-6-luna",
+          "timeoutMs": 12000,
+          "retries": 1,
+          "workspace": "/workspace/lux-legal-batch-1",
+          "git_head": "4f61aa81d62ba68055c1bb1760aa80c5832f232a",
+          "implementation_hash": "971559d75cfc5e4cdd113568cccb15d7d89f9d7ec3b6fe22b603dd55f926dfad",
+          "scoring_protocol": "normalized-apostrophe-whitespace-expected-doc-v2",
+          "agent_policy": "audited-v1",
+          "agent_policy_config": {
+            "systemPrompt": "Tu réponds aux questions de droit luxembourgeois uniquement avec les outils du corpus fermé lx_search, lx_chunk et lx_documents. Réponds en français en 120 mots maximum. Cite les identifiants de chunks entre crochets pour chaque affirmation importante. N’invente rien au-delà des textes fournis ; signale explicitement une preuve insuffisante. Stratégie de recherche : commence par lx_search avec la question telle quelle (les filtres sont inférés automatiquement). Si une recherche filtrée (article/doc_id/kind) retourne 0 résultat, relance la même question SANS filtres — une épingle inférée qui ne correspond à rien est automatiquement relaxée, mais un filtre explicite ne l’est jamais. Ne conclue « preuve insuffisante » qu’après au moins une recherche sans filtre infructueuse. Réponds à chaque partie de la question : énonce la définition ou règle applicable et les alternatives ou conditions pertinentes que les sources établissent. Pour une question de définition ou de classification, donne le critère déterminant, pas seulement une liste d'exemples ou de catégories. Distingue la règle de droit de l'intention du législateur et d'une hypothèse ; qualifie la forme de société si la question est ambiguë. Cite chaque identifiant séparément dans ses propres crochets, par exemple [chunk-a] [chunk-b], jamais deux identifiants dans les mêmes crochets. Avant de conclure, vérifie que la réponse couvre chaque partie demandée et que chaque affirmation est étayée par les textes retrouvés. Si les sources sont insuffisantes, réessaie lx_search avec auto_filters:false et des termes reformulés sans filtre explicite, puis signale ce qui reste non établi.",
+            "allowedTools": [
+              "lx_search",
+              "lx_chunk",
+              "lx_documents"
+            ],
+            "maxSteps": 8,
+            "maxWords": 120
+          },
+          "judge_policy": "baseline",
+          "judge_prompt_sha256": "4eddeb7d99922c2650a6b505eacc3b8ee3ec50b7669e21942ba3b6642dd6dadc",
+          "region": "gcp-us-central1",
+          "chunk_namespace": "lx-corpus-voyage4-1024",
+          "document_namespace": "lx-documents-voyage4-1024",
+          "retrieval_profile": "voyage",
+          "embedding_model": "voyage/voyage-4-large",
+          "embedding_dimensions": 1024,
+          "embedding_query_input_type": "query",
+          "embedding_document_input_type": "document",
+          "rerank_model": "voyage/rerank-2.5"
+        },
+        "concurrency": 10,
+        "runtime": "v24.18.0"
+      },
+      "replay_input_sha256": "d0bdf9a14a9583fb3419d0d45911066db4ca85769d8e45c9e047f65cc1ea215c",
+      "implementation_hash": "3dc62ee13737ece55b0154851df17e3933838070ec6a5a02a00aed98c40c6e78",
+      "judgeModel": "openai/gpt-6-luna",
+      "judge_policy": "evidence-v3",
+      "timeoutMs": 60000,
+      "retries": 1,
+      "judge_reasoning_effort": "high",
+      "judge_max_tokens": 4000,
+      "judge_prompt_sha256": "257355869dcf4b5c7d2d00f2d4b0acd5d37d73cc99b29999786861b257574108"
+    },
+    "concurrency": 4,
+    "runtime": "v24.18.0"
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "mode": "agent",
+      "q": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "answer": "Sont commerciales :\n\n- **Par leur forme**, quelle que soit leur activité : la société en nom collectif, en commandite simple, anonyme, par actions simplifiée, en commandite par actions, à responsabilité limitée ou à responsabilité limitée simplifiée, coopérative et la société européenne (SE) [doc-06:art1002:c0].\n- **Par leur objet**, les sociétés ayant pour objet des actes de commerce [doc-06:art1001:c0].\n\nLa loi mentionne aussi les sociétés commerciales momentanées, en participation et en commandite spéciale, qui n’ont pas de personnalité juridique distincte de celle de leurs associés [doc-06:art1002:c0].",
+      "sources": [
+        {
+          "id": "doc-08:s0027:c1",
+          "doc": "doc-08",
+          "chars": 3695,
+          "sha256": "eb64bb96f31b71d763a7a9fa312bd67d0c2188bc05e739475f265fe8327266a7"
+        },
+        {
+          "id": "doc-07:art1002:c0",
+          "doc": "doc-07",
+          "chars": 1830,
+          "sha256": "eb2714ee865dee23607116f4d3a1e04d4bb47d814f1116c75260321947531a27"
+        },
+        {
+          "id": "doc-06:art1001:c0",
+          "doc": "doc-06",
+          "chars": 371,
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33"
+        },
+        {
+          "id": "doc-09:s0587:c0",
+          "doc": "doc-09",
+          "chars": 112,
+          "sha256": "b67d1cf37eb01c175ce25e9e56a484a9633d2543239a947341081f3295b5d370"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "doc": "doc-06",
+          "chars": 1791,
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-07:s0010:c0",
+          "doc": "doc-07",
+          "chars": 124,
+          "sha256": "84252ba49c0b41a0a1bcf3b8e900174a2e2eecb7510f857e3da7ba7e781e3f5c"
+        },
+        {
+          "id": "doc-08:s0027:c3",
+          "doc": "doc-08",
+          "chars": 4478,
+          "sha256": "a4d3694228676678b9994765d255670adfd1a0d0acb5f3eb60230a286218a59e"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "doc": "doc-07",
+          "chars": 727,
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-08:s0027:c1",
+                "doc-07:art1002:c0",
+                "doc-06:art1001:c0",
+                "doc-09:s0587:c0",
+                "doc-06:art1002:c0",
+                "doc-07:s0010:c0",
+                "doc-08:s0027:c3",
+                "doc-07:art1001:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "Sont commerciales :\n\n- **Par leur forme**, quelle que soit leur activité : la société en nom collectif, en commandite simple, anonyme, par actions simplifiée, en commandite par actions, à responsabilité limitée ou à responsabilité limitée simplifiée, coopérative et la société européenne (SE) [doc-06:art1002:c0].\n- **Par leur objet**, les sociétés ayant pour objet des actes de commerce [doc-06:art1001:c0].\n\nLa loi mentionne aussi les sociétés commerciales momentanées, en participation et en commandite spéciale, qui n’ont pas de personnalité juridique distincte de celle de leurs associés [doc-06:art1002:c0]."
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 8292,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 4280,
+        "judge_usage": {
+          "prompt_tokens": 3974,
+          "completion_tokens": 540,
+          "total_tokens": 4514,
+          "cost": 0.00031001,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 3971,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 297,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00031001,
+          "gateway_cost": 0.00031001
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique que les sociétés ayant pour objet des actes de commerce sont commerciales."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06.",
+          "pass": true,
+          "note": "Elle cite les articles 1001 et 1002 de doc-06."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les formes énumérées et le statut des sociétés momentanées, en participation et en commandite spéciale sont étayés par les sources."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La distinction entre les sociétés commerciales par leur forme et celles ayant pour objet des actes de commerce est fidèle aux sources."
+        }
+      ],
+      "note": "La réponse expose correctement les deux fondements de la commercialité et les catégories supplémentaires mentionnées par l’article 1002.",
+      "citations": [
+        "doc-06:art1002:c0",
+        "doc-06:art1001:c0",
+        "doc-06:art1002:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q02",
+      "mode": "agent",
+      "q": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "answer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote de l’assemblée générale. Ce vote est consultatif, sauf si les statuts le rendent contraignant ; en cas de rejet, une politique révisée doit être soumise à l’assemblée suivante [doc-06:s0314:c0].\n\nLa politique doit soutenir la stratégie et la pérennité à long terme, détailler les composantes de rémunération et, notamment pour la part variable, les critères de performance et le processus de décision. Elle est soumise au vote lors de toute modification importante et au moins tous les quatre ans [doc-06:s0314:c1].\n\nUne dérogation temporaire est possible sous conditions strictes liées à des circonstances exceptionnelles. Après le vote, la politique et le résultat doivent être publiés sans retard sur le site internet de la société [doc-07:s0578:c0] [doc-06:s0314:c1].",
+      "sources": [
+        {
+          "id": "doc-06:s0315:c0",
+          "doc": "doc-06",
+          "chars": 4427,
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-07:s0579:c0",
+          "doc": "doc-07",
+          "chars": 2756,
+          "sha256": "99705d058c4d4082c5839d771d3e3519ef44e3bb3bd3dc27073be386ecf0f9ff"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "doc": "doc-06",
+          "chars": 2440,
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "doc": "doc-07",
+          "chars": 4560,
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "doc": "doc-06",
+          "chars": 3387,
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-07:s0578:c1",
+          "doc": "doc-07",
+          "chars": 1173,
+          "sha256": "d8fee617e2db69826ae3a70720ea063bbd72e5954923c31de51fba02dcc9d337"
+        },
+        {
+          "id": "doc-06:s0258:c0",
+          "doc": "doc-06",
+          "chars": 156,
+          "sha256": "85b62bf30c7214d14af026bda4e95930daf85ecd9a059c983be8f81d91772053"
+        },
+        {
+          "id": "doc-07:s0707:c0",
+          "doc": "doc-07",
+          "chars": 234,
+          "sha256": "898048eb04f8e91949d88b6846c5f2b2baa6ebfe68e39c7e622fc90ab955708b"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-06:s0315:c0",
+                "doc-07:s0579:c0",
+                "doc-06:s0314:c0",
+                "doc-07:s0578:c0",
+                "doc-06:s0314:c1",
+                "doc-07:s0578:c1",
+                "doc-06:s0258:c0",
+                "doc-07:s0707:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "L’article 7bis impose aux sociétés d’établir une politique de rémunération des dirigeants et de la soumettre au vote de l’assemblée générale. Ce vote est consultatif, sauf si les statuts le rendent contraignant ; en cas de rejet, une politique révisée doit être soumise à l’assemblée suivante [doc-06:s0314:c0].\n\nLa politique doit soutenir la stratégie et la pérennité à long terme, détailler les composantes de rémunération et, notamment pour la part variable, les critères de performance et le processus de décision. Elle est soumise au vote lors de toute modification importante et au moins tous les quatre ans [doc-06:s0314:c1].\n\nUne dérogation temporaire est possible sous conditions strictes liées à des circonstances exceptionnelles. Après le vote, la politique et le résultat doivent être publiés sans retard sur le site internet de la société [doc-07:s0578:c0] [doc-06:s0314:c1]."
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 11847,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 4230,
+        "judge_usage": {
+          "prompt_tokens": 5014,
+          "completion_tokens": 588,
+          "total_tokens": 5602,
+          "cost": 0.00034441,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 5011,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 360,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "market_cost": 0.00034441,
+          "gateway_cost": 0.00034441
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse expose les règles de l’article 7bis relatives à la politique de rémunération."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "pass": true,
+          "note": "Elle cite plusieurs chunks de doc-06."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les affirmations sont étayées par les sources citées."
+        },
+        {
+          "item": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "pass": true,
+          "note": "La réponse restitue fidèlement le vote, le contenu général de la politique, la fréquence du vote et les règles de dérogation et de publication."
+        }
+      ],
+      "note": "La réponse est fidèle aux dispositions fournies de l’article 7bis.",
+      "citations": [
+        "doc-06:s0314:c0",
+        "doc-06:s0314:c1",
+        "doc-07:s0578:c0",
+        "doc-06:s0314:c1"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q03",
+      "mode": "agent",
+      "q": "Qu'est-ce que la scission par absorption ?",
+      "answer": "La scission par absorption est une opération où une société transfère son patrimoine, actif et passif, à une ou plusieurs sociétés déjà existantes. Elle peut entraîner la dissolution de la société scindée sans liquidation, avec transfert de l’ensemble de son patrimoine, ou se faire sans dissolution, pour une partie ou la totalité de celui-ci. En contrepartie, ses associés reçoivent des actions ou parts des sociétés bénéficiaires ; une soulte en espèces peut s’y ajouter, dans la limite de 10 % de leur valeur nominale (ou de leur pair comptable) [doc-07:art10303:c0].",
+      "sources": [
+        {
+          "id": "doc-07:art10303:c0",
+          "doc": "doc-07",
+          "chars": 1186,
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c"
+        },
+        {
+          "id": "doc-09:s0750:c0",
+          "doc": "doc-09",
+          "chars": 2877,
+          "sha256": "3ca0d50851d36c269402bc789aab0c03260ffa5ba9f6b95a96c1963b81873aed"
+        },
+        {
+          "id": "doc-08:s0293:c0",
+          "doc": "doc-08",
+          "chars": 4381,
+          "sha256": "d10ce8b2f9bc90fbfeb08af39048d724f6497b6d46237326979a687ad7dc0461"
+        },
+        {
+          "id": "doc-02:s0025:c0",
+          "doc": "doc-02",
+          "chars": 1279,
+          "sha256": "f6ece0e10f85078087c28a3db4df25ec986afb2d04ad40ff8575eec893d6d1a2"
+        },
+        {
+          "id": "doc-02:s0021:c0",
+          "doc": "doc-02",
+          "chars": 4569,
+          "sha256": "678c3f1bdaeabff6b5a2f196d16bf95d0116c2005ac798012ae463891a3e3a00"
+        },
+        {
+          "id": "doc-02:s0024:c1",
+          "doc": "doc-02",
+          "chars": 4149,
+          "sha256": "e6e23dd5267a26a7d18d2407d833022d3e0f8912e9078a2d36459e17a048ca54"
+        },
+        {
+          "id": "doc-07:art10302:c0",
+          "doc": "doc-07",
+          "chars": 283,
+          "sha256": "aee7095bc1d08b8793b16504c8141f854e066a3386f74a2f771e52ac67c5e740"
+        },
+        {
+          "id": "doc-09:s0755:c0",
+          "doc": "doc-09",
+          "chars": 2415,
+          "sha256": "fcd558786a71c61cc33dfaf8bd05843f5a3b91f3068a0877fe89064f542c6cea"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Qu'est-ce que la scission par absorption ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-07:art10303:c0",
+                "doc-09:s0750:c0",
+                "doc-08:s0293:c0",
+                "doc-02:s0025:c0",
+                "doc-02:s0021:c0",
+                "doc-02:s0024:c1",
+                "doc-07:art10302:c0",
+                "doc-09:s0755:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "La scission par absorption est une opération où une société transfère son patrimoine, actif et passif, à une ou plusieurs sociétés déjà existantes. Elle peut entraîner la dissolution de la société scindée sans liquidation, avec transfert de l’ensemble de son patrimoine, ou se faire sans dissolution, pour une partie ou la totalité de celui-ci. En contrepartie, ses associés reçoivent des actions ou parts des sociétés bénéficiaires ; une soulte en espèces peut s’y ajouter, dans la limite de 10 % de leur valeur nominale (ou de leur pair comptable) [doc-07:art10303:c0]."
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 6882,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 4402,
+        "judge_usage": {
+          "prompt_tokens": 6327,
+          "completion_tokens": 572,
+          "total_tokens": 6899,
+          "cost": 0.0010768,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 334,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 6324,
+          "market_cost": 0.0010768,
+          "gateway_cost": 0.0010768
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « scission par absorption est l’opération » (le fait attendu).",
+          "pass": true,
+          "note": "La réponse définit l’opération et décrit ses principales modalités."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-06 / doc-07.",
+          "pass": true,
+          "note": "Elle cite doc-07:art10303:c0, qui contient la définition légale."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Les modalités de transfert, la contrepartie en actions ou parts et la limite de la soulte sont étayées par doc-07."
+        },
+        {
+          "item": "La définition est complète (pas seulement une occurrence du terme).",
+          "pass": true,
+          "note": "La réponse précise le transfert de patrimoine, les variantes avec ou sans dissolution et la contrepartie attribuée aux associés."
+        }
+      ],
+      "note": "La réponse restitue fidèlement la définition figurant au paragraphe (1) de la source citée.",
+      "citations": [
+        "doc-07:art10303:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 4,
+      "rubric_pass": 4
+    },
+    {
+      "id": "q04",
+      "mode": "agent",
+      "q": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+      "answer": "Le capital social minimum d’une société anonyme (SA) au Luxembourg est de **30 000 euros**. Il doit être intégralement souscrit ; chaque action doit être libérée d’au moins un quart [doc-07:art4201:c0].",
+      "sources": [
+        {
+          "id": "doc-08:s0452:c0",
+          "doc": "doc-08",
+          "chars": 1801,
+          "sha256": "b05b534dfb0e73990266ef4e0dd06eea365c8d74119a547a35f4a1c6ed85bc73"
+        },
+        {
+          "id": "doc-07:art4201:c0",
+          "doc": "doc-07",
+          "chars": 1218,
+          "sha256": "0cb34608b8754c2b1aa39301e716e5a0071a2d44a01d63c7ca2f3257f052fd7a"
+        },
+        {
+          "id": "doc-08:s0540:c0",
+          "doc": "doc-08",
+          "chars": 1363,
+          "sha256": "72a73f5f068bb4fac56dff0dd699ca3e7f36dc4337214655fae16b8bd76fd8f8"
+        },
+        {
+          "id": "doc-07:art7204:c0",
+          "doc": "doc-07",
+          "chars": 621,
+          "sha256": "672578720e7b61fd27a239367be8d5fc2168ce5d935f54af2b51010d55e6583e"
+        },
+        {
+          "id": "doc-09:s0598:c0",
+          "doc": "doc-09",
+          "chars": 3277,
+          "sha256": "575be2b39f0b30289c370206ae0a6ce8959577ab19cf0da4daf2434e35916b29"
+        },
+        {
+          "id": "doc-09:s0025:c2",
+          "doc": "doc-09",
+          "chars": 2079,
+          "sha256": "76847fae27bd8d203eb3d8e6bcf2e56815893c845a6f0d6ce7ae190aa7542d64"
+        },
+        {
+          "id": "doc-06:s0095:c0",
+          "doc": "doc-06",
+          "chars": 4104,
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+        },
+        {
+          "id": "doc-09:s0401:c0",
+          "doc": "doc-09",
+          "chars": 4026,
+          "sha256": "84ef7a715f1d2a07b3d242b20032c178a664836f4d8dada26627f635ebb99c2e"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "tool_started",
+          "tool": "lx_search"
+        },
+        {
+          "stage": "tool_finished",
+          "tool": "lx_search",
+          "ok": true
+        },
+        {
+          "stage": "model_usage"
+        },
+        {
+          "stage": "session_completed"
+        }
+      ],
+      "audit": {
+        "calls": [
+          {
+            "tool": "lx_search",
+            "args": {
+              "query": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+              "mode": "hybrid",
+              "limit": 8,
+              "doc_id": "",
+              "kind": "",
+              "article": "",
+              "under": "",
+              "rerank": true,
+              "auto_filters": true,
+              "expand": true
+            },
+            "result": {
+              "ids": [
+                "doc-08:s0452:c0",
+                "doc-07:art4201:c0",
+                "doc-08:s0540:c0",
+                "doc-07:art7204:c0",
+                "doc-09:s0598:c0",
+                "doc-09:s0025:c2",
+                "doc-06:s0095:c0",
+                "doc-09:s0401:c0"
+              ],
+              "count": 8,
+              "error": false
+            }
+          }
+        ],
+        "finalAnswer": "Le capital social minimum d’une société anonyme (SA) au Luxembourg est de **30 000 euros**. Il doit être intégralement souscrit ; chaque action doit être libérée d’au moins un quart [doc-07:art4201:c0]."
+      },
+      "degraded": false,
+      "metrics": {
+        "errors": 0,
+        "replay": true,
+        "original_latency_ms": 5540,
+        "sourceCount": 8,
+        "source_count": 8,
+        "evidence_covered": true,
+        "expected_doc_covered": true,
+        "latency_ms": 2613,
+        "judge_usage": {
+          "prompt_tokens": 5441,
+          "completion_tokens": 316,
+          "total_tokens": 5757,
+          "cost": 0.00083805,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": null,
+            "upstream_inference_prompt_cost": 0,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 148,
+            "image_tokens": 0
+          },
+          "cache_creation_input_tokens": 5438,
+          "market_cost": 0.00083805,
+          "gateway_cost": 0.00083805
+        }
+      },
+      "verdict": "correct",
+      "citation_ok": true,
+      "grounded": true,
+      "rubric": [
+        {
+          "item": "La réponse porte effectivement sur « 30.000 » (le fait attendu).",
+          "pass": true,
+          "note": "Elle indique un capital social minimum de 30 000 euros."
+        },
+        {
+          "item": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-07 / doc-09.",
+          "pass": true,
+          "note": "Elle cite doc-07."
+        },
+        {
+          "item": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "pass": true,
+          "note": "Le montant et les exigences de souscription et de libération sont étayés par doc-07."
+        }
+      ],
+      "note": "La réponse est étayée et sa citation soutient les affirmations.",
+      "citations": [
+        "doc-07:art4201:c0"
+      ],
+      "missing_citations": [],
+      "rubric_total": 3,
+      "rubric_pass": 3
+    }
+  ],
+  "summary": {
+    "agent": {
+      "planned": 4,
+      "completed": 4,
+      "evaluated": 4,
+      "errors": 0,
+      "degraded": 0,
+      "correct": 4,
+      "partial": 0,
+      "wrong": 0,
+      "all_pass": 4,
+      "failed_or_incomplete": 0,
+      "rubric_pass": 15,
+      "rubric_total": 15,
+      "citation_ok": 4,
+      "grounded": 4,
+      "p50_latency_ms": 4280
+    }
+  }
+}

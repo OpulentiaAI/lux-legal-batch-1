@@ -100,6 +100,12 @@ inferred-filter dead-ends (#7), explicit-filter dead-ends (#9), locator
 collisions, and a judge that previously graded source IDs without reading
 the text.
 
+### Luna + Voyage tuning audit (September 26, 2026)
+
+The new experiment uses GPT-6 Luna with Voyage 4 Large embeddings and Voyage 2.5 reranking, retaining the historical index and gold set. On the first ten development questions, the baseline and tuned agent both scored **31/36** under the original judge. Replaying those same answers under a separately versioned, higher-reasoning Luna judge produced **31/36 baseline versus 35/36 tuned (97.2%)**, with 9/10 tuned answers fully passing. This is a small, judge-dependent tuning comparison—not a 99% claim or a replacement for the 50-question baseline. The new full run was stopped after 13/50 recorded answers.
+
+The [detailed evaluation audit](eval/AUDIT.md) separates real answer omissions, source/citation constraints, demonstrable judge mistakes, and remaining limits. [Reproduction commands](eval/README.md) cover isolated agent-policy experiments and hash-verified judge-only replays. All saved results, including interrupted and degraded runs, are retained.
+
 ## Corpus inventory
 
 | # | File | Role |

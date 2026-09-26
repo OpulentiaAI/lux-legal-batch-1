@@ -39,7 +39,10 @@ export function auditLogs(workspace) {
         const ids = new Set((row.sources ?? []).map((s) => s.id))
         const groupedKnown = bracketed.filter((citation) => /[,;]/.test(citation) &&
           citation.split(/[,;]/).map((id) => id.trim()).every((id) => ids.has(id)))
+        const answerText = (row.answer ?? '').replace(/\[[^\]]+\]/g, '').trim()
+        const answerWords = answerText ? answerText.split(/\s+/).length : 0
         return { id: row.id, verdict: row.verdict ?? null, error: row.error ?? null,
+          answer_words_excluding_citations: answerWords, exceeds_120_word_instruction: answerWords > 120,
           degraded: Boolean(row.degraded), rubric_pass: row.rubric_pass ?? null,
           rubric_total: row.rubric_total ?? null, rubric_schema_matches_gold: rubricValid,
           rubric_count_matches: passed === null ? null : passed === row.rubric_pass,
