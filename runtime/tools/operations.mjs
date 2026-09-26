@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { withLegacyNames } from './names.mjs';
 import { CronExpressionParser } from 'cron-parser';
 import recurrence from 'rrule';
 import { posix as path } from 'node:path';
@@ -137,7 +138,7 @@ function upsert(ctx, collection, args, extra = {}) {
   return record(ctx, collection, recordData);
 }
 
-function automation(ctx, args) {
+function automation(ctx, args, legacy = false) {
   const action = required(args.action, 'action');
   if (action === 'schemas') return { trigger_types: ['schedule:recurring', 'github:push', 'github:pull_request', 'slack:message', 'incoming_webhook'], action_types: ['start_session', 'start_code_scan', 'scan_new_commits', 'message_session', 'triage_session'], condition_operators: ['eq', 'neq', 'contains', 'not_contains', 'starts_with', 'ends_with', 'in', 'not_in', 'is_empty', 'is_not_empty', 'gt', 'gte', 'lt', 'lte', 'between', 'matches', 'not_matches', 'recurrence'] };
   if (action === 'templates') return [];
@@ -169,8 +170,9 @@ function automation(ctx, args) {
       allowedRepo(ctx, scan.repo);
     } else if (item.type === 'message_session') {
       required(item.prompt, 'actions[].prompt');
-      if (!item.target_devin_id && !item.auto_create) throw new Error('message_session requires target_devin_id or auto_create');
-      if (item.target_devin_id && !ctx.store.get('sessions', item.target_devin_id)) throw new Error('Target session does not exist');
+      const target = item.target_opulent_id ?? item.target_devin_id;
+      if (!target && !item.auto_create) throw new Error('message_session requires target_opulent_id or auto_create');
+      if (target && !ctx.store.get('sessions', target)) throw new Error('Target session does not exist');
     } else if (item.type === 'triage_session') {
       required(item.setup_prompt, 'actions[].setup_prompt');
       if (triggers.length !== 1 || triggers[0].event_type !== 'slack:message') throw new Error('triage_session requires one slack:message trigger');
@@ -184,7 +186,8 @@ function automation(ctx, args) {
   if (concurrency?.max_queue_depth != null && (!Number.isSafeInteger(concurrency.max_queue_depth) || concurrency.max_queue_depth < 0)) throw new Error('max_queue_depth must be nonnegative');
   const limit = concurrency?.max_concurrent_runs ?? Number.MAX_SAFE_INTEGER;
   if (concurrency?.max_queue_depth != null && !concurrency?.max_concurrent_runs) throw new Error('max_queue_depth requires max_concurrent_runs');
-  const stored = upsert(ctx, 'automations', { ...args, id, repo, max_concurrent: limit }, { triggers, actions, next_due, concurrency, limits: args.limits ?? existing.limits ?? null });
+  const storedActions = legacy ? actions.map(item => item.type === 'message_session' && item.auto_create && !item.target_devin_id ? { ...item, target_devin_id: null } : item) : actions;
+  const stored = upsert(ctx, 'automations', { ...args, id, repo, max_concurrent: limit }, { triggers, actions: storedActions, next_due, concurrency, limits: args.limits ?? existing.limits ?? null });
   return stored;
 }
 
@@ -383,11 +386,11 @@ async function runAutomation(ctx, source, event) {
       record(ctx, 'operation_runs', { id: randomUUID(), kind: 'automations', source_id: source.id, repo: source.repo, status: 'running', session_id: run.session_id, event, created_at: new Date().toISOString() });
       results.push(run);
     } else if (item.type === 'message_session') {
-      let target = item.target_devin_id;
+      let target = item.target_opulent_id ?? item.target_devin_id;
       if (!target && item.auto_create) {
         const created = await ctx.startSession({ title: `Automation: ${source.name}`, prompt: `${item.prompt}\n\nEvent data: ${JSON.stringify(event)}`, parent_session_id: ctx.sessionId, repos: [source.repo] });
         target = created.id;
-        record(ctx, 'automations', { ...source, actions: [{ ...item, target_devin_id: target }] });
+        record(ctx, 'automations', { ...source, actions: [{ ...item, [item.target_devin_id !== undefined ? 'target_devin_id' : 'target_opulent_id']: target }] });
       } else {
         if (typeof ctx.messageSession !== 'function') throw new Error('Existing-session message backend is unavailable');
         await ctx.messageSession(target, `${item.prompt}\n\nEvent data: ${JSON.stringify(event)}`);
@@ -495,10 +498,10 @@ export async function dispatchEvent(ctx, event) {
 }
 
 export function createTools(ctx) {
-  return {
-    devin_automation_manage: args => automation(ctx, args),
-    devin_schedule_manage: args => schedule(ctx, args),
-    devin_oncall_manage: args => {
+  const tools = {
+    opulent_automation_manage: args => automation(ctx, args),
+    opulent_schedule_manage: args => schedule(ctx, args),
+    opulent_oncall_manage: args => {
       if (args.action === 'incident_candidates' || args.action === 'responder_issues') return ctx.store.list('incidents').filter(i => !args.responder_id || i.source_id === args.responder_id).map(i => {
         const run = i.run_id ? ctx.store.get('operation_runs', i.run_id) : null;
         const session = run?.session_id ? ctx.store.get('sessions', run.session_id) : null;
@@ -506,8 +509,8 @@ export function createTools(ctx) {
       });
       return oncall(ctx, args);
     },
-    devin_code_scan_manage: args => scanTool(ctx, args),
-    devin_review_manage: args => reviewTool(ctx, args),
+    opulent_code_scan_manage: args => scanTool(ctx, args),
+    opulent_review_manage: args => reviewTool(ctx, args),
     git_stack: args => stack(ctx, args),
     deploy: async args => {
       if (!ctx.preview?.create) throw new Error('Secure preview backend ctx.preview.create is required; E2B host URLs are not access-controlled deployments');
@@ -556,6 +559,7 @@ export function createTools(ctx) {
       return ctx.store.list('deployments').filter(d => !args.status || d.status === args.status);
     },
   };
+  return withLegacyNames(tools, { opulent_automation_manage: args => automation(ctx, args, true) });
 }
 
 async function deploymentLogs(ctx, args) {

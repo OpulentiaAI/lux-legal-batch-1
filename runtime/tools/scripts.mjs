@@ -36,8 +36,9 @@ tools=Tools()
 def list_tools(): return [(name,'Runtime tool') for name in sorted(declared) if name not in blocked]
 def search_tools(query): return [(name,summary) for name,summary in list_tools() if query.lower() in name.lower()]
 def describe(name): return name if name in declared else "No tool named '%s'. Try search_tools() to find one."%name
-module=types.ModuleType('devin_tools')
+module=types.ModuleType('opulent_tools')
 module.__dict__.update(tools=tools,call_tool=call_tool,call_tool_sync=call_tool_sync,list_tools=list_tools,search_tools=search_tools,describe=describe,ToolCallError=ToolCallError)
+sys.modules['opulent_tools']=module
 sys.modules['devin_tools']=module
 exec(compile(tree,script_path,'exec'),{'__name__':'__main__','__file__':script_path})
 `;

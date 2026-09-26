@@ -6,6 +6,7 @@ import { resolve, sep } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { withLegacyNames } from './names.mjs';
 
 const blocked = new BlockList();
 for (const [address, prefix, family] of [
@@ -285,15 +286,15 @@ export function createTools(ctx) {
       if (command === 'call_tool') return ctx.invoke('mcp_call_tool', { server: required(args.server, 'server'), name: required(args.tool_name, 'tool_name'), arguments: toolArgs(args.tool_args) });
       throw new Error('Invalid MCP command');
     },
-    devin_mcp: args => {
+    opulent_mcp: args => {
       const command = required(args.command, 'command');
-      if (command === 'list_tools') return { tools: Object.keys(tools).filter(name => !['devin_mcp', 'mcp_tool'].includes(name)).map(name => ({ name })) };
+      if (command === 'list_tools') return { tools: Object.keys(tools).filter(name => !['opulent_mcp', 'mcp_tool'].includes(name)).map(name => ({ name })) };
       if (command === 'call_tool') {
         const name = required(args.tool_name, 'tool_name');
-        if (name === 'devin_mcp') throw new Error('Recursive devin_mcp dispatch is not allowed');
+        if (['opulent_mcp', 'devin_mcp'].includes(name)) throw new Error('Recursive opulent_mcp dispatch is not allowed');
         return ctx.invoke(name, toolArgs(args.tool_args));
       }
-      throw new Error('Invalid Devin MCP command');
+      throw new Error('Invalid Opulent MCP command');
     },
     linear: args => {
       const command = required(args.command, 'command');
@@ -367,5 +368,5 @@ export function createTools(ctx) {
       return { image_base64: image.b64_json, mime_type: `image/${output_format}`, ...(args.output_path ? { output_path: args.output_path } : {}) };
     },
   };
-  return tools;
+  return withLegacyNames(tools);
 }
