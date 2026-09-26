@@ -40,6 +40,10 @@ Gold set: 50 questions (evidence strings verified against chunk files).
 Composition (rubric judge, 178 criteria): flat 87.1% criteria pass
 (36 correct / 11 partial / 3 wrong) · RLM depth-1 86.0% — decomposition is
 neutral at this corpus size but rescues thin-coverage statute lookups.
+Agent harness (standalone runtime, 3-tool closed corpus, ~19s/q):
+93.8% criteria pass (42 correct / 7 partial / 1 wrong, 0 errors) —
+the retry-unfiltered search strategy in `runtime/legal-eval.mjs` cut
+degraded runs 18 → 0 vs the first agent baseline (73.0%).
 
 Search levers live: `auto_filters` (article + "loi de 1915" → doc-06
 inference, relaxed when they return zero), `expand` (weak-hit section

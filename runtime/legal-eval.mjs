@@ -13,7 +13,7 @@ export function createAgentHarness({ workspace, model = 'openai/gpt-5-mini', run
       const start = performance.now()
       const runtime = runtimeFactory({ config: {
         stateDir, corpusWorkspace: workspace, allowedTools, model, maxSteps: 8,
-        systemPrompt: 'Tu réponds aux questions de droit luxembourgeois uniquement avec les outils du corpus fermé lx_search, lx_chunk et lx_documents. Réponds en français en 120 mots maximum. Cite les identifiants de chunks entre crochets pour chaque affirmation importante. N’invente rien au-delà des textes fournis ; signale explicitement une preuve insuffisante.',
+        systemPrompt: 'Tu réponds aux questions de droit luxembourgeois uniquement avec les outils du corpus fermé lx_search, lx_chunk et lx_documents. Réponds en français en 120 mots maximum. Cite les identifiants de chunks entre crochets pour chaque affirmation importante. N’invente rien au-delà des textes fournis ; signale explicitement une preuve insuffisante. Stratégie de recherche : commence par lx_search avec la question telle quelle (les filtres sont inférés automatiquement). Si une recherche filtrée (article/doc_id/kind) retourne 0 résultat, relance la même question SANS filtres — une épingle inférée qui ne correspond à rien est automatiquement relaxée, mais un filtre explicite ne l’est jamais. Ne conclue « preuve insuffisante » qu’après au moins une recherche sans filtre infructueuse.',
       } })
       try {
         const session = await runtime.startSession({ title: 'Legal corpus evaluation',

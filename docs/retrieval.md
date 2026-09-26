@@ -155,6 +155,14 @@ other tools for this benchmark, even though they are available in the full
 runtime. Search and chunk tools record the exact hydrated text returned to
 the model so the same source-aware judge can evaluate its answer. This mode
 does not require an E2B sandbox because it cannot use execution/desktop tools.
+Latest run: `eval/compose-agent.json` — 167/178 criteria (93.8%), 42 correct /
+7 partial / 1 wrong, citation_ok 36/50, grounded 48/50, p50 19.4s. The closed
+corpus system prompt tells the model to re-issue a zero-result filtered search
+unfiltered before declaring insufficient evidence; the earlier baseline
+(`eval/compose-agent-baseline.json`, 73.0%, 18 degraded runs) shows why: the
+model would pin an explicit `article`/`doc_id` filter that matches nothing and
+loop on empty results (explicit filters never auto-relax, unlike inferred
+`auto_filters`).
 
 **Note for future evals:** this is a baseline policy, not a permanent harness
 restriction. New experiments may override it and add approved MCP/corpus
