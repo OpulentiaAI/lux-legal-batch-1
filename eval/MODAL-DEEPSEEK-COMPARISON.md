@@ -24,3 +24,19 @@ The next decision is whether to retain stop-on-failure or explicitly authorize a
 ## Private evidence
 
 Artifacts are under `~/.capy/work/modal-deepseek-comparison/`, outside git. `gate-2.json` has SHA-256 `0d565bb3838748d6203106af4a0b9f5283c10d609e82d8f38d8baf70a5d53d6b`. It records effective models/provider filters, instruction hashes, model budgets, corpus version, upstream adapter hashes, and per-row results. The directory also preserves model and adapter smoke proofs, preflight evidence, raw tool records, frozen-answer judge diagnostic requests/responses, and test logs. Licensed source excerpts and raw answers are not committed.
+
+## Authorized 16,000-token judge rerun
+
+Commit `1a0a8fc2` raises both Modal gate judges to 16,000 tokens. Answer generation remains at 4,000 tokens and 40 steps, the Luna baseline remains at its historical judge budget, and the clean-gate rules are unchanged. New artifacts are under `~/.capy/work/modal-deepseek-budget16k/`; the earlier failed run is preserved separately.
+
+The fresh two-question gate completed all four answers and judgments with zero errors or degradation. The subsequent four-question gate completed all eight answers and judgments with **zero judge errors**, but failed the clean gate because Harvey q02 issued a search with no matches and exit code 1. The existing policy counts this as degradation. It is not a missing answer, provider outage, or failed judge call.
+
+| Four-question legacy-v3 diagnostic | Opulent | Harvey |
+| --- | ---: | ---: |
+| Evaluated answers | 4 | 4 |
+| Correct / partial / wrong | 3 / 1 / 0 | 1 / 3 / 0 |
+| Criterion passes | 13/15 | 12/15 |
+| Degraded rows | 0 | 1 |
+| Judge errors | 0 | 0 |
+
+These are legacy-v3 diagnostics, not calibrated legal accuracy. Ten-question expansion remains paused because the four-question gate was not clean; authorizing a larger token budget did not authorize bypassing that rule. No prompts, rubric, validator, or tool-exit policy was changed.
