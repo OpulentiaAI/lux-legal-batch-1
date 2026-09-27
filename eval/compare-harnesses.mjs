@@ -14,6 +14,11 @@ export function parseComparisonOptions(args) {
   const keys = { '--limit': 'limit', '--concurrency': 'concurrency', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python', '--artifacts': 'artifactsDir', '--previous': 'previous',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort', '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--profile': 'profile' }
   for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--diagnostic') {
+      if (options.diagnostic) throw new Error('Duplicate diagnostic option')
+      options.diagnostic = true
+      continue
+    }
     const key = keys[args[i]]
     if (!key || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown or incomplete comparison option')
     options[key] = ['limit', 'concurrency', 'brokerPort'].includes(key) ? Number(args[++i]) : args[++i]
@@ -32,8 +37,14 @@ export function parseComparisonOptions(args) {
     if (!/^[a-f0-9]{64}$/.test(options.computerImageSha256)) throw new Error('Computer image SHA-256 must be 64 lowercase hexadecimal characters')
     options.nativeModule = resolve(options.nativeModule)
   }
-  if (options.limit > 2 && !options.previous) throw new Error('A successful preceding gate is required')
+  if (options.diagnostic && options.previous) throw new Error('Diagnostic mode cannot use --previous')
+  if (options.diagnostic && options.limit !== 10) throw new Error('Diagnostic mode requires --limit 10')
+  if (options.limit > 2 && !options.previous && !options.diagnostic) throw new Error('A successful preceding gate is required')
   return options
+}
+
+export function gateMetadata(options) {
+  return options.diagnostic ? { gate_policy: 'diagnostic-complete-set-with-tool-errors-v1', diagnostic: true } : {}
 }
 
 export function checkPreviousGate(previous, limit, config) {
@@ -82,7 +93,7 @@ export async function main(args = process.argv.slice(2)) {
       nativeMcp: true, mcp, broker, sandboxTemplate: options.sandboxTemplate,
       computerImageSha256: options.computerImageSha256, nativeModuleHash, model, providerOnly })
     const config = {
-      protocol: 'harvey-vs-broad-corpus-v1', profile: options.profile, model, provider_only: providerOnly, judge_model: model, judge_provider_only: providerOnly,
+      protocol: 'harvey-vs-broad-corpus-v1', ...gateMetadata(options), profile: options.profile, model, provider_only: providerOnly, judge_model: model, judge_provider_only: providerOnly,
       judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: judgeMaxTokens, judge_timeout_ms: 120000, judge_retries: 1,
       max_steps: 40, max_completion_tokens: 4000, max_words_instruction: 120,
       corpus_hash: corpus.hash, corpus_chunks: corpus.count,

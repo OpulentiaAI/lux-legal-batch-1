@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parseComparisonOptions, checkPreviousGate, assertFullRuntimeReady, COMPARISON_MODEL } from '../eval/compare-harnesses.mjs'
+import { parseComparisonOptions, gateMetadata, checkPreviousGate, assertFullRuntimeReady, COMPARISON_MODEL } from '../eval/compare-harnesses.mjs'
 import { COMPARISON_PROFILES, MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
 import { BROAD_COMPLETION_TOKENS } from '../runtime/broad-legal-eval.mjs'
 
@@ -19,6 +19,13 @@ test('comparison pins Luna and rejects model substitutions and limits above fift
   assert.throws(() => parseComparisonOptions([...required, '--model', 'another-model']), /Unknown/)
   assert.throws(() => parseComparisonOptions([...required, '--limit', '50']), /15/)
   assert.throws(() => parseComparisonOptions([...required, '--limit', '10']), /preceding/)
+  assert.deepEqual(gateMetadata(parseComparisonOptions(required)), {})
+  const diagnostic = parseComparisonOptions([...required, '--profile', 'modal-deepseek-v4.1-flash', '--limit', '10', '--diagnostic'])
+  assert.deepEqual(gateMetadata(diagnostic), { gate_policy: 'diagnostic-complete-set-with-tool-errors-v1', diagnostic: true })
+  assert.throws(() => parseComparisonOptions([...required, '--diagnostic']), /limit 10/)
+  assert.throws(() => parseComparisonOptions([...required, '--limit', '4', '--diagnostic']), /limit 10/)
+  assert.throws(() => parseComparisonOptions([...required, '--limit', '10', '--diagnostic', '--previous', '/gate-4.json']), /cannot use --previous/)
+  assert.throws(() => parseComparisonOptions([...required, '--limit', '10', '--diagnostic', '--diagnostic']), /Duplicate/)
 })
 
 test('gates reject incomplete, degraded or changed protocols', () => {
