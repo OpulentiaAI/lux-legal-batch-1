@@ -26,6 +26,16 @@ test('v4 is explicitly selected, preserves historical models and legacy schema',
   assert.throws(() => validateJudge(JSON.stringify(base), rubric, answer, sources), /schema/)
 })
 
+test('v4 prompt maps materiality by criticism type and illustrates document compliance', () => {
+  const policy = JUDGE_POLICIES['evidence-v4']
+  assert.match(policy, /incorrect ou incomplete, utilise central ou limited/)
+  assert.match(policy, /unverified, ambiguous_rubric ou document_compliance, utilise uniquement not_applicable/)
+  assert.match(policy, /source entièrement fictive/)
+  const example = policy.match(/\{"type":"document_compliance","rubric_index":1,"materiality":"not_applicable","claim":"","note":"[^"]+","anchors":\[\{"id":"source-fictive-1","quote":"Texte juridique fictif visible\."\}\]\}/)
+  assert.ok(example)
+  assert.deepEqual(Object.keys(JSON.parse(example[0])).sort(), ['anchors', 'claim', 'materiality', 'note', 'rubric_index', 'type'])
+})
+
 test('request sends only actual visible text and rejects invalid hashes or duplicate ids', () => {
   const request = judgeV4Request('Is there no minimum?', rubric, answer, sources, 'no capital minimum',
     [{ criterion: 0, interpretation: 'current law' }])
