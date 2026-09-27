@@ -1,0 +1,1631 @@
+{
+  "source": {
+    "sha256": "be0e0824b792c7350ebcb966d3bd8468066d8992558f1aa99279dd5770406a29",
+    "blockCount": 98,
+    "extraction": "Prose after the signature line and before Args:/JSON schema:; whitespace trimmed"
+  },
+  "catalogNonDescriptionSha256": "4209c8e55831d287c5879865cdf27debef61105b997a8050c30d628793eb14d2",
+  "catalogToolNamesSha256": "20485d86f82658467fbc6faa2a420505212af8593eda0d0edae0f62e357e97f1",
+  "catalogWithoutSource": [
+    {
+      "catalogTool": "annotate_recording",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "4b464b7d0164dd056dc7f5648e1e9ab34666051beb410919f4b1f62eb9d074f8"
+    },
+    {
+      "catalogTool": "opulent_knowledge_manage",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "b74ead845f484d450681f634e874b947d1f482a2a565890dd50073b12db35886"
+    },
+    {
+      "catalogTool": "opulent_mcp",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "750a5a4e583413a3c73a1c102d2e0b2d949498524e5c530f1725f400e89de693"
+    },
+    {
+      "catalogTool": "get_knowledge_note",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "9d9e909e7cb253672e683e0a10396aa67690f009591421d1114e3a29c2c61fcf"
+    },
+    {
+      "catalogTool": "install_personal_plugin",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "4a7ce51fd717fa833f2a75b56aff631fc87fa7935f1ff814f8d9bddfa5f1c75f"
+    },
+    {
+      "catalogTool": "list_knowledge_notes",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "b5f696dc597cd9476b85afe12a046a67c7b407af7de9f0ccd9c1f9a40e91183e"
+    },
+    {
+      "catalogTool": "list_secrets",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "0a6bf5ed09c4846cd9d110409b2bce40c86086202d86f2dddcd174ad0e80dc48"
+    },
+    {
+      "catalogTool": "manage_personal_plugin",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "b66f9e8f29bb870091d4616633bb4158263c6225054e4db082ab1ae9c8f559d0"
+    },
+    {
+      "catalogTool": "mcp_tool",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "f672a9263d3326e9f6eb1231c50856963a1335732f56fc657c99311d95686055"
+    },
+    {
+      "catalogTool": "message_user",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "0e8111d6513cd7a9db5f04dc3f9af027b01bd6a0272b34683f1cde52da8dc4e3"
+    },
+    {
+      "catalogTool": "recording_start",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "6b0694fb1d6ad42766cd13a2d3ca1784a24dff9ff7efc8657c4af8dbe85a9a4e"
+    },
+    {
+      "catalogTool": "recording_stop",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "c251c4e6961a4cedd123d681ff45d52febf2e424100e28d5d03f690960ca9bf8"
+    },
+    {
+      "catalogTool": "report_blocker",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "325b64258742d498ede04a75cdd9c9d1895ad25f951c4e635a4e87310a4127d1"
+    },
+    {
+      "catalogTool": "request_secret",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "fe31cf5848ee80c9bcff23e30f667c48b874e766900d0e57e2f2adf17ccb6dcd"
+    },
+    {
+      "catalogTool": "run_workflow",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "cf6e0c48d7c8b92874e8633e6494824b3cceb58a956eedf468d0417446b4c96e"
+    },
+    {
+      "catalogTool": "scripted_tools",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "ce8d04b8dbf8cac068e454934e9e91ba9c6c585a0fcbf53198ee8b0214d5bdf2"
+    },
+    {
+      "catalogTool": "skill",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "afa2159aa78df80b9740b6f02d9b183924ccf81b1f3a7eaee6c0cf93fff46330"
+    },
+    {
+      "catalogTool": "stop",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "1a9eb5fe2e4bafe2bcd6db0e0fd7fb1dca2c1111fb919b8d084b22a314909505"
+    },
+    {
+      "catalogTool": "suggest_knowledge",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "358ee3ded42a3d98403e1c5c5482341efe66e61304388e62680175fababce7ab"
+    },
+    {
+      "catalogTool": "suggest_save_secret",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "f945670513ed8627727810a1a2f9f2cc4f3a8299fa1a4a77c4d967a6f6506707"
+    },
+    {
+      "catalogTool": "todo_write",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "d6bee4b7ee02db81932c1491ca9d457204b1dd8a77988c1a456300a40758c54b"
+    },
+    {
+      "catalogTool": "tool_search_tool_bm25",
+      "status": "omitted",
+      "reason": "not present in supplied tool-definition file; existing description retained",
+      "descriptionSha256": "7eaaf8965862ade36242d8efae2fa254c1033e0616d22c549ddcce511ca9ef7d"
+    }
+  ],
+  "entries": [
+    {
+      "sourceRange": [
+        17,
+        23
+      ],
+      "sourceProseSha256": "28ea218f829130e311f3777928987161954f30e75c18b267bd552a726786055b",
+      "catalogTool": "MultiEdit",
+      "status": "adapted",
+      "reason": "Read-first is guidance, not enforced by the handler; exact sequential replacements remain.",
+      "descriptionSha256": "52d8dcb00c50d55d4f5bd115e1d4c6c55e9428041d5ea63a576eb73d98d81d7f"
+    },
+    {
+      "sourceRange": [
+        74,
+        74
+      ],
+      "sourceProseSha256": "39fc8ae64eaac32a05a89942d5467318d7314b6c73efc88cbcd78c355d39e587",
+      "catalogTool": "apply_patch",
+      "status": "adapted",
+      "reason": "Local patch accepts workspace-relative paths and unified diffs, unlike the absolute-path-only source.",
+      "descriptionSha256": "85d75e03c9d03b1277b7fcd7d9bb6008ae5678849dcd3bbb089494faca1c9cff"
+    },
+    {
+      "sourceRange": [
+        87,
+        89
+      ],
+      "sourceProseSha256": "010e39c3bf77711718fa59bdfc9aae37e09eafadaf165072562a6eb4ba2d1fff",
+      "catalogTool": "browser_console",
+      "status": "adapted",
+      "reason": "Connected sandbox browser replaces source foreground-Chrome requirement and foreign namespace.",
+      "descriptionSha256": "34aa8af1bcd5c57e8dbc792bae7c711ae1ef4063eaee882b28a5babec83be149"
+    },
+    {
+      "sourceRange": [
+        113,
+        125
+      ],
+      "sourceProseSha256": "82ab65a372736521fcdac50cf3a5deeec9b8e1a47f0381d791040a655aa37639",
+      "catalogTool": "browser_preview",
+      "status": "adapted",
+      "reason": "Local authenticated preview has no hosted chat chip, permanent attachment renderer, or guaranteed wake restoration.",
+      "descriptionSha256": "984108827f8d60f81c0bc69abe80578dad9044a25ff23aa371b31170870e740a"
+    },
+    {
+      "sourceRange": [
+        168,
+        168
+      ],
+      "sourceProseSha256": "ef271d625d8e94c098f4ea84bf2fa9c3f827232dadf32f8eeb449f11205edb8e",
+      "status": "omitted",
+      "reason": "No pending-question cancellation handler exists in this catalog."
+    },
+    {
+      "sourceRange": [
+        183,
+        183
+      ],
+      "sourceProseSha256": "e497e3843d4c05a7c0d80fbc61c0bb6b81a5e2d718851a124ab5404a0920f5a5",
+      "status": "omitted",
+      "reason": "Interactive scan setup form is explicitly excluded; scan approval must not depend on a phantom form."
+    },
+    {
+      "sourceRange": [
+        248,
+        276
+      ],
+      "sourceProseSha256": "a1b1756c86f9ddf4192d8b35da2df6e976722b8b2e08893e4ca1928967e1d32a",
+      "catalogTool": "computer",
+      "status": "adapted",
+      "reason": "Sandbox display coordinates are not fixed at 1024x768; browser DOM and screenshot behavior depends on the connected daemon.",
+      "descriptionSha256": "3fb1fb409591116d7d0121e16c335b8d128fab69be2a5bc15117299ad946de89"
+    },
+    {
+      "sourceRange": [
+        387,
+        404
+      ],
+      "sourceProseSha256": "581afb53f5dd1c9c38c50b9671e8950a2133f346dcf3995f559197347fea905d",
+      "catalogTool": "deploy",
+      "status": "adapted",
+      "reason": "Only temporary authenticated sandbox previews are implemented; source public static hosting, Fly.io, takedown, and approval cards are absent.",
+      "descriptionSha256": "35d87c1a740b4cefbd601b8066185ed07dbe5a84bbeb9c32fd24556382b06974"
+    },
+    {
+      "sourceRange": [
+        454,
+        454
+      ],
+      "sourceProseSha256": "47da44ea46691d13c11e48f1047200b4b39ae5a2a8b87c676b6764d8f5af3bae",
+      "catalogTool": "describe_image",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "47da44ea46691d13c11e48f1047200b4b39ae5a2a8b87c676b6764d8f5af3bae"
+    },
+    {
+      "sourceRange": [
+        486,
+        489
+      ],
+      "sourceProseSha256": "583b5b4d59157a807adebbd1ce52d27c1b2b6c48ed56f3e8c58651983f8d3b83",
+      "status": "omitted",
+      "reason": "Repository Q&A and indexed-wiki providers are excluded."
+    },
+    {
+      "sourceRange": [
+        529,
+        556
+      ],
+      "sourceProseSha256": "db5b31f6bce3fe92e889685865ce7a7a61c9152c162e537d527671ce58430a7a",
+      "catalogTool": "opulent_automation_manage",
+      "status": "adapted",
+      "reason": "Local trigger/action subset and validation only; hosted profile/network grants, preflight, org merge semantics and webapp URLs are absent.",
+      "descriptionSha256": "27d05c61b0c19d88275046ab8b0b0de9ef87e5ed44fb05e5001d485ceada1568"
+    },
+    {
+      "sourceRange": [
+        1860,
+        1866
+      ],
+      "sourceProseSha256": "694357bc0562559fcd1743691c4e07f21ce186db12e55bc1f9e232af934493fd",
+      "catalogTool": "opulent_billing_tag_manage",
+      "status": "adapted",
+      "reason": "Only local list/get/create/list_members/add_member/assign_session actions; source bulk assignment and get_session_tags are not implemented or hosted billing evidence.",
+      "descriptionSha256": "74ddb5f26847466a6850ba4c2d7120e5d957b12bfc75960110122d7ba2c87464"
+    },
+    {
+      "sourceRange": [
+        2015,
+        2017
+      ],
+      "sourceProseSha256": "87d1d4b7283894d5682f7c3b8161662b58ca446d3c99ca945e7150961845b192",
+      "status": "omitted",
+      "reason": "Blueprint testing is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        2189,
+        2326
+      ],
+      "sourceProseSha256": "f578fac3419850d27bfdcf5866d3fc28987af59ef85a38fa775574e23d1ddb68",
+      "catalogTool": "opulent_code_scan_manage",
+      "status": "adapted",
+      "reason": "Local scan actions omit hosted setup form, approval card, Slack DM, incremental/update/batch remediation and entitlement claims; explicit approval retained.",
+      "descriptionSha256": "8b2bb931f6c8a3c5debc375cbb47cecd30a11d921580e1a95bdbd6e204e9ba09"
+    },
+    {
+      "sourceRange": [
+        2846,
+        2846
+      ],
+      "sourceProseSha256": "81759deebf33ef52276a611d95a7280e7d55a4f268a31515454f133312f88435",
+      "status": "omitted",
+      "reason": "Hosted documentation gateway is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        2885,
+        2889
+      ],
+      "sourceProseSha256": "9e6118063a7d21c21ab0fe88f5d9b258aa75d26ae2093f9dbf067e884c482026",
+      "status": "omitted",
+      "reason": "Settings discovery is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        2918,
+        2924
+      ],
+      "sourceProseSha256": "d86121f6efe17082b02491c79ea69f36ec88f03e2de04fe42d206659b29298dc",
+      "status": "omitted",
+      "reason": "Wiki generation is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        2948,
+        2956
+      ],
+      "sourceProseSha256": "f4dcf58d3ca42cd094e378cd16f3a23474f2ee6af3c0b1619a3f0f712c99a38a",
+      "catalogTool": "list_integrations",
+      "status": "adapted",
+      "reason": "Alias resolves to local integration records; hosted settings URLs and live marketplace connectivity are not guaranteed.",
+      "descriptionSha256": "a14c7a2d98dbd96fd59369062dbed37b17adb1cb34ca6d700d5046907cba1fd7"
+    },
+    {
+      "sourceRange": [
+        2996,
+        3001
+      ],
+      "sourceProseSha256": "861f9509430c14ffb5ebc4effde92c8ccecb81725378c99963df888997ffd71b",
+      "status": "omitted",
+      "reason": "Wiki repository discovery is excluded; no indexed-wiki provider exists."
+    },
+    {
+      "sourceRange": [
+        3014,
+        3025
+      ],
+      "sourceProseSha256": "bb923746d6fa4489f765b37421d5d22291dbca91445aa5e84af767ca64ec2eae",
+      "catalogTool": "opulent_mcp_server_manage",
+      "status": "adapted",
+      "reason": "Install/update/delete create pending requests, not hosted immediate installs or automatic approval cards; allowlist and credential references retained.",
+      "descriptionSha256": "9d5a6aa063f3ad78f5b6a31022f09e779346fb1d4604cd11c9d6a83645e90102"
+    },
+    {
+      "sourceRange": [
+        3299,
+        3340
+      ],
+      "sourceProseSha256": "c994b58743a33eb3b7f8f16f5a6988e7561fa4985676fae6e3b2bf5d98c9fa62",
+      "catalogTool": "opulent_oncall_manage",
+      "status": "adapted",
+      "reason": "Local Slack-only responder and incident/report subset; hosted PagerDuty, incident settings, org policy defaults and approval cards are absent.",
+      "descriptionSha256": "cc5a279c39ed555da4e924ebdbbf8aa38f4bd9843e164592b5b2962d4918657b"
+    },
+    {
+      "sourceRange": [
+        4396,
+        4398
+      ],
+      "sourceProseSha256": "e0e9cb9c20abcfc99edd3a76623862a4e197b670da03a7eb0c30000b1f143ae7",
+      "catalogTool": "opulent_playbook_manage",
+      "status": "adapted",
+      "reason": "Local playbook records do not synchronize with a hosted provider.",
+      "descriptionSha256": "ab24f82e24eb2630bd456e8d8a2e2a40d6066429a10d4b7446236c4fa7aa026e"
+    },
+    {
+      "sourceRange": [
+        4534,
+        4536
+      ],
+      "sourceProseSha256": "83d79b8deb732b6cc433c366ac5e5e74a4ba917ec1fd058e04dc3b3602b0a65b",
+      "status": "omitted",
+      "reason": "Wiki content reading is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        4560,
+        4562
+      ],
+      "sourceProseSha256": "dd40383accbc0443d0d6edd27ed51e877790b7edcad5d23b6cef66ad50aa177e",
+      "status": "omitted",
+      "reason": "Wiki structure reading is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        4586,
+        4596
+      ],
+      "sourceProseSha256": "88e5cf7aa7112437300d3e9562358d1f49f80c15919dd803f35af1b0ed5cec36",
+      "catalogTool": "opulent_review_manage",
+      "status": "adapted",
+      "reason": "Local review worker on allowlisted repos replaces private-mode hosted review API; result must be verified.",
+      "descriptionSha256": "5d090f3c1220eb32c76d72d451c1ff18a7e0ffe7bc829fa1b7bb9e72849f2db5"
+    },
+    {
+      "sourceRange": [
+        4698,
+        4706
+      ],
+      "sourceProseSha256": "f2a213955c4749147c8aac52d0f2a0ef815d53a5c263d6fb92b29764ae93cba4",
+      "catalogTool": "opulent_schedule_manage",
+      "status": "adapted",
+      "reason": "Legacy create is explicitly rejected by this handler; no hosted migration-state claim.",
+      "descriptionSha256": "67c224c5bd7c5afe1af8453238ef1f8ebce5aa39580f013ccf1bd8f0a8bde502"
+    },
+    {
+      "sourceRange": [
+        4945,
+        4954
+      ],
+      "sourceProseSha256": "e2f02d3e20674c5fd111dacb779670015391cc2a73c703f28631e5ba88f7c807",
+      "catalogTool": "opulent_session_create",
+      "status": "adapted",
+      "reason": "Locally owned children use unchanged IDs, not hosted v3 REST IDs or prefixed lookup; no managing-child-sessions skill is installed.",
+      "descriptionSha256": "9edaef8500c585edfae1d2258fbd0bd8f4502a3ede4c707dec76f75e9d14fe82"
+    },
+    {
+      "sourceRange": [
+        5300,
+        5307
+      ],
+      "sourceProseSha256": "6d7b3ee5c3f15f9577d9b37015d9727260ddd91b556c9f9c2e202630b6020360",
+      "catalogTool": "opulent_session_events",
+      "status": "adapted",
+      "reason": "Child-owned local event store instead of organization-wide hosted session events.",
+      "descriptionSha256": "518d4d43addb99573f1b57c9ac344eaa357dbcf62e159493a71672f907e88e58"
+    },
+    {
+      "sourceRange": [
+        5511,
+        5532
+      ],
+      "sourceProseSha256": "0d921440295a793feb301ca645efd35d07e6d750032b8817de92d9e2426b891b",
+      "catalogTool": "opulent_session_interact",
+      "status": "adapted",
+      "reason": "Child-owned local lifecycle and event fields instead of hosted URL, ACU, PR and notification guarantees.",
+      "descriptionSha256": "1dde2aed25797ab1aa16610aa061be040b5f39ae3cb2cc8d0afee1f842cc8760"
+    },
+    {
+      "sourceRange": [
+        5663,
+        5668
+      ],
+      "sourceProseSha256": "6984ad5b1d0345b1aeedbf5ab38c6bc2b342c88b7ff6063520ea3ac047c0b131",
+      "catalogTool": "opulent_session_search",
+      "status": "adapted",
+      "reason": "Only locally owned children can be searched, and returned IDs need no hosted prefix.",
+      "descriptionSha256": "8fe4c3c3dac2a0143aab449716333809a63f979d768a7b5f495656f9fbd435bc"
+    },
+    {
+      "sourceRange": [
+        5881,
+        5884
+      ],
+      "sourceProseSha256": "f507e421ec6b85a332f310ce9d3c3c727aa8d6b4a8be6ddea8784e84e03596f9",
+      "status": "omitted",
+      "reason": "Organization user management is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        5956,
+        5962
+      ],
+      "sourceProseSha256": "6fd5096bd7ef5298504b66eba76e2ddbb74cfeac9b6f33b2addee0cc7c4d5264",
+      "catalogTool": "download_attachment",
+      "status": "adapted",
+      "reason": "Configured storage pointers or public URLs only; no authenticated hosted attachment URL download.",
+      "descriptionSha256": "f0026cffb3bd1f9866568479d7fb2f27c8b4ec0040ec069fed32d173fec28538"
+    },
+    {
+      "sourceRange": [
+        5999,
+        6007
+      ],
+      "sourceProseSha256": "0d99da8a44e1995dc79a3ec48f518a7485d4e6e0c4d4063b231d078fad805faf",
+      "catalogTool": "edit",
+      "status": "adapted",
+      "reason": "Read-first is guidance, not enforced; source line-prefix rendering is not used by local read.",
+      "descriptionSha256": "9d9593305a1537c84869d40bf3e682b68534e0eeb9607c007660c03898b4befc"
+    },
+    {
+      "sourceRange": [
+        6051,
+        6051
+      ],
+      "sourceProseSha256": "2ece5936d5569d532a18defd5e66b1d6ab8bb990ebd9e43a77a6335bc795f083",
+      "status": "omitted",
+      "reason": "Voice-call lifecycle is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        6078,
+        6107
+      ],
+      "sourceProseSha256": "22cf83f7e3542d03323d33451fa5a5755e8b9c229c7fb429fa82ea1e77c35f90",
+      "catalogTool": "exec",
+      "status": "adapted",
+      "reason": "E2B command/PTY adapter lacks source platform shell_flavor, blanket sudo rule and cross-call persistent shell guarantee.",
+      "descriptionSha256": "326cd7e4cb688afc5c5ab21b480a18dcfdc89d0276ae7a053cbd3307eacec913"
+    },
+    {
+      "sourceRange": [
+        6197,
+        6199
+      ],
+      "sourceProseSha256": "34a2c22f84618588905dd9189e5ae86812d6e23268e58b13a0865e17067b4c3e",
+      "catalogTool": "fetch_pr_template",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "da89a454967db3b74240aa0455deab431e985546d669478a5c657aeda3b71f62"
+    },
+    {
+      "sourceRange": [
+        6249,
+        6249
+      ],
+      "sourceProseSha256": "97d4b9f4d211fc7c0bab7532ab511b9676df45ec330c116e33939fbfc12a0993",
+      "catalogTool": "find_file_by_name",
+      "status": "adapted",
+      "reason": "Python fnmatch workspace walk does not implement source brace-expanded glob semantics.",
+      "descriptionSha256": "ac6ddf9c2abfddbdd0772c201cf1dec61cf527cf9512893268b3aaee3e6b0c83"
+    },
+    {
+      "sourceRange": [
+        6286,
+        6286
+      ],
+      "sourceProseSha256": "4c65f401a174d2c3aefae3169e95af84e2c69cf9b19a769a4078056f76ae8bbe",
+      "catalogTool": "generate_image",
+      "status": "adapted",
+      "reason": "Image is returned as base64 and saved only with output_path; provider credentials are required.",
+      "descriptionSha256": "8d526a5266ba794b9e4b696de5e9844745b243337698eb000242c9dc94acfd14"
+    },
+    {
+      "sourceRange": [
+        6353,
+        6360
+      ],
+      "sourceProseSha256": "2fe1bbd699f775a9c780aa8c255a9f95fcb1e70b2e24cdc854b590cdb8d600b7",
+      "catalogTool": "get_output",
+      "status": "adapted",
+      "reason": "Local timeout and incremental output semantics differ from source 10-second minimum/default and 280-second maximum.",
+      "descriptionSha256": "65d50e0fc625a2caa82803b99b1906fa59c10a8eb16a9ceeab8b38e5d85ed27e"
+    },
+    {
+      "sourceRange": [
+        6400,
+        6400
+      ],
+      "sourceProseSha256": "f8257dfe66291aa9e5547041956698d01278100c0c0a5781a3e86849bb0678d8",
+      "catalogTool": "get_workflow_output",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "f8257dfe66291aa9e5547041956698d01278100c0c0a5781a3e86849bb0678d8"
+    },
+    {
+      "sourceRange": [
+        6434,
+        6436
+      ],
+      "sourceProseSha256": "c23e0d23a33f913b272d8f8c7009b8ab7bce64171b679e0c56b9169cc8518534",
+      "catalogTool": "git_add_labels",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "5f4797641585f3125f4fbb8845b582be611ba7a119748c0921b8b2cb6bea1939"
+    },
+    {
+      "sourceRange": [
+        6476,
+        6478
+      ],
+      "sourceProseSha256": "aebbb5e6cf68f6b246edb3ee521af33cdd7084e219659c7b4429ad3aa35ebcdc",
+      "catalogTool": "git_ci_job_logs",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "8cb6dde77ff3939d0b2abce474ac3ba0dfa8123047ea6202fe12d745c5d4a8bf"
+    },
+    {
+      "sourceRange": [
+        6509,
+        6511
+      ],
+      "sourceProseSha256": "9dde3aefbfbefe52d545ccf2c5b37971cfcfb94ba1c63b132c58d457ccf01106",
+      "catalogTool": "git_close_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "884c5862b35077ef91b6650eeb29e096f97735fe142727962e7e792616e1698a"
+    },
+    {
+      "sourceRange": [
+        6542,
+        6544
+      ],
+      "sourceProseSha256": "ff39d1c7f3f7d7561fd66bd3a6cc3a8d2bd42374a823ad8a2210bcdc20ad6ebe",
+      "catalogTool": "git_comment_on_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "796fc68cfe530f7be6704cc8f330f4fab41b7f13eabcf700db23d4088427b84d"
+    },
+    {
+      "sourceRange": [
+        6629,
+        6631
+      ],
+      "sourceProseSha256": "266047cf8b22c2c3e50588bb9746d4d08b9283def7788af0b20b39a2ae475d5c",
+      "status": "omitted",
+      "reason": "No matching catalog handler; Git/PR workflow prose excluded by request."
+    },
+    {
+      "sourceRange": [
+        6662,
+        6664
+      ],
+      "sourceProseSha256": "30b27d24bcb8b014cd786f81c6951c447ba54a0c641c29336c63fe5eb696f1f8",
+      "catalogTool": "git_create_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "7b1c3045161e4d1608e297262cf12051928dff2d2509bdd28f6a773a47e9b9f2"
+    },
+    {
+      "sourceRange": [
+        6738,
+        6740
+      ],
+      "sourceProseSha256": "f99bace03733e21fe1bdfffa8a39205f61aed7d22201991adeba3d09eec0b081",
+      "catalogTool": "git_delete_comment",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "afa567fd4291374033f33c3066e8c99c020d619ea50dc11799bd9f17df79bd42"
+    },
+    {
+      "sourceRange": [
+        6777,
+        6779
+      ],
+      "sourceProseSha256": "12f1b04f6055bc6f26e6e73069d19c5e8071189eeff0760c087ae590c44d765f",
+      "catalogTool": "git_edit_comment",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "289c351d93acc1dc36190bffa41633112918e330749de5beb80081c3bb2a9b8c"
+    },
+    {
+      "sourceRange": [
+        6828,
+        6830
+      ],
+      "sourceProseSha256": "c5d09bb481d1150fa1a42c5850da9baefd5562b3a9de7b306e04ad2c3401f6c5",
+      "catalogTool": "git_list_repos",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "0b998b8f443720c3442dc9dc2a10bb65936cafb8f28eabf890826732e92feafc"
+    },
+    {
+      "sourceRange": [
+        6859,
+        6861
+      ],
+      "sourceProseSha256": "3bd6ee0f29d723f060b6a64d3e8938e596bb7d3e1482622ef1be9632ecd529ff",
+      "status": "omitted",
+      "reason": "No matching catalog handler; Git/PR workflow prose excluded by request."
+    },
+    {
+      "sourceRange": [
+        6892,
+        6898
+      ],
+      "sourceProseSha256": "776879cdecb9bec8b286580130f3da4ee28237d0bd52397b1fb54e00d65d18fc",
+      "catalogTool": "git_pr_checks",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "6c9a13e6ae3b3fa0e4bf45881211673d916e811ffcc78aab7219cc67403b666c"
+    },
+    {
+      "sourceRange": [
+        6941,
+        6943
+      ],
+      "sourceProseSha256": "463152808f30a522bb56caa239b38a64c5bfee69614b08264df08cf098f4eebe",
+      "catalogTool": "git_remove_labels",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "67b531d4b8a60687e377e00aafc50479ac512e2aedf237e05c372e9f441c19b2"
+    },
+    {
+      "sourceRange": [
+        6983,
+        6992
+      ],
+      "sourceProseSha256": "d29d0222cb69e7b2f94a73a931e726cb8f7bc2aac61cdf5ec0237fa1ae389697",
+      "catalogTool": "git_stack",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "3bbfb3d1e936f55bfd322fdaddd088c337956041f568632f202792b1b5f2875e"
+    },
+    {
+      "sourceRange": [
+        7065,
+        7067
+      ],
+      "sourceProseSha256": "b7f95754f5bb965409358efd85569aaa72bffa155b00905fbf8eb651135dc847",
+      "catalogTool": "git_take_over_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "52058a798137bb090414360318e05b5e3f0d56c9dbb115bfd1f8e43840af0210"
+    },
+    {
+      "sourceRange": [
+        7098,
+        7100
+      ],
+      "sourceProseSha256": "0d5214fe4cc143dfd3ee1637a9ba87d3c9ae104e40248524738f5af05006f238",
+      "catalogTool": "git_update_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "17a2d7e514438f27bb016f3d393035748451ffde56238cab1823c8dfdf8d9c5e"
+    },
+    {
+      "sourceRange": [
+        7157,
+        7159
+      ],
+      "sourceProseSha256": "ada5e6d1cb7984ee513c89d6587578eb04e2dd899141e0fed48c41284d2c7d15",
+      "catalogTool": "git_update_pr_base",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "f6f09588a16bb0906707cf87668d6dd4c3bd8c9cd77dcc7fd5fa7a045038cf21"
+    },
+    {
+      "sourceRange": [
+        7196,
+        7198
+      ],
+      "sourceProseSha256": "0e0ca33a393f7f49ace0e453299cf582f26a64df224f9a1542495353a8d498fd",
+      "catalogTool": "git_view_pr",
+      "status": "omitted",
+      "reason": "Git/PR workflow and comment prose excluded by request; existing definition retained",
+      "descriptionSha256": "3fb2af0989e6a8085b66ff9a7553361bfdb119e6b5366b6e3796858de22c50eb"
+    },
+    {
+      "sourceRange": [
+        7230,
+        7238
+      ],
+      "sourceProseSha256": "c1e7dc931eac17bb55242dcfd98a7e2c0b9f855234b1da0769a6d0fd91cb10ec",
+      "catalogTool": "grep",
+      "status": "adapted",
+      "reason": "Python regex and workspace walk replace ripgrep/Rust syntax and source 4 MB skip claim.",
+      "descriptionSha256": "b2e8db872651f3a9409515d06f7bfe62aa1c1172181c4a9e286b6f3458b4e011"
+    },
+    {
+      "sourceRange": [
+        7302,
+        7306
+      ],
+      "sourceProseSha256": "4a134b95082a41b154575ed1b0323bb7dec1c9734ad5c27c162df099f2c7671b",
+      "status": "omitted",
+      "reason": "No interactive-artifact compiler handler is registered."
+    },
+    {
+      "sourceRange": [
+        7361,
+        7376
+      ],
+      "sourceProseSha256": "ae5ac4a77b3e11044d50dd12bfd51a69390c185e705ec0a9ed1208896ac58042",
+      "status": "omitted",
+      "reason": "No interactive-artifact creator handler is registered."
+    },
+    {
+      "sourceRange": [
+        7438,
+        7442
+      ],
+      "sourceProseSha256": "5830877d7dfa0c162c405d51c152ce142a251f9c0176d8740e7ad5ad9f8c60eb",
+      "catalogTool": "kill_shell",
+      "status": "adapted",
+      "reason": "Local return object reports killed and exit_code, not a generic success/failure status.",
+      "descriptionSha256": "c186784da86abc9457048c4b5c903b9461056fd4e4cb9d4e064e6e1947aeeea8"
+    },
+    {
+      "sourceRange": [
+        7469,
+        7469
+      ],
+      "sourceProseSha256": "0b401105b01151817c9327f14bb6e72810678f769f14e79890f70d48dee8a6e6",
+      "catalogTool": "kill_workflow",
+      "status": "adapted",
+      "reason": "Local unfinished children are cancelled rather than put to sleep; resumability requires an explicit successful call.",
+      "descriptionSha256": "9eb873f93b2baea2160660e9f9552dc47410250d8fdf3dc343a49cc73019a4e1"
+    },
+    {
+      "sourceRange": [
+        7495,
+        7495
+      ],
+      "sourceProseSha256": "b4657eee178cdbd816282d7224b55a8d871479b36f6e5309da76b9202e59d458",
+      "catalogTool": "linear",
+      "status": "adapted",
+      "reason": "Local wrapper requires an approved reachable MCP server; handler registration alone is not provider availability.",
+      "descriptionSha256": "5b7cd9c93b80ad01470ecd8507a2d9682f4db898c25682a9cf28db421d2faa03"
+    },
+    {
+      "sourceRange": [
+        7535,
+        7541
+      ],
+      "sourceProseSha256": "d9af0caa1b279463a9c82c3b9edc1d048774cd003ea8692772c4435a717c4c2c",
+      "status": "omitted",
+      "reason": "Local personal-plugin manager has incompatible asset, scope and approval contracts; no direct match."
+    },
+    {
+      "sourceRange": [
+        7653,
+        7653
+      ],
+      "sourceProseSha256": "da8cda50f9c21ab34af3f353be31c0d2b5e2120d06988501688fe6a5fb035eb7",
+      "catalogTool": "mcp_call_tool",
+      "status": "adapted",
+      "reason": "An approved, allowlisted, reachable server is required; source omits these local provider guards.",
+      "descriptionSha256": "8c8d0d27af168e1cc878823755aa10c15bb7762e743c87331c6c2e3173fb68c2"
+    },
+    {
+      "sourceRange": [
+        7704,
+        7704
+      ],
+      "sourceProseSha256": "21eb5f56230300b39b2e6903c14cc07e9e2354424bf61009c2f89528e038f158",
+      "catalogTool": "mcp_list_servers",
+      "status": "adapted",
+      "reason": "Lists local records, not verified hosted connection status.",
+      "descriptionSha256": "6575f41b25d602e04e576a7841729eb8f05fdfaf2d86de0c18b4540da5a4e8d1"
+    },
+    {
+      "sourceRange": [
+        7719,
+        7719
+      ],
+      "sourceProseSha256": "ebf0fb93a25d60f79798e8871da27d812568854e99d1b2ba597dd67432c70851",
+      "catalogTool": "mcp_list_tools",
+      "status": "adapted",
+      "reason": "Local provider connect and allowlist checks must succeed; no automatic provider availability.",
+      "descriptionSha256": "da9645525f87a2e31203e4b63cea6501c797ee428d4585211f1a00f37eec6351"
+    },
+    {
+      "sourceRange": [
+        7752,
+        7752
+      ],
+      "sourceProseSha256": "17a176a50e5ce0eb007a4cb703439d5ab326f45292309f9f89ee113a734553cf",
+      "catalogTool": "mcp_read_resource",
+      "status": "adapted",
+      "reason": "Local provider connect and allowlist checks must succeed before resource access.",
+      "descriptionSha256": "fa2d641599a1a09bbdc8aef27b749f3a1b60a79bb0253c2a8831c0aec91cd676"
+    },
+    {
+      "sourceRange": [
+        7790,
+        7790
+      ],
+      "sourceProseSha256": "184978102f249ce6af11d368a4430daa70dbc3c8a6ff300488d38e03588c351a",
+      "catalogTool": "message_workflow_agent",
+      "status": "adapted",
+      "reason": "Locally owned workflow child messaging does not guarantee separate/shared hosted VM or interruption semantics.",
+      "descriptionSha256": "702a777ea8ef7bec7951d44a50ee8922c703266fb9691d470fa110c374ad8da2"
+    },
+    {
+      "sourceRange": [
+        7829,
+        7829
+      ],
+      "sourceProseSha256": "ca27f228157c6cb909c2d45138827dd8b500a811682b9da01d6d41e235429879",
+      "catalogTool": "noop",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "ca27f228157c6cb909c2d45138827dd8b500a811682b9da01d6d41e235429879"
+    },
+    {
+      "sourceRange": [
+        7844,
+        7844
+      ],
+      "sourceProseSha256": "70e048df8533008d63e47b90773359e0d867b4c503799d199f397016accd9c77",
+      "catalogTool": "notebook_edit",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "70e048df8533008d63e47b90773359e0d867b4c503799d199f397016accd9c77"
+    },
+    {
+      "sourceRange": [
+        7902,
+        7902
+      ],
+      "sourceProseSha256": "d8495fbe983b7632075b84f2d589fd39a013f065cf65e8c5497dca633bfe36c0",
+      "catalogTool": "notebook_read",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "d8495fbe983b7632075b84f2d589fd39a013f065cf65e8c5497dca633bfe36c0"
+    },
+    {
+      "sourceRange": [
+        7928,
+        7928
+      ],
+      "sourceProseSha256": "127262084ab2b96fa8017110913ae79bbadda4b451ee841f1e5b93d1a79c3020",
+      "catalogTool": "read",
+      "status": "adapted",
+      "reason": "Workspace-relative paths and 2000-line default replace absolute-only path and 20000-character source limit.",
+      "descriptionSha256": "799ec4732576f55354bab6e5804b4cc9124b3bc15baa35b402b74d1e5bafabae"
+    },
+    {
+      "sourceRange": [
+        7963,
+        7971
+      ],
+      "sourceProseSha256": "c8872d01f0d89d16cbb27787d785cb463449d41d213125c9d5a6018a710b9e00",
+      "catalogTool": "read_build_logs",
+      "status": "adapted",
+      "reason": "Local deployment/build records or configured provider replace organization-wide snapshot JSONL download.",
+      "descriptionSha256": "b46ced78b7648872831474ab524bd480a516ae5f8dac52f4a032e9b70efd31eb"
+    },
+    {
+      "sourceRange": [
+        8003,
+        8009
+      ],
+      "sourceProseSha256": "58dacb9155f827bd779795a2b1b8d9ca42dd203dd34647a71b13ce840c8e0eb7",
+      "status": "omitted",
+      "reason": "Environment settings access is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        8052,
+        8052
+      ],
+      "sourceProseSha256": "36a1df739dc96f487fc380f16e240be60d5ec22399b0c4f9874634c0db8c4aa9",
+      "catalogTool": "read_subagent",
+      "status": "adapted",
+      "reason": "Local child wait is capped at 600 seconds; source 2700-second testing exception and notification claim are absent.",
+      "descriptionSha256": "dd26169ed90df2208a4c8544e1261f18efab199c515e8f1fcd5ffd478bc275a8"
+    },
+    {
+      "sourceRange": [
+        8089,
+        8089
+      ],
+      "sourceProseSha256": "14dcdb5ab4b6d152ac3300d7a4330ed574246c66ce30dc38ddc8909871751560",
+      "catalogTool": "rename_title",
+      "status": "adapted",
+      "reason": "User-set title system note and one-call enforcement are not implemented; user ownership guidance retained.",
+      "descriptionSha256": "9d8fdb1de4fcb32da03f2dad7a5bce5398493648f8d185bc21a12c2b82d486f5"
+    },
+    {
+      "sourceRange": [
+        8114,
+        8118
+      ],
+      "sourceProseSha256": "142647d19b1aa76d9f7befcd66cdafa908cea3d1b27fb330a33313160e102470",
+      "catalogTool": "save_browser_profile",
+      "status": "adapted",
+      "reason": "Captures a sandbox snapshot record but does not save an organization blueprint or promise restoration.",
+      "descriptionSha256": "4a9023af60041b2dac09f53117237f3e363f1a7b19bcde871d2d8515710a8b25"
+    },
+    {
+      "sourceRange": [
+        8149,
+        8159
+      ],
+      "sourceProseSha256": "465f7daab397dce70d3c00d648fb20d1fd7c66761ad5f08403ac27fb7ae2a4a9",
+      "status": "omitted",
+      "reason": "No combined search handler exists; local skill and knowledge surfaces have separate contracts."
+    },
+    {
+      "sourceRange": [
+        8191,
+        8191
+      ],
+      "sourceProseSha256": "1cf3e06abdc852fdd73049645fd2ffe22432b0c98f3c748336ff621362bded81",
+      "catalogTool": "set_workflow_agent_soft_time_limit",
+      "status": "adapted",
+      "reason": "Local advisory limit is stored; no guaranteed repeating notification behavior.",
+      "descriptionSha256": "b8b50471b673f68553fd064a10360bee5e465c619e4bd79ed7339257c2ceb7f7"
+    },
+    {
+      "sourceRange": [
+        8235,
+        8244
+      ],
+      "sourceProseSha256": "a850b4eeafade3ddbb2c152cac4b53f8befdd7d90385e92251ec1dbf2d0357e6",
+      "catalogTool": "sidekick",
+      "status": "adapted",
+      "reason": "Locally reused child lacks hosted tool/credential restrictions, interruption guarantees and process persistence.",
+      "descriptionSha256": "5a78a58f837627adbbb129acddb08f74622213fb6755abad3aa54ce4c9fd3fe6"
+    },
+    {
+      "sourceRange": [
+        8280,
+        8280
+      ],
+      "sourceProseSha256": "4d9c6910012492f9356d03efc32856d61b9d02a5af42458bc6ee715b32804309",
+      "status": "omitted",
+      "reason": "Local skill dispatcher supports invoke, but source activation and permission-grant guarantees do not match."
+    },
+    {
+      "sourceRange": [
+        8308,
+        8308
+      ],
+      "sourceProseSha256": "d4c8d3157feee0162329e143fd7b29cec581a779a3c90d6626d36d847a03bcdd",
+      "status": "omitted",
+      "reason": "Local skill dispatcher scans workspace skills; source plugin-source selection contract does not match."
+    },
+    {
+      "sourceRange": [
+        8344,
+        8344
+      ],
+      "sourceProseSha256": "7944d0135e7276610eeb6946264f7752c973dc5d8dddac46efe9804067b2edcd",
+      "status": "omitted",
+      "reason": "Local skill dispatcher has different project/plugin search and traversal semantics."
+    },
+    {
+      "sourceRange": [
+        8399,
+        8417
+      ],
+      "sourceProseSha256": "d262db2fdfc821084afe72b76ca93870b892907d3e39baea2ba86918a52e91d7",
+      "catalogTool": "suggest_skill_pr",
+      "status": "adapted",
+      "reason": "Pending local suggestion rather than hosted timeline card or automatic PR; skill and secret safeguards retained.",
+      "descriptionSha256": "870b747345b9feec0c03fcccb7df6924d9e520b2c46b681ce36f1694691e4a1d"
+    },
+    {
+      "sourceRange": [
+        8493,
+        8509
+      ],
+      "sourceProseSha256": "092cb130f5e08e2ecd245a52e9ab78e086bb41fc32874b46b530e41eefe3fd9d",
+      "catalogTool": "task_create",
+      "status": "adapted",
+      "reason": "Task deletion wording narrowed to supported user-scope status; planning guidance preserved.",
+      "descriptionSha256": "ed9cf7d8242f16515a7cc704ae22428fc9e2d2d60c4c244b2dbea0134077f588"
+    },
+    {
+      "sourceRange": [
+        8559,
+        8559
+      ],
+      "sourceProseSha256": "875cb965627bb1c8e7687c68cd40a6246c18d641eebf075716c1252af10e85a9",
+      "catalogTool": "task_get",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "875cb965627bb1c8e7687c68cd40a6246c18d641eebf075716c1252af10e85a9"
+    },
+    {
+      "sourceRange": [
+        8585,
+        8585
+      ],
+      "sourceProseSha256": "315a7b535a0ba8506a99565b925c7cc356b8cce58320784dcfbc58a5cd097a66",
+      "catalogTool": "task_list",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "315a7b535a0ba8506a99565b925c7cc356b8cce58320784dcfbc58a5cd097a66"
+    },
+    {
+      "sourceRange": [
+        8600,
+        8607
+      ],
+      "sourceProseSha256": "17150e0af0d9d5b47b1c2f7b39a2a7e8fff8a615e87826c53b81c52472b64282",
+      "catalogTool": "task_update",
+      "status": "preserved",
+      "reason": "Source prose matches the local tool behavior",
+      "descriptionSha256": "17150e0af0d9d5b47b1c2f7b39a2a7e8fff8a615e87826c53b81c52472b64282"
+    },
+    {
+      "sourceRange": [
+        8688,
+        8697
+      ],
+      "sourceProseSha256": "f0f0ce18cc9a3c6e35b8cf6fbd6787968acfda35a940192ce14b75a94f99991e",
+      "catalogTool": "testing_agent",
+      "status": "adapted",
+      "reason": "Local child handoff requires approval evidence and returns ID/status, not a blocking report or guaranteed recording.",
+      "descriptionSha256": "bbc63396529ceaa18ebd3b0934365d13da0b0c114724433c43d62c9d4dc355bd"
+    },
+    {
+      "sourceRange": [
+        8739,
+        8761
+      ],
+      "sourceProseSha256": "4a192389c333ae187d7501b56f5b6f9631f8f6236eb01ea39e77ce37792a8c5a",
+      "status": "omitted",
+      "reason": "Environment settings mutation is explicitly excluded."
+    },
+    {
+      "sourceRange": [
+        8879,
+        8887
+      ],
+      "sourceProseSha256": "8178e57470f951379fd19546026349407108f8126659df4b769cfab1ecee7bff",
+      "catalogTool": "upload_attachment",
+      "status": "adapted",
+      "reason": "Configured code.storage artifact pointer, not a public cloud URL.",
+      "descriptionSha256": "8b505e0ff35a65d2bd28d496668c3bbe87a40da91ddbdb5872bc3677fc4bb19c"
+    },
+    {
+      "sourceRange": [
+        8923,
+        8923
+      ],
+      "sourceProseSha256": "8a2744b1879c6dea58744a0d2d24f1913447fccdfd325be4ff4d58b8769f0693",
+      "catalogTool": "view_image",
+      "status": "adapted",
+      "reason": "Workspace path check and image data return replace arbitrary local absolute-path viewer behavior.",
+      "descriptionSha256": "21733dcb5e87814e56edd7fbc11e74390e3f7e4b972e40a5c4cddf88f203d068"
+    },
+    {
+      "sourceRange": [
+        8949,
+        8949
+      ],
+      "sourceProseSha256": "c901356cc193eaf77afecc486d62f05b2c002dfd03c0b33411c3d8cbed07c611",
+      "catalogTool": "wait",
+      "status": "adapted",
+      "reason": "600-second abortable delay does not subscribe to events or implement source CI/session wake behavior.",
+      "descriptionSha256": "c32cb9e397703711797be8ba76d89690bd419085e7d22adab1e591e31ea3b50a"
+    },
+    {
+      "sourceRange": [
+        8981,
+        8983
+      ],
+      "sourceProseSha256": "dc1d592fbfb4ba346566f621bfd34440a5ca1a881bcda9cc02b38b4232a3002c",
+      "catalogTool": "web_get_contents",
+      "status": "adapted",
+      "reason": "Public text-only fetch with SSRF/size guards; source full web-page claim and foreign namespace narrowed.",
+      "descriptionSha256": "6acbb31a82460346cdb2e2c30c70ec1a2296871e234c3d01b74baaa46f83c6a6"
+    },
+    {
+      "sourceRange": [
+        9011,
+        9015
+      ],
+      "sourceProseSha256": "548bee30d57c3d1ba09b02132baf65fd08ee424336bdfd02e1baf604900bad21",
+      "catalogTool": "web_search",
+      "status": "adapted",
+      "reason": "Foreign namespace removed; query prose otherwise preserved.",
+      "descriptionSha256": "3a19e7e503f0ad97324097b40f2bb47a6105f3d1b1fe7956d8a589ee35871b57"
+    },
+    {
+      "sourceRange": [
+        9052,
+        9058
+      ],
+      "sourceProseSha256": "feef7e2348e60b035fec1b365f9c7f6d9f9e51af975af724c155372066fddbef",
+      "catalogTool": "write",
+      "status": "adapted",
+      "reason": "Workspace-only file write; source unrestricted filesystem wording narrowed.",
+      "descriptionSha256": "9457c930208ccc0cb41e36c7e661c8ae4ed2196b853fc72429f30b9c0bee3f14"
+    },
+    {
+      "sourceRange": [
+        9090,
+        9106
+      ],
+      "sourceProseSha256": "8d568e3426c109130aeab7b885243b9eddc6703d07ee019face0e1e087767c10",
+      "catalogTool": "write_to_process",
+      "status": "adapted",
+      "reason": "Supported byte tokens differ from source <CR>, <LF>, arrows and <C-c> notation.",
+      "descriptionSha256": "a5b68fddd3a8e1f1aeda37e9de316728fee79e1e75825f70cede7b38dc8703dc"
+    }
+  ],
+  "catalogFunctionalSchemaSha256": "3cb8152c17eede286c7268e20516462c7c516e68a424c54ae8b11218fd81dde9",
+  "nestedDescriptionAdaptations": [
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationCodeScanRepoSpec/properties/host/description",
+      "beforeSha256": "91b492fbced0d1a7092d6588f86b521e8d82f57650af49954d77f75bbbc884ab",
+      "afterSha256": "dc54e9c9b285d9da6ddc93782ad2223be79b13d53caa4a231f421546f17ec8bd",
+      "reason": "Local scan action ignores hosted Git host setting."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationConditionSpec/properties/field/description",
+      "beforeSha256": "5a2c6f8139dc97617472f1ea1d6b22daeff8b89f52a803c07d5acee4e7f9deb2",
+      "afterSha256": "173fe6ea9132322770fd84ce890440b914347c79b9d3db4037e02fb3744639a2",
+      "reason": "Fixed local trigger/operator schema; no organization-specific field catalog."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationEmailNotificationSpec/properties/recipients/description",
+      "beforeSha256": "5366968126f3b3ecba245feba75c12776f3e6a583aac68cbd424bee94e2c69f6",
+      "afterSha256": "4373d154c06235448e607c7abb538b69c5def2ff9ad8343907de7d76a8d63ee4",
+      "reason": "No hosted email notification provider."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationLimitsSpec/properties/max_acu_limit/description",
+      "beforeSha256": "4ed0c14ec3cf9db60cd5e950b6b60caf59e8e2465264ef37bf913ecbb08a8895",
+      "afterSha256": "44ce4ea1752d63067673d4707392d9763090bd8711a5077c126f93ef18967fb1",
+      "reason": "No local ACU accounting or budget enforcement."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationMessageSessionActionSpec/properties/target_opulent_id/description",
+      "beforeSha256": "9651ee29245eac94302f97a0d20db5bf5a83486509e63019944656f598421b1f",
+      "afterSha256": "c5de7bbbd78c9e828dbd1d4dc1bf78ff02df8de00c8e196758960ba876984ee9",
+      "reason": "Local store validates session existence, not hosted organization membership."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationNetPolicySpec/description",
+      "beforeSha256": "f5bdd2e69b62087d5e397fb635f2a90e9c8fa9963ede472e22cccd7013b80995",
+      "afterSha256": "3780be63e913a3c5999b8216e01d25b75941c81bfaff6b6234537f50ce63e427",
+      "reason": "No hosted Git Manager/security-profile network grant."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationNotificationsSpec/description",
+      "beforeSha256": "56d7afd97f4d98203a4cdaa8658680fafeb6a40b554ac442507c21bd4b355b9c",
+      "afterSha256": "baa31a9a3ede03d018927f5eea4f050824a6919615f9cf5ce8f5f139f2162c53",
+      "reason": "No hosted email/Slack notification dispatch."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationPreflightSpec/description",
+      "beforeSha256": "8974b2fb98aea1dac6f660413d50dd1c32ef2710bba442e24810237aacf7cf90",
+      "afterSha256": "609b16bb7199a81bc3f9e80e0314ac4493e563cd01b6b518066beca187cfa347",
+      "reason": "Handler rejects preflight and all preflight_* actions."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationPreflightSpec/properties/source/description",
+      "beforeSha256": "166d704a8e232e5e84670903ff8d507891fa6bf73e79631960d549ea42b71d5c",
+      "afterSha256": "a3f84aaa77edc37cb9fd3c6ae01ec4b29831d2c82177a90092e4b3914a1a6080",
+      "reason": "No preflight execution backend or file-URI client resolution."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationPreflightSpec/properties/timeout_seconds/description",
+      "beforeSha256": "c02a73615a10a5f964315bb310af60959d464a69a101a1b5259dfb2219932a4b",
+      "afterSha256": "01f4bcae0d8893e8a66209eb7a6a3a35638e4c86de0ea654ab2ee59a09b4035f",
+      "reason": "No local preflight execution or timeout enforcement."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationPreflightSpec/properties/secret_names/description",
+      "beforeSha256": "1c06e0faf26bfccfd8a8313d3953be0bcf264e8b22872465c9c23fb9998dfde4",
+      "afterSha256": "e3cda5525a94bdbf4e3fb7ba391f67be01096ecaf093b494c32d61eea2033a89",
+      "reason": "Preflight is rejected; no org-secret injection contract."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationPreflightSpec/properties/enabled/description",
+      "beforeSha256": "c08d8640518b2b369b565d256e4a85159adbaed0a59db52758ca412fb2710d7d",
+      "afterSha256": "73f3aa5bca22f9e7e4631c440918c75e9f2d36ace3825679a472243ae290cfe2",
+      "reason": "Preflight field is rejected rather than activated."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationSessionSettingsSpec/properties/opulent_mode/description",
+      "beforeSha256": "4b97e856e2786ed4af330792d57033598f98935d4ea97360275e64a10b7848da",
+      "afterSha256": "78916db894b647d407dbb14eebfcccd74fe5656634c8785479596c3510f655a1",
+      "reason": "Automation session_settings group is rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationSessionSettingsSpec/properties/net_policy/description",
+      "beforeSha256": "ab58f0494490c0792ec379ed43ab9da37266c552e3ee08be5892451c414de899",
+      "afterSha256": "2a4e2c3f9c0d597abf3ae3ea7e4c983b4c8e1903e3223c759506cc06dfcf8048",
+      "reason": "No Git Manager policy, org profile inheritance or null-unrestricted semantics."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationRunAsSpec/properties/type/description",
+      "beforeSha256": "0aba8a51c500a9c0cc00cb1bfa47a8c9414350b49589dcbd84e6bdea7061dad7",
+      "afterSha256": "ab557b734a04d5d6ed0bf3f0cae3299d62e33e50d80196af4335059ee8fa8b99",
+      "reason": "Automation run_as group is rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationScanNewCommitsActionSpec/description",
+      "beforeSha256": "4f6e8fc9daefd703418788a29315ff2a34ce6641a66d6cf487859c24f4bdd6c1",
+      "afterSha256": "853e19d13f0ca1372898254146754d8fcb9a5a37041c7a1b3b4d655b3278df7e",
+      "reason": "Local incremental automation requires completed head SHA; no hosted scan entitlement/UI."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationScanNewCommitsActionSpec/properties/scan_id/description",
+      "beforeSha256": "dba6b7297305964ad1ece387ceeab692f4dfcfdc9121ce7abce7ffad4adcc8a0",
+      "afterSha256": "e6c2af9959b25ca7fd748f3d535ab66835bd51ca693a53409e0ee17ef301a1a4",
+      "reason": "Local scan record and SHA check replace hosted org membership and merge semantics."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationSessionConfigSpec/properties/tags/description",
+      "beforeSha256": "9a534a61576d8e39a86c867970cc23872384a4d1122fa0f423b666a7257dddf7",
+      "afterSha256": "22b769ec3d3b4914187a988a4803c1373c7b4dec7aaa29c7060786274f4f5ac3",
+      "reason": "Automation runJob does not forward session tag config."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationSessionConfigSpec/properties/platform/description",
+      "beforeSha256": "df1155734019d878abde1e6a0c9421820119feb8abd920d527590c15e191cb81",
+      "afterSha256": "293c4196ab35ef020737dcfcc978deded7b78ce6d49fad7b60c18f2e70e8b56d",
+      "reason": "No organization platform default or per-automation VM routing."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationSessionSlackSpec/properties/mode/description",
+      "beforeSha256": "73799b57626890a4add9d7d751eef3c58e43f02f43a3ed43573ff143a5879eb5",
+      "afterSha256": "27d8f55ed7fe2fe7d620f58c08fecd16a060b8430c64877487355f29de74942b",
+      "reason": "Local dispatcher does not consume nested Slack notification settings."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationToolsSpec/properties/mcp_servers/description",
+      "beforeSha256": "c43fb6c90d4591666a818d6284e0c0f72771086175ac5e09b8b7542b405a5632",
+      "afterSha256": "315fc52a7073dc2660cea5f213eb52a06e4071df954ccfb6d467a9a20e93bc48",
+      "reason": "Automation tools group is rejected; no marketplace grant or installation-scope semantics."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationToolsSpec/properties/slack_dm_scope/description",
+      "beforeSha256": "1697a92f4dc6b2bd24d9e8ea035626664a2978bae8b14665f1163cb0eb123e18",
+      "afterSha256": "26885c0f2c82e08a018a529e0ab190bf00526dbba6eb0dd8b54b98decafdf273",
+      "reason": "Automation tools group is rejected; no hosted Slack DM grant."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationTriggerSpec/properties/event_type/description",
+      "beforeSha256": "422fd864517e65b459dc9f80a38a4a32dff7c8120d924335f76ae836ecd7bd4f",
+      "afterSha256": "5ee2bcc63cfa484e1ba3c40e2b7a5495d582f70ff964bac1ec31d24f7a6cb43a",
+      "reason": "Local schema is fixed rather than organization-specific."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationTriggerSpec/properties/replies/description",
+      "beforeSha256": "18400cc62bc5a97a0f0ef96a369ce62d39061d41ef00d056a7d8f2dad7be5ca1",
+      "afterSha256": "e440f77f2230f597d0b8d5d6fc0637f8a628a560495652b02867d44c05c6cec9",
+      "reason": "Dispatcher does not process stored trigger replies."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationStartCodeScanActionSpec/properties/code_scan_effort/description",
+      "beforeSha256": "839b8c61d99c2d096df97eaffd379fede64b9b2052898b801df8e0dfb20a0298",
+      "afterSha256": "f66c1bd9f5f5edc763a57825b2256069e66c213153a55aef583e8162854bddba",
+      "reason": "Local start_code_scan ignores code_scan_effort."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationStartCodeScanActionSpec/description",
+      "beforeSha256": "5954f5289bb592194613779427b54577633b4602c0026449644bd649df1eb2b9",
+      "afterSha256": "5b42bfa39027f4ff7e62f6764a814a75c5ca3ddba5fabeacaf70df7ad496a60e",
+      "reason": "Local action creates a child scan, not a hosted entitlement-backed scan without a session."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationStartCodeScanActionSpec/properties/profile_id/description",
+      "beforeSha256": "1082233f776e5b7c8666145da96eb479611a91caed450a94f8b979189f379ae0",
+      "afterSha256": "3c61cf3d95955f963a1768ff33a31fc2fcbd49cca0a87c854bd4d1ec5ee4d9be",
+      "reason": "Local profile IDs are store UUIDs, not hosted csprof IDs."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationStartSessionActionSpec/properties/prompt/description",
+      "beforeSha256": "0ed45e0078f6cb0329d106c25cdf5a18efed23ebe0664b48da0edc9dcb6a8c11",
+      "afterSha256": "720712dc98938c39e4a02769b4760fae85510ec34ab622f6c4a179f5e800bdba",
+      "reason": "Local runJob appends event JSON but does not expand hosted inline reference tokens or file URIs."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/$defs/AutomationToolsSpec/properties/slack_channels/description",
+      "beforeSha256": "07bb2eebe1493f3b5e24c16d068309e39ae8d15fac77cbc0e08d870e8738e3ec",
+      "afterSha256": "a4c59483eb9a43ac0dac70297df77e72f051eeb91ed34bce45cfcef37651fb32",
+      "reason": "Automation tools group is rejected; no hosted bot channel grant."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/action/description",
+      "beforeSha256": "b8ceef46eeb55020174fc82099d2171adda59af732fb965d7c10f29048145ba2",
+      "afterSha256": "8b11f5841bf172b13214e49315e15c33c15eca7564c205adb7aa82c0e0aed7a6",
+      "reason": "Replace hosted preflight and template execution claims with actual local action behavior."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/actions/description",
+      "beforeSha256": "667e4d2efaeb1adc083748a7e5d4cd1f2d3802c2788d76e37dcdbc3d35fa011c",
+      "afterSha256": "edd2690bba00e6b42f9328c7a67871a459a838187bee3110da26a55330f8aa42",
+      "reason": "No client file-URI expansion or prompt-block extraction."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/notifications/description",
+      "beforeSha256": "48ccd510446dd0812b2704e22b05e58b45c99f057e6b6e9d9ffc86232fd1ab3a",
+      "afterSha256": "fabfa31947a22e852fb0c66c90d927fc48bd37eb21ebdda282786c66e2f816f2",
+      "reason": "Automation notification group is rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/tools/description",
+      "beforeSha256": "4d78f3f10376e7b980d1f09d38176dab10ed0259b9d3eea93fcd72ff5307c24c",
+      "afterSha256": "cdf3d0f756d12a74baf2f644f3832d8f8bceaf7828503a7b502a0db190e0c0d5",
+      "reason": "Automation tools group is rejected rather than provisioning grants."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/metadata/description",
+      "beforeSha256": "138fe800b2acf2b362dc246d95226ee5a35b7d3f4094f3e25f88bd4cfc44ae2a",
+      "afterSha256": "346594c27f4736185a844014c797a18d797fc5977e2a9a66c45983da94a58d92",
+      "reason": "Handler upsert stores a fixed record without metadata or org merge semantics."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/session_settings/description",
+      "beforeSha256": "0a1a3286209394969f8cd7965c897414d2f96234d47476539a67f20e51b3d64d",
+      "afterSha256": "7cec0775682ea47076cf17e9ede5af57e6b9de720ffe7819bafd57aeefb2ed51",
+      "reason": "Automation session_settings group is rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/security_profile/description",
+      "beforeSha256": "e90025b947841283bb9b792b5b600ede5ad4061783cdda4ca10fb86a1f38fbbc",
+      "afterSha256": "89af5a59e48ba5e1e5d88ca6cd4c1e4951b92a12f863de6be700adce9fe0b807",
+      "reason": "Automation security_profile group is rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/run_as/description",
+      "beforeSha256": "34176053e48d00359eeb8328bc4107b3c811d1e0e75953ce68ecb038032d1f85",
+      "afterSha256": "b9d76736899ed6e4dfe999fb2414cf7c115b0f747a20694079019548d46519d2",
+      "reason": "Automation run_as group is rejected; no hosted identity switch."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/preflight/description",
+      "beforeSha256": "6d241733f5faca5ea4a9c5770b970dfda5ae5b45ac919c22fb6d2b45a2eca186",
+      "afterSha256": "943d8ae5a420f9bb5b680999b5ddbc97766ed51c6838c4063d378384576a64e1",
+      "reason": "Preflight is explicitly rejected, even though schema retains the field and enum."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/queued_event_id/description",
+      "beforeSha256": "fb868a0032d0185ba9c11ee1734b129d9a21e6367301e487f8746cbf0bc49a51",
+      "afterSha256": "7f6fad34796bc39f6aa31675d0ee7ed6f96af6ea9a71873afa45a36d711a8ae1",
+      "reason": "No preflight event history backend."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/run_id/description",
+      "beforeSha256": "9e731c6c2d8159a4f8379d2d6aa68a6d0052b16735674caffaaa55b27aa13f75",
+      "afterSha256": "a0fe3ee52ce02d35f2244370b98926aa9416a3fc32d8a94064082be58c8d57b0",
+      "reason": "No preflight run backend."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/first/description",
+      "beforeSha256": "ecb9cacdf7dc915b2d4eba9611af5654da18bfa7e00b8072ec230a442cd0cb0e",
+      "afterSha256": "cce71f1717b7032c892858f8d1b3cf3972f4a3a41db2c1f0ea7916ee2b16e982",
+      "reason": "No preflight pagination or local list paging."
+    },
+    {
+      "jsonPointer": "/tools/opulent_automation_manage/inputSchema/properties/after/description",
+      "beforeSha256": "5d000b16042e90c547111ce08e86600b5818e7988ac8f0dabb8417cd9057bd5c",
+      "afterSha256": "a583dc36a5d66a29387b9eebb1f94aa1801b61d43dfc7c4da2f8cf4834de314e",
+      "reason": "No preflight event cursor or local list paging."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/AutomationConditionSpec/properties/field/description",
+      "beforeSha256": "5a2c6f8139dc97617472f1ea1d6b22daeff8b89f52a803c07d5acee4e7f9deb2",
+      "afterSha256": "f38314f8cf8524decb9b3002e075800e6d53d58956b681f85a1e801ec100cd8a",
+      "reason": "No organization-specific field catalog; local Slack ID validation applies."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/AutomationLimitsSpec/properties/max_acu_limit/description",
+      "beforeSha256": "4ed0c14ec3cf9db60cd5e950b6b60caf59e8e2465264ef37bf913ecbb08a8895",
+      "afterSha256": "78ef66d33e2d8e31b16e91e7bacdc7c9b0c7ed3799e3b5a741fdccad66ab3371",
+      "reason": "No on-call ACU accounting backend."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/AutomationRunAsSpec/properties/type/description",
+      "beforeSha256": "0aba8a51c500a9c0cc00cb1bfa47a8c9414350b49589dcbd84e6bdea7061dad7",
+      "afterSha256": "47a37bfcfcf73aa25b6734d7e8508748b7684770b6fdc98e95f14b5969338eb4",
+      "reason": "On-call run_as group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/OncallSessionConfigSpec/properties/tags/description",
+      "beforeSha256": "4977035a7cc28c1571e8a852892b0d8cd63cfbc7886510081da4c05eef8e03d2",
+      "afterSha256": "322f8ddeb21ce80e3b5e56867c3647922f328cf2cae2e6c532a088fc119e4b9e",
+      "reason": "On-call session group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/OncallToolsSpec/properties/linear_enabled/description",
+      "beforeSha256": "2fdc449d469dfc905f724cc12a9486f08e92fe146c236597dca72b3cbbb8c462",
+      "afterSha256": "1014225ee9b7600e45a62b20f7989d76507f024f461dbc84c86a6c719cb7ffdf",
+      "reason": "On-call tools group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/OncallSessionSettingsSpec/properties/opulent_mode/description",
+      "beforeSha256": "91daef6d1199f8859e812181a9a7e387590b2ac32e53d7137535985d311de12b",
+      "afterSha256": "44ba855f85b89d652e087d16dc5314c4793df79d7e17a67c7cdbf1ee39b9467c",
+      "reason": "On-call session_settings group rejected; no Ultra/fusion default."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/$defs/OncallSessionSettingsSpec/properties/net_policy/description",
+      "beforeSha256": "c1f0c215a19ca7566e11cf609f5030cd35a800bc2fd2a0c0186d38e4d9810426",
+      "afterSha256": "3830c22875f4055e34b8e772717a1b49dc47ae7651c9938bc76cd10d131582cb",
+      "reason": "On-call session_settings group rejected; no Git Manager default or null-unrestricted contract."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/action/description",
+      "beforeSha256": "a77a1f82aa7d2e6318d9c346eddd8b6ce2e3e8d396809c364419c59bc4198355",
+      "afterSha256": "36ee74e22f4c7f1f9afe7c224d9487c4d456f1712eae4a7e9cfca2d75b963c87",
+      "reason": "Local action/resource matrix differs from hosted aliases and schemas defaults."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/resource/description",
+      "beforeSha256": "fcb873aecc68bc5dbc7b8483634e24f107e9453940f8bac0f073959cd4a9da74",
+      "afterSha256": "cbf5d0b4d6acdde5510432bf6c0b1f7fee5c6654a263487f853485f13092d5a6",
+      "reason": "Incident settings explicitly excluded by oncall handler."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/session_settings/description",
+      "beforeSha256": "c42f1f6f1022073ca5b0cb369a395a3a5f090fa887f0d1b759ce7b025c348282",
+      "afterSha256": "88e136a120e23abe31855a216ee8c3dc40691326ad0dd55ae2d6702f9216222f",
+      "reason": "On-call session_settings group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/tools/description",
+      "beforeSha256": "7af726a13550bb2672ecd5d7d650fd681e60a0c3873080a26e0b0a7cab64a420",
+      "afterSha256": "42cf65f1344eeac5da0842483b3317c8ce2610d1d65cffd40153d21890f0904e",
+      "reason": "On-call tools group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/run_as/description",
+      "beforeSha256": "8f89ae85672ac75a2d61c6b30891bd3fe189a23e06f43cd6ffa377999bf4d35a",
+      "afterSha256": "9205aabbe1b8fc20daff532b9c4bad687c925c10873c3f81d9e1849ccc6cb0d5",
+      "reason": "On-call run_as group rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/notifications/description",
+      "beforeSha256": "5a6bfe31f64bfd544bdf44684e13e5fbd70f08cd2e08e801b6afc8b281833bca",
+      "afterSha256": "51c27987c84726cf4dab7b3ff7fe2ed4524d5d664cf28f873bed57c83822d2c8",
+      "reason": "On-call report notifications explicitly rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/limits/description",
+      "beforeSha256": "4ca9aab15f879a49003017bb26e8df11ec8c0662f50d99c35d4cc457bb2ae7fa",
+      "afterSha256": "ca11e2353ec316846f7dbc1988c9ebff0ed7f3488e8683846e7a5b3dd4d87700",
+      "reason": "No hosted 150/hour default or ACU metering."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/session/description",
+      "beforeSha256": "8c5a32d7c46897d1eba4c236602eaf125cfa3fb3b558a7168bfd4dceb3c77549",
+      "afterSha256": "423eb769854e36b368f1d2d536d1cc99cf6976c26280888acc649935553d7ba6",
+      "reason": "On-call session group rejected, no org billing-tag validation."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/slack_channel_prefix/description",
+      "beforeSha256": "43340ae2535f6ea0c2d31ff405924e5a9f5759739e86ac6f0397cbcbe82136f3",
+      "afterSha256": "c3d8f6bbeb0286faa1864d5b57b71625c5f679b604ec11c8ff18a53af95bbe0e",
+      "reason": "On-call incident_settings resource rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_oncall_manage/inputSchema/properties/auto_join_enabled/description",
+      "beforeSha256": "945f25920c9f4a5923c502e0c034ed8fa95ec5e97f4e625a0a454f23476f761c",
+      "afterSha256": "039f3693130c743d4358782c8d9c62138a1cba91b020005a1623b751af185800",
+      "reason": "No hosted automatic Slack channel joining."
+    },
+    {
+      "jsonPointer": "/tools/opulent_code_scan_manage/inputSchema/properties/action/description",
+      "beforeSha256": "11b520a9e14fbf0420bd1e668a202f586c12b6c48472dfd8c82fae28d9820998",
+      "afterSha256": "3c7523b0530219cc0902304ad2171e1a7ac064d8cc0d8fe149c597e3046a0567",
+      "reason": "Local scan types are static and get_session returns record, not hosted URL/entitlement."
+    },
+    {
+      "jsonPointer": "/tools/opulent_code_scan_manage/inputSchema/properties/interactive/description",
+      "beforeSha256": "07149d39dbe350e1edd1d6a995a29486cbcbeeccdd5e901d639ae032c107c22d",
+      "afterSha256": "22ec285a4780dcc65776daee7305ec778842b683fe82f0151be1ebb2e8877071",
+      "reason": "Local create_scan ignores interactive."
+    },
+    {
+      "jsonPointer": "/tools/opulent_code_scan_manage/inputSchema/properties/effort/description",
+      "beforeSha256": "eef083d974e140e9cef276008dcbe8eef820ae075dec7f1bc40b30f709f29d4b",
+      "afterSha256": "72758314089957db21ebe84e3b6999a1654688257550cc5d9edeed4b896cc1e6",
+      "reason": "Local create_scan ignores effort."
+    },
+    {
+      "jsonPointer": "/tools/opulent_code_scan_manage/inputSchema/properties/communication_guidance/description",
+      "beforeSha256": "d8657ceff4b56129d10ca727ba49d5cb6fc277959abac026d246a310897dc4de",
+      "afterSha256": "9466a2925207d70e5d99f495f722126d65c3fd5fea9bc7dc8a604959f5269c8c",
+      "reason": "Profile stores guidance but local scan prompt and worker do not execute a Slack communication phase."
+    },
+    {
+      "jsonPointer": "/tools/opulent_mcp_server_manage/inputSchema/properties/icon/description",
+      "beforeSha256": "56efb6fc9be2b3d91004fec41c49be40f1c6ecfff7622e2c21986670d2fb1124",
+      "afterSha256": "e134d4ad543b1362dcd3bb034746db14c8f609a34cc8959dc3f5588741722426",
+      "reason": "MCP installation returns a pending request, not a hosted approval card."
+    },
+    {
+      "jsonPointer": "/tools/opulent_billing_tag_manage/inputSchema/properties/user_id/description",
+      "beforeSha256": "2c1c8630145271560de3ee7f18d2782eaff029a8c1fca2646b94c6d3c844cdc2",
+      "afterSha256": "b60b6dd35d617176061dd27cda028fdaae28baa6a6356d54421756d5500212dd",
+      "reason": "Hosted organization member listing is excluded."
+    },
+    {
+      "jsonPointer": "/tools/opulent_billing_tag_manage/inputSchema/properties/first/description",
+      "beforeSha256": "be251b17b0d99b7006fbfc2cb66c28a7180edd32277e96c787594c87eb3c3d8a",
+      "afterSha256": "a9eb05a6bf1be3755d2ca10d9a6a47f32d70f2f406bd7bdb2cbc0866dcb89507",
+      "reason": "Local tag handler does not implement first/after pagination."
+    },
+    {
+      "jsonPointer": "/tools/opulent_schedule_manage/inputSchema/properties/action/description",
+      "beforeSha256": "c758df45e0cb79e6141f25f74cd9689f308beb87c626ddd2c9ce74b5e8841eae",
+      "afterSha256": "7d0bb2d5b486d01d170f22d87ccac0418f5c95bbe737b22c06b0fae0a14ca8e7",
+      "reason": "Legacy schedule create explicitly rejected."
+    },
+    {
+      "jsonPointer": "/tools/opulent_schedule_manage/inputSchema/properties/bypass_approval/description",
+      "beforeSha256": "025a8a24aae573b5b2f7befde9367f61147bfa7a4e1b15636c385b3bd3e669db",
+      "afterSha256": "03bf86c9f04dcc8417d8c84ea6aeabd19cb324b3e984ce46f9603bb7444da90b",
+      "reason": "Local schedule handler does not implement an approval bypass."
+    },
+    {
+      "jsonPointer": "/tools/opulent_schedule_manage/inputSchema/properties/platform/description",
+      "beforeSha256": "afe5fb2ff494a895f05c421dceac3782ff06ec62d0bf1344a2ca4ef03545aa8d",
+      "afterSha256": "a4b9832b311ea714f7c93ed1409f1386758c2d301cc56f34cfca10c710d2cc02",
+      "reason": "No hosted platform registry or VM placement override."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/$defs/SessionSpec/properties/platform/description",
+      "beforeSha256": "e440ad7b37bd6704864f8f3ce1cd2abd00d7a1f38de80d45e68930631c54844a",
+      "afterSha256": "3e38a46cc16b260f0cacc950f5d6bf908a10481a1b368cbc457b0b398489073b",
+      "reason": "No per-child VM platform/outpost routing."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/properties/platform/description",
+      "beforeSha256": "89129393002b64c0015883b3102bb69c31c0ca7970329c92d4032d21fe94205c",
+      "afterSha256": "1b65e3d9d129887c31e4afae69559573071f6fc22124825abeaee0088cdf33bd",
+      "reason": "No hosted platform registry, inheritance or outpost routing."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/properties/board_ticket_ids/description",
+      "beforeSha256": "4572fb4878dcc91db9afee0399776892757e7b51095282c6c67a491b3069c8b9",
+      "afterSha256": "3aa84b5af0a96d1d96eed6ce957ca42f9dc1a59f9edf7653a8e3c61434383ffd",
+      "reason": "No Boards ticket provider or child claiming behavior."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/properties/opulent_mode/description",
+      "beforeSha256": "acb6c9a361d10594116ceed57a07f2dd03c5df7b47f2ea0109dd7735e295531c",
+      "afterSha256": "3e1216e5c6bec9bbc6e3b6f08c8ffcbf0c1c8a289a5e32b832dd419f81fe43c9",
+      "reason": "No hosted mode routing or organization entitlement checks."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/properties/structured_output_schema/description",
+      "beforeSha256": "b473e5fd1b28994fd1d7b0d1668e88a5fe75f76754674ff7515fd89e3f8a1350",
+      "afterSha256": "08680e6f675c33a8ea3806fd281bceeaf2f9f64bfcb170a42ec0468b407370ad",
+      "reason": "Local final-output JSON validation replaces hosted provide_structured_output."
+    },
+    {
+      "jsonPointer": "/tools/opulent_session_create/inputSchema/$defs/SessionSpec/properties/structured_output_required/description",
+      "beforeSha256": "a21c2b657d1129a2b1d269fbc891adbf468eead8069032298be7d24d6fd2a623",
+      "afterSha256": "c39b1ee211d240c8c238d0ca6a3adb66e705bf39bc7c598e5d9b0d97b2bd6077",
+      "reason": "No hosted required-output gate or server default."
+    }
+  ],
+  "catalogUnchangedNestedDescriptionsSha256": "e47686af24a47e2fc7fd761444ebcec7465380c26c49e28739d4ded6ee1050d9"
+}

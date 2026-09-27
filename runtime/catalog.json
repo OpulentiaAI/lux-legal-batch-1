@@ -41,7 +41,7 @@
   "tools": {
     "MultiEdit": {
       "name": "MultiEdit",
-      "description": "Performs multiple exact string replacements in a single file in one atomic operation. This is more efficient than multiple Edit calls when making several changes to the same file.",
+      "description": "Performs multiple exact string replacements in a single file in one atomic operation. This is more efficient than multiple Edit calls when making several changes to the same file.\n\nUsage:\n- Read the file before editing so old_string matches the current text.\n- Edits are applied sequentially in the order provided, so later edits see the result of earlier ones.\n- Each edit's old_string must be unique in the file (after prior edits are applied).\n- Prefer this tool over multiple Edit calls when making 2+ changes to the same file - it reduces round trips and ensures atomicity.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -123,7 +123,7 @@
     },
     "apply_patch": {
       "name": "apply_patch",
-      "description": "apply patch",
+      "description": "Use the apply_patch tool to edit files. You must include a header with your intended action (Add/Update/Delete). You must prefix new lines with `+` even when creating a new file. To delete a file, use a `*** Delete File: <path>` header with no body. To rename or move a file, add a `*** Move to: <new path>` line immediately after its `*** Update File: <path>` header (you may also include edits in the same hunk). Paths must stay inside the configured workspace. Both `*** Begin Patch` format and standard unified diffs are accepted through the existing patch input.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -150,7 +150,7 @@
     },
     "browser_console": {
       "name": "browser_console",
-      "description": "View the browser console outputs and optionally run JavaScript. Useful for inspecting errors and debugging when combined with console.log statements in your code. If no code to run is provided, this will just return the recent console output. Only works when Chrome is in the foreground.",
+      "description": "View the browser console outputs and optionally run JavaScript. Useful for inspecting errors and debugging when combined with console.log statements in your code. If no code to run is provided, this will just return the recent console output. Requires a connected browser in the sandbox.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -164,7 +164,7 @@
     },
     "browser_preview": {
       "name": "browser_preview",
-      "description": "browser preview",
+      "description": "Show the user a live browser preview of a web app or page running in the sandbox \u2014 something they will open and use, not a document they will read. If the deliverable is a report, guide, analysis, write-up, or self-contained HTML/PDF, attach the file with `message_user` instead of starting a static file server. A preview depends on the running sandbox; an attachment is durable when configured storage is available.\n\nProvide a short human-readable `name`, local `ports` with the user-facing port first, and optionally an app-relative `path` including a query string. Pass all required ports for multi-service apps. Call this after starting a dev server that the user should open, and call it again after restarting the server if the sandbox expires. A configured authenticated preview backend is required. Do not describe a preview as a public deployment or claim it survives sandbox expiry.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -194,7 +194,7 @@
     },
     "computer": {
       "name": "computer",
-      "description": "Use a mouse and keyboard to interact with a computer screen. This is an interface to a desktop GUI. You do not have the ability to interact with a terminal or run code directly. You must click on desktop icons, extract text from screenshots, type text into the appropriate fields, etc.",
+      "description": "Use a mouse and keyboard to interact with the sandbox desktop GUI. This tool does not execute shell commands; use `exec` for terminal operations. Actions include `key`, `type`, `cursor_position`, `mouse_move`, clicks, drag, `scroll`, `left_mouse_down`, `left_mouse_up`, `hold_key`, `wait`, `zoom`, `screenshot`, and `read_dom`. Coordinates use the sandbox display space; do not assume a fixed screen resolution. You can perform multiple consecutive actions in one call by providing multiple entries in the `actions` array. `read_dom` reads the connected browser DOM when available; screenshots require an available computer backend. Inspect the result before claiming that an action took effect.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -290,7 +290,7 @@
     },
     "deploy": {
       "name": "deploy",
-      "description": "Deploy a project to make it publicly accessible. Sub-commands: 'frontend', 'backend', 'logs', 'expose'.",
+      "description": "Deploy a project only through the configured sandbox preview backend. Supported commands are `frontend` (run `npm run dev`), `backend` (run `npm start`), `expose` (preview an already listening HTTP port), and `logs` (read a deployment record). The directory must stay inside the workspace; a backend volume requires a preconfigured sandbox volume. These deployments are temporary authenticated previews, not publicly hosted sites. Do not claim a permanent public URL, approval card, Fly.io or static hosting. Get explicit user approval before making an app publicly reachable through any separate publishing workflow; never treat this preview as that approval.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -325,7 +325,7 @@
     },
     "describe_image": {
       "name": "describe_image",
-      "description": "Describe the contents of an image file on the box, or ask a specific question about it. Provide the path to an image (PNG, JPEG, GIF, WebP, etc.) and optionally a question. Without a question you get a detailed natural-language description including any visible text. With a question the model answers that specific question about the image.",
+      "description": "Describe the contents of an image file on the box, or ask a specific question about it. Provide the path to an image (PNG, JPEG, GIF, WebP, etc.) and optionally a question. Without a question you get a detailed natural-language description including any visible text. With a question the model answers that question about the image. Useful for inspecting screenshots, diagrams, or other images you cannot otherwise read.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -346,7 +346,7 @@
     },
     "opulent_automation_manage": {
       "name": "opulent_automation_manage",
-      "description": "opulent automation manage",
+      "description": "Manage Opulent automations stored in this runtime. Supported triggers are recurring schedules, GitHub push/pull-request, Slack message, and incoming webhook; actions include starting a session or scan, scanning new commits, messaging a session, and triage. Call action=\"schemas\" before building one to see supported types; `validate_create` and `validate_update` dry-run without mutation. For updates, fetch with `get` and include fields you intend to keep rather than assuming hosted per-organization merge semantics. Repository scope is enforced locally. Tool grants, identity/network policy, preflight scripts, notifications, ACU metering, and hosted webapp URLs require separate providers and are rejected here. Never imply a listed trigger is connected to a live external event without verifying ingestion.",
       "inputSchema": {
         "$defs": {
           "AutomationCodeScanRepoSpec": {
@@ -365,7 +365,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Git host of the repository, when not the org default."
+                "description": "Host value retained in the schema; the local scan action uses allowlisted repository names and does not select an organization-default Git host."
               }
             },
             "required": [
@@ -424,7 +424,7 @@
             "description": "A single field/operator/value filter on the triggering event.",
             "properties": {
               "field": {
-                "description": "Event field to filter on. Valid fields are event-type-specific and org-specific \u2014 discover them via action=\"schemas\". Slack channel fields (e.g. slack:message 'channel') take the Slack channel ID like C0123ABC456, not the channel name or #handle.",
+                "description": "Event field used by local conditions. Call action=\"schemas\" for supported triggers and operators. Slack channel conditions use the channel ID, not a name or #handle.",
                 "type": "string"
               },
               "operator": {
@@ -540,7 +540,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Email addresses to notify. null = the automation creator; required for service-user-created automations."
+                "description": "Unsupported notification recipients. The local automation handler rejects notifications and does not email the creator."
               }
             },
             "required": [
@@ -619,7 +619,7 @@
                   }
                 ],
                 "default": null,
-                "description": "ACU limit per spawned session (same name as the sessions API). Omitted/null = unlimited."
+                "description": "Unsupported ACU limit: the local handler rejects max_acu_limit without a metering backend."
               },
               "invocations": {
                 "anyOf": [
@@ -654,7 +654,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Session to message; must belong to the org. Required unless auto_create is true, in which case it is set server-side once the first trigger creates the session."
+                "description": "Existing local session ID to message. The session must exist in this runtime; auto_create may create and remember a local target on the first event."
               },
               "prompt": {
                 "anyOf": [
@@ -680,7 +680,7 @@
             "type": "object"
           },
           "AutomationNetPolicySpec": {
-            "description": "Network policy restricting spawned sessions' outbound connections.",
+            "description": "Unsupported per-automation network-policy configuration. The handler rejects session_settings and security_profile.",
             "properties": {
               "allow": {
                 "description": "Destinations spawned sessions may reach; everything else is blocked.",
@@ -706,7 +706,7 @@
             "type": "object"
           },
           "AutomationNotificationsSpec": {
-            "description": "Dispatch-status notifications for an automation.",
+            "description": "Unsupported dispatch notifications. The local automation handler rejects notifications.",
             "properties": {
               "email": {
                 "anyOf": [
@@ -734,7 +734,7 @@
             "type": "object"
           },
           "AutomationPreflightSpec": {
-            "description": "A Preflight check: a script the automation runs on its own microVM\nbetween the trigger and the actions. It reads the trigger event from the\nfile at $EVENT_FILE, may read/write a small JSON object at $STATE_FILE\nthat persists across runs, and must write its decision to $OUTPUT_FILE\nas {\"run\": true}, {\"run\": false, \"reason\": \"...\"}, or {\"items\": [...]}\n(one action run per item). Only available when action=\"schemas\" reports\nthe Preflight check as available for the organization.",
+            "description": "Unsupported in this runtime. Preflight scripts, event/state/output files and fan-out checks require an installed execution backend; automation creation rejects preflight.",
             "properties": {
               "runtime": {
                 "description": "Script runtime.",
@@ -746,7 +746,7 @@
                 "type": "string"
               },
               "source": {
-                "description": "The script source. Write it to a file and pass 'file:///absolute/path' (Opulent's client resolves file URIs before the call); other MCP clients must pass the text inline.",
+                "description": "Unsupported preflight script source. This runtime does not resolve file:// URIs or run preflight scripts.",
                 "type": "string"
               },
               "timeout_seconds": {
@@ -759,7 +759,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Wall-clock limit per run in seconds (default 60, max 300). A run past it fails closed."
+                "description": "Unsupported preflight timeout; no script is run by this runtime."
               },
               "secret_names": {
                 "anyOf": [
@@ -774,7 +774,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Org secret names exposed to the script as environment variables. Requires the manage org secrets permission whenever non-empty."
+                "description": "Unsupported preflight secret grants. Do not include secret values or assume environment access."
               },
               "enabled": {
                 "anyOf": [
@@ -786,7 +786,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Whether the script gates the automation's runs. Omitted keeps the current state on update; a new Preflight check starts enabled."
+                "description": "Unsupported preflight enable flag; preflight is not installed by this runtime."
               }
             },
             "required": [
@@ -817,7 +817,7 @@
             "description": "Identity that triggered sessions run as and are attributed to.",
             "properties": {
               "type": {
-                "description": "'organization' runs sessions as the org identity; 'creator' runs them as the automation's creator.",
+                "description": "Unsupported automation run identity. The handler rejects run_as instead of switching organization or creator identity.",
                 "enum": [
                   "organization",
                   "creator"
@@ -832,7 +832,7 @@
           },
           "AutomationScanNewCommitsActionSpec": {
             "additionalProperties": true,
-            "description": "Re-scans an existing code scan each time the automation fires: adds a\ndiff run covering the commits landed since that scan's last completed run\n(a new row in the scan's runs table). Use it when the user wants to keep\nan existing scan up to date; use start_code_scan for a brand-new scan.\nRequires code scanning to be enabled for the org.",
+            "description": "Re-scan an existing local code scan after its last completed run with a validated head SHA when the automation fires. This starts a local child run; do not infer hosted organization entitlement or a scan-runs UI.",
             "properties": {
               "type": {
                 "const": "scan_new_commits",
@@ -848,7 +848,7 @@
                   }
                 ],
                 "default": null,
-                "description": "The existing code scan (scan-...) to extend; must belong to the org and have a completed run, otherwise each fire fails. Find it with opulent_code_scan_manage action='list_scans'. Required when creating or adding this action; on a merge-semantics update, omit it to keep the stored value (null is invalid)."
+                "description": "Existing local scan ID to extend. The scan must have a completed run with a validated head SHA, or the automation action fails; find it with opulent_code_scan_manage action=\"list_scans\"."
               }
             },
             "required": [
@@ -862,7 +862,7 @@
             "properties": {
               "tags": {
                 "default": [],
-                "description": "Label the spawned sessions for filtering/attribution \u2014 prefer the org's existing resource tags (e.g. team names), and offer to tag the automation's sessions with the relevant team when creating one.",
+                "description": "Session tags are retained in this schema but not applied to spawned sessions by the local automation dispatcher.",
                 "items": {
                   "type": "string"
                 },
@@ -878,7 +878,7 @@
                   }
                 ],
                 "default": null,
-                "description": "VM platform for the session; null uses the organization's default platform at invocation time."
+                "description": "Platform setting is retained in this schema but not used for local spawned-session VM placement."
               },
               "bypass_approval": {
                 "default": false,
@@ -938,7 +938,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Opulent agent mode for spawned sessions; set it here, not inside a start_session action. null = org default."
+                "description": "Unsupported per-automation session setting. The handler rejects session_settings; it does not select an organization mode."
               },
               "net_policy": {
                 "anyOf": [
@@ -949,7 +949,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "On create, always set the Git Manager policy from schemas, plus only required hosts, even for tasks needing no external services. Omission blocks all access. Explicit null requires user-requested unrestricted access. On update, preserve the policy unless asked to change it."
+                "description": "Unsupported per-automation network policy. The handler rejects session_settings; no null value grants unrestricted access."
               }
             },
             "type": "object"
@@ -959,7 +959,7 @@
             "description": "Gives the spawned session a Slack home in the given channel.",
             "properties": {
               "mode": {
-                "description": "post_response is the only mode to create for a new automation, with no exceptions \u2014 even when the user asks for a live or conversational thread: it posts the final response as a top-level message, then binds its thread for replies and follow-up messages, and works with any trigger. post_updates (converses in a channel thread) and forward_thread (additionally backlinks the triggering thread; requires a Slack trigger) are legacy modes that only appear on pre-existing automations; preserve them when editing those automations, but never create them.",
+                "description": "Slack notification mode is retained in this schema but not executed by the local automation dispatcher. Do not promise posted replies.",
                 "enum": [
                   "post_response",
                   "post_updates",
@@ -1052,7 +1052,7 @@
           },
           "AutomationStartCodeScanActionSpec": {
             "additionalProperties": true,
-            "description": "Starts a fresh code scan (no Opulent session) each time the automation\nfires, e.g. a weekly security scan of a repo. Scans can be very expensive:\nonly create one when the user explicitly asked for a recurring or\nevent-driven scan. Requires code scanning to be enabled for the org. Use\nscan_new_commits instead to keep an existing scan up to date.",
+            "description": "Start a local code scan when the automation fires. Scans can be expensive: only configure recurring or event-driven scanning on an explicit user request. The local run creates an investigation session; hosted code-scanning entitlements and scan pages are not provided.",
             "properties": {
               "type": {
                 "const": "start_code_scan",
@@ -1123,7 +1123,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Scan profile (csprof-...) defining the scan's objective; find one with opulent_code_scan_manage action='list_profiles'. Required for every non-security scan_type; optional for 'security'."
+                "description": "Local scan profile ID defining the objective; use opulent_code_scan_manage action=\"list_profiles\". Non-security scans require a matching profile."
               },
               "scan_type": {
                 "anyOf": [
@@ -1151,7 +1151,7 @@
                   }
                 ],
                 "default": null,
-                "description": "'lite' (shown as Normal in the UI: faster, cheaper; the UI default) or 'deep' (shown as Deep). Omitting it runs 'deep', so pass 'lite' unless the user asked for a deep scan."
+                "description": "Accepted in this schema but not used by the local scan worker; do not promise UI effort or billing semantics."
               },
               "interactive": {
                 "anyOf": [
@@ -1189,7 +1189,7 @@
                   }
                 ],
                 "default": null,
-                "description": "The single source of truth: plain text with inline reference tokens (@{owner}/{repo}, @{path}, @playbook:{id}, @skills:{name}, !{macro}, ${SECRET_NAME}); never pass repos or playbook_id separately. The triggering event's payload is appended automatically. Required when creating or adding this action; on a merge-semantics update, omit it to keep the stored value (null is invalid)."
+                "description": "Plain-text prompt for a new local session. The event payload is appended by the dispatcher. Pass literal text; inline repository, path, playbook, skill or secret-reference tokens are not expanded by this handler."
               },
               "session": {
                 "anyOf": [
@@ -1213,7 +1213,7 @@
             "properties": {
               "mcp_servers": {
                 "default": [],
-                "description": "Authoritative allowlist of MCP server marketplace slugs (e.g. 'github', 'notion') enabled for spawned sessions \u2014 omitted or empty means the sessions get NO MCP tools, so list every server the prompt relies on. Only servers whose installation_scope is 'org' work under run_as 'organization'; a 'user' scoped installation only works with run_as 'creator' when the creator has connected that server. Read each server's installation_scope and auth_info.has_token from list_integrations first.",
+                "description": "Unsupported per-automation MCP grants. The handler rejects tools; configure and approve providers separately before using MCP tools.",
                 "items": {
                   "type": "string"
                 },
@@ -1221,7 +1221,7 @@
               },
               "slack_channels": {
                 "default": [],
-                "description": "Channels the session's Slack tools may post to: [team_id, channel_id] pairs of channels the Opulent bot has joined, or the single sentinel entry {'team_id': '*', 'channel_id': '*'} granting every public channel in the org's connected workspaces. The sentinel can't be mixed with explicit channels and is rejected when the automation watches a private channel. Explicit entries may mix public and private channels, but this session cannot see private channels to find or verify their IDs \u2014 point the user to the web UI for those.",
+                "description": "Unsupported Slack channel grants. The local automation handler rejects tools; do not promise bot channel access or wildcard public-channel permission.",
                 "items": {
                   "$ref": "#/$defs/AutomationSlackChannelSpec"
                 },
@@ -1241,7 +1241,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Allow spawned sessions to open 1:1 Slack DMs: 'org_members' (enterprise accounts only) restricts DM targets to organization members; 'workspace' (non-enterprise accounts only) allows any eligible workspace member. Omit or null to disable DMs."
+                "description": "Unsupported per-automation Slack DM grants. The handler rejects tools; do not promise automatic DM delivery."
               },
               "linear_enabled": {
                 "anyOf": [
@@ -1300,7 +1300,7 @@
             "description": "An event that dispatches the automation.",
             "properties": {
               "event_type": {
-                "description": "Trigger event type, e.g. 'github:pull_request' or 'schedule:recurring'. The supported set is org-specific \u2014 discover it via action=\"schemas\".",
+                "description": "Trigger event type. Call action=\"schemas\" for the fixed local supported set; a configured trigger does not prove an external provider is connected.",
                 "type": "string"
               },
               "conditions": {
@@ -1317,7 +1317,7 @@
               },
               "replies": {
                 "default": [],
-                "description": "Supported reply types vary by event type. With a start_session action, add the default reply to each new reply-capable trigger unless the user opts out: post_response for github/gitlab/jira/linear event types (except github:push, github:check_run, gitlab:push, and gitlab:pipeline), attach_thread for slack event types unless the action sets session.notifications.slack; if the API rejects the replies field, retry without it.",
+                "description": "Reply configuration is not executed by the local dispatcher; do not promise automatic GitHub or Slack responses.",
                 "items": {
                   "$ref": "#/$defs/AutomationReplySpec"
                 },
@@ -1332,7 +1332,7 @@
         },
         "properties": {
           "action": {
-            "description": "The operation to perform: 'list', 'get', 'schemas', 'templates' (the built-in automation templates whose template_id create accepts), 'create', 'validate_create', 'update', 'validate_update', 'delete', or 'run' (manually fire an enabled automation now \u2014 'run now' \u2014 bypassing its trigger conditions). validate_create and validate_update perform a dry-run validation without requiring approval. Preflight check actions (only when action='schemas' reports it available): 'preflight_get' (the saved script and settings), 'preflight_events' (recent matched trigger events a test can replay), 'preflight_event' (one event's full $EVENT_FILE document), 'preflight_test' (run a script \u2014 saved or not \u2014 against a recent event on a real VM; starts no actions), and 'preflight_run' (poll a test run's outcome and logs). Save the script itself through the 'preflight' parameter of create/update.",
+            "description": "Supported local actions: list, get, schemas, templates (returns an empty list), create, validate_create, update, validate_update, delete, run. Validation is a dry run. Preflight actions remain in the enum for interface compatibility but the handler rejects them; no script is executed.",
             "enum": [
               "list",
               "get",
@@ -1430,7 +1430,7 @@
               }
             ],
             "default": null,
-            "description": "What the automation does. Required for 'create'; replaces all existing actions when passed to 'update'. Most automations use a single start_session action; scheduled/event-driven code scans use start_code_scan (fresh scan) or scan_new_commits (re-scan an existing scan) instead of a session. Long prompts render as BEGIN/END PROMPT <label> blocks: extract only the text between those two lines (excluding both) into a local file, edit it, and update with the full actions array and 'prompt': 'file:///absolute/path' (Opulent's client resolves file URIs; other MCP clients must pass the text inline). Never retype a long prompt; extraction may add one trailing newline."
+            "description": "Actions to run when a trigger fires. Required for create; supported types are start_session, start_code_scan, scan_new_commits, message_session and triage_session. Pass prompt text inline; this runtime does not expand file:// prompt URIs or render BEGIN/END PROMPT blocks."
           },
           "enabled": {
             "anyOf": [
@@ -1454,7 +1454,7 @@
               }
             ],
             "default": null,
-            "description": "Email/Slack pings about the automation's dispatch outcomes."
+            "description": "Unsupported email/Slack dispatch notifications. The handler rejects notifications; no delivery provider is implied."
           },
           "tools": {
             "anyOf": [
@@ -1466,7 +1466,7 @@
               }
             ],
             "default": null,
-            "description": "Tool grants for the sessions the automation spawns (slack_dm_scope goes inside this group, never as a top-level argument)."
+            "description": "Unsupported per-automation tool grants. The handler rejects tools; existing runtime allowlists and provider approvals still apply."
           },
           "metadata": {
             "anyOf": [
@@ -1488,7 +1488,7 @@
               }
             ],
             "default": null,
-            "description": "Org-visible string key/value labels (max 16 pairs; keys <= 32 chars, values <= 128). Update behavior (per-key merge with null deleting a key, vs whole-dict replace) follows the org's update semantics \u2014 see action=\"schemas\". On 'list', filters to automations whose metadata matches every given pair exactly (null values are invalid there)."
+            "description": "Metadata is accepted by this schema but not persisted or queried by the local automation handler; do not rely on it for labels or filters."
           },
           "limits": {
             "anyOf": [
@@ -1524,7 +1524,7 @@
               }
             ],
             "default": null,
-            "description": "Settings applied to every session the automation spawns."
+            "description": "Unsupported spawned-session settings. The handler rejects session_settings; mode and network-policy defaults are not inferred."
           },
           "security_profile": {
             "anyOf": [
@@ -1537,7 +1537,7 @@
               }
             ],
             "default": null,
-            "description": "The automation's security-profile binding: {'profile_id': '...'} pins that profile, {'profile_id': null} records an explicit opt-out, omitted inherits the org/enterprise default. Writing it requires the security-profile management permission; an opt-out cannot escape a mandatory org/enterprise profile. Reads return {'selection': 'inherit'|'none'|'profile', 'profile_id', 'warnings': [...]} \u2014 warnings are non-blocking configuration conflicts (e.g. an MCP server endpoint the governing profile's network policy blocks); surface them to the user."
+            "description": "Unsupported security-profile binding. The handler rejects security_profile; do not infer network or MCP access."
           },
           "run_as": {
             "anyOf": [
@@ -1549,7 +1549,7 @@
               }
             ],
             "default": null,
-            "description": "Identity the triggered sessions run under \u2014 REQUIRED for 'create', no default. Choose it together with tools.mcp_servers. On 'update', omitted = unchanged."
+            "description": "Unsupported run identity. The handler rejects run_as and does not impersonate an organization or creator."
           },
           "template_id": {
             "anyOf": [
@@ -1573,7 +1573,7 @@
               }
             ],
             "default": null,
-            "description": "For 'create'/'update' (and their validate_ dry-runs): the automation's Preflight check \u2014 a script run before the actions that decides per trigger event whether to proceed, skip, or fan out. For 'preflight_test': the script to run (need not be saved). Pass the source as 'file:///absolute/path' (Opulent's client resolves file URIs). On update the whole group replaces the stored one; omitted keeps it. Only when action='schemas' reports the Preflight check available."
+            "description": "Unsupported preflight script. Passing preflight to create/update is rejected; preflight_* actions are not implemented and file:// source resolution is unavailable."
           },
           "queued_event_id": {
             "anyOf": [
@@ -1585,7 +1585,7 @@
               }
             ],
             "default": null,
-            "description": "For 'preflight_event' (required) and 'preflight_test' (optional; default = the most recent matched event): a queued_event_id from 'preflight_events'."
+            "description": "Preflight event cursor is unsupported because preflight_* actions are rejected."
           },
           "run_id": {
             "anyOf": [
@@ -1597,7 +1597,7 @@
               }
             ],
             "default": null,
-            "description": "For 'preflight_run': the run_id returned by 'preflight_test'."
+            "description": "Preflight run ID is unsupported because preflight_* actions are rejected."
           },
           "search": {
             "anyOf": [
@@ -1685,7 +1685,7 @@
               }
             ],
             "default": null,
-            "description": "Page size for 'list' (default 100) and 'preflight_events' (default 20) pagination; max 200."
+            "description": "Pagination parameter retained for interface compatibility; the local automation list returns stored records without cursor pagination."
           },
           "after": {
             "anyOf": [
@@ -1697,7 +1697,7 @@
               }
             ],
             "default": null,
-            "description": "Opaque cursor for 'list'/'preflight_events' pagination (from a previous response's end_cursor)."
+            "description": "Cursor parameter retained for interface compatibility; the local automation list returns stored records without cursor pagination."
           }
         },
         "required": [
@@ -1709,7 +1709,7 @@
     },
     "opulent_billing_tag_manage": {
       "name": "opulent_billing_tag_manage",
-      "description": "opulent billing tag manage",
+      "description": "Manage Opulent billing tags in the runtime store: list/get/create tags, list/add members, and assign a session to a tag one at a time. The hosted bulk assignment and get_session_tags actions are not implemented. This is local tracking, not a hosted billing account or proof of metered charges. Session access remains scoped to this runtime.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -1770,7 +1770,7 @@
               }
             ],
             "default": null,
-            "description": "ID of the organization member to add. Required for 'add_member'. User ids can be found via the organization members listing (they are not email addresses)."
+            "description": "Member ID to add to a local billing tag. User-management lookup is not provided by this runtime."
           },
           "opulent_id": {
             "anyOf": [
@@ -1794,7 +1794,7 @@
               }
             ],
             "default": null,
-            "description": "Page size for 'list'/'list_members' pagination (default 100, max 200)."
+            "description": "Pagination hint retained in the schema; local list and list_members return stored rows without paging."
           },
           "after": {
             "anyOf": [
@@ -1818,11 +1818,11 @@
     },
     "opulent_code_scan_manage": {
       "name": "opulent_code_scan_manage",
-      "description": "opulent code scan manage",
+      "description": "Manage repository-scoped Opulent code scans and profiles in this runtime. Establish the scan type first with `list_scan_types`; infer the objective from the request, but only use a type actually returned. Security and other scan types have different profile guidance; never silently broaden a narrow request. Map focus, exclusions and triage guidance from the user\u2019s request; never inline tokens in ingestion guidance \u2014 reference configured secret names. Prefer reusing a matching profile over creating an unrelated one.\n\nNEVER call `create_scan` until the user explicitly approves the exact scan and repository in text. A request to set up a scan is not approval to launch it. Repository scope is enforced by the runtime, but no hosted setup form or approval card is implemented here; do not claim that a form submission or card is available. Do not claim a returned scan ID is a hosted scan URL, or that a local scan record proves the investigation completed. The source\u2019s incremental `scan_new_commits`, `update_scan`, and batch `remediate_findings` actions are not implemented by this handler. `remediate_finding` launches code-changing work: use it only on explicit user request, and do not claim PR creation without checking the actual result. Hosted org entitlements, Slack DMs, security-profile approval cards, and MCP grants are not supplied by this adapter.",
       "inputSchema": {
         "properties": {
           "action": {
-            "description": "The operation to perform: 'list_scans', 'list_findings', 'list_scan_types', 'list_profiles', 'get_profile', 'create_profile', 'update_profile', 'create_scan', 'get_session', or 'remediate_finding'. 'list_scan_types' returns the scan types enabled for this org \u2014 only ever use those types (when general scans are disabled, only 'security'). Pick the type from the user's request yourself rather than presenting the types as a menu; use 'general' for anything no standard type covers. 'create_scan' launches the scan: only call it after the user has explicitly confirmed the summarized setup (every repo, scan type, what the scan looks for, what happens when it finishes, interactive mode, effort) in their most recent reply. 'get_session' retrieves the latest run's orchestrating session link for a scan.",
+            "description": "Supported local scan actions are list_scans, list_findings, list_scan_types, list_profiles, get_profile, create_profile, update_profile, create_scan, get_session and remediate_finding. list_scan_types returns the local supported types, not organization entitlements. Infer a matching type from the request. Only call create_scan after explicit user approval of the exact repository and objective. get_session returns a local session record, not a hosted link.",
             "enum": [
               "list_scans",
               "list_findings",
@@ -1910,7 +1910,7 @@
               }
             ],
             "default": null,
-            "description": "Interactive mode ('create_scan' only): true pauses the scan once it has drafted its scan model and opens a session where the user reviews and adjusts it before investigation starts; false (default) runs end to end unattended. Explain the difference, then ask."
+            "description": "Accepted in the schema but ignored by the local create_scan handler. It does not pause investigation or open a hosted user review session."
           },
           "effort": {
             "anyOf": [
@@ -1922,7 +1922,7 @@
               }
             ],
             "default": null,
-            "description": "Scan effort ('create_scan' only): 'normal' (default) uses lower model reasoning effort and larger investigation batches \u2014 faster and fewer ACUs; 'deep' runs the full pipeline, tracing each finding further and validating findings one at a time \u2014 most thorough, more expensive. Explain the trade-off, then ask."
+            "description": "Accepted in the schema but ignored by the local create_scan handler. It does not select a model, ACU budget, investigation pipeline or validation depth."
           },
           "scan_id": {
             "anyOf": [
@@ -2108,7 +2108,7 @@
               }
             ],
             "default": null,
-            "description": "Guidance for the communication phase: what happens when the scan finishes, e.g. Slack the requester a summary, or ping the code owners of each finding with it and its fix ('create_profile' and 'update_profile'). Always ask the user about this for non-security discover profiles. Security and ingest scans do not run this phase."
+            "description": "Optional text stored on a local scan profile. The local scan worker does not send Slack DMs or run a separate communication phase; do not promise notifications."
           },
           "remediation_guidance": {
             "anyOf": [
@@ -2474,7 +2474,7 @@
     },
     "opulent_mcp_server_manage": {
       "name": "opulent_mcp_server_manage",
-      "description": "opulent mcp server manage",
+      "description": "Manage MCP server installation requests and enable/disable records. For a custom installation, research the official endpoint and authentication method; never ask the user to paste a secret into ordinary session text. Reference only an approved environment-variable secret name and an allowlisted HTTPS URL or stdio command. `install`, `update`, and `delete` create pending approval requests; they do not install a server immediately. Only a separate approval flow can probe and activate a server. Do not claim an automatic approval card or private-mode hosting. Verify a provider connection with `mcp_list_tools` before treating an enabled record as working.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -2659,7 +2659,7 @@
               }
             ],
             "default": null,
-            "description": "Icon URL for the approval card. Set automatically; do not set it."
+            "description": "Optional icon value retained in the schema; the local handler does not create an approval card or automatically set this field."
           }
         },
         "required": [
@@ -2671,7 +2671,7 @@
     },
     "opulent_oncall_manage": {
       "name": "opulent_oncall_manage",
-      "description": "opulent oncall manage",
+      "description": "Manage Opulent on-call responder, incident, and report records in this runtime. Call `schemas` for locally supported resources and triggers before creating a responder; responders require one Slack-message trigger constrained to a real channel ID. Never invent Slack channel IDs. Use `validate_create`/`validate_update` to dry-run and list before retrying an ambiguous create. Obtain explicit user approval before creating, updating, deleting, stopping, resuming, or ingesting a dashboard. Hosted PagerDuty, incident settings, approval cards, automatic Slack delivery, identity/network policy, and organization-specific merge semantics are not supplied here. Check actual connected providers and returned run status before claiming incident triage succeeded.",
       "inputSchema": {
         "$defs": {
           "AutomationConditionGroupSpec": {
@@ -2693,7 +2693,7 @@
             "description": "A single field/operator/value filter on the triggering event.",
             "properties": {
               "field": {
-                "description": "Event field to filter on. Valid fields are event-type-specific and org-specific \u2014 discover them via action=\"schemas\". Slack channel fields (e.g. slack:message 'channel') take the Slack channel ID like C0123ABC456, not the channel name or #handle.",
+                "description": "Event field used by local conditions. On-call responders require a Slack channel ID condition; do not use a channel name or #handle.",
                 "type": "string"
               },
               "operator": {
@@ -2855,7 +2855,7 @@
                   }
                 ],
                 "default": null,
-                "description": "ACU limit per spawned session (same name as the sessions API). Omitted/null = unlimited."
+                "description": "ACU limit retained in the schema but not metered or enforced by the local on-call handler."
               },
               "invocations": {
                 "anyOf": [
@@ -2920,7 +2920,7 @@
             "description": "Identity that triggered sessions run as and are attributed to.",
             "properties": {
               "type": {
-                "description": "'organization' runs sessions as the org identity; 'creator' runs them as the automation's creator.",
+                "description": "Unsupported on-call run identity. The handler rejects run_as and does not impersonate a creator or organization user.",
                 "enum": [
                   "organization",
                   "creator"
@@ -2997,7 +2997,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Session tags (cost codes) spawned sessions bill to, validated as the run identity (organization or creator). Orgs that enforce required session tags must supply exactly one allowed tag. On update the list replaces wholesale."
+                "description": "Unsupported on-call session tags. The handler rejects the session group and does not validate hosted cost codes."
               }
             },
             "type": "object"
@@ -3021,7 +3021,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Mode for spawned sessions. Omit on create to get the server default: the best of ultra > fusion > normal the organization can use (schemas.default_opulent_mode). Ultra is recommended for Oncall investigation."
+                "description": "Unsupported on-call session setting. The handler rejects session_settings; no organization mode default is selected."
               },
               "net_policy": {
                 "anyOf": [
@@ -3033,7 +3033,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Network policy for spawned sessions. Omit on create for the deployment default (the Git Manager-only policy in schemas.default_net_policy); explicit null = unrestricted (only when the user asks for it). On update, preserve the stored policy unless asked."
+                "description": "Unsupported on-call network setting. The handler rejects session_settings; null does not grant unrestricted access."
               }
             },
             "type": "object"
@@ -3081,7 +3081,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Whether spawned sessions may use Linear tools (server default: enabled)."
+                "description": "Unsupported per-responder Linear grant. The handler rejects tools; any Linear provider requires separate configuration."
               }
             },
             "type": "object"
@@ -3123,7 +3123,7 @@
         },
         "properties": {
           "action": {
-            "description": "Operation to perform on 'resource': 'list', 'get', 'create', 'validate_create', 'update', 'validate_update', 'delete', 'issues' (responder), 'stop'/'resume' (incident), 'runs'/'run' (report). Without a resource: 'schemas' (defaults, available modes, Slack connectivity) or 'ingest_dashboard'. The flat legacy names (report_context, responder_issues, ...) are aliases for older prompts; do not use them in new ones.",
+            "description": "Local actions depend on resource: responder list/get/create/validate_create/update/validate_update/delete/issues/run/stop/resume; incident list/get/stop/resume; report list/get/create/validate_create/update/validate_update/delete/runs/run. Without a resource, schemas and ingest_dashboard are supported. Other legacy enum values are not uniformly implemented; verify the returned result.",
             "enum": [
               "list",
               "get",
@@ -3164,7 +3164,7 @@
               }
             ],
             "default": null,
-            "description": "What to operate on: 'responder' (a Slack channel triage bot), 'incident_settings' (the org's single incident-channel config), 'incident' (an incident channel + investigation session), or 'report' (recurring report over responders/incidents; runs live under it). Omit only for 'schemas' and 'ingest_dashboard'."
+            "description": "Use responder, incident, or report. incident_settings remains in the enum for interface compatibility but is rejected by this runtime."
           },
           "responder_id": {
             "anyOf": [
@@ -3327,7 +3327,7 @@
               }
             ],
             "default": null,
-            "description": "Responder / incident_settings tool grants for spawned sessions: mcp_servers (only telemetry servers the org has installed \u2014 check list_integrations), slack_channels, linear_enabled. Omit slack_channels on responder create: the server grants Slack for the channels the trigger watches. Update merges per member; lists replace wholesale."
+            "description": "Unsupported responder tool grants. The handler rejects tools; check provider configuration separately."
           },
           "metadata": {
             "anyOf": [
@@ -3361,7 +3361,7 @@
               }
             ],
             "default": null,
-            "description": "Responder limits: max_acu_limit per triage session and invocations rate (server default 150 per hour). Omit unless the user asks."
+            "description": "Invocation limits may be recorded for a responder, but max_acu_limit requires a metering backend and is not enforced here. Do not assume a hosted default rate."
           },
           "session_settings": {
             "anyOf": [
@@ -3373,7 +3373,7 @@
               }
             ],
             "default": null,
-            "description": "Responder / incident_settings: opulent_mode (omit on create for the server default \u2014 the best of ultra > fusion > normal the org can use; Ultra is recommended for Oncall) and net_policy (omit on create for the deployment default Git Manager-only policy from 'schemas'; explicit null = unrestricted, only when the user asks). On update, preserve unless asked."
+            "description": "Unsupported responder session mode/network policy. The handler rejects session_settings; no hosted organization defaults or unrestricted-null behavior."
           },
           "session": {
             "anyOf": [
@@ -3385,7 +3385,7 @@
               }
             ],
             "default": null,
-            "description": "Responder / incident_settings / report session tags (cost codes) spawned sessions bill to, validated as the run identity. Orgs that require session tags must supply exactly one allowed tag; otherwise omit."
+            "description": "Unsupported on-call session tags and cost codes. The handler rejects the session group."
           },
           "run_as": {
             "anyOf": [
@@ -3397,7 +3397,7 @@
               }
             ],
             "default": null,
-            "description": "Identity spawned sessions run as: {'type': 'organization'} (default; the org system user, recommended so triage survives the creator leaving) or {'type': 'creator'}."
+            "description": "Unsupported on-call identity switch. The handler rejects run_as; it does not promise a hosted organization system user."
           },
           "slack_channel_prefix": {
             "anyOf": [
@@ -3409,7 +3409,7 @@
               }
             ],
             "default": null,
-            "description": "incident_settings: prefix for auto-created incident channels (server default 'inc-'). Pass '' on update to clear the stored prefix."
+            "description": "Incident-settings channel prefix is unsupported because this runtime excludes incident_settings."
           },
           "auto_join_enabled": {
             "anyOf": [
@@ -3421,7 +3421,7 @@
               }
             ],
             "default": null,
-            "description": "incident_settings: whether Opulent auto-joins new public channels matching the prefix (default true \u2014 keep it on unless the user wants to invite Opulent manually)."
+            "description": "Incident-settings auto-join is unsupported because this runtime excludes incident_settings."
           },
           "slack_team_id": {
             "anyOf": [
@@ -3487,7 +3487,7 @@
               }
             ],
             "default": null,
-            "description": "Report create only: {'slack': {'channel_id': 'C...'}} delivers each run to that channel. Recommend it when the user names a channel or one is obvious (e.g. the team's channel); never invent an ID. Cannot be changed on update."
+            "description": "Unsupported report Slack delivery. The report handler rejects notifications; a generated report is not automatically posted."
           },
           "incident_ids": {
             "anyOf": [
@@ -3566,7 +3566,7 @@
     },
     "opulent_playbook_manage": {
       "name": "opulent_playbook_manage",
-      "description": "opulent playbook manage",
+      "description": "Manage Opulent playbooks with a single action-based tool in the runtime store; it does not synchronize hosted playbooks.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -3687,7 +3687,7 @@
     },
     "opulent_review_manage": {
       "name": "opulent_review_manage",
-      "description": "opulent review manage",
+      "description": "Trigger an Opulent review for an allowlisted repository\u2019s pull request, get its status, or fetch its findings when the configured review worker supports those actions. Reviews may run asynchronously: fetch status before requesting findings. This runtime does not establish a hosted private-mode organization or grant repository access; verify credentials and the returned review result before claiming completion.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -3738,11 +3738,11 @@
     },
     "opulent_schedule_manage": {
       "name": "opulent_schedule_manage",
-      "description": "opulent schedule manage",
+      "description": "Manage existing scheduled Opulent sessions in this runtime. Legacy `create` is unavailable: use `opulent_automation_manage` with a `schedule:recurring` trigger. Existing schedule actions still use their recorded local configuration. Do not claim a hosted migration state or a provider\u2019s 403 response.",
       "inputSchema": {
         "properties": {
           "action": {
-            "description": "The operation to perform: 'list', 'get', 'create', 'update', or 'delete'.",
+            "description": "Manage existing local schedules with list, get, update or delete. Legacy create remains in the enum for compatibility but the handler rejects it; create a recurring automation instead.",
             "enum": [
               "list",
               "get",
@@ -3895,7 +3895,7 @@
               }
             ],
             "default": null,
-            "description": "Skip MCP tool permission checks for created sessions."
+            "description": "Unsupported approval bypass. This field does not disable tool permission checks in this runtime."
           },
           "target_opulent_id": {
             "anyOf": [
@@ -3919,7 +3919,7 @@
               }
             ],
             "default": null,
-            "description": "VM platform for sessions spawned by this schedule (e.g. 'windows'). When omitted, sessions fall back to the org's default platform at trigger time. Must match a platform configured for the organization (case-insensitive); unknown values are rejected with a 400 that lists the available platform labels."
+            "description": "Platform value retained in the schema but not used by the local schedule handler to select a VM or validate an organization platform."
           },
           "limit": {
             "anyOf": [
@@ -3955,7 +3955,7 @@
     },
     "opulent_session_create": {
       "name": "opulent_session_create",
-      "description": "opulent session create",
+      "description": "Create one or more child Opulent sessions in this runtime. Only use this when prompted to; do not parallelize by default. Children must use repositories in the configured allowlist. Returned IDs identify locally owned child sessions; pass them unchanged to `opulent_session_interact`. This is not the hosted v3 REST API and does not expose organization-wide sessions.",
       "inputSchema": {
         "$defs": {
           "SessionSpec": {
@@ -4041,7 +4041,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Per-session override of the batch-level platform arg (platform label or outpost pool name)."
+                "description": "Per-session platform value retained in the schema; local startSession ignores VM/outpost placement overrides."
               },
               "attachment_urls": {
                 "anyOf": [
@@ -4121,7 +4121,7 @@
                   }
                 ],
                 "default": null,
-                "description": "Whether the session must produce structured output before stopping (server default: true)."
+                "description": "Flag retained in the schema but not enforced by local startSession. A supplied structured_output_schema is validated against the child final response."
               },
               "triage_issue_id": {
                 "anyOf": [
@@ -4197,7 +4197,7 @@
               }
             ],
             "default": null,
-            "description": "JSON Schema (Draft 7) applied to ALL sessions that don't specify their own. Only pass this when you need a task-specific result from the child; without it no structured output is requested. The child reports output conforming to the schema via provide_structured_output; poll it via opulent_session_interact(action='get') \u2014 the structured_output field is populated without interrupting the child."
+            "description": "JSON Schema applied to created children without a per-session override. A child is asked to return JSON matching the schema, and final output is validated locally; no provide_structured_output tool or hosted polling contract is involved."
           },
           "repos": {
             "anyOf": [
@@ -4224,7 +4224,7 @@
               }
             ],
             "default": null,
-            "description": "Prefer leaving this unset. When omitted (or set to 'inherit'), the child inherits the parent session's placement \u2014 its VM platform AND its outpost (BYOB) pool \u2014 so a Windows session spawns Windows children, and a session running on an outpost pool spawns children on the same pool, by default. Only set this when the user explicitly asks for a different machine type or a specific outpost pool: pass a platform label (e.g. 'linux', 'windows') or the name of an outpost pool. Each session spec can also include a 'platform' key to override this value for that session. Any value must match either a platform label or an outpost pool name registered for the org (built-in platforms take priority when a name matches both)."
+            "description": "Batch platform value retained in the schema; local startSession ignores VM/outpost placement overrides."
           },
           "tags": {
             "anyOf": [
@@ -4254,7 +4254,7 @@
               }
             ],
             "default": null,
-            "description": "Opulent Boards ticket ids (from opulent_ticket_manage) that ALL created sessions are dispatched to work on. Each session spec can also include a 'board_ticket_ids' key to override this value for that session. The server validates the ids against the org, persists them on the child and tags it 'board'; the CHILD claims the tickets itself on its first turn, so do not claim them before dispatching."
+            "description": "Ticket IDs retained in the schema but not validated, claimed or dispatched by local startSession."
           },
           "opulent_mode": {
             "anyOf": [
@@ -4266,7 +4266,7 @@
               }
             ],
             "default": null,
-            "description": "Opulent agent mode for ALL created sessions. One of 'normal' (default Agent mode), 'fast' (Fast mode, Opus-backed), 'lite' (Opulent Lite \u2014 cheaper, smaller-scope sessions), 'ultra' (Opulent Ultra \u2014 smartest, most capable model), or 'fusion' (Fusion \u2014 multi-model routing). Batch-level only \u2014 a 'opulent_mode' key inside a session spec is rejected with guidance to move it to this batch-level field. When omitted, the org/user default is used. 'fast', 'lite', 'ultra', and 'fusion' are gated by the same feature flags / enterprise agent-preview restrictions as the web app \u2014 the server rejects the call with a 400 if the mode is not available for the org."
+            "description": "Agent mode value retained in the schema but not used by local startSession to select a hosted mode or enterprise feature flag."
           }
         },
         "required": [
@@ -4278,7 +4278,7 @@
     },
     "opulent_session_events": {
       "name": "opulent_session_events",
-      "description": "opulent session events",
+      "description": "Inspect events within a child Opulent session owned by this runtime. Actions: `list` returns paginated summaries; `details` returns full selected events or an offset range; `search` filters locally recorded event contents. This is not an organization-wide hosted event search.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -4462,7 +4462,7 @@
     },
     "opulent_session_interact": {
       "name": "opulent_session_interact",
-      "description": "opulent session interact",
+      "description": "Interact with a child Opulent session owned by this runtime. `get` returns the local session record and child IDs; `message` sends to an active or sleeping child; `sleep`/`terminate` cancel the child; `archive`/`unarchive` update local archive state. `get_messages` returns locally recorded messages with pagination, `get_attachments` returns recorded pointers, and `set_tags` replaces tags. A completed child cannot be resumed by `message`. Do not claim hosted webapp URLs, ACU usage, PR metadata, or automatic notifications unless the returned record actually provides them.",
       "inputSchema": {
         "properties": {
           "action": {
@@ -4578,7 +4578,7 @@
     },
     "opulent_session_search": {
       "name": "opulent_session_search",
-      "description": "opulent session search",
+      "description": "Search and filter child Opulent sessions owned by this runtime. All supplied filters combine with AND. Returned `session_id` values are local IDs; use them unchanged with `opulent_session_interact`. This is not an organization-wide hosted search.",
       "inputSchema": {
         "properties": {
           "session_ids": {
@@ -4756,7 +4756,7 @@
     },
     "download_attachment": {
       "name": "download_attachment",
-      "description": "Download a Opulent attachment URL to the box and get its local file path. Attachment URLs require webapp authentication, so fetching them with shell commands or browser tools will fail; this tool downloads them through Opulent's storage layer instead.",
+      "description": "Download a `storage://` attachment pointer in the configured artifact repository, or a public HTTP(S) URL, to the sandbox workspace and return its path. Use this when you need an attachment\u2019s bytes locally. Passing multiple `urls` downloads them in one call. This does not authenticate to arbitrary hosted session attachment URLs; a provider-specific credential is required for those.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4777,7 +4777,7 @@
     },
     "edit": {
       "name": "edit",
-      "description": "Performs exact string replacements in files. You must use your read tool at least once in the conversation before editing. When editing text from read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. Always prefer editing existing files to creating new ones. Only use emojis if the user explicitly requests them. Avoid adding emojis to ",
+      "description": "Performs exact string replacements in files.\n\nUsage:\n- Read the file before editing so old_string matches the current text.\n- Preserve exact indentation from the file content when matching old_string; do not include display line numbers.\n- ALWAYS prefer editing existing files to creating new ones.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will fail if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`.\n- Use `replace_all` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4808,7 +4808,7 @@
     },
     "exec": {
       "name": "exec",
-      "description": "Executes a given shell command in a persistent shell session and waits for output with optional timeout, ensuring proper handling and security measures. Commands run under bash. This tool is for terminal operations like git, npm, docker, etc. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.",
+      "description": "Execute a shell command in the sandbox and return its output, or a shell_id for a still-running process. Commands use the sandbox command environment; one-shot calls do not preserve a working directory. Set `workdir` to an existing absolute directory when needed, and use a returned `shell_id` to continue an interactive process.\n\nUse specialized file tools for reading, writing, editing, and searching files when possible. Check the intended parent directory before a command that creates files; quote paths containing spaces and never embed secrets in commands. Chain dependent commands with `&&` so later steps run only if earlier ones succeed. Do not assume a Windows shell, automatic sudo authorization, or a persistent shell on calls without shell_id.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4870,7 +4870,7 @@
     },
     "find_file_by_name": {
       "name": "find_file_by_name",
-      "description": "Fast file name/path pattern matching tool that works with any codebase size using glob patterns. Supports brace expansion (e.g., `**/*.{ts,tsx,js,jsx}`). Matches against file paths, not file contents. Do NOT use this tool for searching for things like function names, variable names, etc. which should be searched against file contents (e.g. using grep).",
+      "description": "Fast file name/path pattern matching in the workspace. Matches names or relative paths, not file contents. Do NOT use this tool for searching function names or variables; use `grep` for contents. Patterns follow the runtime\u2019s fnmatch implementation, not ripgrep glob brace expansion.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4891,7 +4891,7 @@
     },
     "generate_image": {
       "name": "generate_image",
-      "description": "Generate an image from a text prompt. The image is saved to a file on the machine and also returned in the result so you can see it. Useful for logos, illustrations, placeholder assets, mockups, and other visual content. Pass input_image_paths to edit or combine existing images on the machine instead of generating from scratch.",
+      "description": "Generate an image from a text prompt. The image is returned as base64; an optional `output_path` saves it inside the sandbox workspace. Useful for logos, illustrations, placeholder assets, mockups, and other visual content. Pass input_image_paths to edit or combine existing images on the machine (e.g. restyle a screenshot or apply a logo to a mockup) instead of generating from scratch. Use `upload_attachment` to create an artifact pointer if storage is configured, or pass the saved workspace path to `message_user` attachments. The image provider requires configured credentials; do not claim an image was produced before the call succeeds.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4944,7 +4944,7 @@
     },
     "get_output": {
       "name": "get_output",
-      "description": "Reads the output from a background shell process. The shell_id argument is required (use the ID returned by the exec tool). You can specify an optional timeout in milliseconds (up to 300000ms / 5 minutes). Timeouts below 10000ms (10s) are raised to 10s; the default is 10s. This returns immediately when the process exits. The process continues running after reading output. This will return the outp",
+      "description": "Reads output from a background shell process using the `shell_id` returned by `exec`. A timeout is a maximum wait and returns when the process exits; the process continues running after output is read. Use a longer timeout to await a finite command and a shorter one to inspect startup output from a server. Output may be incremental; inspect the returned running and exit status rather than treating an empty chunk as completion.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4969,7 +4969,7 @@
     },
     "get_workflow_output": {
       "name": "get_workflow_output",
-      "description": "Wait for or check on a workflow run that is executing in the background.",
+      "description": "Wait for or check on a workflow run that is executing in the background (a `run_workflow` call that was interrupted keeps its run alive). Returns the run's final output once it finishes, or a progress snapshot if it is still running when the wait elapses: its agents' statuses plus the script's recent output, including its log() lines emitted so far.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5438,7 +5438,7 @@
     },
     "grep": {
       "name": "grep",
-      "description": "A powerful search tool built on ripgrep. Always prefer this tool over invoking grep or rg as a shell command. The pattern is treated as a regular expression. Filter files with the glob_pattern parameter in glob format. Use output_mode to control results: 'content' for matching lines, 'files_with_matches' for file paths only, 'count' for match counts. Set case_insensitive for case-insensitive match",
+      "description": "Search workspace file contents with a regular expression. Filter files with `glob_pattern`; choose `content`, `files_with_matches`, or `count` through `output_mode`, and use `case_insensitive` and `context_lines` as needed. This runtime uses Python regular expressions, not ripgrep/Rust regex, and walks only workspace paths. If results are truncated, narrow your search with a more specific pattern or filters.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5502,7 +5502,7 @@
     },
     "kill_shell": {
       "name": "kill_shell",
-      "description": "Kills a running background shell by its ID. Takes a shell_id parameter identifying the shell to kill. Returns a success or failure status. Use this tool when you need to terminate a long-running shell.",
+      "description": "Kills a running background shell by its ID.\n\n- Takes a shell_id parameter identifying the shell to kill\n- Returns the shell_id, whether it was killed, and its exit code\n- Use this tool when you need to terminate a long-running shell",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5519,7 +5519,7 @@
     },
     "kill_workflow": {
       "name": "kill_workflow",
-      "description": "Kill a workflow run that is executing.",
+      "description": "Kill a running workflow by run_id. The script is cancelled; completed child results remain recorded and unfinished children are cancelled. The recorded run can be inspected afterward, but do not assume it can be resumed unless `run_workflow` succeeds with its run_id.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5536,7 +5536,7 @@
     },
     "linear": {
       "name": "linear",
-      "description": "Tool for interacting with Linear via MCP. Available commands: 'list_tools' (lists all available Linear tools), 'call_tool' (executes a specific Linear tool with the provided JSON arguments).",
+      "description": "Tool for interacting with Linear via MCP. Available commands: 'list_tools' (lists all available Linear tools like list_issues, get_issue, save_issue, etc.), 'call_tool' (executes a specific Linear tool with the provided JSON arguments). Use list_tools first to see what operations are available. Requires a configured, approved and reachable Linear MCP server; listing a handler alone does not prove connectivity.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5565,7 +5565,7 @@
     },
     "list_integrations": {
       "name": "list_integrations",
-      "description": "list integrations",
+      "description": "List native integrations and MCP servers recorded for this runtime, with their stored status. Returns `integrations` and `mcp_servers`; pass `query` to narrow the names. Stored or marketplace entries are not evidence of a working provider connection. Check the specific provider and authorization before making a live claim; do not fabricate hosted settings URLs.",
       "inputSchema": {
         "properties": {
           "filter": {
@@ -5647,7 +5647,7 @@
     },
     "mcp_call_tool": {
       "name": "mcp_call_tool",
-      "description": "mcp call tool",
+      "description": "Execute a tool on an MCP (Model Context Protocol) server with the provided JSON arguments. Requires a configured, approved server and allowlisted transport; verify the provider is connected and authorized rather than inferring that from the handler.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5671,7 +5671,7 @@
     },
     "mcp_list_servers": {
       "name": "mcp_list_servers",
-      "description": "mcp list servers",
+      "description": "List MCP server records configured in this runtime. Use this to check names and stored enable/approval state. A record alone does not establish a live connection; use `mcp_list_tools` to verify the provider is reachable and authorized.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -5682,7 +5682,7 @@
     },
     "mcp_list_tools": {
       "name": "mcp_list_tools",
-      "description": "mcp list tools",
+      "description": "List the tools and resources available on a specific MCP (Model Context Protocol) server. This connects through the approved and allowlisted server transport; a failure must remain visible, not be treated as an empty list.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5699,7 +5699,7 @@
     },
     "mcp_read_resource": {
       "name": "mcp_read_resource",
-      "description": "mcp read resource",
+      "description": "Read a resource from an MCP (Model Context Protocol) server by URI. MCP servers can expose resources (data addressable by URI) in addition to tools; use this to dereference resource URIs returned by MCP tool calls or listed by mcp_list_tools. Requires a configured, approved, reachable server; do not treat a resource URI as authorization.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5842,7 +5842,7 @@
     },
     "message_workflow_agent": {
       "name": "message_workflow_agent",
-      "description": "Send an interrupting message to a running dynamic-workflow agent.",
+      "description": "Send an message to a running dynamic-workflow agent (a local child session) without stopping the run. Use it to check on or steer an agent the soft-time-limit notification flagged.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5869,7 +5869,7 @@
     },
     "noop": {
       "name": "noop",
-      "description": "noop",
+      "description": "Do nothing and return immediately. Call this only when no action is needed but you must emit a tool call. Never call it in place of an action, and never re-issue a tool call that already succeeded.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -5941,7 +5941,7 @@
     },
     "read": {
       "name": "read",
-      "description": "Reads a file from the local filesystem. The file_path parameter must be an absolute path, not a relative path. By default, it reads up to 20000 characters starting from the beginning of the file. You can optionally specify a line offset and limit (especially handy for long files), but it's recommended to read the whole file by not providing these parameters. Any lines longer than 2000 characters w",
+      "description": "Read a UTF-8 file from the configured sandbox workspace. The file_path must resolve inside that workspace; absolute and workspace-relative paths are accepted. By default, reads up to 2000 lines; use positive line `offset` and `limit` for long files. Read before making exact-string edits, and do not assume missing content means a file is empty when a limit was applied.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5966,7 +5966,7 @@
     },
     "read_build_logs": {
       "name": "read_build_logs",
-      "description": "List snapshot build jobs or fetch a summarized log for a specific build job. Two modes: 1. List mode (no build_job_id): Returns a table of recent snapshot build jobs. 2. Fetch mode (build_job_id provided): Downloads the build log and returns a summary.",
+      "description": "List deployment/build records or fetch logs for a specific `build_job_id`. With no ID, optional `status` filters stored deployment records unless a build provider is configured. With an ID, this reads that deployment\u2019s sandbox logs or uses the configured build provider. It does not automatically download or persist organization-wide snapshot JSONL logs.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5984,7 +5984,7 @@
     },
     "read_subagent": {
       "name": "read_subagent",
-      "description": "Read the response from a background subagent.",
+      "description": "Read a child agent\u2019s locally recorded response using its `agent_id`. Set `block=true` to wait up to the handler\u2019s limit for terminal status, or continue other work and check later. This call does not interrupt the child. Do not assume an external completion notification is configured.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6053,7 +6053,7 @@
     },
     "rename_title": {
       "name": "rename_title",
-      "description": "rename title",
+      "description": "Rename the current session's title, replacing the auto-generated one. Use it when the session's actual work turns out to be different from what the title says, or when the user asks for a rename. Never rename just to add a PR/issue number or to reflect progress \u2014 the title names the task, not its status. If the user set the title themselves, do not replace it unless they explicitly ask. Avoid repeated renames unless the user asks. Keep it to a succinct 2-5 words, optionally with a single leading emoji so the session is easy to spot in a list.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6212,7 +6212,7 @@
     },
     "save_browser_profile": {
       "name": "save_browser_profile",
-      "description": "Save the current browser profile (cookies, passwords, local storage, etc.) so it persists across future sessions. This zips the browser data directory and suggests an update to the organization-wide blueprint that restores the browser state at the start of every future session.",
+      "description": "Capture the current sandbox browser profile only when the user asks to save or persist browser state. The handler requires a connected computer backend and records snapshot metadata in this runtime; it does not update an organization blueprint or guarantee restoration in future sessions. Browser state can contain credentials: do not expose or log profile contents, and verify a restoration mechanism separately before promising persistence.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6255,7 +6255,7 @@
     },
     "set_workflow_agent_soft_time_limit": {
       "name": "set_workflow_agent_soft_time_limit",
-      "description": "Set the advisory soft time limit for one dynamic-workflow agent or a whole phase mid-run.",
+      "description": "Set the advisory soft time limit (minutes) for one dynamic-workflow agent or a whole phase mid-run, e.g. after a soft-limit notification showed the estimate was wrong. The stored limit is advisory and does not itself stop an agent; do not claim notifications unless a worker provides them.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6289,7 +6289,7 @@
     },
     "sidekick": {
       "name": "sidekick",
-      "description": "sidekick",
+      "description": "Hand off work to a local child agent while you act as the lead. This runtime reuses the same child session for later handoffs and can block for its response or return its agent_id. It does not guarantee a separate VM, a particular tool allowlist, completion notifications, or that a background process survives sandbox expiry. Correctness-critical queries, prompts, rubrics, graders, and evaluation thresholds should be authored by the lead before handoff; verify delegated results before reporting them.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6445,7 +6445,7 @@
     },
     "suggest_skill_pr": {
       "name": "suggest_skill_pr",
-      "description": "suggest skill pr",
+      "description": "Suggest creating or updating a SKILL.md file only for confirmed, reusable knowledge. Do not include secrets in plain text: reference a secret manager, and do not suggest unverified credentials or permission assumptions. Each SKILL.md should begin with YAML frontmatter containing name and description. Prefer improving an existing skill when appropriate. This creates a pending local suggestion, not an automatic pull request or hosted timeline card; a separately authorized approval flow is required for a PR.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6478,7 +6478,7 @@
     },
     "task_create": {
       "name": "task_create",
-      "description": "task create",
+      "description": "Create tasks on the session's structured task list. The list tracks your progress and gives the user visibility into what you are working on.\n\n## When to use\nUse tasks for multi-step work, non-trivial work that requires planning, when the user provides multiple tasks or explicitly asks for a task list, and to capture new requirements from the user as tasks immediately. Skip it for trivial, single-step, or purely conversational/informational requests \u2014 just do the work directly. Don't make single-task plans. Plan after reading the code, not before; tasks should name the concrete change, not generic phases (inspect, implement, test, commit).\n\n## Task management\n- Tasks start pending. Break complex work into specific, actionable tasks; create them together when planning.\n- Use `task_update` to mark a task in_progress when starting it and completed IMMEDIATELY after finishing it. Keep exactly ONE task in_progress at a time.\n- Add follow-up tasks discovered during work; use `task_update` with status \"deleted\" only for tasks genuinely no longer relevant or created in error.\n- Use `task_list` to check the current list before adding tasks so you don't create duplicates.\n\n## Example\nFor \"Add a dark mode toggle to settings, then run tests and build\", create tasks:\n1. subject: \"Add dark mode toggle component to settings page\", active_form: \"Adding dark mode toggle component\"\n2. subject: \"Wire up dark mode state management\"\n3. subject: \"Update existing components to support theme switching\"\n4. subject: \"Run tests and build, fixing any failures\"",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6517,7 +6517,7 @@
     },
     "task_get": {
       "name": "task_get",
-      "description": "task get",
+      "description": "Get the full details of a single task by ID, including its description and dependencies (blocks / blocked_by).",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6534,7 +6534,7 @@
     },
     "task_list": {
       "name": "task_list",
-      "description": "task list",
+      "description": "List all tasks on the session's task list with their IDs, statuses, and unresolved blockers. Use it to review progress, find the next task to work on, and avoid creating duplicate tasks.",
       "inputSchema": {
         "type": "object",
         "properties": {}
@@ -6543,7 +6543,7 @@
     },
     "task_update": {
       "name": "task_update",
-      "description": "task update",
+      "description": "Update tasks on the session's task list by ID: change status, edit fields, record dependencies, or delete.\n\n## Status flow\n- Mark a task in_progress when beginning work on it. Keep exactly ONE task in_progress at a time.\n- Mark a task completed IMMEDIATELY after fully finishing it.\n- ONLY mark a task completed when it is fully done \u2014 not when tests are failing, the implementation is partial, or errors are unresolved. If you hit a blocker, keep the task in_progress and create a new task describing what must be resolved.\n- Never silently drop user-requested tasks: if one seems infeasible, keep it in_progress or blocked and message the user (non-blocking) with what you tried and what's blocking you \u2014 the user may have context you lack. Use status \"deleted\" only for tasks that are genuinely no longer relevant or were created in error.\n- Use add_blocks / add_blocked_by to record ordering dependencies between tasks.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6613,7 +6613,7 @@
     },
     "testing_agent": {
       "name": "testing_agent",
-      "description": "Hand off UI-driven testing to your testing agent.",
+      "description": "Hand off UI-driven testing to a local child agent; do not use it for shell-verifiable tests, lint, type checks or builds. The first handoff requires `user_testing_request` approval evidence. Subsequent handoffs message the existing child and return its agent_id/status; call `read_subagent` to wait for or inspect its result. Do not claim a recording or verdict until the returned evidence exists. Child capabilities and credentials depend on runtime configuration; never assume access to a provider or secret.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6698,7 +6698,7 @@
     },
     "upload_attachment": {
       "name": "upload_attachment",
-      "description": "Upload a file from the box to cloud storage and get a URL. Use this tool when you need to get a file's URL before referencing it elsewhere, such as embedding images in generated HTML or documents. Do not use this tool just to share files with the user \u2014 pass file paths to message_user's attachments parameter instead.",
+      "description": "Upload a workspace file to configured artifact storage and get a `storage://` pointer, not a public URL. Use it when an artifact pointer is needed elsewhere; pass workspace paths to `message_user` attachments to share files with the user. Multiple `file_paths` are supported. Requires the configured storage repository and branch; do not claim a public download URL.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6719,7 +6719,7 @@
     },
     "view_image": {
       "name": "view_image",
-      "description": "view image",
+      "description": "View a local image file from the filesystem. Use this only when you are given or already know the full file path and the image is not already in context. The path must resolve within the configured workspace. This returns encoded image data from a local file; remote URLs need a separate authenticated provider.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6740,7 +6740,7 @@
     },
     "wait": {
       "name": "wait",
-      "description": "Wait before continuing. Use this for non-event-driven delays like loading browser windows, or other cases where there is no specific signal to wait on. Pass seconds for a bounded wait (max 600). The wait ends early if an external event (e.g. a user message) arrives. Prefer this tool over running sleep in the shell \u2014 unlike sleep, this wait is cancelled the moment new input arrives.",
+      "description": "Wait for a non-event-driven delay using positive `seconds` and a concise `message`. Use this only when there is no better completion signal; do not add delays between your own tool calls or wait for user replies. Prefer `get_output` for background shell processes and a provider-specific status check for CI or external jobs. The handler caps the actual delay at 600 seconds and can be aborted by the current run; it does not itself subscribe to external notifications.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6762,7 +6762,7 @@
     },
     "web_get_contents": {
       "name": "web_get_contents",
-      "description": "Fetch the full contents of one or more web pages by URL. Use this when you need to read the full text of a specific web page or extract content from multiple URLs at once (max 10).",
+      "description": "Fetch the text contents of one or more web pages by URL. Use this when you need to read the full text of a specific web page or extract content from multiple URLs at once (max 10). Use it after `web_search` to read promising public results. Only public HTTP(S) text/HTML/JSON on standard ports is accepted; private IPs, oversized content, and credential-bearing URLs are rejected.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6782,7 +6782,7 @@
     },
     "web_search": {
       "name": "web_search",
-      "description": "Search the web for information using a search query. Returns relevant web page titles, URLs, and summaries. Use this when you need to find information online. You must not include extraneous information in web searches.",
+      "description": "Search the web for information using a search query. Returns relevant web page titles, URLs, and summaries. Use this when you need to find information online.\n\nYou must not include extraneous information in web searches. For example, to find latest python version, do *NOT* search \"latest Python version 2026 3.11 3.12 3.13\". The \"2026 3.11 3.12 3.13\" is unnecessary. Keep the search string simple and focused, e.g. \"latest Python version\".",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6807,7 +6807,7 @@
     },
     "write": {
       "name": "write",
-      "description": "Write content to a file, creating it if needed and overwriting it if it exists. Use this tool to create new files or for complete rewrites. If overwriting an existing file, you SHOULD use the read tool first to read the file's contents. NEVER proactively create documentation files (*.md) or README files unless explicitly requested. Only use emojis if the user explicitly requests them. Avoid writin",
+      "description": "Write content to a file inside the configured sandbox workspace, creating it if needed and overwriting it if it exists.\n\nUsage:\n- Prefer the edit tool for modifying existing files. Only use this tool to create new files or for complete rewrites.\n- If overwriting an existing file, you SHOULD use the read tool first to read the file's contents.\n- NEVER proactively create documentation files (*.md) or README files unless explicitly requested.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -6829,7 +6829,7 @@
     },
     "write_to_process": {
       "name": "write_to_process",
-      "description": "Writes input to an interactive process running in a shell with support for both text and special characters. This command will NOT work if there is no command running in the shell. If you want to execute a command in the shell use the exec tool. Provide exactly ONE of text_input or bytes_input (never both).",
+      "description": "Write to a still-running interactive process identified by `shell_id`; if no process is running, use `exec` instead. Provide exactly one of `text_input` or `bytes_input`. `text_input` is literal text. `bytes_input` recognizes `<ENTER>`, `<RETURN>`, `<TAB>`, `<ESC>`, `<CTRL_C>`, `<CTRL_D>`, and `<BACKSPACE>`; other angle-bracket tokens are sent literally. Check the process result and avoid sending secrets in tool arguments.",
       "inputSchema": {
         "type": "object",
         "properties": {
