@@ -157,6 +157,49 @@ test('nested native evidence rejects wrong document, unrelated text and altered 
   assert.throws(() => evidenceV4(options).replay(broad), /call hash/)
 })
 
+test('raw broad arguments bind to captured gateway responses without canonicalizing hashes', t => {
+  const { root, options, row } = fixture(t)
+  const args = { command: 'true' }
+  const raw = '{"command": "true"}'
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const captureRoot = join(root, 'captures')
+  mkdirSync(captureRoot)
+  const capturePath = join(captureRoot, 'call-0001.json')
+  const request = { model: MODAL_DEEPSEEK_MODEL, providerOptions: { gateway: { only: ['modal'] } }, max_completion_tokens: 4000 }
+  const capture = { request, request_sha256: hash(JSON.stringify(request)), status: 200,
+    response: { choices: [{ message: { role: 'assistant', tool_calls: [
+      { id: 'call-1', function: { name: 'exec', arguments: raw } },
+    ] } }] } }
+  writeFileSync(capturePath, JSON.stringify(capture))
+  const call = { tool: 'exec', args, output: '', result: { error: false, sha256: hash('') } }
+  writeFileSync(artifact, JSON.stringify({ provenance: { version: 1 }, calls: [call] }))
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: 'exec', argsHash: hash(raw), result: call.result }] } }
+  const withCaptures = { ...options, argumentCaptures: captureRoot, captureModel: MODAL_DEEPSEEK_MODEL, captureProviderOnly: ['modal'] }
+  assert.throws(() => evidenceV4(options).replay(broad), /argument hash/)
+  const evidence = evidenceV4(withCaptures)
+  assert.deepEqual(evidence.replay(broad).proof.argument_hash_unverifiable, [])
+  assert.equal(evidence.artifactHashes['argument-captures/call-0001.json'], hash(readFileSync(capturePath)))
+  call.rawArguments = raw
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.deepEqual(evidenceV4(options).replay(broad).proof.argument_hash_unverifiable, [])
+  call.rawArguments = '{"command":"true"}'
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.throws(() => evidenceV4(withCaptures).replay(broad), /raw argument hash/)
+  call.rawArguments = '{"command": "false"}'
+  broad.audit.calls[0].argsHash = hash(call.rawArguments)
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.throws(() => evidenceV4(withCaptures).replay(broad), /raw argument identity/)
+  delete call.rawArguments
+  broad.audit.calls[0].argsHash = hash(raw)
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  capture.response.choices[0].message.tool_calls[0].function.arguments = '{"command":"true"}'
+  writeFileSync(capturePath, JSON.stringify(capture))
+  assert.throws(() => evidenceV4(withCaptures).replay(broad), /missing captured arguments/)
+  rmSync(capturePath)
+  assert.throws(() => evidenceV4(withCaptures), /capture inventory/)
+})
+
 test('v4 checkpoint pins policy, rubric and evidence without persisting excerpt text', async t => {
   const { root, options, data } = fixture(t)
   const input = join(root, 'input.json'), output = join(root, 'output.json')

@@ -130,6 +130,9 @@ test('observed corpus and sandbox evidence only; raw outputs stay in private art
     assert.ok(artifact.includes(corpus.sources[0].text))
     assert.ok(artifact.includes(corpus.sources[1].text))
     assert.ok(!artifact.includes('private system instructions'))
+    const saved = JSON.parse(artifact)
+    assert.equal(saved.calls[0].rawArguments, '{"query":"contrat"}')
+    assert.equal(result.audit.calls[0].rawArguments, undefined)
     assert.equal(result.audit.calls.length, 4)
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })

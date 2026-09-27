@@ -34,7 +34,7 @@ export function replayHarness(data, workspace) {
   } }
 }
 
-export function preflightEvidenceV4({ data, workspace, artifacts, rubrics, limit }) {
+export function preflightEvidenceV4({ data, workspace, artifacts, argumentCaptures, rubrics, limit }) {
   const goldRaw = readFileSync(new URL('./gold.json', import.meta.url), 'utf8')
   const gold = JSON.parse(goldRaw)
   const original = Array.from({ length: gold.length }, (_, i) => gold.slice(0, i + 1))
@@ -73,13 +73,15 @@ export function preflightEvidenceV4({ data, workspace, artifacts, rubrics, limit
   if (!modes.length || modes.some(mode => !['harvey', 'broad'].includes(mode)) ||
       data.rows.length !== original.length * modes.length ||
       selected.some(g => modes.some(mode => data.rows.filter(row => row.id === g.id && row.q === g.q && row.mode === mode && !row.error).length !== 1))) throw new Error('Invalid evidence-v4 input row identities')
-  const evidence = evidenceV4({ workspace, artifacts })
+  const evidence = evidenceV4({ workspace, artifacts, argumentCaptures,
+    captureModel: data.provenance.config.model, captureProviderOnly: data.provenance.config.provider_only })
   const jobs = selected.flatMap(g => modes.map(mode => ({ g, mode, original: data.rows.find(row => row.id === g.id && row.mode === mode) })))
   const verified = jobs.map(job => ({ ...job, result: evidence.replay(job.original) }))
   return { selected, modes, jobs, verified, evidence }
 }
 
 export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, artifacts, rubrics,
+  argumentCaptures,
   judgeModel, providerOnly = null, judgeEffort = 'high', judgeMaxTokens = 4000, timeoutMs = 60000, retries = 1,
   limit, concurrency = 1, resume = false, chat }) {
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16 ||
@@ -96,9 +98,10 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
         !actualParent || actualParent !== '..' && !actualParent.startsWith(`..${sep}`)) throw new Error('Invalid evidence-v4 output location: outside repository required')
   }
   if (resolve(output) === resolve(rawInput.path)) throw new Error('Invalid evidence-v4 output: source checkpoint must remain unchanged')
-  const { selected, modes, jobs, verified, evidence } = preflightEvidenceV4({ data, workspace, artifacts, rubrics, limit })
+  const { selected, modes, jobs, verified, evidence } = preflightEvidenceV4({ data, workspace, artifacts, argumentCaptures, rubrics, limit })
   const config = { experiment_kind: 'evidence-v4-judge-only-replay', protocol: 'evidence-v4',
     original_provenance: data.provenance, replay_input_sha256: sha256(rawInput.text),
+    ...(argumentCaptures ? { argument_capture_policy: 'gateway-response-raw-tool-arguments-v1' } : {}),
     artifacts_sha256: evidence.artifactHashes,
     evidence_binding: Object.fromEntries(verified.map(job => [`${job.g.id}/${job.mode}`, job.result.proof])),
     evidence_writer_sha256: sha256(readFileSync(new URL('./grading-evidence.mjs', import.meta.url))),
@@ -170,7 +173,7 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
 }
 
 async function v4Main(input, output, args) {
-  const names = { '--artifacts': 'artifacts', '--judge-model': 'judgeModel', '--rubrics': 'rubricsFile',
+  const names = { '--artifacts': 'artifacts', '--argument-captures': 'argumentCaptures', '--judge-model': 'judgeModel', '--rubrics': 'rubricsFile',
     '--limit': 'limit', '--concurrency': 'concurrency', '--judge-effort': 'judgeEffort', '--judge-max-tokens': 'judgeMaxTokens', '--timeout-ms': 'timeoutMs', '--retries': 'retries' }
   const opts = {}
   for (let i = 0; i < args.length; i++) {
@@ -187,7 +190,7 @@ async function v4Main(input, output, args) {
   const rubrics = rubricRaw ? { raw: rubricRaw, data: JSON.parse(rubricRaw) } : undefined
   if (opts.preflight) {
     const { verified, evidence } = preflightEvidenceV4({ data: JSON.parse(rawInput.text), workspace: process.cwd(), artifacts: opts.artifacts,
-      rubrics, limit: opts.limit })
+      argumentCaptures: opts.argumentCaptures, rubrics, limit: opts.limit })
     console.log(JSON.stringify({ protocol: 'evidence-v4', rows: verified.map(({ g, mode, result }) => ({ id: g.id, mode,
       binding: result.proof, source_records: result.sources.length,
       visible_characters: result.sources.reduce((total, source) => total + source.text.length, 0) })),

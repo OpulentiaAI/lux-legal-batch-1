@@ -12,7 +12,7 @@ function inside(path, root) {
   return path
 }
 
-export function evidenceV4({ workspace, artifacts }) {
+export function evidenceV4({ workspace, artifacts, argumentCaptures, captureModel, captureProviderOnly }) {
   const workspaceRoot = realpathSync(workspace)
   const manifest = loadChunks(workspace)
   const corpusRoot = realpathSync(resolve(workspace, 'corpus/chunks'))
@@ -24,6 +24,34 @@ export function evidenceV4({ workspace, artifacts }) {
   const harveyRoot = realpathSync(join(root, 'harvey'))
   const broadRoot = realpathSync(join(root, 'broad'))
   const artifactHashes = new Map()
+  const capturedArguments = new Map()
+  if (argumentCaptures) {
+    const captureRoot = realpathSync(argumentCaptures)
+    for (const repo of [workspaceRoot, realpathSync(new URL('..', import.meta.url))]) {
+      const path = relative(repo, captureRoot)
+      if (!path || path !== '..' && !path.startsWith(`..${sep}`)) throw new Error('Invalid evidence capture location: outside repository required')
+    }
+    if (typeof captureModel !== 'string' || !Array.isArray(captureProviderOnly)) throw new Error('Invalid evidence capture model policy')
+    const names = readdirSync(captureRoot)
+    if (!names.length || names.some(name => !/^call-\d+\.json$/.test(name))) throw new Error('Invalid evidence capture inventory')
+    for (const name of names) {
+      const path = inside(realpathSync(join(captureRoot, name)), captureRoot)
+      const bytes = readFileSync(path)
+      artifactHashes.set(`argument-captures/${name}`, hash(bytes))
+      const capture = JSON.parse(bytes)
+      if (capture.status !== 200 || capture.request_sha256 !== hash(JSON.stringify(capture.request)) ||
+          capture.request?.model !== captureModel || JSON.stringify(capture.request?.providerOptions?.gateway?.only) !== JSON.stringify(captureProviderOnly) ||
+          ![4000, 16000].includes(capture.request.max_completion_tokens) || !Array.isArray(capture.response?.choices)) throw new Error('Invalid evidence argument capture')
+      for (const choice of capture.response.choices) for (const call of choice.message?.tool_calls ?? []) {
+        if (capture.request.max_completion_tokens !== 4000 || choice.message?.role !== 'assistant' ||
+            typeof call.function?.name !== 'string' || typeof call.function?.arguments !== 'string') throw new Error('Invalid evidence captured tool call')
+        let parsed
+        try { parsed = JSON.parse(call.function.arguments) } catch { throw new Error('Invalid evidence captured arguments') }
+        const key = `${call.function.name}\0${hash(call.function.arguments)}\0${JSON.stringify(parsed)}`
+        capturedArguments.set(key, call.function.arguments)
+      }
+    }
+  }
   const canonical = new Map()
   function sourceFor(id) {
     if (!canonical.has(id)) {
@@ -155,7 +183,18 @@ export function evidenceV4({ workspace, artifacts }) {
         if (call.tool !== audit.tool ||
             hash(call.output) !== audit.result.sha256 || call.result?.error !== audit.result.error ||
             JSON.stringify(call.result) !== JSON.stringify(audit.result)) throw new Error('Invalid evidence call hash or identity')
-        const argsVerified = hash(JSON.stringify(call.args)) === audit.argsHash
+        let argsVerified = hash(JSON.stringify(call.args)) === audit.argsHash
+        if (Object.hasOwn(call, 'rawArguments')) {
+          if (typeof call.rawArguments !== 'string' || hash(call.rawArguments) !== audit.argsHash) throw new Error('Invalid evidence raw argument hash')
+          let parsed
+          try { parsed = JSON.parse(call.rawArguments) } catch { throw new Error('Invalid evidence raw arguments') }
+          if (JSON.stringify(parsed) !== JSON.stringify(call.args)) throw new Error('Invalid evidence raw argument identity')
+          argsVerified = true
+        } else if (!argsVerified && argumentCaptures) {
+          const key = `${call.tool}\0${audit.argsHash}\0${JSON.stringify(call.args)}`
+          if (!capturedArguments.has(key)) throw new Error('Invalid evidence missing captured arguments')
+          argsVerified = true
+        }
         if (!argsVerified) {
           if (call.tool !== 'mcp_call_tool' || !['lx_search', 'lx_chunk'].includes(call.args?.name)) throw new Error('Invalid evidence call argument hash')
           argumentHashUnverifiable.push(index)

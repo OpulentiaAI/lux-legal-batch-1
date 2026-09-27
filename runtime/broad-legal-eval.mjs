@@ -151,7 +151,9 @@ function auditMessages(messages, evidence, corpusSources) {
       for (const call of message.tool_calls ?? []) {
         let args = null
         try { args = JSON.parse(call.function.arguments) } catch {}
-        const entry = { tool: call.function?.name ?? 'unknown', argsHash: sha256(redactAudit(call.function?.arguments ?? '')), args: redactAudit(args), result: { error: true, sha256: null } }
+        const rawArguments = redactAudit(call.function?.arguments ?? '')
+        const entry = { tool: call.function?.name ?? 'unknown', argsHash: sha256(rawArguments), args: redactAudit(args), rawArguments,
+          result: { error: true, sha256: null } }
         calls.push(entry)
         if (typeof call.id === 'string') byId.set(call.id, entry)
       }
@@ -372,10 +374,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         const trace = events.map(event => ({ stage: event.type, ...(event.data?.name ? { tool: event.data.name } : {}),
           ...(event.data?.ok !== undefined ? { ok: event.data.ok } : {}) }))
         if (completed) trace.push({ stage: 'session_terminal', status: completed.status })
-        const audit = { provenance, terminalStatus: completed?.status ?? null, calls: observed.calls.map(({ output, args, ...entry }) => entry),
+        const audit = { provenance, terminalStatus: completed?.status ?? null, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
         const artifact = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}.json`)
-        writeFileSync(artifact, JSON.stringify({ provenance, calls: observed.calls.map(({ tool, args, output, result }) => ({ tool, args, output, result })) }), { mode: 0o600 })
+        writeFileSync(artifact, JSON.stringify({ provenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
+          ({ tool, args, rawArguments, output, result })) }), { mode: 0o600 })
         audit.evidenceArtifact = artifact
         const sessions = runtime?.store?.list('sessions') ?? []
         const descendants = new Set(session ? [session.id] : [])
