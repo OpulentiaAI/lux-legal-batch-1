@@ -53,7 +53,7 @@ export function assertFullRuntimeReady(provenance) {
 
 export async function main(args = process.argv.slice(2)) {
   const options = parseComparisonOptions(args)
-  const { model, providerOnly } = COMPARISON_PROFILES[options.profile]
+  const { model, providerOnly, judgeMaxTokens } = COMPARISON_PROFILES[options.profile]
   if (!options.nativeModule) throw new Error('Full comparison blocked: --native-module, --broker-origin, --broker-port, --sandbox-template and --computer-image-sha256 are required')
   if (existsSync(options.output)) throw new Error('Comparison output already exists')
   for (const name of ['AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
@@ -83,7 +83,7 @@ export async function main(args = process.argv.slice(2)) {
       computerImageSha256: options.computerImageSha256, nativeModuleHash, model, providerOnly })
     const config = {
       protocol: 'harvey-vs-broad-corpus-v1', profile: options.profile, model, provider_only: providerOnly, judge_model: model, judge_provider_only: providerOnly,
-      judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: 4000, judge_timeout_ms: 120000, judge_retries: 1,
+      judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: judgeMaxTokens, judge_timeout_ms: 120000, judge_retries: 1,
       max_steps: 40, max_completion_tokens: 4000, max_words_instruction: 120,
       corpus_hash: corpus.hash, corpus_chunks: corpus.count,
       implementation_hash: implementationHash(workspace),

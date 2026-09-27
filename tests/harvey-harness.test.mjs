@@ -107,6 +107,7 @@ test('Harvey Modal profile crosses the JS/Python bridge without changing Luna de
   const options = { workspace: resolve('.'), harveyRoot: root, python: fakePython, corpus, artifactsDir }
   const modal = createHarveyHarness({ ...options, model: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'] })
   assert.equal(modal.provenance.adapter, 'eval.harvey-modal-adapter.ModalDeepSeekAdapter')
+  assert.equal(modal.provenance.max_completion_tokens, 4000)
   await modal.run({ mode: 'harvey', question: 'Modal comparison' })
   const config = JSON.parse(readFileSync(join(artifactsDir, readdirSync(artifactsDir)[0], 'model-config.json'), 'utf8'))
   assert.deepEqual(config, { model: MODAL_DEEPSEEK_MODEL, provider_only: ['modal'] })

@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseComparisonOptions, checkPreviousGate, assertFullRuntimeReady, COMPARISON_MODEL } from '../eval/compare-harnesses.mjs'
 import { COMPARISON_PROFILES, MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
+import { BROAD_COMPLETION_TOKENS } from '../runtime/broad-legal-eval.mjs'
 
 const required = ['--output', 'out.json', '--harvey-root', '/harvey', '--python', '/python', '--artifacts', '/artifacts']
 
@@ -11,6 +12,9 @@ test('comparison pins Luna and rejects model substitutions and limits above fift
   assert.equal(parseComparisonOptions([...required, '--profile', 'modal-deepseek-v4.1-flash']).profile, 'modal-deepseek-v4.1-flash')
   assert.equal(COMPARISON_PROFILES['modal-deepseek-v4.1-flash'].model, MODAL_DEEPSEEK_MODEL)
   assert.deepEqual(COMPARISON_PROFILES['modal-deepseek-v4.1-flash'].providerOnly, ['modal'])
+  assert.equal(COMPARISON_PROFILES['luna-baseline'].judgeMaxTokens, 4000)
+  assert.equal(COMPARISON_PROFILES['modal-deepseek-v4.1-flash'].judgeMaxTokens, 16000)
+  assert.equal(BROAD_COMPLETION_TOKENS, 4000)
   assert.throws(() => parseComparisonOptions([...required, '--profile', 'unknown']), /profile/)
   assert.throws(() => parseComparisonOptions([...required, '--model', 'another-model']), /Unknown/)
   assert.throws(() => parseComparisonOptions([...required, '--limit', '50']), /15/)
