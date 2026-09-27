@@ -1,9 +1,13 @@
-import { readFileSync, realpathSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { resolve, relative, isAbsolute, sep } from 'node:path'
+import { resolve, relative, isAbsolute, sep, dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { loadChunks, chunkText } from '../src/tp/manifest.ts'
-import { evaluate, gatewayChat, implementationHash, JUDGE_POLICIES, parseOptions, questionHash } from './compose.mjs'
+import { evaluate, gatewayChat, implementationHash, JUDGE_POLICIES, parseOptions, questionHash, summarize, safeError } from './compose.mjs'
+import { evidenceV4 } from './grading-evidence.mjs'
+import { JUDGE_V4_POLICY, judgeV4Request, validateJudgeV4 } from './judge-v4.mjs'
+
+const sha256 = value => createHash('sha256').update(value).digest('hex')
 
 export function replayHarness(data, workspace) {
   const manifest = loadChunks(workspace)
@@ -29,9 +33,174 @@ export function replayHarness(data, workspace) {
   } }
 }
 
+export function preflightEvidenceV4({ data, workspace, artifacts, rubrics, limit }) {
+  const goldRaw = readFileSync(new URL('./gold.json', import.meta.url), 'utf8')
+  const gold = JSON.parse(goldRaw)
+  const original = Array.from({ length: gold.length }, (_, i) => gold.slice(0, i + 1))
+    .find(prefix => questionHash(prefix) === data.provenance?.question_hash)
+  if (!original || !data.provenance?.config || !Array.isArray(data.rows)) throw new Error('Invalid evidence-v4 replay input')
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > original.length)) throw new Error('Invalid evidence-v4 replay limit')
+  if (rubrics && (typeof rubrics.raw !== 'string' || !rubrics.data || !/^[a-f0-9]{64}$/.test(rubrics.data.baselineSha256) ||
+      JSON.stringify(JSON.parse(rubrics.raw)) !== JSON.stringify(rubrics.data) ||
+      rubrics.data.baselineSha256 !== sha256(goldRaw) || typeof rubrics.data.version !== 'string' ||
+      !rubrics.data.version.trim() || !rubrics.data.entries || Array.isArray(rubrics.data.entries) ||
+      Object.keys(rubrics.data.entries).length !== gold.length ||
+      Object.keys(rubrics.data.entries).some(id => !gold.some(g => g.id === id)))) throw new Error('Invalid evidence-v4 rubric baseline')
+  const manifest = loadChunks(workspace)
+  const chunksRoot = realpathSync(resolve(workspace, 'corpus/chunks'))
+  const calibrated = gold.map(g => {
+    const entry = rubrics?.data.entries[g.id]
+    if (!entry) return { ...g }
+    if (entry.originalQuestion !== g.q || entry.originalQuestionSha256 !== sha256(g.q) ||
+        !Array.isArray(entry.criteria) || entry.criteria.length !== (g.rubric ?? []).length ||
+        entry.criteria.some((criterion, index) => criterion.original !== g.rubric[index] ||
+          typeof criterion.dimension !== 'string' || criterion.replacement != null &&
+          (typeof criterion.replacement !== 'string' || !criterion.replacement.trim())) ||
+        typeof entry.reviewStatus !== 'string' || typeof entry.ambiguity?.needsAdjudication !== 'boolean' ||
+        !Array.isArray(entry.sources) || entry.sources.some(source => {
+          const meta = manifest.get(source?.id)
+          if (!meta || !/^[a-f0-9]{64}$/.test(source.sha256)) return true
+          const path = relative(chunksRoot, realpathSync(resolve(workspace, meta.path)))
+          if (!path || path === '..' || path.startsWith(`..${sep}`) || isAbsolute(path)) return true
+          return sha256(chunkText(workspace, meta)) !== source.sha256
+        })) throw new Error(`Invalid evidence-v4 rubric entry ${g.id}`)
+    return { ...g, rubric: entry.criteria.map(criterion => criterion.replacement ?? criterion.original),
+      criteria_metadata: { ...entry, version: rubrics.data.version } }
+  })
+  const selected = calibrated.slice(0, limit === undefined ? original.length : limit)
+  const modes = [...new Set(data.rows.map(row => row.mode))]
+  if (!modes.length || modes.some(mode => !['harvey', 'broad'].includes(mode)) ||
+      data.rows.length !== original.length * modes.length ||
+      selected.some(g => modes.some(mode => data.rows.filter(row => row.id === g.id && row.q === g.q && row.mode === mode && !row.error).length !== 1))) throw new Error('Invalid evidence-v4 input row identities')
+  const evidence = evidenceV4({ workspace, artifacts })
+  const jobs = selected.flatMap(g => modes.map(mode => ({ g, mode, original: data.rows.find(row => row.id === g.id && row.mode === mode) })))
+  const verified = jobs.map(job => ({ ...job, result: evidence.replay(job.original) }))
+  return { selected, modes, jobs, verified, evidence }
+}
+
+export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, artifacts, rubrics,
+  judgeModel, judgeEffort = 'high', judgeMaxTokens = 4000, timeoutMs = 60000, retries = 1,
+  limit, concurrency = 1, resume = false, chat }) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16 || judgeModel !== 'openai/gpt-6-luna' ||
+      !Number.isInteger(judgeMaxTokens) || judgeMaxTokens < 256 || judgeMaxTokens > 16000 ||
+      !Number.isInteger(timeoutMs) || timeoutMs < 1 || !Number.isInteger(retries) || retries < 0 || retries > 5 ||
+      !['none', 'low', 'medium', 'high', 'xhigh', 'max'].includes(judgeEffort)) throw new Error('Invalid evidence-v4 judge configuration')
+  if (!rawInput || JSON.stringify(JSON.parse(rawInput.text)) !== JSON.stringify(data)) throw new Error('Invalid evidence-v4 raw input identity')
+  for (const repo of [realpathSync(workspace), realpathSync(new URL('..', import.meta.url))]) {
+    const outputRelative = relative(repo, resolve(output))
+    const actualParent = relative(repo, realpathSync(dirname(resolve(output))))
+    if (!outputRelative || outputRelative !== '..' && !outputRelative.startsWith(`..${sep}`) ||
+        !actualParent || actualParent !== '..' && !actualParent.startsWith(`..${sep}`)) throw new Error('Invalid evidence-v4 output location: outside repository required')
+  }
+  if (resolve(output) === resolve(rawInput.path)) throw new Error('Invalid evidence-v4 output: source checkpoint must remain unchanged')
+  const { selected, modes, jobs, verified, evidence } = preflightEvidenceV4({ data, workspace, artifacts, rubrics, limit })
+  const config = { experiment_kind: 'evidence-v4-judge-only-replay', protocol: 'evidence-v4',
+    original_provenance: data.provenance, replay_input_sha256: sha256(rawInput.text),
+    artifacts_sha256: evidence.artifactHashes,
+    evidence_binding: Object.fromEntries(verified.map(job => [`${job.g.id}/${job.mode}`, job.result.proof])),
+    evidence_writer_sha256: sha256(readFileSync(new URL('./grading-evidence.mjs', import.meta.url))),
+    replay_writer_sha256: sha256(readFileSync(new URL('./rejudge.mjs', import.meta.url))),
+    judge_model: judgeModel, judge_policy_sha256: sha256(JUDGE_V4_POLICY),
+    judge_validator_sha256: sha256(readFileSync(new URL('./judge-v4.mjs', import.meta.url))),
+    rubric_file_sha256: rubrics ? sha256(rubrics.raw) : null,
+    judge_reasoning_effort: judgeEffort, judge_max_tokens: judgeMaxTokens, timeout_ms: timeoutMs, retries }
+  const provenance = { question_hash: questionHash(selected), config, concurrency, runtime: process.version }
+  let result = { provenance, rows: [], summary: {} }
+  if (existsSync(output)) {
+    if (!resume) throw new Error('Invalid evidence-v4 output exists; select another path or --resume')
+    result = JSON.parse(readFileSync(output, 'utf8'))
+    if (JSON.stringify(result.provenance) !== JSON.stringify(provenance) || !Array.isArray(result.rows)) throw new Error('Invalid evidence-v4 resume provenance')
+    const keys = result.rows.map(row => `${row.id}\0${row.mode}`)
+    if (new Set(keys).size !== keys.length || result.rows.some(row => !jobs.some(job => job.g.id === row.id && job.mode === row.mode))) throw new Error('Invalid evidence-v4 resume rows')
+  } else if (resume) throw new Error('Invalid evidence-v4 resume checkpoint missing')
+  const checkpoint = () => {
+    const temporary = `${output}.tmp-${process.pid}`
+    writeFileSync(temporary, JSON.stringify(result, null, 2) + '\n', { mode: 0o600 })
+    renameSync(temporary, output)
+  }
+  if (!resume) checkpoint()
+  let next = 0
+  async function worker() {
+    while (next < verified.length) {
+      const { g, mode, original, result: replay } = verified[next++]
+      if (result.rows.some(row => row.id === g.id && row.mode === mode && !row.error)) continue
+      let row
+      try {
+        const judged = await chat({ role: 'judge', maxTokens: judgeMaxTokens, messages: [
+          { role: 'system', content: JUDGE_V4_POLICY },
+          { role: 'user', content: judgeV4Request(g.q, g.rubric, replay.answer, replay.sources, g.evidence, g.criteria_metadata) },
+        ] })
+        const verdict = validateJudgeV4(judged.text, g.rubric ?? [], replay.answer, replay.sources, g.criteria_metadata)
+        const citation_evidence = Object.fromEntries([...new Set(verdict.citations)].map(id => [id,
+          replay.sources.some(source => source.id === id && source.kind === 'full') ? 'full' :
+            replay.sources.some(source => source.id === id) ? 'excerpt' : 'missing']))
+        row = { id: g.id, mode, q: g.q, answer: replay.answer, degraded: original.degraded, proof: replay.proof,
+          citation_evidence,
+          sources: replay.sources.map(({ id, doc, text, kind, sha256, origin }) => ({ id, doc, chars: text.length, kind, sha256, origin })),
+          trace: replay.trace, metrics: { ...replay.metrics, source_count: replay.sources.length,
+            judge_usage: judged.usage ?? null }, ...verdict,
+          rubric_total: g.rubric.length, rubric_pass: verdict.rubric.filter(item => item.pass).length }
+      } catch (error) {
+        row = { id: g.id, mode, q: g.q, error: safeError(error), failure_stage: 'judge', answer: replay.answer, proof: replay.proof,
+          sources: replay.sources.map(({ id, doc, text, kind, sha256, origin }) => ({ id, doc, chars: text.length, kind, sha256, origin })), metrics: replay.metrics }
+      }
+      result.rows = result.rows.filter(existing => existing.id !== g.id || existing.mode !== mode)
+      result.rows.push(row)
+      result.rows.sort((a, b) => selected.findIndex(g => g.id === a.id) - selected.findIndex(g => g.id === b.id) || modes.indexOf(a.mode) - modes.indexOf(b.mode))
+      result.summary = summarize(result.rows, selected, modes)
+      for (const arm of modes) {
+        result.summary[arm].provisional_rubric_pass = result.rows.filter(row => row.mode === arm && row.adjudication === 'needs-review')
+          .reduce((total, row) => total + row.rubric_pass, 0)
+        result.summary[arm].rubric_pass -= result.summary[arm].provisional_rubric_pass
+        result.summary[arm].ambiguous = result.rows.filter(row => row.mode === arm && row.verdict === 'ambiguous').length
+        result.summary[arm].needs_review = result.rows.filter(row => row.mode === arm && row.adjudication === 'needs-review').length
+        result.summary[arm].legal_correct = result.rows.filter(row => row.mode === arm && row.legal_truth === 'correct').length
+        result.summary[arm].document_compliance_met = result.rows.filter(row => row.mode === arm && row.document_compliance === 'met').length
+        result.summary[arm].document_compliance_unmet = result.rows.filter(row => row.mode === arm && row.document_compliance === 'unmet').length
+      }
+      checkpoint()
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, verified.length) }, () => worker()))
+  return result
+}
+
+async function v4Main(input, output, args) {
+  const names = { '--artifacts': 'artifacts', '--judge-model': 'judgeModel', '--rubrics': 'rubricsFile',
+    '--limit': 'limit', '--concurrency': 'concurrency', '--judge-effort': 'judgeEffort', '--judge-max-tokens': 'judgeMaxTokens', '--timeout-ms': 'timeoutMs', '--retries': 'retries' }
+  const opts = {}
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--resume') { opts.resume = true; continue }
+    if (args[i] === '--preflight') { opts.preflight = true; continue }
+    const name = names[args[i]]
+    if (!name || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Invalid evidence-v4 option')
+    opts[name] = ['limit', 'concurrency', 'judgeMaxTokens', 'timeoutMs', 'retries'].includes(name) ? Number(args[++i]) : args[++i]
+  }
+  if (!opts.artifacts || !opts.preflight && !opts.judgeModel) throw new Error('Evidence-v4 requires --artifacts and --judge-model (except --preflight)')
+  const rawInput = { path: resolve(input), text: readFileSync(resolve(input), 'utf8') }
+  const rubricRaw = opts.rubricsFile ? readFileSync(resolve(opts.rubricsFile), 'utf8') : null
+  const rubrics = rubricRaw ? { raw: rubricRaw, data: JSON.parse(rubricRaw) } : undefined
+  if (opts.preflight) {
+    const { verified, evidence } = preflightEvidenceV4({ data: JSON.parse(rawInput.text), workspace: process.cwd(), artifacts: opts.artifacts,
+      rubrics, limit: opts.limit })
+    console.log(JSON.stringify({ protocol: 'evidence-v4', rows: verified.map(({ g, mode, result }) => ({ id: g.id, mode,
+      binding: result.proof, source_records: result.sources.length,
+      visible_characters: result.sources.reduce((total, source) => total + source.text.length, 0) })),
+    artifact_hashes: evidence.artifactHashes }, null, 2))
+    return
+  }
+  const result = await rejudgeEvidenceV4({ ...opts, data: JSON.parse(rawInput.text), rawInput, output: resolve(output), workspace: process.cwd(),
+    rubrics,
+    chat: gatewayChat({ key: process.env.AI_GATEWAY_API_KEY, model: opts.judgeModel,
+      timeoutMs: opts.timeoutMs ?? 60000, retries: opts.retries ?? 1, reasoningEffort: opts.judgeEffort ?? 'high' }) })
+  console.log(JSON.stringify(result.summary, null, 2))
+  if (Object.values(result.summary).some(summary => summary.errors || summary.degraded)) process.exitCode = 1
+}
+
 async function main() {
   const [input, output, ...args] = process.argv.slice(2)
   if (!input || !output) throw new Error('Usage: node eval/rejudge.mjs INPUT OUTPUT --judge-model MODEL --judge-policy POLICY [--limit N] [--concurrency N]')
+  if (args.includes('--evidence-v4')) return v4Main(input, output, args.filter(arg => arg !== '--evidence-v4'))
   const options = parseOptions(args)
   if (!args.includes('--judge-model') || !args.includes('--judge-policy')) throw new Error('Explicit judge model and policy are required')
   const raw = readFileSync(resolve(input), 'utf8')
