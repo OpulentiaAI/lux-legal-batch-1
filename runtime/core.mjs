@@ -24,8 +24,23 @@ const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_br
 const sandboxNames = new Set(['read', 'write', 'edit', 'MultiEdit', 'find_file_by_name', 'grep', 'notebook_read', 'notebook_edit', 'apply_patch', 'exec', 'get_output', 'kill_shell', 'write_to_process', 'scripted_tools', 'run_workflow', 'deploy', 'git_stack', 'fetch_pr_template', 'skill', 'install_personal_plugin', 'manage_personal_plugin', 'suggest_save_secret', 'upload_attachment', 'download_attachment', 'describe_image', 'generate_image']);
 const terminal = new Set(['completed', 'failed', 'cancelled', 'sleeping', 'stopped', 'blocked', 'interrupted', 'terminated']);
 const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow']);
+const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map(Object.entries(catalog.tools).map(([name, tool]) => [name, ajv.compile(tool.inputSchema)]));
+
+function modelVisibleToolResult(result) {
+  const serialized = JSON.stringify(result) ?? 'null';
+  if (serialized.length <= MAX_TOOL_RESULT_CHARS) return serialized;
+  const characters = Array.from(serialized.slice(0, MAX_TOOL_RESULT_CHARS));
+  let lower = 0, upper = characters.length;
+  while (lower < upper) {
+    const middle = Math.ceil((lower + upper) / 2);
+    const envelope = JSON.stringify({ truncated: true, prefix: characters.slice(0, middle).join('') });
+    if (envelope.length <= MAX_TOOL_RESULT_CHARS) lower = middle;
+    else upper = middle - 1;
+  }
+  return JSON.stringify({ truncated: true, prefix: characters.slice(0, lower).join('') });
+}
 
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
@@ -239,7 +254,7 @@ export function createRuntime(options = {}) {
           let result;
           try { result = await ctx.invoke(call.function.name, JSON.parse(call.function.arguments)); }
           catch (error) { result = { error: safeError(error) }; }
-          messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result).slice(0, 80000) });
+          messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult(result) });
         }
         store.put('conversations', id, { messages: scrub(id, messages), delivered: [...delivered] });
         if (ctx.stopRequested) { update(id, { status: 'sleeping' }); return; }

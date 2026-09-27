@@ -2445,7 +2445,7 @@
     },
     "opulent_mcp": {
       "name": "opulent_mcp",
-      "description": "Tool for interacting with the Opulent MCP server: codebase exploration (wiki docs, semantic search), Opulent session management (propose, search, interact with, wait on, inspect), playbooks, knowledge notes, schedules, event-driven automations, and the org's integration/MCP status. Commands: 'list_tools' (discover available tools and their parameters), 'call_tool' (execute a tool with JSON arguments).",
+      "description": "Runtime-local connector facade. 'list_tools' lists registered local handler names, not their parameter schemas or an external MCP server's tools; listed names may still be forbidden by the active execution policy. 'call_tool' dispatches one runtime-local handler by tool_name and obeys its normal allowlist, authentication and approval checks. Discover external or native MCP tools (including native lx_* tools) with mcp_list_tools and server; invoke them with mcp_call_tool with server, name and arguments. opulent_mcp does not invoke them.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -2462,7 +2462,7 @@
             "type": "string"
           },
           "tool_args": {
-            "description": "JSON string or object containing the input arguments for the tool (optional for call_tool command). Any string value starting with file:/// will be automatically replaced with the contents of that file before the call is made.",
+            "description": "JSON string containing an object of runtime-local tool arguments (optional for call_tool). File URLs are not expanded automatically.",
             "type": "string"
           }
         },
