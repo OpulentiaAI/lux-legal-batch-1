@@ -302,13 +302,32 @@ export async function approveResource(ctx, { kind, id: requestId, approve, value
       const marketplace = request.marketplace_server_slug && ctx.store.list('mcp_marketplace').find(entry => entry.slug === request.marketplace_server_slug);
       if (request.marketplace_server_slug && !marketplace) throw new Error('Marketplace server not found');
       if (request.action === 'update' && !previous) throw new Error('MCP server not found');
-      const url = request.url || marketplace?.url || previous?.url;
-      if (!url || new URL(url).protocol !== 'https:' || !ctx.config.allowedMcpUrls?.includes(url)) throw new Error('MCP URL must be HTTPS and explicitly allowlisted');
-      const candidate = { ...previous, ...marketplace, name: request.name || marketplace?.name || previous?.name, url, transport: 'http', installed: true, enabled: true };
+      if (value !== undefined && (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['args', 'env', 'authEnv'].includes(key)))) throw new Error('MCP approval accepts only arguments and environment references');
+      const transport = String(marketplace?.transport || request.transport || previous?.transport || 'http').toLowerCase();
+      const candidate = { ...previous, ...marketplace, name: request.name || marketplace?.name || previous?.name, transport, installed: true, enabled: true };
+      if (transport === 'stdio') {
+        candidate.command = marketplace?.command || request.command || previous?.command;
+        candidate.args = marketplace?.args || value?.args || previous?.args || [];
+        candidate.env = marketplace?.env || value?.env || previous?.env || {};
+        if (!Array.isArray(candidate.args) || !candidate.args.every(arg => typeof arg === 'string') || !ctx.config.allowedMcpCommands?.some(entry => entry.command === candidate.command && JSON.stringify(entry.args) === JSON.stringify(candidate.args))) throw new Error('MCP stdio command and arguments must be explicitly allowlisted');
+        if (!candidate.env || typeof candidate.env !== 'object' || Array.isArray(candidate.env) || Object.entries(candidate.env).some(([key, reference]) => !/^[A-Za-z_][A-Za-z_0-9]*$/.test(key) || typeof reference !== 'string' || !/^[A-Za-z_][A-Za-z_0-9]*$/.test(reference))) throw new Error('MCP environment must contain variable-name references only');
+        delete candidate.url;
+        delete candidate.authEnv;
+      } else if (transport === 'http') {
+        candidate.url = request.url || marketplace?.url || previous?.url;
+        if (!candidate.url || new URL(candidate.url).protocol !== 'https:' || !ctx.config.allowedMcpUrls?.includes(candidate.url)) throw new Error('MCP URL must be HTTPS and explicitly allowlisted');
+        if (value?.authEnv !== undefined) {
+          if (typeof value.authEnv !== 'string' || !/^[A-Za-z_][A-Za-z_0-9]*$/.test(value.authEnv)) throw new Error('MCP authentication must reference an environment variable');
+          candidate.authEnv = value.authEnv;
+        }
+        delete candidate.command;
+        delete candidate.args;
+        delete candidate.env;
+      } else throw new Error('Unsupported MCP approval transport');
       const serverId = previous?.id || id();
       if (typeof ctx.probeMcp !== 'function') throw new Error('MCP probe provider required');
       await ctx.probeMcp({ ...candidate, id: serverId });
-      result = ctx.store.put('mcp_servers', serverId, candidate);
+      result = ctx.store.put('mcp_servers', serverId, { ...candidate, approved: true });
     }
   } else if (kind === 'secret' || kind === 'secret_save') {
     const name = kind === 'secret' ? request.secret_name : request.env_var_name;

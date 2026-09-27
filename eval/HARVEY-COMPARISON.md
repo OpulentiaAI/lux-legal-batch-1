@@ -20,7 +20,9 @@ Raw, redacted tool evidence stays in the local artifact directory, outside git; 
 
 ## Running the gated comparison
 
-The paired CLI is currently blocked by its readiness gate: the custom MCP/Arsumbris connection, authenticated sandbox broker and desktop bootstrap have not been integrated and live-verified. The command below documents the intended interface; it is not currently a working full-runtime evaluation command. Registered handlers or presence of credentials cannot satisfy this gate. The next integration change must supply and verify the real providers before enabling scored runs.
+The authoritative custom corpus build is merge `6b2b6ae1363409ca70693bd79d8fbe89530d1014` (PR #1), not a separate hosted MCP service. Current chunk texts are unchanged from that build; retain the later Voyage client improvements. Its four `lx_*` plugins must be discovered and served by the actual Arsumbris engine/kernel over a corpus-only workspace, rather than bypassed through the standalone three-tool adapter.
+
+The paired CLI is currently blocked by its readiness gate while native MCP/Arsumbris and desktop bootstrap are integrated. The scoped authenticated broker has separately passed live E2B checks, but still needs wiring into the complete paired preflight. The command below documents the intended interface; it is not currently a working full-runtime evaluation command. Registered handlers or presence of credentials cannot satisfy this gate.
 
 Install the pinned Harvey checkout and its frozen Python dependencies, and verify its E2B adapter and the actual approved MCP/Arsumbris configuration. The host Python process uses AI Gateway credentials; do not inject them into either model-controlled sandbox. Set `LX_RETRIEVAL_PROFILE=voyage`, `AI_GATEWAY_API_KEY`, `E2B_API_KEY`, `TURBOPUFFER_API_KEY` and `TURBOPUFFER_REGION`.
 
@@ -43,4 +45,6 @@ Harvey's E2B template `gfkhlvaqlbbjrjm04d6d` was built from the pinned native im
 
 Our adapter exposes 97 tools: the full 97-handler catalog plus three corpus tools, excluding only three direct storage consumers (`upload_attachment`, `download_attachment`, `recording_stop`). E2B command/read and PTY security checks passed. Created sandboxes are explicitly killed, including after the runtime pauses them; a live cleanup probe confirmed its paused sandbox no longer existed. IDs from earlier smoke scripts were not retained, so cleanup of those earlier instances cannot be confirmed. No unrelated account sandboxes were touched.
 
-The custom MCP/Arsumbris integration, authenticated broker and desktop bootstrap remain unverified. No paired evaluation has run and no accuracy claim or 99% conclusion follows from these integration checks.
+The scoped evaluation broker has passed a live E2B `scripted_tools` round trip, invalid-token rejection, removal of broker reachability when its hostname is removed from the outbound allowlist, and successful callback restoration after re-allowlisting. Public routes expose only scoped session/workflow callbacks, not administrative approvals. E2B's `allowPublicTraffic: false` controls inbound authentication, not outbound access; the evaluation separately configures `denyOut` plus the exact broker hostname in `allowOut`.
+
+The native MCP/Arsumbris connection and desktop bootstrap remain in progress. No paired evaluation has run and no accuracy claim or 99% conclusion follows from these integration checks.

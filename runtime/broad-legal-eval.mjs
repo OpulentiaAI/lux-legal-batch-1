@@ -7,6 +7,7 @@ import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { createSandbox } from './e2b.mjs'
 import { createModel } from './model.mjs'
+import { brokerNetwork } from './eval-broker.mjs'
 import { redact } from './security.mjs'
 
 export const BROAD_MODEL = 'openai/gpt-6-luna'
@@ -155,12 +156,14 @@ function auditMessages(messages, evidence, corpusSources) {
 }
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps = BROAD_MAX_STEPS,
-  mcp, runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
+  mcp, broker, runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
   if (provision !== undefined && typeof provision !== 'function') throw new Error('Sandbox provision must be a callback')
   if (maxSteps !== BROAD_MAX_STEPS) throw new Error('Broad comparison uses exactly 40 steps')
   if (mcp && (typeof mcp.provision !== 'function' || !Array.isArray(mcp.servers))) throw new Error('MCP requires operator-provisioned approved server state and provenance')
+  if (broker && (typeof broker.attach !== 'function' || !broker.origin)) throw new Error('A scoped broker and public origin are required')
+  const network = broker ? brokerNetwork(broker.origin) : { allowPublicTraffic: false, denyOut: ['0.0.0.0/0'] }
   if (artifactsDir) {
     const path = relative(resolve(workspace), resolve(artifactsDir))
     if (!path || path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path)) throw new Error('Evidence artifacts must stay outside the source repository')
@@ -175,7 +178,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     integrations: { webSearch: process.env.BRAVE_SEARCH_API_KEY ? 'configured, not probed' : 'available tool; BRAVE_SEARCH_API_KEY unavailable',
       imageGeneration: process.env.OPENAI_API_KEY ? 'configured, not probed' : 'available tool; OPENAI_API_KEY unavailable',
       github: process.env.GITHUB_TOKEN ? 'credential present; repository allowlist empty' : 'available tools; GITHUB_TOKEN unavailable and repository allowlist empty',
-      runtimeBroker: 'available tools; authenticated runtime URL not configured',
+      runtimeBroker: broker ? { status: 'scoped authenticated broker configured; verify live before scoring', origin: broker.origin, network } : 'available tools; authenticated runtime URL not configured',
       desktop: 'available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot',
       storage: 'unconfigured; storage-dependent operations omitted',
       mcp: mcp ? { status: 'operator provisioned; live connection not verified', servers: redact(mcp.servers.map(({ name, version, tools }) => ({ name, version, tools }))) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
@@ -187,14 +190,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const evidenceDir = artifactsDir ? resolve(artifactsDir) : mkdtempSync(join(tmpdir(), 'broad-legal-evidence-'))
       const start = performance.now()
       const provisionedSandboxes = new Set()
-      let runtime, session, completed, runError, runDetails
+      let runtime, session, completed, runError, runDetails, detachBroker
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const model = modelFactory({ model: BROAD_MODEL })
         runtime = runtimeFactory({
           config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: BROAD_MODEL,
-            maxSteps, systemPrompt, allowedRepos: [],
+            maxSteps, systemPrompt, allowedRepos: [], network, ...(broker ? { runtimeUrl: broker.origin } : {}),
             ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
           },
           storage: {},
@@ -209,6 +212,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
             return model(messages, { ...options, model: BROAD_MODEL })
           },
         })
+        if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
         completed = await runtime.waitSession(session.id)
@@ -230,6 +234,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         throw runError
       } finally {
         let closeFailed = false
+        try { detachBroker?.() } catch { closeFailed = true }
         try { await runtime?.close() } catch { closeFailed = true }
         const sandboxes = [...provisionedSandboxes]
         const outcomes = await Promise.allSettled(sandboxes.map(sandbox => Promise.resolve().then(() => sandbox.kill())))

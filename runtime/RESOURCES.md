@@ -1,5 +1,7 @@
 # Resource tool contracts
 
+MCP installation remains an operator-approved action. HTTP approvals require an exact HTTPS URL allowlist; stdio approvals require an exact executable-and-arguments allowlist. For stdio, the operator's approval `value` supplies `{ args, env }`, where `env` maps child environment names to host environment variable names, never credential values. HTTP approval may supply `{ authEnv }` as a variable-name reference. The runtime probes the candidate before persisting `approved: true`; a failed probe leaves the request pending and does not install the candidate. The model cannot call the approval endpoint through the evaluation broker.
+
 The startup JSON and later MCP schemas define the knowledge, secret, attachment, and management actions in `resources.mjs`. The catalog only names `install_personal_plugin`, `manage_personal_plugin`, and `suggest_skill_pr`; it does not capture their callable input schema. This runtime defines these local inputs explicitly rather than claiming exact compatibility with the historical source schemas:
 
 - `install_personal_plugin({url})` downloads a public HTTPS JSON manifest with `name`, `version`, `kind` (`tool` or `skill`), and `download_url`. It downloads the referenced payload into the E2B sandbox. A tool payload is a Node ESM program stored as `entry.mjs`; a skill payload is Markdown stored as `SKILL.md`. Neither is run on the control-plane host.
