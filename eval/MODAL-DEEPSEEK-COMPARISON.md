@@ -1,5 +1,7 @@
 # Modal DeepSeek V4.1 Flash comparison
 
+The subsequently authorized full ten-question run is complete; see [MODAL-DEEPSEEK-TEN-REPORT.md](MODAL-DEEPSEEK-TEN-REPORT.md). The gate failures and pauses below are preserved development history, not the current execution status.
+
 The September 27, 2026 rerun uses the `modal-deepseek-v4.1-flash` profile from commit `440a29ee`. Both answerers, delegated Opulent runtime calls, and the gate judge select `deepseek/deepseek-v4.1-flash` through AI Gateway with `providerOptions.gateway.only=["modal"]`. There is no provider-order fallback. The named Luna baseline and historical artifacts remain separate.
 
 The live model smoke verified exact-model responses, tool invocation and continuation, and high-reasoning JSON output. A separate live test exercised the actual Harvey Chat Completions adapter. Native MCP, authenticated broker, restricted-network sandbox, and desktop checks passed before evaluation. The upstream Harvey checkout, prompts, skills, tool executor, and agent loop remain pinned; the Modal profile uses a Chat Completions transport adapter rather than the Luna Responses adapter. All 210 tests passed on serialized rerun, with typecheck and diff checks; the initial parallel run reproduced the existing GitHub request-order flake.
