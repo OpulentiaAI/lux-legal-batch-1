@@ -35,7 +35,7 @@ The full-budget pass rejected three judgments. A same-policy retry recovered Har
 | Additional provisional passes, excluded | 8 | 7 |
 | Original degraded answer rows | 0 | 1 |
 
-q01 and q02 remain ambiguous under the rubric's adjudication flags. q08 remains unscored in the final replay, and its rubric also requires adjudication. Schema/anchor validation of the other judgments is not legal adjudication. The replay's error-row summary omits original degradation when judging that row fails; the original answer checkpoint is authoritative, so Harvey's degraded q08 is explicitly retained above rather than reporting zero degradation.
+q01 and q02 remain ambiguous under the rubric's adjudication flags. q08 remains unscored in the final replay, and its rubric also requires adjudication. Schema/anchor validation of the other judgments is not legal adjudication. This historical replay's error-row summary omits original degradation when judging that row fails; the original answer checkpoint is authoritative, so Harvey's degraded q08 is explicitly retained above rather than reporting zero degradation. New replays retain the original degraded flag on judge-error rows.
 
 The independent audit reconstructed exact model-visible evidence, compared every accepted raw response against the validator and stored verdict, verified all twenty answer byte strings unchanged, and confirmed both rejected q08 responses fail exact-anchor validation. It does not repair the weaker Harvey legacy artifact binding into an original output-hash attestation. Opulent records output hashes; Harvey's preserved artifact snapshots and canonical argument hashes remain the stated evidence boundary.
 

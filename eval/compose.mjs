@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { SCORING_PROTOCOL, normalizeEvidence } from './scoring.mjs'
 import { JUDGE_V4_POLICY, judgeV4Request, validateJudgeV4 } from './judge-v4.mjs'
 import { redact } from '../runtime/security.mjs'
+import { LUNA_MODEL, MODAL_DEEPSEEK_MODEL, validateEvalModel } from '../runtime/eval-model-profile.mjs'
 import { RETRIEVAL_PROFILE, EMBED_MODEL, RERANK_MODEL, DIMENSIONS, CHUNK_NS, DOC_NS, REQUIRED_ENV, EMBED_QUERY_INPUT_TYPE, EMBED_DOCUMENT_INPUT_TYPE } from '../src/tp/client.ts'
 
 const GATEWAY = 'https://ai-gateway.vercel.sh/v1/chat/completions'
@@ -118,9 +119,11 @@ export async function evaluate({ gold, modes, output, resume = false, concurrenc
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16) throw new Error('concurrency must be 1..16')
   const judgePolicy = config.judge_policy ?? 'baseline'
   if (!Object.hasOwn(JUDGE_POLICIES, judgePolicy)) throw new Error('Invalid judge policy')
-  if (judgePolicy === 'evidence-v4' && [config.model, config.judgeModel, config.judge_model].some((model) => model !== undefined && model !== 'openai/gpt-6-luna')) {
-    throw new Error('Invalid judge v4 model: openai/gpt-6-luna required')
+  if (judgePolicy === 'evidence-v4' && [config.model, config.judgeModel, config.judge_model].some((model) => model !== undefined && ![LUNA_MODEL, MODAL_DEEPSEEK_MODEL].includes(model))) {
+    throw new Error('Invalid judge v4 model')
   }
+  if (judgePolicy === 'evidence-v4' && [config.model, config.judgeModel, config.judge_model].some(model => model === MODAL_DEEPSEEK_MODEL) &&
+      JSON.stringify(config.judge_provider_only ?? config.provider_only) !== '["modal"]') throw new Error('Invalid judge v4 model/provider pairing')
   if (judgePolicy === 'evidence-v4') {
     const repository = realpathSync(fileURLToPath(new URL('..', import.meta.url)))
     const destination = resolve(realpathSync(dirname(resolve(output))), basename(output))
@@ -212,8 +215,9 @@ export async function evaluate({ gold, modes, output, resume = false, concurrenc
   return data
 }
 
-export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, reasoningEffort = 'low', fetchImpl = fetch }) {
+export function gatewayChat({ key, model, providerOnly = null, timeoutMs = 12000, retries = 1, reasoningEffort = 'low', fetchImpl = fetch }) {
   if (!key) throw new Error('AI_GATEWAY_API_KEY is required before starting evaluation')
+  if (providerOnly !== null) validateEvalModel(model, providerOnly)
   return async ({ messages, maxTokens = 900, signal }) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
@@ -221,7 +225,8 @@ export function gatewayChat({ key, model, timeoutMs = 12000, retries = 1, reason
         const response = await fetchImpl(GATEWAY, {
           method: 'POST', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, messages, max_completion_tokens: maxTokens, reasoning_effort: reasoningEffort }),
+          body: JSON.stringify({ model, messages, max_completion_tokens: maxTokens, reasoning_effort: reasoningEffort,
+            ...(providerOnly ? { providerOptions: { gateway: { only: providerOnly } } } : {}) }),
         })
         if (!response.ok) {
           if (response.status < 500 && response.status !== 429) throw new Error(`gateway ${response.status}`)
@@ -252,9 +257,9 @@ export function parseOptions(args) {
   if (!['standard', 'rlm', 'paired', 'agent'].includes(options.mode)) throw new Error('mode must be standard, rlm, paired or agent')
   if (!['baseline', 'audited-v1'].includes(options.agentPolicy) || !Object.hasOwn(JUDGE_POLICIES, options.judgePolicy)) throw new Error('Invalid agent or judge policy')
   if (options.judgePolicy === 'evidence-v4') {
-    if (!args.includes('--model')) options.model = 'openai/gpt-6-luna'
-    if (!args.includes('--judge-model')) options.judgeModel = 'openai/gpt-6-luna'
-    if (options.model !== 'openai/gpt-6-luna' || options.judgeModel !== 'openai/gpt-6-luna') throw new Error('Invalid judge v4 model: openai/gpt-6-luna required')
+    if (!args.includes('--model')) options.model = LUNA_MODEL
+    if (!args.includes('--judge-model')) options.judgeModel = LUNA_MODEL
+    if (options.model !== LUNA_MODEL || options.judgeModel !== LUNA_MODEL) throw new Error('Invalid judge v4 model: standalone compose requires Luna')
   }
   if (options.mode !== 'agent' && options.agentPolicy !== 'baseline') throw new Error('Agent policy requires agent mode')
   if (!['none', 'low', 'medium', 'high', 'xhigh', 'max'].includes(options.judgeEffort) || !Number.isInteger(options.judgeMaxTokens) || options.judgeMaxTokens < 256 || options.judgeMaxTokens > 16000) throw new Error('Invalid judge reasoning or token budget')

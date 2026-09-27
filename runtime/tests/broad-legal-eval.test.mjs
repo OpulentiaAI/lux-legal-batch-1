@@ -6,6 +6,8 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { BROAD_MODEL, BROAD_POLICY, BROAD_SANDBOX_WORKSPACE, BROAD_TOOLS, createBroadHarness } from '../broad-legal-eval.mjs'
 import { createRuntime } from '../core.mjs'
+import { createModel } from '../model.mjs'
+import { MODAL_DEEPSEEK_MODEL } from '../eval-model-profile.mjs'
 
 const workspace = resolve(new URL('../..', import.meta.url).pathname)
 const corpus = { directory: '/safe/export', hash: 'sample-hash', count: 2, sources: [
@@ -66,6 +68,37 @@ test('broad policy pins Luna, 40/4000 and full catalog except storage operations
     assert.throws(() => createBroadHarness({ workspace, corpus, artifactsDir: workspace }), /outside the source repository/)
     assert.throws(() => createBroadHarness({ workspace, corpus, maxSteps: 8 }), /exactly 40/)
     assert.throws(() => createBroadHarness({ workspace }), /Prepared corpus export is required/)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('Modal profile pins runtime model and provider through parent and child requests', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'broad-modal-test-'))
+  try {
+    const outbound = []
+    const modelFactory = config => createModel(config, async (_url, init) => {
+      outbound.push(JSON.parse(init.body))
+      return { ok: true, json: async () => ({ choices: [{ message: {
+        role: 'assistant', content: 'ok', reasoning: 'private chain', provider_metadata: { provider: 'modal' },
+      } }] }) }
+    })
+    const fake = fixture()
+    const harness = createBroadHarness({ workspace, corpus, artifactsDir: dir, model: MODAL_DEEPSEEK_MODEL,
+      providerOnly: ['modal'], runtimeFactory: fake.runtimeFactory, modelFactory })
+    await harness.run({ mode: 'broad', question: 'Question' })
+    assert.equal(fake.options.config.model, MODAL_DEEPSEEK_MODEL)
+    assert.deepEqual(fake.options.config.providerOnly, ['modal'])
+    const parent = await fake.options.model([{ role: 'user', content: 'parent' }], {})
+    const child = await fake.options.model([parent.choices[0].message, { role: 'tool', tool_call_id: 'x', content: 'done' }], {})
+    assert.equal(child.choices[0].message.content, 'ok')
+    assert.equal(outbound[1].messages[0].reasoning, 'private chain')
+    assert.equal(outbound[1].messages[0].provider_metadata.provider, 'modal')
+    for (const body of outbound) {
+      assert.equal(body.model, MODAL_DEEPSEEK_MODEL)
+      assert.deepEqual(body.providerOptions, { gateway: { only: ['modal'] } })
+      assert.equal(body.max_completion_tokens, 4000)
+    }
+    assert.throws(() => fake.options.model([], { model: BROAD_MODEL }), /pinned to Modal DeepSeek/)
+    assert.throws(() => createBroadHarness({ workspace, corpus, model: MODAL_DEEPSEEK_MODEL }), /model\/provider/)
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
@@ -214,8 +247,10 @@ test('completed and failed sessions terminate every parent and child provision',
 test('real runtime child session is provisioned, paused, and terminated by adapter', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'broad-test-'))
   const sandboxes = []
+  const seenModels = []
   try {
-    const modelFactory = () => async messages => {
+    const modelFactory = config => async (messages, options) => {
+      seenModels.push({ config, options, child: messages.some(message => message.role === 'user' && message.content === 'child worker') })
       const child = messages.some(message => message.role === 'user' && message.content === 'child worker')
       const calls = messages.flatMap(message => message.role === 'assistant' ? message.tool_calls ?? [] : [])
       let message
@@ -232,7 +267,7 @@ test('real runtime child session is provisioned, paused, and terminated by adapt
       } else message = { role: 'assistant', content: 'Parent completed' }
       return { choices: [{ message }], usage: { total_tokens: 1 } }
     }
-    const harness = createBroadHarness({ workspace, corpus, artifactsDir: dir, modelFactory,
+    const harness = createBroadHarness({ workspace, corpus, artifactsDir: dir, model: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'], modelFactory,
       provision: async () => {
         const sandbox = { sandboxId: `child-${sandboxes.length}`, paused: 0, killed: 0,
           files: { makeDir: async () => {} },
@@ -243,6 +278,10 @@ test('real runtime child session is provisioned, paused, and terminated by adapt
       } })
     const result = await harness.run({ mode: 'broad', question: 'Parent child teardown' })
     assert.equal(result.answer, 'Parent completed')
+    assert.ok(seenModels.some(call => call.child))
+    assert.ok(seenModels.some(call => !call.child))
+    assert.ok(seenModels.every(call => call.config.model === MODAL_DEEPSEEK_MODEL && call.options.model === MODAL_DEEPSEEK_MODEL &&
+      JSON.stringify(call.config.providerOnly) === '["modal"]'))
     assert.equal(result.metrics.errors, 0)
     assert.equal(sandboxes.length, 1)
     assert.deepEqual([sandboxes[0].paused, sandboxes[0].killed], [1, 1])

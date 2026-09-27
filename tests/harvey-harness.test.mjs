@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
 import { createHarveyHarness } from '../eval/harvey-harness.mjs'
+import { MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
 
 const MODEL = 'openai/gpt-6-luna'
 
@@ -36,6 +37,7 @@ process.stdin.on('end', () => {
   const crypto = require('node:crypto')
   const hash = crypto.createHash('sha256').update(fs.readFileSync(request.harvey_root + '/harness/system_prompt.md')).digest('hex')
   fs.mkdirSync(request.artifacts)
+  fs.writeFileSync(request.artifacts + '/model-config.json', JSON.stringify({ model: request.model, provider_only: request.provider_only }))
   const toolOutput = '[doc-01:a:c0]\\nExact source text.\\n'
   fs.writeFileSync(request.artifacts + '/tool-results.jsonl', [
     { tool: 'grep', arguments: { pattern: 'Exact' }, result: '[doc-01:a:c0] Exact' },
@@ -91,6 +93,24 @@ test('rejects missing key and invalid mode before invoking a provider', async t 
   delete process.env.AI_GATEWAY_API_KEY
   t.after(() => { if (prior !== undefined) process.env.AI_GATEWAY_API_KEY = prior })
   await assert.rejects(harness.run({ question: 'test', mode: 'harvey' }), /AI_GATEWAY_API_KEY/)
+})
+
+test('Harvey Modal profile crosses the JS/Python bridge without changing Luna default', async t => {
+  const { root, fakePython, corpus, artifactsDir } = fixture(t)
+  const oldGateway = process.env.AI_GATEWAY_API_KEY, oldE2b = process.env.E2B_API_KEY
+  process.env.AI_GATEWAY_API_KEY = 'unit-test-only'
+  process.env.E2B_API_KEY = 'unit-test-only'
+  t.after(() => {
+    if (oldGateway === undefined) delete process.env.AI_GATEWAY_API_KEY; else process.env.AI_GATEWAY_API_KEY = oldGateway
+    if (oldE2b === undefined) delete process.env.E2B_API_KEY; else process.env.E2B_API_KEY = oldE2b
+  })
+  const options = { workspace: resolve('.'), harveyRoot: root, python: fakePython, corpus, artifactsDir }
+  const modal = createHarveyHarness({ ...options, model: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'] })
+  assert.equal(modal.provenance.adapter, 'eval.harvey-modal-adapter.ModalDeepSeekAdapter')
+  await modal.run({ mode: 'harvey', question: 'Modal comparison' })
+  const config = JSON.parse(readFileSync(join(artifactsDir, readdirSync(artifactsDir)[0], 'model-config.json'), 'utf8'))
+  assert.deepEqual(config, { model: MODAL_DEEPSEEK_MODEL, provider_only: ['modal'] })
+  assert.throws(() => createHarveyHarness({ ...options, model: MODAL_DEEPSEEK_MODEL }), /pairing/)
 })
 
 test('retains partial visible evidence on child failure', async t => {

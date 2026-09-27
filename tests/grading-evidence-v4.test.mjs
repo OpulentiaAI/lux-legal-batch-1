@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto'
 import { evidenceV4 } from '../eval/grading-evidence.mjs'
 import { rejudgeEvidenceV4 } from '../eval/rejudge.mjs'
 import { questionHash } from '../eval/compose.mjs'
+import { MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
 
 const hash = text => createHash('sha256').update(text).digest('hex')
 const id = 'doc-01:a:c0'
@@ -183,6 +184,8 @@ test('v4 checkpoint pins policy, rubric and evidence without persisting excerpt 
   await rejudgeEvidenceV4({ ...inputs, resume: true })
   assert.equal(calls, 1)
   await assert.rejects(rejudgeEvidenceV4({ ...inputs, resume: true, judgeModel: 'changed-model' }), /judge configuration/)
+  await assert.rejects(rejudgeEvidenceV4({ ...inputs, resume: true, judgeModel: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'] }), /resume provenance/)
+  await assert.rejects(rejudgeEvidenceV4({ ...inputs, judgeModel: MODAL_DEEPSEEK_MODEL }), /judge configuration/)
   const rubrics = rubricFixture()
   await assert.rejects(rejudgeEvidenceV4({ ...inputs, resume: true, rubrics: { raw: JSON.stringify(rubrics), data: rubrics } }), /resume provenance/)
   await assert.rejects(rejudgeEvidenceV4({ ...inputs, rubrics: { raw: JSON.stringify(rubrics), data: { ...rubrics, baselineSha256: hash('altered') } } }), /rubric baseline/)
@@ -198,6 +201,22 @@ test('v4 checkpoint pins policy, rubric and evidence without persisting excerpt 
   mkdirSync(join(options.workspace, 'artifacts'))
   assert.throws(() => evidenceV4({ ...options, artifacts: join(options.workspace, 'artifacts') }), /outside repository/)
   assert.throws(() => evidenceV4({ ...options, artifacts: join(root, 'missing') }), /ENOENT/)
+})
+
+test('Modal replay retains original degradation when strict judging fails', async t => {
+  const { root, options, data, row } = fixture(t)
+  row.degraded = true
+  const raw = JSON.stringify(data)
+  const result = await rejudgeEvidenceV4({ ...options, data, rawInput: { path: join(root, 'input.json'), text: raw },
+    output: join(root, 'modal-failed.json'), judgeModel: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'], judgeMaxTokens: 16000,
+    chat: async () => { throw new Error('synthetic invalid anchor') } })
+  assert.equal(result.rows[0].degraded, true)
+  assert.equal(result.rows[0].failure_stage, 'judge')
+  assert.equal(result.provenance.config.judge_model, MODAL_DEEPSEEK_MODEL)
+  assert.deepEqual(result.provenance.config.judge_provider_only, ['modal'])
+  assert.equal(result.provenance.config.judge_max_tokens, 16000)
+  assert.equal(result.summary.harvey.errors, 1)
+  assert.equal(result.summary.harvey.degraded, 1)
 })
 
 test('calibrated adjudication stays in planned denominator without passing', async t => {

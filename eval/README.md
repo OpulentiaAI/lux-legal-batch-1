@@ -70,6 +70,20 @@ For the separately recorded higher-budget judge calibration, add `--judge-effort
 
 ## Override the policy for a future evaluation
 
+### Modal DeepSeek harness comparison (separate opt-in experiment)
+
+The full Harvey-versus-broad runner keeps `luna-baseline` as its default profile. Select `--profile modal-deepseek-v4.1-flash` to pin **both answerers and the legacy evidence-v3 gate judge** to `deepseek/deepseek-v4.1-flash` through AI Gateway with `providerOptions.gateway.only=["modal"]`. The same pin applies to broad runtime child/delegated model calls and Harvey's upstream agent loop through its Chat Completions bridge. The existing tool policy, prompts, 40-step limit and 4,000-token answer budget are unchanged. No direct Modal credential is used. Keep output, corpus export and evidence artifacts outside the repository and separate from Luna outputs.
+
+Use the existing full-comparison infrastructure flags (`--output`, `--harvey-root`, `--python`, `--artifacts`, `--native-module`, `--broker-origin`, `--broker-port`, `--sandbox-template`, `--computer-image-sha256`) and `LX_RETRIEVAL_PROFILE=voyage`. Start at `--limit 2`, then `--limit 4 --previous <clean-2-output>`, then `--limit 10 --previous <clean-4-output>`. Use the same profile and effective infrastructure configuration at every gate: mismatched provenance or degraded/incomplete predecessor blocks progression. The v3 gate judge remains a separately labeled operational diagnostic, not calibrated v4 accuracy.
+
+For final evidence-v4 replay of the answer checkpoint, use a separate output and the existing rubric overlay:
+
+```sh
+node eval/rejudge.mjs INPUT.json OUTPUT-v4.json --evidence-v4 --artifacts ARTIFACT_DIR --rubrics RUBRIC_OVERLAY.json --judge-model deepseek/deepseek-v4.1-flash --judge-effort high --judge-max-tokens 16000 --timeout-ms 180000 --limit 10
+```
+
+The exact DeepSeek ID automatically selects the Modal-only gateway filter in the v4 CLI; unknown model/provider pairings fail closed. The replay pins model, provider, rubric, input/evidence hashes, timeout and budgets in provenance, rejects changed resumes, and preserves original degraded flags even on failed judgments. Its schema and exact citation-anchor checks are unchanged. Validate provider operation and legal outcomes from the live outputs; offline adapter tests are not a live end-to-end pass.
+
 Create a named evaluation runner using `createRuntime`, or extend `createAgentHarness` with an explicit policy input when adding the new experiment. **The current compose CLI has no tool-policy/config override flag, and `RUNTIME_CONFIG` is read by the runtime CLI, not by `eval/compose.mjs`.** Editing a config file alone will not change the existing `--mode agent` protocol.
 
 This is the runtime configuration pattern for an MCP-plus-corpus experiment:

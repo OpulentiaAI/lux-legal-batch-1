@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { evaluate, gatewayChat, parseOptions, questionHash, safeError, summarize, validateJudge } from '../eval/compose.mjs'
+import { MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
 
 const rubric = ['first', 'second']
 const verdict = { verdict: 'correct', citation_ok: true, grounded: true,
@@ -129,6 +130,22 @@ test('gateway forwards cancellation and does not retry an aborted request', asyn
   } })
   await assert.rejects(chat({ messages: [], signal: controller.signal }), /cancelled/)
   assert.equal(calls, 1)
+})
+
+test('Modal judge request fails closed to only modal without changing Luna', async () => {
+  const outbound = []
+  const fetchImpl = async (_url, init) => {
+    outbound.push(JSON.parse(init.body))
+    return { ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }] }) }
+  }
+  await gatewayChat({ key: 'fixture', model: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'], reasoningEffort: 'high', fetchImpl })(
+    { messages: [{ role: 'user', content: 'Judge' }], maxTokens: 16000 })
+  await gatewayChat({ key: 'fixture', model: 'openai/gpt-6-luna', fetchImpl })({ messages: [], maxTokens: 4000 })
+  assert.deepEqual(outbound[0].providerOptions, { gateway: { only: ['modal'] } })
+  assert.equal(outbound[0].max_completion_tokens, 16000)
+  assert.equal(outbound[0].reasoning_effort, 'high')
+  assert.equal(outbound[1].providerOptions, undefined)
+  assert.throws(() => gatewayChat({ key: 'fixture', model: MODAL_DEEPSEEK_MODEL, providerOnly: ['other'] }), /pairing/)
 })
 
 test('CLI rejects invalid or unbounded options', () => {

@@ -7,12 +7,13 @@ import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { createSandbox } from './e2b.mjs'
 import { createModel } from './model.mjs'
+import { LUNA_MODEL, validateEvalModel } from './eval-model-profile.mjs'
 import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
 import { redact } from './security.mjs'
 import { renderInstructions } from './instructions/render.mjs'
 
-export const BROAD_MODEL = 'openai/gpt-6-luna'
+export const BROAD_MODEL = LUNA_MODEL
 export const BROAD_MAX_STEPS = 40
 export const BROAD_COMPLETION_TOKENS = 4000
 export const BROAD_SANDBOX_WORKSPACE = '/tmp/broad-legal-workspace'
@@ -180,7 +181,10 @@ function auditMessages(messages, evidence, corpusSources) {
 }
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps = BROAD_MAX_STEPS,
-  mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
+  mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
+  runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
+  validateEvalModel(model, providerOnly)
+  const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
   if (provision !== undefined && typeof provision !== 'function') throw new Error('Sandbox provision must be a callback')
@@ -199,7 +203,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const instructions = renderInstructions({ appendix: nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt,
     variant: nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const provenance = {
-    policy: nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model: BROAD_MODEL, maxSteps, maxCompletionTokens: BROAD_COMPLETION_TOKENS,
+    policy: nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: BROAD_COMPLETION_TOKENS,
     instructions: instructions.provenance,
     allowedTools, excluded: BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
@@ -220,7 +224,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   function runtimeOptions(stateDir, model, provisionedSandboxes) {
     return {
-      config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: BROAD_MODEL,
+      config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
+        ...(providerOnly ? { providerOnly } : {}),
         maxSteps, systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
@@ -234,8 +239,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         return sandbox
       },
       model: (messages, options = {}) => {
-        if (options.model && options.model !== BROAD_MODEL) throw new Error('Broad evaluation model is pinned to Luna')
-        return model(messages, { ...options, model: BROAD_MODEL })
+        if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
+        return model(messages, { ...options, model: provenance.model })
       },
     }
   }
@@ -314,7 +319,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: BROAD_MODEL })
+        const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',

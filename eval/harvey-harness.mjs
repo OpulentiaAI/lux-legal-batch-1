@@ -5,9 +5,10 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { captureVisibleSources } from './comparison-corpus.mjs'
 import { redact } from '../runtime/security.mjs'
+import { LUNA_MODEL, validateEvalModel } from '../runtime/eval-model-profile.mjs'
 
 const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
-const MODEL = 'openai/gpt-6-luna'
+const MODEL = LUNA_MODEL
 const GATEWAY = 'https://ai-gateway.vercel.sh/v1'
 const HARVEY_IMAGE = 'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2'
 const E2B_TEMPLATE = 'gfkhlvaqlbbjrjm04d6d'
@@ -79,7 +80,8 @@ function collectEvidence(artifacts, corpus, answer, start, response) {
     audit: { calls: auditCalls, finalAnswer: typeof answer === 'string' ? redact(answer) : null } }
 }
 
-export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps = 40 }) {
+export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps = 40, model = MODEL, providerOnly = null }) {
+  validateEvalModel(model, providerOnly)
   if (!corpus?.sources?.length || !corpus.directory || !corpus.hash) throw new Error('Prepared comparison corpus required')
   if (maxSteps !== 40) throw new Error('Harvey comparison requires exactly 40 steps')
   harveyRoot = realpathSync(harveyRoot)
@@ -93,7 +95,8 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   const skills = existsSync(skillsDir) ? readdirSync(skillsDir).filter(name => existsSync(join(skillsDir, name, 'SKILL.md'))).sort() : []
   prompt += skills.map(name => `\n\n## Skill: ${name}\n\n${readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8')}`).join('\n')
   const provenance = Object.freeze({
-    harvey_commit: HARVEY_COMMIT, model: MODEL, endpoint: GATEWAY, adapter: 'harness.adapters.openai.OpenAIAdapter',
+    harvey_commit: HARVEY_COMMIT, model, providerOnly, endpoint: GATEWAY,
+    adapter: providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
     agent_loop: 'harness.agent_loop.run_agent', executor: 'harness.tools.ToolExecutor', sandbox: 'E2B pinned Harvey image (remote upstream ToolExecutor)',
     harvey_base_image: HARVEY_IMAGE, e2b_template_id: E2B_TEMPLATE,
     e2b_sdk: '2.34.0', e2b_internet_access: false,
@@ -110,7 +113,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       const artifacts = resolve(artifactsDir, randomUUID())
       mkdirSync(dirname(artifacts), { recursive: true })
       const request = { harvey_root: harveyRoot, documents: corpus.directory, corpus_hash: corpus.hash,
-        artifacts, question, max_steps: maxSteps }
+        artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly }
       const start = performance.now()
       const env = { ...process.env, OPENAI_BASE_URL: GATEWAY, OPENAI_API_KEY: process.env.AI_GATEWAY_API_KEY }
       let response

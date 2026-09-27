@@ -15,7 +15,8 @@ from pathlib import Path
 
 
 HARVEY_COMMIT = "845a08840869b21a5c11958aae58bf5f00a7b775"
-MODEL = "openai/gpt-6-luna"
+LUNA_MODEL = "openai/gpt-6-luna"
+MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
 E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
 HARVEY_IMAGE = "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2"
@@ -188,6 +189,11 @@ def main():
     if subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"], text=True).strip():
         raise RuntimeError("Harvey upstream checkout is dirty")
     smoke = "--smoke" in sys.argv[1:]
+    model = request.get("model", LUNA_MODEL)
+    provider_only = request.get("provider_only")
+    if not ((model == LUNA_MODEL and provider_only is None) or
+            (model == MODAL_MODEL and provider_only == ["modal"])):
+        raise RuntimeError("Invalid Harvey model/provider pairing")
     if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != GATEWAY or not os.environ.get("OPENAI_API_KEY")):
         raise RuntimeError("Exact AI Gateway endpoint and credentials required")
     if not os.environ.get("E2B_API_KEY"):
@@ -312,7 +318,14 @@ def main():
             def rpc(self, payload):
                 return rpc(payload)
 
-        adapter = OpenAIAdapter(model=MODEL, max_tokens=4000)
+        if provider_only:
+            from importlib.util import module_from_spec, spec_from_file_location
+            spec = spec_from_file_location("harvey_modal_adapter", Path(__file__).with_name("harvey-modal-adapter.py"))
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            adapter = module.ModalDeepSeekAdapter(model=model, max_tokens=4000)
+        else:
+            adapter = OpenAIAdapter(model=model, max_tokens=4000)
         result = run_agent(
             adapter=adapter,
             system_prompt=prompt,

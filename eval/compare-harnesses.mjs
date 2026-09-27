@@ -4,20 +4,22 @@ import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { evaluate, gatewayChat, implementationHash, safeError } from './compose.mjs'
 import { prepareCorpus } from './comparison-corpus.mjs'
+import { COMPARISON_PROFILES, LUNA_MODEL } from '../runtime/eval-model-profile.mjs'
 
-export const COMPARISON_MODEL = 'openai/gpt-6-luna'
+export const COMPARISON_MODEL = LUNA_MODEL
 export const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
 
 export function parseComparisonOptions(args) {
-  const options = { limit: 2, concurrency: 1 }
+  const options = { limit: 2, concurrency: 1, profile: 'luna-baseline' }
   const keys = { '--limit': 'limit', '--concurrency': 'concurrency', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python', '--artifacts': 'artifactsDir', '--previous': 'previous',
-    '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort', '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256' }
+    '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort', '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--profile': 'profile' }
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown or incomplete comparison option')
     options[key] = ['limit', 'concurrency', 'brokerPort'].includes(key) ? Number(args[++i]) : args[++i]
   }
   if (![2, 4, 10, 15].includes(options.limit)) throw new Error('Comparison limit must be 2, 4, 10 or 15')
+  if (!Object.hasOwn(COMPARISON_PROFILES, options.profile)) throw new Error('Invalid comparison profile')
   if (!Number.isInteger(options.concurrency) || options.concurrency < 1 || options.concurrency > 4) throw new Error('Comparison concurrency must be 1..4')
   for (const key of ['output', 'harveyRoot', 'python', 'artifactsDir']) {
     if (!options[key]) throw new Error(`Missing comparison option: ${key}`)
@@ -51,6 +53,7 @@ export function assertFullRuntimeReady(provenance) {
 
 export async function main(args = process.argv.slice(2)) {
   const options = parseComparisonOptions(args)
+  const { model, providerOnly } = COMPARISON_PROFILES[options.profile]
   if (!options.nativeModule) throw new Error('Full comparison blocked: --native-module, --broker-origin, --broker-port, --sandbox-template and --computer-image-sha256 are required')
   if (existsSync(options.output)) throw new Error('Comparison output already exists')
   for (const name of ['AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
@@ -74,18 +77,19 @@ export async function main(args = process.argv.slice(2)) {
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker did not bind the configured port') }
   broker.origin = options.brokerOrigin
   try {
-    const harvey = createHarveyHarness({ workspace, harveyRoot: options.harveyRoot, python: options.python, corpus, artifactsDir: resolve(options.artifactsDir, 'harvey'), maxSteps: 40 })
+    const harvey = createHarveyHarness({ workspace, harveyRoot: options.harveyRoot, python: options.python, corpus, artifactsDir: resolve(options.artifactsDir, 'harvey'), maxSteps: 40, model, providerOnly })
     const broad = createBroadHarness({ workspace, corpus, artifactsDir: resolve(options.artifactsDir, 'broad'), maxSteps: 40,
       nativeMcp: true, mcp, broker, sandboxTemplate: options.sandboxTemplate,
-      computerImageSha256: options.computerImageSha256, nativeModuleHash })
+      computerImageSha256: options.computerImageSha256, nativeModuleHash, model, providerOnly })
     const config = {
-      protocol: 'harvey-vs-broad-corpus-v1', model: COMPARISON_MODEL, judge_model: COMPARISON_MODEL,
-      judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: 4000,
+      protocol: 'harvey-vs-broad-corpus-v1', profile: options.profile, model, provider_only: providerOnly, judge_model: model, judge_provider_only: providerOnly,
+      judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: 4000, judge_timeout_ms: 120000, judge_retries: 1,
       max_steps: 40, max_completion_tokens: 4000, max_words_instruction: 120,
       corpus_hash: corpus.hash, corpus_chunks: corpus.count,
       implementation_hash: implementationHash(workspace),
       harvey_commit: HARVEY_COMMIT,
       harvey_bridge_hash: createHash('sha256').update(readFileSync(resolve(workspace, 'eval/harvey-bridge.py'))).digest('hex'),
+      harvey_modal_adapter_hash: createHash('sha256').update(readFileSync(resolve(workspace, 'eval/harvey-modal-adapter.py'))).digest('hex'),
       harvey_policy: harvey.provenance,
       broad_policy: broad.provenance,
       retrieval: { profile: 'voyage', embedding: 'voyage/voyage-4-large', dimensions: 1024, reranker: 'voyage/rerank-2.5' },
@@ -109,7 +113,7 @@ export async function main(args = process.argv.slice(2)) {
       desktop: preflight.desktop, sandbox: preflight.sandbox, scoredRuntimeBroker: preflight.runtimeBroker,
       broker: brokerProof }, null, 2), { flag: 'wx', mode: 0o600 })
     const gold = JSON.parse(readFileSync(resolve(workspace, 'eval/gold.json'), 'utf8')).slice(0, options.limit)
-    const chat = gatewayChat({ key: process.env.AI_GATEWAY_API_KEY, model: COMPARISON_MODEL, timeoutMs: 120000, retries: 1, reasoningEffort: 'high' })
+    const chat = gatewayChat({ key: process.env.AI_GATEWAY_API_KEY, model, providerOnly, timeoutMs: 120000, retries: 1, reasoningEffort: 'high' })
     const result = await evaluate({ gold, modes: ['harvey', 'broad'], output: options.output, concurrency: options.concurrency, config,
       harness: { run: input => (input.mode === 'harvey' ? harvey : broad).run(input) }, chat })
     console.log(JSON.stringify(result.summary, null, 2))
