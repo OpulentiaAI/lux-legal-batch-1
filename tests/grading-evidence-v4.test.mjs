@@ -119,6 +119,36 @@ test('legacy Harvey result hashes were not recorded; changed canonical excerpt r
   assert.equal(result.proof.historical_result_hash_missing, true)
 })
 
+test('Harvey bash cat recovers multiple contiguous full chunks, never forged or truncated chunks', t => {
+  const { root, options, row } = fixture(t)
+  const secondId = 'doc-02:b:c0', secondDoc = 'doc-02', secondText = 'A separate complete rule.'
+  writeFileSync(join(options.workspace, 'corpus/chunks/second.txt'), secondText)
+  writeFileSync(join(options.workspace, 'corpus/index/chunks.jsonl'),
+    `${JSON.stringify({ chunk_id: id, doc_id: doc, path: 'corpus/chunks/source.txt' })}\n${JSON.stringify({ chunk_id: secondId, doc_id: secondDoc, path: 'corpus/chunks/second.txt' })}\n`)
+  const args = '{"command":"cat chunks/*.txt"}'
+  const call = { tool: 'bash', arguments: args, result: `[${id}]\n${text}\n[${secondId}]\n${secondText}\n` }
+  const artifact = join(root, 'artifacts/harvey/run-1/tool-results.jsonl')
+  const save = () => writeFileSync(artifact, JSON.stringify(call) + '\n')
+  row.audit.calls = [{ tool: 'bash', arguments_sha256: hash(args) }]
+  row.sources = [{ id, doc, chars: text.length, sha256: hash(text) },
+    { id: secondId, doc: secondDoc, chars: secondText.length, sha256: hash(secondText) }]
+  save()
+  const recovered = evidenceV4(options).replay(row)
+  assert.deepEqual(recovered.sources.map(source => [source.id, source.kind, source.text]),
+    [[id, 'full', text], [secondId, 'full', secondText]])
+  assert.equal(recovered.proof.binding_strength, 'legacy-artifact-snapshot-arguments-canonical')
+  for (const result of [
+    `[${id}]\n${text.slice(0, -5)}`,
+    `[${id}]\n${text.slice(0, -1)}X\n`,
+    `[${id}]\n${text}`,
+    `forged[${id}]\n${text}\n`,
+  ]) {
+    call.result = result
+    save()
+    assert.deepEqual(evidenceV4(options).replay(row).sources, [])
+  }
+})
+
 test('wrong run, altered output, unrelated ID/text, and ambiguous excerpt fail closed', t => {
   const { root, options, row, calls, file } = fixture(t)
   const evidence = evidenceV4(options)

@@ -124,6 +124,15 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (section) attach(found, id, section, origin, 'excerpt', source.text.split('\n').slice(0, start).join('\n').length + (start ? 1 : 0))
       }
     } else if (call.tool === 'grep' || call.tool === 'bash') {
+      for (const match of call.result.matchAll(/(?:^|\n)\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)) {
+        const id = match[1]
+        if (!manifest.has(id)) continue
+        const source = sourceFor(id)
+        const start = match.index + match[0].length
+        if (call.result.slice(start, start + source.text.length + 1) === `${source.text}\n`) {
+          attach(found, id, source.text, { ...origin, format: 'literal-chunk-header', outputStart: start }, 'full', 0)
+        }
+      }
       const headers = [...call.result.matchAll(/(?:^|\n)(?:[^:\n]*\/)?([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt:(\d+): ?/g)]
       for (let i = 0; i < headers.length; i++) {
         const id = headers[i][1]
