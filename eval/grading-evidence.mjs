@@ -366,19 +366,24 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
   function harvey(found, call, origin) {
     let args
     try { args = JSON.parse(call.arguments) } catch { throw new Error('Invalid evidence Harvey arguments') }
+    if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Invalid evidence Harvey arguments')
     if (call.tool === 'read' && typeof args.file_path === 'string') {
       const id = basename(args.file_path).match(/^(.+)\.txt$/)?.[1]
       if (!args.file_path.includes('/chunks/') || !id || !manifest.has(id)) return
       const source = sourceFor(id)
       const full = `[${id}]\n${source.text}\n`
-      if (!Number.isInteger(args.offset) || args.offset < 0 || !Number.isInteger(args.limit) || args.limit < 1) throw new Error('Invalid evidence read range')
+      if (args.offset != null && (!Number.isInteger(args.offset) || args.offset < 0) ||
+          args.limit != null && (!Number.isInteger(args.limit) || args.limit < 1)) throw new Error('Invalid evidence read range')
       const lines = full.split('\n')
-      const expected = lines.slice(args.offset, args.offset + args.limit).join('\n')
-      if (call.result !== expected && !(call.result === `${expected}\n` && args.offset + args.limit < lines.length)) throw new Error('Invalid evidence read contents')
+      const offset = args.offset ?? 0
+      const expected = args.offset == null && args.limit == null ? full :
+        lines.slice(offset, args.limit == null ? undefined : offset + args.limit).join('\n')
+      if (call.result !== expected && !(args.offset != null && args.limit != null && call.result === `${expected}\n` &&
+          offset + args.limit < lines.length)) throw new Error('Invalid evidence read contents')
       if (call.result === full) attach(found, id, source.text, origin, 'full', 0)
       else {
-        const start = Math.max(args.offset - 1, 0)
-        const section = call.result.split('\n').slice(args.offset === 0 ? 1 : 0).join('\n').replace(/\n$/, '')
+        const start = Math.max(offset - 1, 0)
+        const section = call.result.split('\n').slice(offset === 0 ? 1 : 0).join('\n').replace(/\n$/, '')
         if (section) attach(found, id, section, origin, 'excerpt', source.text.split('\n').slice(0, start).join('\n').length + (start ? 1 : 0))
       }
     } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, {
