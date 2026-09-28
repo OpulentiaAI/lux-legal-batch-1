@@ -155,6 +155,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       if (!match || !manifest.has(match[1]) || !match[3].trim()) continue
       const source = sourceFor(match[1])
       const lineNumber = Number(match[2])
+      if (lineNumber === 1 && match[3] === `[${source.id}]`) continue
       if (!Number.isSafeInteger(lineNumber) || lineNumber < 2) throw new Error('Invalid evidence grep coordinate')
       const lines = source.text.split('\n')
       const canonicalLine = lines[lineNumber - 2]
