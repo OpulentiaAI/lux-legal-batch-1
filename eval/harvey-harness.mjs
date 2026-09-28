@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -48,13 +48,37 @@ function invoke(python, script, request, env, cwd, args = []) {
   return new Promise((resolveResult, reject) => {
     const child = spawn(python, [script, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] })
     let stdout = ''
-    let stderr = ''
+    const stderrHash = createHash('sha256')
+    let stderrBytes = 0
+    let stderrPrefix = ''
+    let settled = false
     child.stdout.setEncoding('utf8').on('data', chunk => { stdout += chunk })
-    child.stderr.setEncoding('utf8').on('data', chunk => { stderr += chunk })
-    child.on('error', reject)
+    child.stderr.on('data', chunk => {
+      stderrHash.update(chunk)
+      stderrBytes += chunk.length
+      if (stderrPrefix.length < 8192) stderrPrefix += chunk.toString('utf8').slice(0, 8192 - stderrPrefix.length)
+    })
+    const fail = (reason, message, code = null) => {
+      if (settled) return
+      settled = true
+      const text = stderrPrefix
+      const classes = [...new Set([...text.matchAll(/(?:^|\n)(?:[A-Za-z][A-Za-z0-9_.]*\.)?(RuntimeError|ValueError|TypeError|KeyError|ImportError|ModuleNotFoundError|TimeoutError|ConnectionError|PermissionError|FileNotFoundError|JSONDecodeError|AuthenticationError|RateLimitError):/g)].map(match => match[1]))].slice(0, 8)
+      const statuses = [...new Set([...text.matchAll(/\b(?:HTTP(?:Error| status)?\s*[:=]?\s*|status(?: code)?\s*[:=]\s*)([1-5][0-9]{2})\b/gi)].map(match => Number(match[1])))].slice(0, 8)
+      const diagnostic = redact({ version: 1, reason, exitCode: code, stderrBytes,
+        stderrSha256: stderrHash.digest('hex'), stderr: classes.map(name => `${name}: [redacted]`), httpStatuses: statuses,
+        stdoutBytes: Buffer.byteLength(stdout), stdoutSha256: hash(stdout) },
+      [env.AI_GATEWAY_API_KEY, env.E2B_API_KEY, env.OPENAI_API_KEY])
+      try {
+        mkdirSync(request.artifacts, { recursive: true, mode: 0o700 })
+        writeFileSync(join(request.artifacts, 'bridge-failure.json'), JSON.stringify(diagnostic) + '\n', { mode: 0o600, flag: 'wx' })
+      } catch {}
+      reject(new Error(message))
+    }
+    child.on('error', () => fail('spawn', 'Harvey bridge process failed'))
     child.on('close', code => {
-      if (code !== 0) return reject(new Error(`Harvey bridge exited ${code}; inspect local artifacts (stderr sha256=${hash(stderr)})`))
-      try { resolveResult(JSON.parse(stdout)) } catch { reject(new Error('Invalid Harvey bridge result')) }
+      if (settled) return
+      if (code !== 0) return fail('nonzero_exit', `Harvey bridge exited ${code}; inspect local artifacts`, code)
+      try { const result = JSON.parse(stdout); settled = true; resolveResult(result) } catch { fail('invalid_json', 'Invalid Harvey bridge result', code) }
     })
     child.stdin.end(JSON.stringify(request))
   })

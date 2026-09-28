@@ -131,14 +131,21 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
   }
   function visibleFileText(found, text, origin) {
-    for (const match of text.matchAll(/(?:^|\n)\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)) {
-      const id = match[1]
+    const headed = [...text.matchAll(/(?:^|\n)(?:=== ([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt\n)?\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)]
+    for (const [index, match] of headed.entries()) {
+      const id = match[2]
       if (!manifest.has(id)) continue
+      if (match[1] && match[1] !== id) throw new Error('Invalid evidence headed chunk identity')
       const source = sourceFor(id)
       const start = match.index + match[0].length
-      if (text.slice(start, start + source.text.length + 1) === `${source.text}\n`) {
-        attach(found, id, source.text, { ...origin, format: 'literal-chunk-header', outputStart: start }, 'full', 0)
-      }
+      const next = headed[index + 1]
+      const block = text.slice(start, next ? next.index + Number(text[next.index] === '\n') : text.length)
+      const full = block.startsWith(`${source.text}\n`)
+      const excerpt = full ? source.text : block.replace(/\n{1,2}$/, '')
+      if (!full && (!origin.headPrinted || !excerpt || excerpt === source.text ||
+          !source.text.startsWith(excerpt))) continue
+      attach(found, id, excerpt, { ...origin, format: 'literal-chunk-header', outputStart: start },
+        full ? 'full' : 'excerpt', 0)
     }
     const headers = [...text.matchAll(/(?:^|\n)(?:[^:\n]*\/)?([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt:(\d+): ?/g)]
     for (let i = 0; i < headers.length; i++) {
@@ -347,7 +354,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           const origin = { artifact: name, call: index, tool: call.tool,
             outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
           if (call.tool === 'scripted_tools' || call.tool === 'exec' || call.tool === 'get_output') {
-            printedStdout(found, modelVisibleMetadata, call.output, origin)
+            printedStdout(found, modelVisibleMetadata, call.output, { ...origin,
+              headPrinted: call.tool === 'exec' && /\bhead\s+-c\s+\d+\b/.test(call.args?.command ?? '') })
           } else if (call.tool === 'read' || call.tool === 'grep') {
             let output
             try { output = JSON.parse(call.output) } catch { output = null }

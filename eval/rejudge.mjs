@@ -127,6 +127,7 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
     metrics: original.metrics, ...(original.degraded === undefined ? {} : { degraded: original.degraded }) }))
   const unavailableInventory = unavailableRows.map(({ id, mode, original_row_sha256 }) => ({ id, mode, original_row_sha256 }))
   const config = { experiment_kind: 'evidence-v4-judge-only-replay', protocol: 'evidence-v4',
+    evidence_extraction_policy: 'verified-visible-head-prefix-v2',
     original_provenance: data.provenance, replay_input_sha256: sha256(rawInput.text),
     allow_harness_failures: allowHarnessFailures, unavailable_rows: unavailableInventory,
     ...(argumentCaptures ? { argument_capture_policy: 'gateway-response-raw-tool-arguments-v1' } : {}),
