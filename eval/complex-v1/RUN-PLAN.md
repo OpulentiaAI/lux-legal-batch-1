@@ -1,5 +1,9 @@
 # Prospective launch comparison plan
 
+## Current operator workflow (28 September 2026)
+
+The operator has superseded the model-judge workflow below: let the harnesses run with `deepseek/deepseek-v4.1-flash`, then have Capy grade the saved results against the frozen criteria and actual evidence. Do not launch further DeepSeek judge runs or make their calibration a gate for execution. Historical model-judge attempts and calibration results remain preserved, but they are not the final Capy assessment. The prior judging sections below document the development history, not the current grading instruction. Answerer budgets, corpus restrictions, security checks and the development/held-out split remain unchanged.
+
 Declared before the first complex work-product agent execution on 28 September 2026. The comparison is Opulent versus the public Harvey LAB reference harness at pinned commit `845a08840869b21a5c11958aae58bf5f00a7b775`, **not Harvey's proprietary hosted product**. The task design used a newer public LAB design reference, not a silent runtime upgrade.
 
 ## Development and held-out execution
