@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { sameToken, safeError, redact } from './security.mjs';
+import { reconcileDispatch } from './dispatch-recovery.mjs';
 
 async function bodyOf(request) {
   const chunks = [];
@@ -16,6 +17,11 @@ async function bodyOf(request) {
 export function createRuntimeServer(runtime, { token, webhookSecret, rootSessionId } = {}) {
   if (!token || token.length < 32) throw new Error('Runtime bearer token must have at least 32 characters');
   const root = rootSessionId ?? runtime.allocate({ title: 'Runtime operations' }).id;
+  const persistable = value => {
+    const ctx = runtime.context(root);
+    return redact(value, [ctx.config?.scriptToken, ...(ctx.secrets?.values() ?? [])]);
+  };
+  const activeDeliveries = new Set();
   let ticking = false;
   const timer = setInterval(async () => {
     if (ticking) return;
@@ -42,13 +48,27 @@ export function createRuntimeServer(runtime, { token, webhookSecret, rootSession
         if (!sameToken(signature, expected)) return send(401, { error: 'Invalid webhook signature' });
         const delivery = request.headers['x-runtime-delivery'] ?? request.headers['x-github-delivery'];
         if (!delivery) return send(400, { error: 'Webhook delivery id is required' });
-        if (runtime.store.get('webhook_receipts', delivery)) return send(200, { duplicate: true });
-        runtime.store.put('webhook_receipts', delivery, { status: 'received', created_at: new Date().toISOString() });
+        const payload_hash = createHash('sha256').update(raw).digest('hex');
+        const prior = runtime.store.get('webhook_receipts', delivery);
+        if (prior?.payload_hash && prior.payload_hash !== payload_hash) return send(409, { error: 'Delivery id belongs to a different payload' });
+        if (activeDeliveries.has(delivery)) return send(202, { duplicate: true, status: 'dispatching' });
+        const existing = prior;
+        if (existing) {
+          const receipt = reconcileDispatch(runtime.store, 'webhook_receipts', delivery);
+          if (receipt.status === 'uncertain') return send(409, { duplicate: true, status: 'uncertain', receipt });
+          return send(200, { duplicate: true, status: receipt.status, receipt });
+        }
+        runtime.store.put('webhook_receipts', delivery, { status: 'received', payload_hash, created_at: new Date().toISOString() });
+        activeDeliveries.add(delivery);
         try {
-          const result = await runtime.dispatchEvent(root, JSON.parse(raw));
-          runtime.store.put('webhook_receipts', delivery, { status: 'completed' });
+          const result = await runtime.dispatchEvent(root, JSON.parse(raw), delivery);
+          const uncertain = result.some(item => item.error);
+          runtime.store.put('webhook_receipts', delivery, { ...runtime.store.get('webhook_receipts', delivery), status: uncertain ? 'uncertain' : 'completed', ...(uncertain ? { resolution_required: true } : {}), result: persistable(result), updated_at: new Date().toISOString() });
           return send(200, result);
-        } catch (error) { runtime.store.delete('webhook_receipts', delivery); throw error; }
+        } catch (error) {
+          runtime.store.put('webhook_receipts', delivery, { ...runtime.store.get('webhook_receipts', delivery), status: 'uncertain', resolution_required: true, error: persistable(safeError(error)), updated_at: new Date().toISOString() });
+          throw error;
+        } finally { activeDeliveries.delete(delivery); }
       }
       if (segments[0] === 'workflows' && segments[2] === 'broker' && request.method === 'POST') {
         return send(200, await runtime.workflowCall(segments[1], supplied, JSON.parse(await bodyOf(request))));
@@ -58,6 +78,17 @@ export function createRuntimeServer(runtime, { token, webhookSecret, rootSession
         return send(200, { result: await runtime.scriptCall(segments[1], supplied, body.name, body.args) });
       }
       if (!sameToken(supplied, token)) return send(401, { error: 'Unauthorized' });
+      if (url.pathname === '/dispatch-recovery' && request.method === 'GET') return send(200, {
+        occurrences: runtime.store.list('operation_occurrences').filter(row => row.status !== 'completed' && row.status !== 'acknowledged'),
+        receipts: runtime.store.list('webhook_receipts').filter(row => row.status !== 'completed' && row.status !== 'acknowledged'),
+      });
+      if (url.pathname === '/dispatch-recovery' && request.method === 'POST') {
+        const { collection, id, note } = JSON.parse(await bodyOf(request));
+        if (!['operation_occurrences', 'webhook_receipts'].includes(collection) || typeof id !== 'string' || !id || typeof note !== 'string' || !note.trim()) return send(400, { error: 'collection, id and operator note are required' });
+        const receipt = reconcileDispatch(runtime.store, collection, id);
+        if (!receipt || receipt.status !== 'uncertain') return send(409, { error: 'No uncertain dispatch with that id' });
+        return send(200, runtime.store.put(collection, id, { ...receipt, status: 'acknowledged', resolution_required: false, operator_note: persistable(note.trim()), updated_at: new Date().toISOString() }));
+      }
       if (segments[0] === 'previews') {
         const preview = runtime.store.get('previews', segments[1]);
         if (!preview || Date.parse(preview.expires_at) <= Date.now()) return send(410, { error: 'Preview expired' });

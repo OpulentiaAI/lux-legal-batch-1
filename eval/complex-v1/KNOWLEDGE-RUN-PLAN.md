@@ -1,0 +1,23 @@
+# Knowledge-work profile comparison (revised-protocol repeat)
+
+This is a separate `opulent-knowledge-v3` experiment on the frozen complex-v1 legal work-product suite, not a replacement for the historical `RUN-PLAN.md` or its closed-corpus scores. The suite measures knowledge-work behavior on these legal/accounting tasks, not general-domain performance. Keep all 15 task packets, 101 criteria, materials, references and frozen manifest unchanged. Compare the Opulent harness against the pinned public Harvey LAB harness, not Harvey's hosted product.
+
+## Execution stages and gates
+
+1. Development pilot: `task-01,task-08,task-15`. Use it to verify real provider access, saved substantive files, source visibility, script/broker behavior, and complete redacted trajectories. These tasks are development examples, never a held-out headline.
+2. Six-task revised-protocol repeat: `task-02` through `task-07`. Begin only after inspecting the pilot's completion states, actual deliverables, evidence, and material failure causes; do not require a favorable score.
+3. Twelve-task revised-protocol repeat: `task-02` through `task-07` and `task-09` through `task-14`, in that order on both arms. Inspect six-task coverage and material deficits before scaling. The already completed matched 12-task 160-step run is a repeat baseline, so neither this six-task nor twelve-task result is untouched holdout performance.
+
+Use a **distinct outside-repository output/checkpoint directory for each stage and policy revision**. The runner rejects a changed selected task set, execution policy, rendered prompt hash, script limits, corpus, or this plan's hash when resuming a checkpoint. Retain all attempts and failures; do not overwrite historical outputs. Run `node eval/complex-v1/freeze.mjs --check` before launch.
+
+## Matched answerer protocol
+
+For both arms use the exact Modal-only `deepseek/deepseek-v4.1-flash` answerer, **160 agent steps and 32,768 maximum completion tokens per call**, with the same frozen public task packet and corpus. Pass `--instruction-profile opulent-knowledge-v3 --max-steps 160` to the complex-v1 runner. Keep its approved initial-scripted model-visible inventory and native MCP/corpus route distinct from dispatcher permissions; neither a catalog entry nor a configured server proves provider connectivity. Preserve excluded tools, operator workflow approvals, authentication, repository scope, and secret protections. The historical default profile and run-plan remain available and unchanged.
+
+Save each requested artifact and verify its bytes/content before accepting completion. Preserve immutable grader evidence, the full redacted per-session conversation/event trajectory, bounded redacted script-call arguments/results and statuses, actual parent-visible tool results, child-only session histories labeled as such, terminal failures, timestamps and hashes. Child-only or script-only evidence cannot establish answerer source visibility unless its content is actually returned in the parent's model-visible tool response. Clearly label truncated ledger values; never persist credentials, authenticated URLs or extracted image/base64 payloads in trajectories. Record missing provider access and skipped live checks explicitly rather than treating mocked tests as capability proof.
+
+Probe browser and general-domain capabilities separately from scored legal tasks, under their actual approved surface and provider configuration. Web pages, browser outputs and general sources are not automatically legal authority or corpus evidence. An external-source fidelity judgment requires the exact source text seen by the model, identity/version/retrieval time and visible excerpts; the existing corpus-only evidence adapter does not supply that for arbitrary providers.
+
+## Grading and reporting
+
+After **both answerer arms finish**, have Capy grade saved outputs against the existing frozen criteria and the actual visible evidence. Do not launch DeepSeek judge runs, change the grading CLI, or change scores to accommodate this profile. Preserve incomplete attempts, missing files, unsupported legal claims, unresolved criteria and the denominator for each stage. Report answer quality, accuracy, execution completion, wall time, tokens and tool use separately; record turns without turn-count penalties until explicitly requested. Investigate material losses using the initial task, ordered events, relevant calls/results, child-to-parent boundaries and actual files. Distinguish observed failures from hypotheses and do not assume one arm wins. No live model/provider run is authorized by this plan alone.

@@ -2,6 +2,8 @@
 
 The harness supports broader tool use than the original legal benchmark. **For future harness evaluations, override the corpus-only policy when the task needs MCP, additional corpus tools, execution or other included capabilities.** Preserve the closed-corpus protocol as a separate baseline rather than treating it as a runtime-wide requirement.
 
+The separate [`opulent-knowledge-v3` protocol](complex-v1/KNOWLEDGE-RUN-PLAN.md) and [runtime capability guide](../runtime/KNOWLEDGE-CAPABILITIES.md) define a staged 3→6→12 revised-protocol repeat with complete per-arm trajectories and Capy grading after both answerers finish. Select `--instruction-profile opulent-knowledge-v3 --max-steps 160` on the complex-v1 runner: its knowledge instructions, per-script 64/8 limits and trajectory/checkpoint pass-through are wired, while the **legal pilot intentionally keeps its existing approved tool policy**. Browser/waits do not belong to its allowlist; verify them in separately scoped `createRuntime` probes using `runtimeCapabilities: ['browser-v1', 'operation-waits-v1']` and explicit `allowedTools` / model-visible grants. Keep outputs/checkpoints separate and label mock, local Chromium, live E2B/model and credential-blocked provider evidence distinctly; full integrated validation remains pending.
+
 ## Existing baseline commands
 
 ### GPT-6 Luna experiment

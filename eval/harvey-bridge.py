@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import sys
 import tarfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -96,6 +97,94 @@ def redact_local(value):
             value = value.replace(secret, "[redacted]")
     return value
 
+
+SENSITIVE_FIELD = re.compile(r"authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|access[_-]?key|signature", re.I)
+IMAGE_DATA = re.compile(r"data:image/[^\s;,]+;base64,[A-Za-z0-9+/=]+", re.I)
+AUTH_VALUE = re.compile(r"\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*", re.I)
+SECRET_ASSIGNMENT = re.compile(r"(?i)(\b(?:authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|client[_-]?secret|access[_-]?key)\b\s*[:=]\s*)(?:[\"']?)[^\s,;&}\"']+", re.I)
+QUOTED_SECRET = re.compile(r'(?i)(["\'](?:authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|access[_-]?key)["\']\s*:\s*)(?:"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[^\s,;}]+)')
+URL_QUERY_SECRET = re.compile(r"([?&](?:[^=&]*(?:token|key|secret|password|signature|auth|credential)[^=&]*)=)[^\s&#\"',}]+", re.I)
+
+
+def scrub_trajectory(value, field=""):
+    if SENSITIVE_FIELD.search(field) or field.lower() in {"headers", "reasoning", "reasoning_content", "provider_metadata", "image", "image_url", "base64", "image_data"}:
+        return "[redacted]"
+    if isinstance(value, dict):
+        return {key: scrub_trajectory(item, key) for key, item in value.items()}
+    if isinstance(value, list):
+        return [scrub_trajectory(item, field) for item in value]
+    if not isinstance(value, str):
+        return value
+    value = IMAGE_DATA.sub("[redacted image]", value)
+    value = re.sub(r"(https?://)[^\s/@]+@", r"\1[redacted]@", value)
+    value = URL_QUERY_SECRET.sub(r"\1[redacted]", value)
+    value = AUTH_VALUE.sub("[redacted authorization]", value)
+    value = QUOTED_SECRET.sub(r"\1\"[redacted]\"", value)
+    value = SECRET_ASSIGNMENT.sub(r"\1[redacted]", value)
+    for name, secret in os.environ.items():
+        if len(secret) >= 8 and name not in {"PATH", "PYTHONPATH", "PWD", "HOME", "SHELL", "LANG", "TERM"}:
+            value = value.replace(secret, "[redacted]")
+    return redact_local(value)
+
+
+class Trajectory:
+    def __init__(self, path):
+        self.path = path
+        self.turn = 0
+        self.pending = []
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        self.stream = os.fdopen(fd, "w", encoding="utf-8")
+
+    def append(self, event, **fields):
+        record = scrub_trajectory({"at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+                                   "event": event, **fields})
+        self.stream.write(json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n")
+        self.stream.flush()
+        os.fsync(self.stream.fileno())
+
+    def close(self):
+        self.stream.close()
+
+
+class TracedAdapter:
+    def __init__(self, adapter, trajectory):
+        self.adapter = adapter
+        self.trajectory = trajectory
+
+    def chat(self, messages, tools):
+        trace = self.trajectory
+        trace.turn += 1
+        trace.append("model_call", turn=trace.turn, messageCount=len(messages))
+        try:
+            response = self.adapter.chat(messages, tools)
+        except BaseException as error:
+            trace.append("model_failure", turn=trace.turn, errorType=type(error).__name__)
+            raise
+        trace.pending = [(call.id, call.name, call.arguments) for call in response.tool_calls]
+        trace.append("assistant", turn=trace.turn, text=response.text,
+                     toolCalls=[{"id": call.id, "name": call.name, "arguments": call.arguments}
+                                for call in response.tool_calls], inputTokens=response.input_tokens,
+                     outputTokens=response.output_tokens)
+        return response
+
+    def make_tool_result_messages(self, results):
+        messages = self.adapter.make_tool_result_messages(results)
+        for call_id, result in results:
+            self.trajectory.append("tool_result", turn=self.trajectory.turn, toolCallId=call_id, result=result)
+        self.trajectory.pending = []
+        return messages
+
+    def make_system_message(self, content):
+        return self.adapter.make_system_message(content)
+
+    def make_user_message(self, content):
+        message = self.adapter.make_user_message(content)
+        self.trajectory.append("user", content=content)
+        return message
+
+
+active_trajectory = None
+
 REMOTE_EXECUTOR = r'''
 import base64
 import json
@@ -125,6 +214,7 @@ class LocalE2BSandbox(Sandbox):
             return ExecResult(str(error.stdout or ""), str(error.stderr or ""), None, True)
 
 def main():
+    global active_trajectory
     request = json.loads(base64.b64decode(sys.argv[1]))
     sandbox = LocalE2BSandbox(documents_dir="/workspace/documents",
         output_dir="/workspace/output", workspace_dir="/workspace", default_timeout=60)
@@ -279,7 +369,11 @@ def main():
     if sorted(tool["name"] for tool in tools) != ["bash", "edit", "glob", "grep", "read", "write"]:
         raise RuntimeError("Harvey tool policy changed")
     prompt = SYSTEM_PROMPT_PREAMBLE + load_skills(DEFAULT_SKILLS)
-    artifacts.mkdir(parents=True, exist_ok=False)
+    artifacts.mkdir(parents=True, exist_ok=False, mode=0o700)
+    trajectory = Trajectory(artifacts / "trajectory.jsonl") if not smoke else None
+    active_trajectory = trajectory
+    if trajectory:
+        trajectory.append("run_start", model=model)
     source_files = validate_corpus(documents, request["corpus_hash"])
     work_product = request.get("work_product")
     if work_product:
@@ -394,9 +488,19 @@ def main():
 
         class RemoteExecutor:
             def execute(self, tool, arguments):
-                result = self.rpc({"action": "execute", "tool": tool, "arguments": arguments})
+                call_id = trajectory.pending[0][0] if trajectory.pending else None
+                try:
+                    result = self.rpc({"action": "execute", "tool": tool, "arguments": arguments})
+                except BaseException as error:
+                    trajectory.append("tool_failure", turn=trajectory.turn, toolCallId=call_id, tool=tool,
+                                      arguments=arguments, errorType=type(error).__name__)
+                    raise
+                if trajectory.pending:
+                    trajectory.pending.pop(0)
+                trajectory.append("tool_output", turn=trajectory.turn, toolCallId=call_id,
+                                  tool=tool, arguments=arguments, result=result)
                 with (artifacts / "tool-results.jsonl").open("a", encoding="utf-8") as stream:
-                    stream.write(redact_local(json.dumps({"tool": tool, "arguments": arguments, "result": result}, ensure_ascii=False)) + "\n")
+                    stream.write(json.dumps(scrub_trajectory({"tool": tool, "arguments": arguments, "result": result}), ensure_ascii=False) + "\n")
                 return result
 
             def get_metrics(self):
@@ -414,7 +518,7 @@ def main():
         else:
             adapter = OpenAIAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000))
         result = run_agent(
-            adapter=adapter,
+            adapter=TracedAdapter(adapter, trajectory),
             system_prompt=prompt,
             user_prompt=(
                 ("Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
@@ -436,9 +540,6 @@ def main():
             max_turns=request["max_steps"],
             transcript_path=None,
         )
-        with (artifacts / "transcript.jsonl").open("w", encoding="utf-8") as stream:
-            for message in result["messages"]:
-                stream.write(redact_local(json.dumps(message, default=str, ensure_ascii=False)) + "\n")
         final_text = final_answer_text(result["messages"])
         if work_product:
             answer = final_text
@@ -468,9 +569,18 @@ def main():
             "materialHashes": {row["path"]: hashlib.sha256(row["content"].encode("utf-8")).hexdigest() for row in work_product["materials"]},
             "taskSha256": hashlib.sha256(json.dumps(task, ensure_ascii=False).encode("utf-8")).hexdigest()} if work_product else {}),
     }
-    (artifacts / "bridge-result.json").write_text(redact_local(json.dumps(payload, ensure_ascii=False)), encoding="utf-8")
+    (artifacts / "bridge-result.json").write_text(json.dumps(scrub_trajectory(payload), ensure_ascii=False), encoding="utf-8")
+    trajectory.append("run_complete", finishedCleanly=result["finished_cleanly"], turnCount=result["turn_count"])
+    trajectory.close()
+    active_trajectory = None
     print(json.dumps(payload, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BaseException as error:
+        if active_trajectory is not None:
+            active_trajectory.append("run_failure", errorType=type(error).__name__)
+            active_trajectory.close()
+        raise

@@ -12,12 +12,28 @@ const preparedManifest = JSON.parse(preparedManifestText)
 if (sha256(prepared) !== preparedManifest.addendumSha256 || preparedManifest.inheritedBaseSha256 !== manifest.baseSha256) throw new Error('Prepared Opulent instructions differ from the audited manifest')
 const skillsManifestText = readFileSync(new URL('../skills/manifest-v1.json', import.meta.url), 'utf8')
 if (sha256(skillsManifestText) !== preparedManifest.builtinSkillsManifestSha256) throw new Error('Prepared Opulent skill manifest differs from audited instructions')
+const knowledge = readFileSync(new URL('./knowledge-v3.md', import.meta.url), 'utf8').trimEnd()
+const knowledgeManifestText = readFileSync(new URL('./manifest-knowledge-v3.json', import.meta.url), 'utf8')
+const knowledgeManifest = JSON.parse(knowledgeManifestText)
+if (sha256(knowledge) !== knowledgeManifest.baseSha256) throw new Error('Knowledge Opulent instructions differ from the audited manifest')
 
 export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
-  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile === 'opulent-knowledge-v3') {
+    variant ??= profile
+    const systemPrompt = appendix ? `${knowledge}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : knowledge
+    return { systemPrompt, provenance: {
+      variant, version: knowledgeManifest.version, profile,
+      sourceZipSha256: knowledgeManifest.sourceZipSha256,
+      sourceSystemSha256: knowledgeManifest.sourceSystemSha256,
+      baseSha256: knowledgeManifest.baseSha256,
+      manifestSha256: sha256(knowledgeManifestText),
+      effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
   variant ??= profile
   const selected = profile === 'opulent-prepared-v2' ? preparedManifest : manifest
   const selectedText = profile === 'opulent-prepared-v2' ? preparedManifestText : manifestText

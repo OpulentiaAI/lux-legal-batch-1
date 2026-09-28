@@ -1,0 +1,61 @@
+{
+  "version": "opulent-knowledge-v3",
+  "profile": "opulent-knowledge-v3",
+  "sourceZipSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+  "sourceSystemSha256": "13ceffa41effb92389dd0921da4669047f03b09808b685ec41ada26bec979655",
+  "sourceLineCount": 517,
+  "baseSha256": "5257b9af33c2b8476155bd08ccb65202c88352459dc60d4bb48d2c26168862b8",
+  "lineHashRule": "SHA-256 of UTF-8 source bytes for inclusive 1-based line ranges including original line terminators",
+  "sourceSections": [
+    {
+      "lines": [1, 14],
+      "sha256": "9d3aa5964dde47830e5b4cef78cd9c2402375931d40bdb296dcf605e94f7613a",
+      "disposition": "Replace software-engineering and hosted identity with a standalone Opulent knowledge-work role; retain authorization and truthfulness boundaries."
+    },
+    {
+      "lines": [15, 64],
+      "sha256": "514e8fa50e57afeaef130faf37460328067f5b20f68c84401ae2bbacd1a256e6",
+      "disposition": "Adapt concise interactive progress and nonblocking completed delivery to local message_user fields; block only for a real user decision or access request. Exclude hosted message states, automatic wakes, and PR callbacks."
+    },
+    {
+      "lines": [65, 70],
+      "sha256": "e3e30a1944ed0e129e585432b4c8df390c340dd5ceb3b2f0c30f752cb6366144",
+      "disposition": "Adapt multi-step planning to available task_create/task_update or todo_write contracts."
+    },
+    {
+      "lines": [71, 145],
+      "sha256": "38f64b18678b0af031655c62181d7d9fe92d2986cbe2d3ba04a3b52122be94f9",
+      "disposition": "Generalize perseverance, verification, parallelism, calibrated claims and concise reporting to research, drafting and data; exclude SWE-only workflow and unsupported control-plane tools."
+    },
+    {
+      "lines": [146, 198],
+      "sha256": "28d47f7eff910e9a6a8e076a73566e11b60ce9af9eacf8b733a583ca1df2ba3f",
+      "disposition": "Replace hosted machine, child and thread lifecycle claims with local delegation and independently verified child evidence; exclude app navigation."
+    },
+    {
+      "lines": [199, 259],
+      "sha256": "fb0a4623fa1bb92ac45e1c88132f2e48135130107191ef67bd495a9c49ca4b4f",
+      "disposition": "Exclude Git/PR, review, automation, desktop and environment procedures; retain no merge or automation enablement without explicit request."
+    },
+    {
+      "lines": [260, 274],
+      "sha256": "cac54778f30111a92edf5a32ae1890d05d1316018a0997187b74693015ae82b9",
+      "disposition": "Exclude hosted issue-reporting and link-rendering mechanics."
+    },
+    {
+      "lines": [275, 398],
+      "sha256": "3e3739890cf9020a9aa26be7dbb756ce0464df33c689fbdd4dda135c10617a43",
+      "disposition": "Exclude source-specific date, environment, identity, model, skill-path and drive inventories; describe local skill discovery generically."
+    },
+    {
+      "lines": [399, 515],
+      "sha256": "9a3f2c224a91f84733a190c2fa5ccb140b57ff530d1138afeed1f72a2b7efb4f",
+      "disposition": "Replace hosted codemode and MCP catalogs with real local schema discovery, tool allowlists and approval contracts."
+    },
+    {
+      "lines": [516, 517],
+      "sha256": "db06b14476b28b90002d7592f37cad3ebeed66ee69e6361f69f4451ac2fe9d23",
+      "disposition": "Use local interactive message_user fields; explicitly let a noninteractive evaluation appendix override messaging and termination."
+    }
+  ]
+}

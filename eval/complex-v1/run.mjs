@@ -24,7 +24,7 @@ function executionHash(root) {
       for (const item of readdirSync(join(root, path), { withFileTypes: true })) {
         const relativePath = join(path, item.name)
         if (item.isDirectory()) visit(relativePath)
-        else if (item.isFile() && /\.(?:mjs|ts)$/.test(item.name)) files.push(relativePath)
+        else if (item.isFile() && /\.(?:mjs|ts|cjs|py)$/.test(item.name)) files.push(relativePath)
       }
     }
     visit(directory)
@@ -47,16 +47,20 @@ function validMaxSteps(value) {
 export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
-    '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps' }
+    '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps',
+    '--instruction-profile': 'instructionProfile' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => key !== 'maxSteps')) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  options.instructionProfile ??= 'opulent-prepared-v2'
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
+  if (options.instructionProfile === 'opulent-knowledge-v3' && options.maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
@@ -107,10 +111,18 @@ function failure(error, stage) {
     kind: sessionFailed ? terminalStatus === 'cancelled' ? 'SessionCancelled' : 'SessionFailed' : missingOutput ? 'MissingDeliverable' : error?.preflightStage ?? error?.name ?? 'Error',
     message: sessionFailed ? 'Evaluation session failed' : missingOutput ? 'Required work-product files missing' : /^(?:Invalid|Missing|Checkpoint|Full comparison blocked)/.test(error?.message ?? '') ? error.message : 'Evaluation operation failed',
     answer: typeof error?.answer === 'string' ? redact(error.answer) : null, trace: error?.trace ?? [],
-    metrics: error?.metrics ?? null, sources: error?.sources ?? [], audit: error?.audit ?? null,
+    metrics: error?.metrics ?? null, sources: error?.sources ?? [], audit: error?.audit ? { ...error.audit,
+      ...(error.audit.trajectoryArtifact ? { trajectory: trajectoryArtifact(error.audit) } : {}) } : null,
     deliverables: error?.deliverables ?? [], missingDeliverables: error?.missingDeliverables ?? [],
     artifactPaths: Array.isArray(error?.artifactPaths) ? error.artifactPaths.filter(path => typeof path === 'string' && existsSync(path))
       .map(path => ({ path, sha256: fileHash(path) })) : [] }
+}
+
+function trajectoryArtifact(audit) {
+  const path = audit.trajectoryArtifact
+  if (typeof path !== 'string' || !isAbsolute(path) || !outside(path, workspace) || !existsSync(path) ||
+      fileHash(path) !== audit.trajectorySha256) throw new Error('Missing or changed redacted trajectory artifact')
+  return { path, sha256: audit.trajectorySha256 }
 }
 
 function evidenceArtifacts(result, mode, output) {
@@ -167,7 +179,8 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
         attempt = { status: 'completed', answer: result.answer ?? '', deliverables: task.deliverables.map(file => result.deliverables.find(item => item.file === file) ?? { file, content: null, sha256: null }),
           artifactPaths: evidence?.grader ?? result.artifactPaths,
           sources: result.sources, metrics: { ...result.metrics, elapsedMs: Math.round(performance.now() - start), cost: result.metrics.cost ?? null },
-          audit: { ...result.audit, originalArtifacts: evidence?.originals ?? [] }, missingDeliverables: result.missingDeliverables ?? [], grading: { status: 'ungraded' } }
+          audit: { ...result.audit, ...(result.audit.trajectoryArtifact ? { trajectory: trajectoryArtifact(result.audit) } : {}),
+            originalArtifacts: evidence?.originals ?? [] }, missingDeliverables: result.missingDeliverables ?? [], grading: { status: 'ungraded' } }
       } catch (error) {
         attempt = { ...failure(error, 'answerer'), elapsedMs: Math.round(performance.now() - start), grading: { status: 'ungraded' } }
       }
@@ -181,6 +194,8 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   const source = dependencies.workspace ?? workspace
   const suiteRoot = dependencies.suite ?? suite
   const manifestPath = join(suiteRoot, 'manifest.json')
@@ -211,7 +226,7 @@ export async function run(options, dependencies = {}) {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
-        nativeModuleHash, toolSurface: 'initial-scripted-v1' }),
+        nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
       model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps, maxCompletionTokens: 32768,
@@ -219,10 +234,12 @@ export async function run(options, dependencies = {}) {
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
         'eval/harvey-modal-adapter.py', 'runtime/broad-legal-eval.mjs', 'runtime/eval-broker.mjs',
-        'runtime/eval-model-profile.mjs'].map(path => [path, fileHash(join(source, path))])),
+        'runtime/eval-model-profile.mjs', 'runtime/script-execution.mjs'].map(path => [path, fileHash(join(source, path))])),
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
-      nativeModuleHash, harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
+      ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
+      nativeModuleHash, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
+      harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
       integration: { sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
         nativeMcp: mcp.server, servers: redact(mcp.servers), probesSha256: hash(JSON.stringify(mcp.probes)),
         brokerPort: options.brokerPort, brokerOriginSha256: hash(options.brokerOrigin) },
