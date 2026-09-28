@@ -131,12 +131,15 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, metadata, child, origin, depth + 1)
     }
   }
-  function visibleFileText(found, text, origin) {
+  function visibleFileText(found, text, origin, command) {
+    const printedCat = typeof command === 'string' && command.match(/^(?:cd [^;\n]+;\s*)?for f in ([A-Za-z0-9_:-]+\.txt(?: +[A-Za-z0-9_:-]+\.txt)*); do echo "=== \$f"; done; cat ([A-Za-z0-9_:-]+)\.txt(?:;|$)/)
+    const catPrelude = printedCat && {
+      id: printedCat[2], text: `${printedCat[1].split(/ +/).map(name => `=== ${name}`).join('\n')}\n`,
+    }
     const headed = [...text.matchAll(/(?:^|\n)(?:(#{2,}|={2,}) ([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt(?: (#{2,}|={2,}))?\n)?\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)]
     for (const [index, match] of headed.entries()) {
       const id = match[4]
       if (!manifest.has(id)) continue
-      if (match[2] && match[2] !== id) throw new Error('Invalid evidence headed chunk identity')
       if (match[3] && match[3] !== match[1]) throw new Error('Invalid evidence heading markers')
       const source = sourceFor(id)
       const start = match.index + match[0].length
@@ -144,6 +147,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const block = text.slice(start, next ? next.index + Number(text[next.index] === '\n') : text.length)
       const printed = block.endsWith('\n') ? block.slice(0, -1) : block
       const full = block.startsWith(`${source.text}\n`)
+      if (match[2] && match[2] !== id && !(index === 0 && full && catPrelude?.id === id &&
+          text.slice(0, start - `[${id}]\n`.length) === catPrelude.text)) throw new Error('Invalid evidence headed chunk identity')
       const excerpt = full ? source.text : printed.endsWith('\ufffd') &&
         source.text.codePointAt(printed.length - 1) > 127 ? printed.slice(0, -1) : printed
       if (!full && (!origin.headPrinted || !excerpt || excerpt === source.text ||
@@ -255,7 +260,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       }
     }
   }
-  function printedStdout(found, metadata, output, origin) {
+  function printedStdout(found, metadata, output, origin, command) {
     let envelope
     try { envelope = JSON.parse(output) } catch { return }
     if (!envelope || Array.isArray(envelope) || typeof envelope !== 'object' ||
@@ -270,7 +275,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         try { records = lines.map(line => JSON.parse(line)) } catch {}
       }
       if (!records) {
-        visibleFileText(found, envelope.stdout, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout) })
+        visibleFileText(found, envelope.stdout, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout) }, command)
         return
       }
     }
@@ -280,7 +285,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (value.length > 1_000_000) return
         try { visible(JSON.parse(value), recordOrigin, depth + 1) } catch (error) {
           if (error?.message?.startsWith('Invalid evidence')) throw error
-          visibleFileText(found, value, recordOrigin)
+          visibleFileText(found, value, recordOrigin, command)
         }
         return
       }
@@ -319,7 +324,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       }
     } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, {
       ...origin, headPrinted: call.tool === 'bash' && /\bhead\s+-c\s+\d+\b/.test(args?.command ?? ''),
-    })
+    }, args?.command)
   }
   function verifyFullSources(row, found) {
     if (!Array.isArray(row.sources)) throw new Error('Invalid evidence source inventory')
@@ -376,7 +381,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
             outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
           if (call.tool === 'scripted_tools' || call.tool === 'exec' || call.tool === 'get_output') {
             printedStdout(found, modelVisibleMetadata, call.output, { ...origin,
-              headPrinted: call.tool === 'exec' && /\bhead\s+-c\s+\d+\b/.test(call.args?.command ?? '') })
+              headPrinted: call.tool === 'exec' && /\bhead\s+-c\s+\d+\b/.test(call.args?.command ?? '') }, call.tool === 'exec' ? call.args?.command : undefined)
           } else if (call.tool === 'read' || call.tool === 'grep') {
             let output
             try { output = JSON.parse(call.output) } catch { output = null }
