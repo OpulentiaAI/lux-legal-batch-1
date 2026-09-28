@@ -1,0 +1,8 @@
+{
+  "id": "task-14",
+  "title": "Industry contributions and capital/rights structuring",
+  "instructions": "Prepare memo.md for the fictional founder. Classify the proposed contributions and rights across Belgian SRL, Luxembourg ordinary SARL, SARL-S, and SCS; correct the draft terms with a workable conditional structure for the stated preferred forms. Distinguish capital funding from service/industry rights, older doctrinal descriptions from the Luxembourg statute consolidated 29 May 2026, and legal rules from unresolved valuation and transaction facts. The Belgian SRL discussion is a 2021 comparative doctrinal account, not proof of unchanged Belgian law in 2026: qualify current-law conclusions. Use only the supplied corpus for law and cite actual consulted passages by canonical chunk ID.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/contributions.csv", "materials/terms.md"],
+  "scope": { "jurisdiction": "Belgium and Luxembourg", "companyForm": "Belgian SRL/BV; Luxembourg SARL, SARL-S and SCS", "asOf": "2026-09-28" }
+}

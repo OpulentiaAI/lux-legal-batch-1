@@ -1,0 +1,7 @@
+FICTIONAL CLIENT MATERIAL — internal forecast; month,opening_cash,receipts,operating_outflows,closing_cash_without_new_funding
+1,8000,0,10000,-2000
+2,-2000,3000,9000,-8000
+3,-8000,6000,9000,-11000
+4,-11000,12000,9000,-8000
+5,-8000,18000,10000,0
+6,0,22000,11000,11000

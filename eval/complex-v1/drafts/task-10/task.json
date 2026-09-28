@@ -1,0 +1,8 @@
+{
+  "id": "task-10",
+  "title": "Luxembourg–France complete split: executable closing sequence",
+  "instructions": "Using only the legal corpus for law and the supplied hypothetical records for facts, draft memo.md for the transaction team. Reconcile the proposed 21 December vote and 22 December completion claim against the 2025 European cross-border split regime. Give a dependency-ordered, relative or calendar-dated action plan through legal effectiveness, identify what the Luxembourg and destination authorities must check, and distinguish accounting or contractual dates from legal effectiveness. Flag missing French-law confirmations rather than inventing French formalities. Cite visible corpus passages with canonical chunk IDs; do not treat historic scission doctrine as overriding the 2025 statute.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/workplan.md"],
+  "scope": { "jurisdiction": "Luxembourg split company; France beneficiary companies (French procedural law unverified)", "companyForm": "Luxembourg SA; two newly incorporated French SAS beneficiaries", "asOf": "2026-10-01, applying Luxembourg statutory compilation through 2026-05-29" }
+}

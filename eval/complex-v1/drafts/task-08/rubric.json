@@ -1,0 +1,230 @@
+{
+  "criteria": [
+    {
+      "id": "08-01",
+      "requirement": "Distinguish reserve distribution from unapproved current profit while allowing either lawful organ route.",
+      "pass": "Explains that shareholders can consider the EUR 120,000 pre-existing available reserves in-year but cannot themselves declare EUR 40,000 unapproved current profit as an ordinary reserve distribution; alternatively the articles-authorized board may consider a single interim dividend including both tranches if the combined amount satisfies art. 461-3 statement, formula, reviewer and timing conditions. Does not require the split path exclusively.",
+      "fail": "Allows the October general meeting to declare all EUR 160,000 as an ordinary prior-reserve dividend, or bars a properly conditioned board interim route that includes reserves and current results.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9",
+          "quote": "de distribuer aux actionnaires un dividende prélevé sur les réserves disponibles"
+        },
+        {
+          "id": "doc-09:s0456:c0",
+          "sha256": "26ce05d104012a274f77ea94971f759a17de3f8ebf2f996f4c4d3f3625f8e299",
+          "quote": "l’assemblée des associés pourrait à tout moment provoquer la distribution de ces réserves bilantaires"
+        },
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "les statuts autorisent le conseil d'administration ou le directoire"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/treasury-email.md",
+          "quote": "EUR 120,000 from reserves shown in the last approved accounts and EUR 40,000 from 2026 trading profit not yet approved by shareholders"
+        }
+      ],
+      "minimalPass": "Either have the AG declare verified EUR 120k old reserves and the board assess EUR 40k interim profit, or use a single EUR 160k board interim decision subject to art. 461-3 controls and no double count.",
+      "nearMiss": "The October AG may declare EUR 160k from the unapproved 2026 profit without an interim-dividend process.",
+      "failureFamily": "classification"
+    },
+    {
+      "id": "08-02",
+      "requirement": "Apply statutory net-asset and distributable-sum limits to reserve tranche.",
+      "pass": "Computes 2025 net-asset cushion EUR 450,000 (1.55m minus 1m capital minus 100k locked reserve), recognizes only EUR 120,000 identified free reserves are on the table, and conditions payment on confirming no depletion/loss.",
+      "fail": "Uses EUR 450,000 as automatically distributable free reserves or ignores capital/reserve protection.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "inférieur au montant du capital souscrit, augmenté des réserves que la loi ou les statuts ne permettent pas de distribuer"
+        },
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "des prélèvements effectués sur des réserves disponibles à cet effet"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "net assets were EUR 1,550,000, subscribed capital EUR 1,000,000 and nondistributable legal/statutory reserves EUR 100,000"
+        },
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "The EUR 120,000 free-reserve balance remains earmarked as available; confirm it has not been depleted since year-end."
+        }
+      ],
+      "minimalPass": "EUR 450k net-asset headroom, but only EUR 120k identified free reserves are proposed; confirm that balance remains available.",
+      "nearMiss": "Distribute EUR 450k just because equity exceeds subscribed capital.",
+      "failureFamily": "calculation"
+    },
+    {
+      "id": "08-03",
+      "requirement": "Apply board-interim conditions to current-profit tranche.",
+      "pass": "Conditions EUR 40,000 board decision on authorized articles, a dated statement showing sufficient distributable funds, and commissaire/auditor verification; flags the currently missing report.",
+      "fail": "Approves board transfer on the unsigned management statement and articles alone, without the required review.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "il est établi un état comptable faisant apparaître que les fonds disponibles pour la distribution sont suffisants"
+        },
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "le commissaire ou le réviseur d'entreprises"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "The auditor/commissaire has not issued a report on that statement."
+        }
+      ],
+      "minimalPass": "Board interim route exists in the articles, but obtain a dated sufficient-funds statement and commissaire report before declaration.",
+      "nearMiss": "The board can transfer EUR 40k now because accounting estimates show a profit.",
+      "failureFamily": "condition"
+    },
+    {
+      "id": "08-04",
+      "requirement": "Check two-month interim decision deadline.",
+      "pass": "Treats the 31 August management statement as draft, not conclusively established on that date; if the formal accounting statement was established 31 August, 15 October is within two months, otherwise requests the actual establishment date and retests the board-decision deadline.",
+      "fail": "Unconditionally starts the statutory clock from the draft statement date or declares 15 October timely without checking when a qualifying statement was actually established.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "ne peut être prise plus de deux mois après la date à laquelle a été arrêté l'état comptable"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "The draft 31 August 2026 management statement"
+        },
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "board meeting tentatively scheduled for 15 October 2026"
+        }
+      ],
+      "minimalPass": "Confirm when the qualifying accounting statement was established; if 31 August, a 15 October board decision is within two months, subject to other conditions.",
+      "nearMiss": "The draft 31 August management numbers conclusively start the two-month statutory clock, so 15 October is automatically timely.",
+      "failureFamily": "timing"
+    },
+    {
+      "id": "08-05",
+      "requirement": "Do not misrepresent comparative authority or prudent verification as a Luxembourg statutory command.",
+      "pass": "If relying on the Belgian case discussed in the Luxembourg treatise, attributes it as comparative rather than binding Luxembourg law; a separate adequately sourced Luxembourg analysis need not cite that case. A recommended interim balance check for reserve depletion is not described as mandatory solely on the treatise’s say-so.",
+      "fail": "Presents Belgian Cassation as binding Luxembourg law, or invents a Luxembourg statutory interim-balance requirement from the treatise’s recommendation.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9",
+          "quote": "La Cour de cassation belge"
+        },
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9",
+          "quote": "L’établissement d’un bilan intérimaire est donc à conseiller"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "confirm it has not been depleted since year-end"
+        }
+      ],
+      "minimalPass": "Verify that reserves remain available; if mentioning the Belgian case, distinguish its provenance from domestic authority.",
+      "nearMiss": "Belgian Cassation requires a filed interim balance for every Luxembourg SA reserve payout.",
+      "failureFamily": "source_hierarchy"
+    },
+    {
+      "id": "08-06",
+      "requirement": "Recognize parent's entitlement on corporate declaration, not cash or subsidiary profit.",
+      "pass": "Rejects 30 September parent accrual because neither shareholder reserve declaration nor a lawful interim board decision existed; recognizes the EUR 120,000 on a valid 1 October shareholder declaration if that route is used, and the EUR 40,000 (or a combined interim amount) only upon a valid board interim decision, not the 16 October cash transfer. Explains that the cited shareholder-declaration passage directly supports the AG leg and the interim-board decision needs separate art. 461-3 support.",
+      "fail": "Accrues EUR 160,000 on 30 September merely because reserves/profit/cash exist or waits until cash receipt for recognition.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a",
+          "quote": "Les dividendes doivent être comptabilisés à la date de leur acquisition"
+        },
+        {
+          "id": "doc-07:s0083:c0",
+          "sha256": "b1fe514db128f70978fc83e757e839c7a283f93407b46a395c4014aa6ce0b33b",
+          "quote": "le bénéfice net distribuable devient dividende du fait de sa mise en distribution par l’assemblée générale."
+        },
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "la décision du conseil d'administration ou du directoire, selon le cas, de distribuer un acompte"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "The parent's 30 September 2026 year-end precedes either proposed corporate decision."
+        }
+      ],
+      "minimalPass": "No 30 September accrual; recognize EUR 120k at its lawful 1 October AG declaration if chosen, and interim EUR 40k or combined EUR 160k only at a valid board decision, not 16 October cash receipt.",
+      "nearMiss": "Accrue on 30 September and reverse when the 16 October bank transfer clears.",
+      "failureFamily": "accounting"
+    },
+    {
+      "id": "08-08",
+      "requirement": "Avoid confusing ordinary reserve distribution and interim current-results formula.",
+      "pass": "States board interim ceiling as 2026 realized results plus permissible carried profit/free reserves less carried losses/required reserves; on assumed inputs EUR 40,000 current profit plus EUR 120,000 reserve could support EUR 160,000 gross interim capacity if both remain available and the statutory controls are met. Does not count the reserve again if the AG distributes it separately.",
+      "fail": "Uses EUR 120k reserves twice, assumes EUR 160k is current-year profit, or fails to deduct losses and required reserves in the conditional interim ceiling.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008",
+          "quote": "le montant des résultats réalisés depuis la fin du dernier exercice dont les comptes annuels ont été approuvés"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/accounts-and-minutes.md",
+          "quote": "EUR 40,000 realized 2026 profit after necessary provisions, with no further carried losses or reserve allocation assumed"
+        },
+        {
+          "file": "materials/distribution-ledger.csv",
+          "quote": "total_cash_transfer,160000,mixed,treasury,2026-10-16"
+        },
+        {
+          "file": "materials/distribution-ledger.csv",
+          "quote": "prior_free_reserves,120000,approved_2025_accounts,shareholders,2026-10-01"
+        }
+      ],
+      "minimalPass": "Interim cap = realized post-approval results + carried profit/free reserves − carried losses/required allocations: on stated assumptions EUR 40k + EUR 120k = EUR 160k if board chooses the combined route, or EUR 40k after separate EUR 120k AG payout; verify statement and report.",
+      "nearMiss": "Board can distribute EUR 160k as 2026 profit plus the EUR 120k reserve again after the AG has paid it.",
+      "failureFamily": "calculation"
+    }
+  ]
+}

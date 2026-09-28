@@ -1,0 +1,109 @@
+{
+  "criteria": [
+    {
+      "id": "06-1",
+      "requirement": "Compute Nova SA expressed vote denominator 90 (70 yes, 20 no), excluding 10 abstentions, and 70/90 exceeds two-thirds.",
+      "pass": "SA numerical threshold passed on hypothetical tally, not automatically a completed legal resolution.",
+      "fail": "Uses 70/100 and wrongly fails two-thirds.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "quote": "Les voix exprimées ne comprennent pas celles attachées aux actions pour lesquelles l'actionnaire n'a pas pris part au vote ou s'est abstenu ou a voté blanc ou nul."
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/vote-tallies.csv",
+          "quote": "Nova SA,100,100,70,20,10,70,20"
+        }
+      ],
+      "minimalPass": "Nova: 70/(70+20)=77.78% expressed votes, above two-thirds; numerical gate passes.",
+      "nearMiss": "Nova fails because only 70% of all 100 units voted yes.",
+      "failureFamily": "vote-arithmetic"
+    },
+    {
+      "id": "06-2",
+      "requirement": "Apply Terra SARL statutory default three-quarters of total social capital; 74/100 falls short regardless of 74/90 expressed-vote ratio.",
+      "pass": "SARL numerical threshold fails on stated default, articles caveat explicit.",
+      "fail": "Passes SARL on 74/90 expressed or counts abstentions as reducing total-capital denominator.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca",
+          "quote": "Sauf dispositions contraires des statuts, les associés représentant les trois quarts du capital social peuvent modifier les statuts"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/vote-tallies.csv",
+          "quote": "Terra SARL,100,100,74,16,10,74,16"
+        }
+      ],
+      "minimalPass": "Terra: 74/100 capital < 75/100 default threshold; no provisional approval.",
+      "nearMiss": "Terra passes because 74 of 90 expressed votes exceeds 75%.",
+      "failureFamily": "vote-arithmetic"
+    },
+    {
+      "id": "06-4",
+      "requirement": "Assess SA first-meeting capital representation on the stated 100/100 units and draft a conditional certification that reserves formal completion pending signed minutes, agenda and notice evidence.",
+      "pass": "Recognizes the numerical quorum and provides usable conditional certification wording, expressly withholding certification of formal completion until the missing documentary conditions are established; does not certify a resolution from the internal tally alone.",
+      "fail": "Ignores quorum, omits the requested conditional certification wording, or certifies formal completion from the internal tally alone.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "quote": "la moitié au moins du capital est représentée"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/vote-tallies.csv",
+          "quote": "Nova SA,100,100,70,20,10,70,20"
+        }
+      ],
+      "minimalPass": "Proposed certificate: the supplied 100/100 representation satisfies the first-meeting half-capital condition on the stated facts; formal completion cannot be certified until the notice, agenda and executed minutes are verified.",
+      "nearMiss": "Tally alone conclusively proves all formal steps.",
+      "failureFamily": "procedure"
+    },
+    {
+      "id": "06-5",
+      "requirement": "Do not import SA or SARL threshold to Sol SCS; use article 310-5's contractual/default decision mechanism and require agreement plus vote record before a conclusion.",
+      "pass": "SCS approval remains unknown; identifies that its agreement controls specified decisions and statutory defaults matter only absent terms, not SA/SARL thresholds.",
+      "fail": "Declares SCS approved from other entities' votes or asserts a universal threshold without the governing agreement.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:art3105:c0",
+          "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468",
+          "quote": "Le contrat social détermine parmi les autres décisions celles qui ne sont pas prises par les associés."
+        },
+        {
+          "id": "doc-06:art3105:c0",
+          "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468",
+          "quote": "À défaut de telles stipulations dans le contrat social"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary.md",
+          "quote": "its partnership agreement and vote record have not been supplied."
+        }
+      ],
+      "minimalPass": "Sol's decision procedure depends on its contract/default under article 310-5 and no tally exists; do not certify approval.",
+      "nearMiss": "Sol passes by Nova's two-thirds SA rule.",
+      "failureFamily": "evidence-boundary"
+    }
+  ]
+}

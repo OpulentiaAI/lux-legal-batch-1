@@ -1,0 +1,237 @@
+{
+  "criteria": [
+    {
+      "id": "07-01",
+      "requirement": "Apply the listed-issuer policy regime, not an all-SA rule.",
+      "pass": "Explains why this Luxembourg listed SA is subject to the shareholder remuneration-policy vote.",
+      "fail": "Treats the listed-company rule as universal to private SAs or says the issuer need not hold a policy vote.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0301:c0",
+          "sha256": "dc122774a3fdcd45add0a49de9098cf876945f63c21cd98f7e2d0c295e18ba48",
+          "quote": "d’une société de droit luxembourgeois"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "Les sociétés doivent établir une politique de rémunération"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/chair-email.md",
+          "quote": "a Luxembourg SA whose shares are admitted to trading on an EU regulated market"
+        }
+      ],
+      "minimalPass": "Listed Luxembourg SA: put a remuneration policy to the AGM vote.",
+      "nearMiss": "Every SA must get a binding vote before paying any director.",
+      "failureFamily": "scope"
+    },
+    {
+      "id": "07-02",
+      "requirement": "Distinguish default consultative vote from binding articles.",
+      "pass": "Recognizes ordinarily consultative policy vote but applies Article 19's binding override to Ardenne.",
+      "fail": "Treats the CFO's advisory-vote theory as authorization to pay the rejected package.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "Le vote des actionnaires sur la politique de rémunération lors de l’assemblée générale est consultatif."
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "Toutefois les statuts peuvent prévoir que le vote sur la politique de rémunération exprimé lors de l’assemblée générale est contraignant."
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "The shareholders' vote on the remuneration policy is binding."
+        }
+      ],
+      "minimalPass": "Although normally advisory, the articles make Ardenne's policy vote binding.",
+      "nearMiss": "The rejection is merely advisory despite Article 19.",
+      "failureFamily": "governance"
+    },
+    {
+      "id": "07-03",
+      "requirement": "Give a component-specific October payroll instruction.",
+      "pass": "Blocks EUR 35,000/month new fixed pay and EUR 180,000 bonus; permits only remuneration conforming to existing approved 2022 policy, including EUR 25,000/month fixed pay, pending a valid new policy.",
+      "fail": "Greenlights the rejected package or blocks all compensation despite the surviving approved policy.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "la société doit continuer à rémunérer ses dirigeants"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "The 2022 policy was approved at the 30 June 2022 AGM."
+        },
+        {
+          "file": "materials/payroll-extract.csv",
+          "quote": "Mira D.,CEO,180000,signing_bonus,proposed_policy_rejected"
+        },
+        {
+          "file": "materials/payroll-extract.csv",
+          "quote": "Mira D.,CEO,25000,fixed_monthly_based_on_EUR300000,2022_policy_approved"
+        }
+      ],
+      "minimalPass": "Pay only the existing approved-policy EUR 25,000 monthly fixed amount; hold the EUR 35,000 rate and bonus.",
+      "nearMiss": "Because shareholders rejected the new policy, stop even compliant old fixed pay.",
+      "failureFamily": "remedy"
+    },
+    {
+      "id": "07-04",
+      "requirement": "Address failed-policy cure and material revision timing.",
+      "pass": "Instructs board to submit revised policy for approval at next AGM (or an earlier valid general meeting) and explains significant change triggers a new vote; ordinary four-year cadence does not excuse this rejection.",
+      "fail": "Says wait four years or that the September rejected text governs meanwhile.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "une politique de rémunération révisée"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "lors de chaque modification importante et, en tout état de cause, au moins tous les quatre ans"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "The next AGM is scheduled for 20 April 2027"
+        }
+      ],
+      "minimalPass": "Submit a revised policy at the next general meeting, earlier if new terms cannot wait; material changes require a vote, and the four-year outer interval does not excuse the rejection.",
+      "nearMiss": "The company may defer the rejected policy until June 2030 without a new vote.",
+      "failureFamily": "timing"
+    },
+    {
+      "id": "07-05",
+      "requirement": "Reject unsupported emergency derogation.",
+      "pass": "Finds the current policy lacks required procedural terms and identified derogable elements; retention urgency alone is not a free-standing exception and cannot rescue the proposed bonus.",
+      "fail": "Authorizes the bonus merely by calling it retention/emergency.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "quote": "à condition que cette politique prévoie les conditions procédurales"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "no exceptional-deviation procedure or list of derogable elements"
+        }
+      ],
+      "minimalPass": "Do not invoke an exception absent policy procedures and specified derogable items.",
+      "nearMiss": "The board can approve any emergency retention bonus without policy wording.",
+      "failureFamily": "exception"
+    },
+    {
+      "id": "07-06",
+      "requirement": "Distinguish report vote from policy vote and identify 2026 reporting action.",
+      "pass": "Identifies the annual report vote as consultative, requires next report to explain response to its negative 2025 vote, and starts preparing individualized component/policy-compliance reporting rather than using that vote to validate future pay.",
+      "fail": "Calls the report vote binding approval of the new 2026 package or omits response to prior negative vote.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0315:c0",
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8",
+          "quote": "L’assemblée générale annuelle dispose du droit de procéder à un vote consultatif sur le rapport sur la rémunération"
+        },
+        {
+          "id": "doc-06:s0315:c0",
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8",
+          "quote": "La société explique, dans le rapport sur la rémunération suivant, la manière dont le vote de l’assemblée générale a été pris en compte."
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "a negative advisory vote on the 2025 remuneration report"
+        }
+      ],
+      "minimalPass": "The report vote is distinct and consultative; the next report explains the negative 2025 vote and itemizes each director's actual remuneration components and compliance with the voted policy, rather than validating future pay.",
+      "nearMiss": "A negative report vote itself invalidates the 2022 policy.",
+      "failureFamily": "reporting"
+    },
+    {
+      "id": "07-07",
+      "requirement": "Publish policy vote details promptly.",
+      "pass": "Instructs posting the policy and 18 September vote date/result on issuer website without delay and keeping the policy available during application.",
+      "fail": "Treats the existing 2022 policy page alone as sufficient disclosure of the September vote.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c1",
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01",
+          "quote": "la politique de rémunération, ainsi que la date et le résultat du vote, doivent être rendus publics sans retard sur le site internet de la société"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "has not posted the proposed 2026 policy, the date or the result of the 18 September vote"
+        }
+      ],
+      "minimalPass": "Post the voted policy plus date and rejection result without delay; keep the applicable policy available.",
+      "nearMiss": "Publish only once the April 2027 AGM approves a policy.",
+      "failureFamily": "publication"
+    },
+    {
+      "id": "07-08",
+      "requirement": "Make revised policy content operational, not just an agenda item.",
+      "pass": "Calls for clear fixed/variable component and bonus terms, performance criteria and decision/conflict process, plus explanation of significant revisions and prior shareholder feedback before re-vote.",
+      "fail": "Recommends resubmitting identical text with no identified required policy contents or feedback treatment.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0314:c1",
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01",
+          "quote": "doit décrire les différentes composantes de la rémunération fixe et variable"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01",
+          "quote": "doit indiquer la manière dont elle prend en compte les votes et les avis des actionnaires"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretariat-record.md",
+          "quote": "increases fixed CEO pay to EUR 420,000 and adds a EUR 180,000 signing bonus"
+        }
+      ],
+      "minimalPass": "Revise fixed/bonus components with performance criteria, a decision and conflict-management process, and explanation of changes and shareholder feedback before a new vote.",
+      "nearMiss": "Simply retable the rejected bonus schedule as a board resolution.",
+      "failureFamily": "deliverable"
+    }
+  ]
+}

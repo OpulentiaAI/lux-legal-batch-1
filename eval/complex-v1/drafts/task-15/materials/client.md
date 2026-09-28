@@ -1,0 +1,3 @@
+# FICTIONAL CLIENT MATERIAL — operations email, 23 September 2026
+
+Our Luxembourg company Atelier Lumen signed a services agreement with client Rivage SA: we must deliver a prototype test report by 30 October for €12,000, payable by Rivage on delivery. We have not delivered yet. Rivage later emailed a request to add a second report for €3,000, and we replied with a revised quote requiring written acceptance; nobody has located acceptance or a signed change order. Separately, our director told Rivage's director at a social dinner, “I'll introduce you to a museum curator sometime.” Both parties understood that courtesy as personal, not part of the commercial bargain. Please correct our junior's draft and tell me what evidence would change your classification.

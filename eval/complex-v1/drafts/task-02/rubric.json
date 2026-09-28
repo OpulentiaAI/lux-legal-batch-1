@@ -1,0 +1,194 @@
+{
+  "criteria": [
+    {
+      "id": "02-1",
+      "requirement": "Classify no-dissolution transfer to existing companies under the absorption branch, not a dissolution of Orion.",
+      "pass": "Correct branch with distinction from whole-estate dissolution.",
+      "fail": "Says Orion must cease to exist.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a",
+          "quote": "soit transfère, sans dissolution, à une ou plusieurs autres sociétés, une partie ou l’ensemble de son patrimoine"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/instructions.md",
+          "quote": "Orion will not dissolve."
+        }
+      ],
+      "minimalPass": "This is the without-dissolution absorption branch; Orion continues.",
+      "nearMiss": "Orion must dissolve on closing.",
+      "failureFamily": "legal-classification"
+    },
+    {
+      "id": "02-2",
+      "requirement": "Flag the presently unallocated customer refund liability and require explicit treatment in the final project rather than fabricate a recipient. This criterion assesses the pre-closing drafting instruction; conditional residual-liability analysis is optional, subject to the partial-split textual caveat.",
+      "pass": "Closing instruction prioritizes correcting the project now; does not call the proposal legally operative or assign the refund to Vega without basis. Conditional residual beneficiary solidarity may be noted, but no definite distribution is required where the partial continuing-company effect remains uncertain.",
+      "fail": "Ignores the refund liability, silently assigns it to Vega, or asserts the project is operative from the spreadsheet.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0158:c1",
+          "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115",
+          "quote": "la description et la répartition précises des éléments du patrimoine actif et passif à transférer à chacune des sociétés bénéficiaires"
+        },
+        {
+          "id": "doc-06:s0158:c1",
+          "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115",
+          "quote": "Lorsqu'un élément du patrimoine passif n'est pas attribué dans le projet de scission et que l'interprétation de celui-ci ne permet pas de décider de sa répartition"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/allocation.csv",
+          "quote": "Customer refund liability,,unallocated"
+        }
+      ],
+      "minimalPass": "Resolve the refund liability expressly in the draft project; the spreadsheet is not operative and supplies no basis to assign the liability to Vega alone.",
+      "nearMiss": "The customer refund liability automatically passes to Vega because the whole estate moves.",
+      "failureFamily": "issue-spotting"
+    },
+    {
+      "id": "02-3",
+      "requirement": "Scope the mechanism discussion to the division's allocated assets and liabilities and surviving Orion; credit a qualified operation-of-law analysis that acknowledges the current statute's partial-branch versus whole-estate consequence tension.",
+      "pass": "Uses articles 1030-3 and 1031-1 to describe proposed partial transfer and required allocation, explicitly avoids concluding whole-estate transfer/Orion extinction. May characterize completed allocated transfer as statutory/universal subject to this scope caveat, or identify unresolved 1031-16 textual tension for counsel; does not require individual novation for every item without support.",
+      "fail": "Applies the full-estate/extinction consequence to Orion, claims every debt inevitably requires an individual novation, or states universal transfer unqualified as to all assets and liabilities.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a",
+          "quote": "soit transfère, sans dissolution, à une ou plusieurs autres sociétés, une partie ou l’ensemble de son patrimoine, activement et passivement"
+        },
+        {
+          "id": "doc-06:s0158:c1",
+          "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115",
+          "quote": "la description et la répartition précises des éléments du patrimoine actif et passif à transférer à chacune des sociétés bénéficiaires"
+        },
+        {
+          "id": "doc-06:s0160:c0",
+          "sha256": "678cbc97b5085e79ed42f4f82ca385192461eda82754eff3c8db1cd2c270fa4e",
+          "quote": "de l'ensemble du patrimoine actif et passif de la société scindée"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/allocation.csv",
+          "quote": "Supplier payable,Vega SA,proposal only"
+        }
+      ],
+      "minimalPass": "The proposed payable and assets belong in the final allocated division, not Orion's entire estate; statutory partial-transfer effect must be scoped and checked against 1031-16's whole-estate wording.",
+      "nearMiss": "Article 1031-16 makes the surviving Orion disappear and transfers all its assets to the beneficiaries.",
+      "failureFamily": "mechanism"
+    },
+    {
+      "id": "02-4",
+      "requirement": "Condition general Luxembourg realization on concordant corporate decisions and reject client's proposed effective-this-week inference.",
+      "pass": "No completed decisions or effective date asserted.",
+      "fail": "Treats projected date or accounting entry as legal realization.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0159:c0",
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed",
+          "quote": "La scission est réalisée lorsque sont intervenues les décisions concordantes prises au sein des sociétés en cause."
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/instructions.md",
+          "quote": "no signed split instrument, concordant company decisions, publication proof, creditor records, or completed closing certificate is attached."
+        }
+      ],
+      "minimalPass": "No concordant decisions have been evidenced; do not mark effective this week.",
+      "nearMiss": "The spreadsheet makes the split effective this week.",
+      "failureFamily": "temporal-analysis"
+    },
+    {
+      "id": "02-5",
+      "requirement": "Identify distinct action owners for allocation/legal approval/accounting evidence without assuming creditor release.",
+      "pass": "Action table requests legal documentation, corporate proof, accounting confirmation and creditor assessment.",
+      "fail": "Says creditors waived claims despite absent record.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0158:c1",
+          "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115",
+          "quote": "la description et la répartition précises des éléments du patrimoine actif et passif à transférer"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/instructions.md",
+          "quote": "No creditor has agreed to a release in the materials."
+        }
+      ],
+      "minimalPass": "Legal team verifies allocation and approvals; finance holds the entry; creditor-release status is unknown.",
+      "nearMiss": "The split extinguishes all existing creditor claims.",
+      "failureFamily": "evidence-boundary"
+    },
+    {
+      "id": "02-6",
+      "requirement": "For Lyra's proposed articles amendment, identify the default three-quarters-of-total-capital threshold subject to articles and mark vote evidence absent.",
+      "pass": "Distinct SARL approval gate in dependency checklist; no approval deemed complete.",
+      "fail": "Treats circulated draft as approved or uses majority of attendees as universal rule.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca",
+          "quote": "Sauf dispositions contraires des statuts, les associés représentant les trois quarts du capital social peuvent modifier les statuts"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/closing-log.md",
+          "quote": "no shareholder voting tally was returned."
+        }
+      ],
+      "minimalPass": "Lyra's draft is blocked pending articles and evidence of the applicable SARL amendment vote.",
+      "nearMiss": "Circulation approves the amendment by simple majority.",
+      "failureFamily": "dependency-analysis"
+    },
+    {
+      "id": "02-7",
+      "requirement": "Do not recognize Orion dividend income solely from a preliminary notice; require acquisition of entitlement ordinarily from distributing AG decision.",
+      "pass": "Dividend accounting gate separate from split legal effectiveness.",
+      "fail": "Books notice as cash receipt or established entitlement.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a",
+          "quote": "Les dividendes doivent être comptabilisés à la date de leur acquisition"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/closing-log.md",
+          "quote": "the issuer has not furnished an AG distribution resolution or payment confirmation."
+        }
+      ],
+      "minimalPass": "Hold dividend recognition until the distributing AG's entitlement decision is evidenced; cash payment is a different event.",
+      "nearMiss": "Recognize the dividend when the preliminary notice arrives.",
+      "failureFamily": "accounting-cutoff"
+    }
+  ]
+}

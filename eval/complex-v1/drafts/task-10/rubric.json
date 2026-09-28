@@ -1,0 +1,52 @@
+{
+  "criteria": [
+    {
+      "id": "10-01", "requirement": "Select the special 2025 European cross-border complete-split route, not the older general rule, conditional on French-company eligibility.",
+      "pass": "Identifies Luxembourg SA, two newly formed French Annex II beneficiaries and complete dissolution as fitting article 1034-1, subject to French eligibility confirmation; distinguishes general article 1030-1.", "fail": "Uses only the general split regime or asserts eligibility without its supplied qualification.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0163:c0","sha256":"fad77beb45a9f2f43558c76a785f9c48fdc1b4d8c604c5b3ef24f1e1a9432d4f","quote":"la présente section s’applique également aux scissions transfrontalières européennes"},{"id":"doc-06:s0158:c0","sha256":"0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a","quote":"Les articles 1034-1 à 1034-20 forment le régime spécial des scissions transfrontalières européennes"}],
+      "factRefs": [{"file":"materials/client.md","quote":"Assume both French SAS are eligible Annex II companies, subject to confirmation by local counsel."}], "minimalPass":"Special route conditional on French Annex II eligibility, not domestic-only route.", "nearMiss":"Applies concordant decisions as the sole 1987 regime despite 2025 European scope.", "failureFamily":"regime_selection"
+    },
+    {
+      "id": "10-02", "requirement": "Draft terms identify the complete-split allocation, share exchange, employee impacts and indicative calendar.",
+      "pass": "Orders a written project with asset and liability allocation, consideration/exchange, indicative timetable and employment impact before publication; equivalent precise checklist passes.", "fail": "A vote-only schedule lacking draft terms or allocation fails.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0166:c0","sha256":"a490d4c52b421763b023145102aaf6d528be3da266c043cb9b3b242de13507b1","quote":"une description précise des éléments d’actif et de passif de la société scindée"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"Board-approved draft terms and allocation annex"}], "minimalPass":"Calls for complete written allocation and timetable before vote.", "nearMiss":"Assumes the still-undrafted allocation annex can be completed after vote.", "failureFamily":"draft_terms"
+    },
+    {
+      "id": "10-03", "requirement": "Protect the six-week management-report availability period given no waivers and employees.",
+      "pass": "Places management report with member and worker information at least six weeks before the 21 December vote (nominally by 9 November), or moves the vote if missed; does not casually invoke unavailable waiver.", "fail": "Treats proposed 16 November availability as sufficient or substitutes one-month publication for six-week report.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0166:c1","sha256":"ff351d73553ad51a57f57393807926fe74cc892f3203d6ce4ce9240703414498","quote":"six semaines au moins avant la date de l’assemblée générale"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"16 November 2026"},{"file":"materials/client.md","quote":"No shareholder has waived any report or expert review."}], "minimalPass":"Move management-report target to 9 November or postpone vote.", "nearMiss":"Calls 16 November safe because publication needs only a month.", "failureFamily":"report_timing"
+    },
+    {
+      "id": "10-04", "requirement": "Sequence one-month project publication and notice with the five-working-day observation cut-off.",
+      "pass": "Requires project and statutory notice at least one month before vote and allows observations no later than five working days before; proposed 20 November publication is a prudent early target relative to 21 December, subject to actual filing confirmation.", "fail": "Omits notice/observations or claims same-day meeting publication sufficient.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0166:c1","sha256":"ff351d73553ad51a57f57393807926fe74cc892f3203d6ce4ce9240703414498","quote":"au moins cinq jours ouvrables avant la date de l’assemblée générale"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"Project publication and notices"}], "minimalPass":"Publish terms and notice at least month ahead; set five-working-day observation gate.", "nearMiss":"Treats creditor and worker observation as an optional post-vote courtesy.", "failureFamily":"publicity_timing"
+    },
+    {
+      "id": "10-05", "requirement": "Reserve independent expert report availability and shareholder approval in their correct order.",
+      "pass": "Requires independent-expert examination/report available at least a month before assembly absent unanimous waiver, then assembly considers reports and observations and approves, modifies or rejects.", "fail": "Assumes unappointed expert can issue a valid same-day post-vote report.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0167:c0","sha256":"2c279d296962f64a6ba1829a1aebc4206e27469986e8db661d5525e85734f787","quote":"Ce rapport est mis à la disposition des associés au moins un mois avant la date de l’assemblée générale"},{"id":"doc-06:s0168:c0","sha256":"7b8e6641565765dcf76f7699d76a4418f87f04bd3171bcc5d0d1a6b37069dc24","quote":"l’assemblée générale de la société scindée décide, par voie de résolution, d’approuver, de modifier ou de rejeter le projet de scission"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"Expert not appointed"}], "minimalPass":"Expert first and one-month access, then informed vote.", "nearMiss":"Vote precedes expert appointment because expert review is assumed waivable.", "failureFamily":"approval_sequence"
+    },
+    {
+      "id": "10-06", "requirement": "Route Luxembourg pre-split certificate and French destination-legality checks through their respective authorities.",
+      "pass": "After approval seeks Luxembourg notarial pre-certificate and RCS transmission; requires French destination formation/registration and worker steps to be confirmed by competent French authority, not assumed complete on 22 December; may mention Luxembourg three-month review period rather than promising a one-day issue.", "fail": "Guarantees next-day certificate or presumes French completion without verification.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0165:c0","sha256":"78f8aca89f0b207d58ec7efb7455a2aac9032ea6b2f4a3634d0b6eb7619c7150","quote":"le droit de l’État membre des sociétés bénéficiaires régit les parties des procédures et des formalités à remplir après la réception du certificat préalable"},{"id":"doc-06:s0170:c0","sha256":"e889183b014739d0aceb4bde02b5bcbe01d9d7eff19d7bf87c42df38363107ce","quote":"dans un délai de trois mois à compter de la date de réception des documents et des informations"},{"id":"doc-06:s0171:c0","sha256":"8f1234a4998d6ceb082df93b517a2da00b3b94b675b688c2cd8cb22a7035b8e1","quote":"Le certificat préalable à la scission transfrontalière européenne délivré par le notaire est déposé au registre de commerce et des sociétés"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"Project manager assumes same-day completion; no approval obtained"}], "minimalPass":"Notarial pre-certificate then destination-law steps, no next-day guarantee.", "nearMiss":"Treats Luxembourg shareholder minutes as an already issued cross-border certificate.", "failureFamily":"certificate_and_destination"
+    },
+    {
+      "id": "10-07", "requirement": "Reject the vote as legal effective date and distinguish source-state law and publication trigger.",
+      "pass": "States source-company state governs date; for this Luxembourg European split article 1034-15 realizes it upon publication of realization, not concordant decisions or accounting date. Treats actual register publication as conditional gate.", "fail": "States 21 December vote or merely concordant decisions legally effect this European split.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0172:c0","sha256":"16e6f68f0f31e5982fca5c60bea623ae9b59d7b8df84310e662dd7d50dbdabba","quote":"La scission transfrontalière européenne est réalisée à la date de la publication de la réalisation"},{"id":"doc-06:s0159:c0","sha256":"9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed","quote":"La scission est réalisée lorsque sont intervenues les décisions concordantes prises au sein des sociétés en cause."}],
+      "factRefs": [{"file":"materials/client.md","quote":"21 December is the **legal effective date** merely because shareholders approved the split that day"}], "minimalPass":"Vote not enough; Luxembourg European realization occurs at actual publication.", "nearMiss":"Cites article 1031-14 general realization as conclusive despite article 1034-15.", "failureFamily":"effective_date"
+    },
+    {
+      "id": "10-08", "requirement": "Turn legal effectiveness into an actionable financing/contract-migration hold point.",
+      "pass": "Makes drawdown and asset/contract transfer conditional on documented legal-effectiveness publication and recipient formation, with accounting or proposed contractual completion dates separated from legal operation; notes split company ceases only upon effect.", "fail": "Orders drawdown or universal transfer on vote day while publication and destination checks are outstanding.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0173:c0","sha256":"288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f","quote":"la société scindée cesse d'exister"},{"id":"doc-06:s0172:c0","sha256":"16e6f68f0f31e5982fca5c60bea623ae9b59d7b8df84310e662dd7d50dbdabba","quote":"La scission transfrontalière européenne est réalisée à la date de la publication de la réalisation"}],
+      "factRefs": [{"file":"materials/workplan.md","quote":"The financing term sheet has no contractual definition of \"completion\" yet."}], "minimalPass":"Condition financing and migration on evidenced publication/formation, separate accounting dates.", "nearMiss":"Correctly names publication but still promises financing close on 22 December independent of evidence.", "failureFamily":"transaction_reconciliation"
+    }
+  ]
+}
