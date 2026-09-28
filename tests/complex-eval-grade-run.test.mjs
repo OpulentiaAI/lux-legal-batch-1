@@ -4,7 +4,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { sha256, validateSuite } from '../eval/complex-v1/validate.mjs'
-import { extractVisibleSources, gradeRun, calibrateJudge } from '../eval/complex-v1/grade-run.mjs'
+import { extractVisibleSources, gradeRun, calibrateJudge, normalizeJudgeCoordinates } from '../eval/complex-v1/grade-run.mjs'
+import { validateJudgeResponse } from '../eval/complex-v1/judge.mjs'
 
 const packets = validateSuite('eval/complex-v1/drafts')
 const first = packets.find(item => item.bundle.task.id === 'task-01').bundle
@@ -54,7 +55,7 @@ function runnerCheckpoint(f, { content = answer, call } = {}) {
   const runPlanSha256 = sha256(readFileSync('eval/complex-v1/RUN-PLAN.md'))
   writeFileSync(f.input, JSON.stringify({ provenance: { protocol: 'complex-v1-paired-work-product',
     selectedTasks: ['task-01'], model: 'deepseek/deepseek-v4.1-flash', providerOnly: ['modal'],
-    maxSteps: 80, maxCompletionTokens: 8000, suiteManifestSha256, runPlanSha256 }, rows }))
+    maxSteps: 80, maxCompletionTokens: 32768, suiteManifestSha256, runPlanSha256 }, rows }))
   return { rows, attempt }
 }
 
@@ -93,7 +94,9 @@ test('independent scores, unresolved disagreement and execution failure remain d
         calls++
         const data = JSON.parse(request.messages[1].content)
         assert.deepEqual(data.outputs.map(output => output.file), ['memo.md'])
-        assert.equal(request.maxTokens, 16000)
+        assert.equal(request.maxTokens, 32768)
+        assert.deepEqual(request.responseFormat, { type: 'json_object' })
+        assert.match(request.messages[0].content, /Quotes must|quotes exactly/i)
         const verdict = data.criterion.id === '01-1' && calls === 2 ? 'fail' : 'pass'
         if (data.criterion.id === '01-2') return { text: '{malformed' }
         return { text: JSON.stringify(answerFor({ data }, verdict)) }
@@ -113,6 +116,11 @@ test('independent scores, unresolved disagreement and execution failure remain d
     await gradeRun({ inputPath: f.input, outputPath: f.graded, taskId: 'task-01', resume: true,
       chat: async () => { throw new Error('Resume must not rejudge completed criteria') } })
     assert.equal(readdirSync(`${f.graded}.attempts`).length, before)
+    const checkpoint = JSON.parse(readFileSync(f.graded))
+    writeFileSync(f.graded, JSON.stringify({ ...checkpoint,
+      binding: { ...checkpoint.binding, policy: { ...checkpoint.binding.policy, maxTokens: 16000 } } }))
+    await assert.rejects(gradeRun({ inputPath: f.input, outputPath: f.graded, taskId: 'task-01', resume: true }), /Resume binding mismatch/)
+    writeFileSync(f.graded, JSON.stringify(checkpoint))
     writeFileSync(f.input, `${readFileSync(f.input, 'utf8')} `)
     await assert.rejects(gradeRun({ inputPath: f.input, outputPath: f.graded, taskId: 'task-01', resume: true }), /Resume binding mismatch/)
   } finally { cleanup(f) }
@@ -146,6 +154,69 @@ test('grading retains truncated raw text, usage and reported costs, then retries
     const captures = files.map(name => JSON.parse(readFileSync(join(`${f.graded}.attempts`, name))))
     assert.equal(captures.some(item => item.error === 'Evaluation operation failed' && item.usage === null), true)
     assert.equal(captures.some(item => JSON.stringify(item).includes('secret-value-must-not-persist')), false)
+  } finally { cleanup(f) }
+})
+
+test('v2 corrects only uniquely located exact quotes and retains strict schema and semantics', () => {
+  const request = { data: { criterion: { id: 'c' }, outputs: [{ file: 'memo.md', content: 'alpha beta alpha' }],
+    referenceSources: [{ id: 'ref', text: 'The rule is binding.' }, { id: 'ref', text: 'The rule is binding.' }],
+    visibleSources: [{ id: 'seen', text: 'Seen only.' }],
+    scenarioFacts: [{ file: 'materials/f.txt', text: 'Fact here.' }] } }
+  const raw = { criterionId: 'c', verdict: 'pass', reason: 'Keep the legal reasoning unchanged.',
+    answerSpans: [{ file: 'memo.md', start: 0, end: 4, quote: 'beta' }],
+    anchors: [{ role: 'source_reference', id: 'ref', start: 0, end: 4, quote: 'rule' }],
+    defectId: null, defectType: null, legalTruth: 'correct', sourceCompliance: 'not_required' }
+  const original = JSON.stringify(raw)
+  const normalized = normalizeJudgeCoordinates(original, request)
+  assert.equal(normalized.corrections.length, 2)
+  assert.deepEqual(normalized.corrections.map(item => [item.before, item.after]), [
+    [{ start: 0, end: 4 }, { start: 6, end: 10 }],
+    [{ start: 0, end: 4 }, { start: 4, end: 8 }]])
+  assert.equal(validateJudgeResponse(normalized.response, request).verdict, 'pass')
+  assert.equal(normalized.response.reason, raw.reason)
+  assert.equal(normalized.response.anchors[0].quote, 'rule')
+  assert.equal(JSON.stringify(raw), original)
+  for (const [change, pattern] of [
+    [{ answerSpans: [{ file: 'memo.md', start: 2, end: 7, quote: 'alpha' }] }, /answer span quote/],
+    [{ anchors: [{ role: 'source_reference', id: 'ref', start: 0, end: 4, quote: 'invented' }] }, /anchor quote/],
+    [{ anchors: [{ role: 'visible_source', id: 'ref', start: 0, end: 4, quote: 'rule' }] }, /anchor quote/],
+    [{ extra: 'schema laundering' }, /judge response keys/],
+  ]) {
+    const candidate = normalizeJudgeCoordinates({ ...raw, ...change }, request)
+    assert.deepEqual(candidate.corrections.filter(item => item.type === (change.answerSpans ? 'answerSpan' : 'anchor')), [])
+    assert.throws(() => validateJudgeResponse(candidate.response, request), pattern)
+  }
+  const invalid = normalizeJudgeCoordinates('{incomplete', request)
+  assert.deepEqual(invalid.corrections, [])
+  assert.throws(() => validateJudgeResponse(invalid.response, request), SyntaxError)
+})
+
+test('grading stores immutable raw offsets and explicit per-judge mechanical corrections', async () => {
+  const f = fixture()
+  try {
+    runnerCheckpoint(f)
+    let calls = 0
+    const result = await gradeRun({ inputPath: f.input, outputPath: f.graded, taskId: 'task-01', chat: async request => {
+      calls++
+      const response = answerFor({ data: JSON.parse(request.messages[1].content) })
+      if (calls === 1) {
+        response.answerSpans[0].start = 1
+        response.answerSpans[0].end++
+        response.anchors[0].start = 1
+        response.anchors[0].end++
+      }
+      return { text: JSON.stringify(response) }
+    } })
+    assert.equal(calls, 14)
+    const graded = result.rows.find(item => item.mode === 'broad' && item.criterionId === '01-1')
+    assert.equal(graded.status, 'pass')
+    assert.deepEqual(graded.judgeCorrections.map(items => items.length), [2, 0])
+    assert.equal(graded.judges[0].answerSpans[0].start, 0)
+    const path = join(`${f.graded}.attempts`, `${sha256('task-01:broad:01-1').slice(0, 24)}-judge1-attempt1.json`)
+    const captured = JSON.parse(readFileSync(path))
+    assert.equal(JSON.parse(captured.text).answerSpans[0].start, 1)
+    assert.deepEqual(captured.coordinateCorrections.map(item => item.before.start), [1, 1])
+    assert.deepEqual(captured.coordinateCorrections.map(item => item.after.start), [0, 0])
   } finally { cleanup(f) }
 })
 
@@ -299,5 +370,33 @@ test('calibration is dev-only, records both independent raw outputs, and exclude
     const failed = JSON.parse(readFileSync(join(`${f.graded}.attempts`, report.rows[0].rawAttempts[1])))
     assert.equal(failed.error, 'Evaluation operation failed')
     assert.equal(JSON.stringify(failed).includes('secret-value-must-not-persist'), false)
+  } finally { cleanup(f) }
+})
+
+test('calibration uses v2 JSON transport and persists correction beside unchanged raw judgment', async () => {
+  const f = fixture()
+  try {
+    let calls = 0
+    const report = await calibrateJudge({ outputPath: f.graded, criteria: ['task-01:01-1'], chat: async request => {
+      calls++
+      assert.equal(request.maxTokens, 32768)
+      assert.deepEqual(request.responseFormat, { type: 'json_object' })
+      const data = JSON.parse(request.messages[1].content)
+      if (data.outputs[0].content === null) return { text: '{invalid' }
+      const text = data.outputs[0].content
+      const reference = data.referenceSources[0]
+      return { text: JSON.stringify({ criterionId: data.criterion.id, verdict: 'pass', reason: 'Original semantic finding.',
+        answerSpans: [{ file: data.outputs[0].file, start: 1, end: text.length + 1, quote: text }],
+        anchors: [{ role: 'source_reference', id: reference.id, start: 1, end: 11,
+          quote: reference.text.slice(0, 10) }], defectId: null, defectType: null,
+        legalTruth: 'correct', sourceCompliance: 'not_required' }) }
+    } })
+    const row = report.rows[0]
+    assert.equal(row.status, 'pass')
+    assert.deepEqual(row.judgeCorrections.map(items => items.length), [2, 2])
+    const captured = JSON.parse(readFileSync(join(`${f.graded}.attempts`, row.rawAttempts[0])))
+    assert.equal(JSON.parse(captured.text).answerSpans[0].start, 1)
+    assert.equal(captured.coordinateCorrections[0].after.start, 0)
+    assert.ok(calls >= 6)
   } finally { cleanup(f) }
 })

@@ -97,6 +97,8 @@ test('mocked infrastructure executes selected paired arms and resumes unchanged 
   try {
     const first = await run(options, dependencies)
     assert.equal(first.preflight.status, 'verified')
+    assert.equal(first.provenance.maxSteps, 80)
+    assert.equal(first.provenance.maxCompletionTokens, 32768)
     assert.equal(first.rows.length, 15)
     assert.equal(first.rows[0].harvey.status, 'completed', JSON.stringify(first.rows[0].harvey.attempts[0]))
     assert.equal(first.rows[0].broad.status, 'completed')

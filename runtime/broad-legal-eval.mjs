@@ -274,7 +274,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] })),
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
-  function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected) {
+  function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords) {
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
@@ -323,7 +323,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
-        return model(messages, { ...options, model: provenance.model, ...(workProduct ? { max_tokens: workProduct.maxCompletionTokens } : {}) })
+        const request = model(messages, { ...options, model: provenance.model, ...(workProduct ? { max_tokens: workProduct.maxCompletionTokens } : {}) })
+        if (!workProduct || !providerRecords) return request
+        return Promise.resolve(request).then(response => {
+          const raw = response.raw_response ?? response.rawResponse ?? response
+          const usage = raw.usage ?? response.usage ?? {}
+          const record = Object.fromEntries(Object.entries(usage)
+            .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number' && Number.isFinite(value)))
+          record.finishReason = typeof raw.choices?.[0]?.finish_reason === 'string' ? raw.choices[0].finish_reason : null
+          providerRecords.push(record)
+          return response
+        })
       },
     }
   }
@@ -404,12 +414,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const start = performance.now()
       const provisionedSandboxes = new Set()
       const collected = new Map()
+      const providerRecords = []
       let runtime, session, completed, runError, runDetails, detachBroker
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
-        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected))
+        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: workProduct
@@ -514,7 +525,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           completed && completed.status !== 'completed' ? 1 : 0,
           childSessions.filter(row => row.status === 'failed').length)
         return { sources: observed.sources, trace, audit: redactAudit(audit), metrics: {
-          ...(workProduct ? { providerUsageRecords: (runtime?.store?.list('events') ?? [])
+          ...(workProduct ? { providerUsageRecords: providerRecords.length ? providerRecords : (runtime?.store?.list('events') ?? [])
             .filter(event => descendants.has(event.session_id) && event.type === 'model_usage')
             .map(event => Object.fromEntries(Object.entries(event.data?.usage ?? {})
               .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number'))) } : {}),

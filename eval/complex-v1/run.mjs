@@ -195,7 +195,7 @@ export async function run(options, dependencies = {}) {
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
   broker.origin = options.brokerOrigin
   try {
-    const common = { workspace: source, corpus, maxSteps: 80, model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, workProduct: { maxCompletionTokens: 8000 } }
+    const common = { workspace: source, corpus, maxSteps: 80, model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
@@ -203,7 +203,7 @@ export async function run(options, dependencies = {}) {
         nativeModuleHash, toolSurface: 'initial-scripted-v1' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps: 80, maxCompletionTokens: 8000,
+      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps: 80, maxCompletionTokens: 32768,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',

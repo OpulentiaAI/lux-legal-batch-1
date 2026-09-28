@@ -25,7 +25,9 @@ test('broad work-product collects actual file before pause, with full budgets an
     commands: { run: async () => ({ exitCode: 0, stdout: 'ok' }) }, pause: async () => { paused = true }, kill: async () => {} }
   const harness = createBroadHarness({ workspace, corpus: { directory: '/safe/export', hash: 'corpus', count: 0, sources: [] },
     artifactsDir, workProduct: { maxCompletionTokens: 8000 }, provision: async () => sandbox,
-    modelFactory: () => async (_messages, received) => { modelOptions = received },
+    modelFactory: () => async (_messages, received) => { modelOptions = received
+      return { raw_response: { choices: [{ finish_reason: 'length' }], usage: { prompt_tokens: 10, completion_tokens: 8000, cost: 0.003 } },
+        choices: [{ finish_reason: 'length', message: { role: 'assistant', content: 'Now writing' } }] } },
     runtimeFactory: received => {
       options = received
       const store = { get: (kind) => kind === 'sessions' ? { sandbox_id: 'parent-sandbox' } : { messages: [
@@ -46,12 +48,41 @@ test('broad work-product collects actual file before pause, with full budgets an
   assert.equal(options.config.maxSteps, 80)
   assert.equal(options.config.sandboxTimeoutMs, 3_600_000)
   assert.equal(modelOptions.max_tokens, 8000)
+  assert.deepEqual(result.metrics.providerUsageRecords, [{ prompt_tokens: 10, completion_tokens: 8000, cost: 0.003, finishReason: 'length' }])
   assert.ok(!prompt.includes('120 mots'))
   assert.equal(paused, true)
   assert.deepEqual(result.deliverables, [{ file: 'memo.md', content: 'Saved memo [doc:a]', sha256: digest('Saved memo [doc:a]') }])
   assert.equal(result.audit.provenance.materialHashes['materials/facts.md'], digest('Public facts'))
   assert.match(readFileSync(result.artifactPaths[0], 'utf8'), /Visible full response/)
   await assert.rejects(harness.run({ mode: 'broad', question: 'bad', workProduct: { ...packet, task: { ...task, rubric: 'private' } } }), /Invalid public/)
+})
+
+test('broad work-product records natural stop without changing QA telemetry', async t => {
+  const artifactsDir = mkdtempSync(join(tmpdir(), 'broad-stop-telemetry-'))
+  t.after(() => rmSync(artifactsDir, { recursive: true, force: true }))
+  for (const active of [false, true]) {
+    let options
+    const harness = createBroadHarness({ workspace, corpus: { directory: '/safe/export', hash: 'corpus', count: 0, sources: [] },
+      artifactsDir, ...(active ? { workProduct: {} } : {}),
+      modelFactory: () => async () => ({ choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } }],
+        usage: { prompt_tokens: 4, completion_tokens: 2, gateway_cost: 0.001 } }),
+      runtimeFactory: received => {
+        options = received
+        return { startSession: async () => { await received.model([], {}); return { id: 'parent' } },
+          waitSession: async () => ({ status: 'completed', output: 'Done' }),
+          store: { get: () => ({ messages: [] }), list: () => [] }, context: () => ({ evidence: new Map() }), close: async () => {} }
+      } })
+    try {
+      const result = await harness.run({ mode: 'broad', question: 'Question', ...(active ? { workProduct: packet } : {}) })
+      assert.equal(active, false)
+      assert.equal(result.metrics.providerUsageRecords, undefined)
+    } catch (error) {
+      assert.equal(active, true)
+      assert.equal(error.message, 'Broad missing deliverables: memo.md')
+      assert.deepEqual(error.metrics.providerUsageRecords, [{ prompt_tokens: 4, completion_tokens: 2, gateway_cost: 0.001, finishReason: 'stop' }])
+    }
+    assert.equal(typeof options.model, 'function')
+  }
 })
 
 test('broad work-product fails explicitly when final chat is not a saved memo', async t => {
@@ -172,12 +203,14 @@ const request = JSON.parse(input); fs.mkdirSync(request.artifacts);
 fs.writeFileSync(request.artifacts + '/request.json', JSON.stringify(request));
 fs.writeFileSync(request.artifacts + '/tool-results.jsonl', JSON.stringify({tool:'read',arguments:{file_path:'chunks/doc:a.txt'},result:'[doc:a]\\nLegal source.\\n'}) + '\\n');
 const result = {answer:'',finished_cleanly:true,turn_count:2,input_tokens:19,output_tokens:7,
+provider_usage_records:[{prompt_tokens:19,completion_tokens:7,cost:0.002,finishReason:'stop'}],
 prompt_sha256:crypto.createHash('sha256').update(fs.readFileSync(request.harvey_root + '/harness/system_prompt.md')).digest('hex'),
 tool_names:['bash','read','write','edit','glob','grep'],template_id:'gfkhlvaqlbbjrjm04d6d',
 harvey_base_image:'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2',
 deliverables:[{file:'memo.md',content:'Saved memo',sha256:crypto.createHash('sha256').update('Saved memo').digest('hex')}],missingDeliverables:[]};
 if (request.question === 'missing') Object.assign(result, {answer:'Now I will write the deliverable.',finished_cleanly:false,
-turn_count:62,input_tokens:8024,output_tokens:1932,wall_clock_seconds:729,deliverables:[],missingDeliverables:['memo.md']});
+turn_count:62,input_tokens:8024,output_tokens:1932,wall_clock_seconds:729,deliverables:[],missingDeliverables:['memo.md'],
+provider_usage_records:[{prompt_tokens:8024,completion_tokens:8000,cost:0.01,finishReason:'length'}]});
 process.stdout.write(JSON.stringify(result)); });`)
   chmodSync(fake, 0o755)
   const oldGateway = process.env.AI_GATEWAY_API_KEY, oldE2b = process.env.E2B_API_KEY
@@ -190,6 +223,7 @@ process.stdout.write(JSON.stringify(result)); });`)
   assert.equal(harness.provenance.max_steps, 80)
   assert.equal(harness.provenance.max_completion_tokens, 8000)
   assert.equal(result.metrics.errors, 0)
+  assert.deepEqual(result.metrics.providerUsageRecords, [{ prompt_tokens: 19, completion_tokens: 7, cost: 0.002, finishReason: 'stop' }])
   assert.deepEqual(result.deliverables, [{ file: 'memo.md', content: 'Saved memo', sha256: digest('Saved memo') }])
   assert.equal(result.workProductProvenance.materialHashes['materials/facts.md'], digest('Public facts'))
   assert.deepEqual(JSON.parse(readFileSync(join(result.artifactPaths[1], '../request.json'))).work_product, packet)
@@ -198,6 +232,7 @@ process.stdout.write(JSON.stringify(result)); });`)
     assert.equal(error.answer, 'Now I will write the deliverable.')
     assert.deepEqual(error.agentStatus, { finishedCleanly: false, turnCount: 62, wallClockSeconds: 729 })
     assert.equal(error.metrics.usage.input_tokens, 8024)
+    assert.deepEqual(error.metrics.providerUsageRecords, [{ prompt_tokens: 8024, completion_tokens: 8000, cost: 0.01, finishReason: 'length' }])
     assert.equal(error.artifactPaths.length, 2)
     return true
   })

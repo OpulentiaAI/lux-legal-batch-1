@@ -25,9 +25,12 @@ class ModalDeepSeekAdapter(ModelAdapter):
         )
         if self.usage_records is not None:
             usage = response.usage.model_dump() if response.usage else {}
-            self.usage_records.append({key: value for key, value in usage.items()
-                                       if key in {"prompt_tokens", "completion_tokens", "total_tokens", "cost", "gateway_cost", "market_cost"}
-                                       and isinstance(value, (int, float)) and not isinstance(value, bool)})
+            record = {key: value for key, value in usage.items()
+                      if key in {"prompt_tokens", "completion_tokens", "total_tokens", "cost", "gateway_cost", "market_cost"}
+                      and isinstance(value, (int, float)) and not isinstance(value, bool)}
+            finish_reason = getattr(response.choices[0], "finish_reason", None)
+            record["finishReason"] = finish_reason if isinstance(finish_reason, str) else None
+            self.usage_records.append(record)
         message = response.choices[0].message.model_dump(exclude_none=True)
         calls = [ToolCall(id=call["id"], name=call["function"]["name"],
                           arguments=call["function"]["arguments"])

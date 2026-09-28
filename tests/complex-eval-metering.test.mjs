@@ -22,7 +22,7 @@ class Usage:
     def model_dump(self): return {'prompt_tokens':12,'completion_tokens':7,'cost':0.001,'gateway_cost':0.001,'other':'private','market_cost':None}
 class OpenAI:
     def __init__(self): self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=self.create))
-    def create(self, **kwargs): return types.SimpleNamespace(choices=[types.SimpleNamespace(message=Message())],usage=Usage())
+    def create(self, **kwargs): return types.SimpleNamespace(choices=[types.SimpleNamespace(message=Message(),finish_reason='length')],usage=Usage())
 sys.modules['openai'] = types.SimpleNamespace(OpenAI=OpenAI)
 spec = importlib.util.spec_from_file_location('adapter', sys.argv[1])
 module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
@@ -33,6 +33,6 @@ legacy.chat([], [])
 print(json.dumps({'active':active.usage_records,'legacy':legacy.usage_records}))
 `
   const result = JSON.parse(execFileSync('python3', ['-c', script, resolve('eval/harvey-modal-adapter.py')], { encoding: 'utf8' }))
-  assert.deepEqual(result.active, [{ prompt_tokens: 12, completion_tokens: 7, cost: 0.001, gateway_cost: 0.001 }])
+  assert.deepEqual(result.active, [{ prompt_tokens: 12, completion_tokens: 7, cost: 0.001, gateway_cost: 0.001, finishReason: 'length' }])
   assert.equal(result.legacy, null)
 })

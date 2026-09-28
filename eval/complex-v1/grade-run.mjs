@@ -4,7 +4,7 @@ import { resolve, dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { sha256, validateSuite, safeName } from './validate.mjs'
 import { buildManifest } from './freeze.mjs'
-import { prepareJudgeRequest, validateJudgeResponse, reconcileJudges } from './judge.mjs'
+import { JUDGE_RESPONSE_CONTRACT, prepareJudgeRequest, validateJudgeResponse, reconcileJudges } from './judge.mjs'
 import { gatewayChat } from '../compose.mjs'
 import { evidenceV4 } from '../grading-evidence.mjs'
 import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY } from '../../runtime/eval-model-profile.mjs'
@@ -12,8 +12,53 @@ import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY } from '../../runtime/eval-model-profi
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const suiteRoot = fileURLToPath(new URL('drafts', import.meta.url))
 const model = MODAL_DEEPSEEK_MODEL
-const judgePolicy = Object.freeze({ model, providerOnly: MODAL_ONLY, reasoningEffort: 'high', maxTokens: 16000,
+const transportInstruction = 'Return one JSON object. Copy evidence quotes exactly from the provided records. Coordinates are verified against those records and uniquely matching exact quotes may have their offsets mechanically resolved; do not change your legal judgment to fit an anchor.'
+const judgePolicy = Object.freeze({ version: 'complex-grader-v2', model, providerOnly: MODAL_ONLY,
+  reasoningEffort: 'high', maxTokens: 32768, responseFormat: { type: 'json_object' },
+  transportInstructionSha256: sha256(transportInstruction), normalization: 'unique-exact-quote-offset-v2',
   timeoutMs: 120000, retries: 2, evidence: 'original-recorded-tool-output-excerpts-v1', judges: 2 })
+const judgeMessages = request => [{ role: 'system', content: `${request.policy}\n${transportInstruction}` },
+  { role: 'user', content: JSON.stringify(request.data) }]
+const sameKeys = (value, expected) => plain(value) &&
+  Object.keys(value).sort().join() === expected.slice().sort().join()
+
+export function normalizeJudgeCoordinates(raw, request) {
+  let response
+  try { response = typeof raw === 'string' ? JSON.parse(raw) : raw } catch { return { response: raw, corrections: [] } }
+  if (!sameKeys(response, JUDGE_RESPONSE_CONTRACT.keys) || !Array.isArray(response.answerSpans) ||
+      !Array.isArray(response.anchors) ||
+      response.answerSpans.some(span => !sameKeys(span, JUDGE_RESPONSE_CONTRACT.answerSpanKeys)) ||
+      response.anchors.some(anchor => !sameKeys(anchor, JUDGE_RESPONSE_CONTRACT.anchorKeys))) {
+    return { response, corrections: [] }
+  }
+  const corrections = []
+  function normalize(spans, recordsFor, type) {
+    return spans.map((span, index) => {
+      const records = [...new Set(recordsFor(span))]
+      if (!Array.isArray(records) || typeof span.quote !== 'string' || !span.quote.length ||
+          !Number.isSafeInteger(span.start) || !Number.isSafeInteger(span.end) || span.start < 0 || span.end < 0) return span
+      if (records.some(record => record.slice(span.start, span.end) === span.quote && span.end > span.start)) return span
+      const matches = records.flatMap(record => {
+        const positions = []
+        for (let start = record.indexOf(span.quote); start !== -1; start = record.indexOf(span.quote, start + 1)) positions.push(start)
+        return positions
+      })
+      if (matches.length !== 1) return span
+      const after = { start: matches[0], end: matches[0] + span.quote.length }
+      corrections.push({ type, index, ...(type === 'answerSpan' ? { file: span.file } : { role: span.role, id: span.id }),
+        quote: span.quote, before: { start: span.start, end: span.end }, after })
+      return { ...span, ...after }
+    })
+  }
+  const { outputs, visibleSources, referenceSources, scenarioFacts } = request.data
+  return { response: { ...response,
+    answerSpans: normalize(response.answerSpans, span => outputs.filter(record => record.file === span.file &&
+      typeof record.content === 'string').map(record => record.content), 'answerSpan'),
+    anchors: normalize(response.anchors, anchor => anchor.role === 'source_reference' ?
+      referenceSources.filter(record => record.id === anchor.id).map(record => record.text) :
+      anchor.role === 'visible_source' ? visibleSources.filter(record => record.id === anchor.id).map(record => record.text) :
+        anchor.role === 'scenario_fact' ? scenarioFacts.filter(record => record.file === anchor.id).map(record => record.text) : [], 'anchor') }, corrections }
+}
 const costFields = ['cost', 'total_cost', 'input_cost', 'output_cost', 'prompt_cost', 'completion_cost']
 function transportError(error) {
   if (/^gateway (?:[45]\d\d|retryable [45]\d\d)$/.test(error?.message)) return error.message
@@ -159,7 +204,7 @@ export async function gradeRun({ inputPath, outputPath, taskId, resume = false, 
       data.provenance.suiteManifestSha256 !== sha256(frozenBytes) ||
       data.provenance.runPlanSha256 !== sha256(readFileSync(new URL('./RUN-PLAN.md', import.meta.url))) ||
       data.provenance.model !== model || JSON.stringify(data.provenance.providerOnly) !== JSON.stringify(MODAL_ONLY) ||
-      data.provenance.maxSteps !== 80 || data.provenance.maxCompletionTokens !== 8000 ||
+      data.provenance.maxSteps !== 80 || data.provenance.maxCompletionTokens !== 32768 ||
       !Array.isArray(data.provenance.selectedTasks)) throw new Error('Runner provenance/policy mismatch')
   const selected = taskId ? [taskId] : data.rows.filter(row => row.selected).map(row => row.taskId).sort()
   const modes = ['harvey', 'broad']
@@ -224,9 +269,9 @@ export async function gradeRun({ inputPath, outputPath, taskId, resume = false, 
         }
         const request = prepareJudgeRequest(bundle, directory, criterion.id, visibleSources)
         const requestSha256 = sha256(JSON.stringify(request))
-        const results = []
+        const results = [], judgeCorrections = []
         for (let judge = 0; judge < 2; judge++) {
-          let verdict
+          let verdict, finalCorrections = []
           for (let attempt = 0; attempt <= judgePolicy.retries; attempt++) {
             const name = sha256(identity).slice(0, 24) + `-judge${judge + 1}-attempt${attempt + 1}.json`
             const path = join(attemptsDir, name)
@@ -235,26 +280,33 @@ export async function gradeRun({ inputPath, outputPath, taskId, resume = false, 
             else {
               try {
                 if (!chat) throw new Error('Judge transport unavailable')
-                const response = await chat({ messages: [{ role: 'system', content: request.policy },
-                  { role: 'user', content: JSON.stringify(request.data) }], maxTokens: judgePolicy.maxTokens })
+                const response = await chat({ messages: judgeMessages(request), maxTokens: judgePolicy.maxTokens,
+                  responseFormat: judgePolicy.responseFormat })
                 capture = { requestSha256, ...captureJudgeResponse(response) }
               } catch (error) { capture = { requestSha256, text: null, usage: null, finishReason: null, error: transportError(error) } }
+              capture.coordinateCorrections = capture.error ? [] : normalizeJudgeCoordinates(capture.text, request).corrections
               writeFileSync(path, `${JSON.stringify(capture)}\n`, { flag: 'wx', mode: 0o600 })
             }
             try {
               if (capture.requestSha256 !== requestSha256) throw new Error('Judge attempt request binding mismatch')
               if (capture.error) throw new Error(capture.error)
-              verdict = validateJudgeResponse(capture.text, request)
+              const normalized = normalizeJudgeCoordinates(capture.text, request)
+              if (JSON.stringify(capture.coordinateCorrections) !== JSON.stringify(normalized.corrections)) {
+                throw new Error('Judge coordinate correction binding mismatch')
+              }
+              finalCorrections = normalized.corrections
+              verdict = validateJudgeResponse(normalized.response, request)
               break
             } catch (error) {
               if (attempt === judgePolicy.retries) verdict = { executionFailure: String(error.message).slice(0, 500) }
             }
           }
           results.push(verdict)
+          judgeCorrections.push(finalCorrections)
         }
         const result = reconcileJudges(request, ...results)
         output.rows.push({ identity, taskId: id, mode, criterionId: criterion.id,
-          status: result.status, judges: results, reason: result.reason ?? null,
+          status: result.status, judges: results, judgeCorrections, reason: result.reason ?? null,
           visibleEvidence: visibleSources })
         output.summary = summarize(output.rows, selected, modes, plannedByTask)
         save(outputPath, output)
@@ -288,35 +340,39 @@ export async function calibrateJudge({ outputPath, criteria, chat }) {
     try {
       if (variant !== 'omitted') for (const file of criterion.deliverables) writeFileSync(join(directory, file), criterion[variant])
       const request = prepareJudgeRequest(bundle, directory, criterion.id, [])
-      const rawAttempts = [], judges = []
+      const rawAttempts = [], judges = [], judgeCorrections = []
       for (let judge = 0; judge < 2; judge++) {
-        let validated = null
+        let validated = null, finalCorrections = []
         for (let attempt = 0; attempt <= judgePolicy.retries; attempt++) {
           let capture
           try {
             if (!chat) throw new Error('Judge transport unavailable')
-            const response = await chat({ messages: [{ role: 'system', content: request.policy },
-              { role: 'user', content: JSON.stringify(request.data) }], maxTokens: judgePolicy.maxTokens })
+            const response = await chat({ messages: judgeMessages(request), maxTokens: judgePolicy.maxTokens,
+              responseFormat: judgePolicy.responseFormat })
             capture = captureJudgeResponse(response)
           } catch (error) { capture = { text: null, usage: null, finishReason: null, error: transportError(error) } }
+          const normalized = capture.error ? { response: capture.text, corrections: [] } : normalizeJudgeCoordinates(capture.text, request)
+          capture.coordinateCorrections = normalized.corrections
           const name = `${taskId}-${criterion.id}-${variant}-judge${judge + 1}-attempt${attempt + 1}.json`
           writeFileSync(join(attemptsDir, name), `${JSON.stringify({ requestSha256: sha256(JSON.stringify(request)), ...capture })}\n`,
             { flag: 'wx', mode: 0o600 })
           rawAttempts.push(name)
           try {
             if (capture.error) throw new Error(capture.error)
-            validated = validateJudgeResponse(capture.text, request)
+            finalCorrections = normalized.corrections
+            validated = validateJudgeResponse(normalized.response, request)
             break
           } catch (error) {
             if (attempt === judgePolicy.retries) validated = { executionFailure: String(error.message).slice(0, 500) }
           }
         }
         judges.push(validated)
+        judgeCorrections.push(finalCorrections)
       }
       const outcome = reconcileJudges(request, ...judges)
       output.rows.push({ taskId, criterionId: criterion.id, variant, expected: variant === 'minimalPass' ? 'pass' : 'fail',
         outputs: request.data.outputs, referenceIds: request.data.referenceSources.map(source => source.id),
-        rawAttempts, judges, status: outcome.status })
+        rawAttempts, judges, judgeCorrections, status: outcome.status })
       save(outputPath, output)
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }
