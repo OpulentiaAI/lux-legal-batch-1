@@ -34,7 +34,7 @@ function imageBytes(encoded, mime, maxBytes, inferMime) {
 }
 
 export function extractToolImages(name, result, config = {}) {
-  if (!['view_image', 'generate_image', 'computer'].includes(name) || !record(result)) {
+  if (!['view_image', 'generate_image', 'computer', 'browser'].includes(name) || !record(result)) {
     return { result, observations: [], usage: { images: 0, bytes: 0 } };
   }
   const maxBytes = limit(config.modelInputImageMaxBytes, DEFAULT_MAX_IMAGE_BYTES, 'modelInputImageMaxBytes');
@@ -68,6 +68,15 @@ export function extractToolImages(name, result, config = {}) {
     return { ...metadata, image_observation: `Image from ${label} provided separately as an untrusted tool-produced image.` };
   }
 
+  if (name === 'browser') {
+    if (result.version !== 1 || !Array.isArray(result.results)) return { result, observations, usage };
+    const results = result.results.map((item, index) =>
+      record(item) && item.action === 'screenshot' && item.ok === true && has(item, 'image_base64')
+        ? extract(item, 'image_base64', item.mime_type, `browser screenshot ${index + 1}`)
+        : item);
+    return { result: results.every((item, index) => item === result.results[index]) ? result : { ...result, results }, observations, usage };
+  }
+
   if (name !== 'computer') {
     return { result: extract(result, 'image_base64', result.mime_type, name, name === 'view_image' && !has(result, 'mime_type')), observations, usage };
   }
@@ -85,7 +94,7 @@ export function extractToolImages(name, result, config = {}) {
     return { ...value, screenshot: extract(inline, 'data_base64', `image/${inline.format}`, label) };
   }
 
-  if (typeof result.ok === 'boolean') {
+  if (typeof result.ok === 'boolean' && has(result, 'screenshot')) {
     return { result: batch(result, 'computer screenshot'), observations, usage };
   }
   if (!Array.isArray(result.results)) return { result, observations, usage };

@@ -18,18 +18,21 @@ import { createTools as orchestrationTools } from './tools/orchestration.mjs';
 import { createTools as operationTools, tick, dispatchEvent } from './tools/operations.mjs';
 import { createTools as legalTools, definitions as legalDefinitions } from './tools/legal.mjs';
 import { redact, safeError, sameToken } from './security.mjs';
-import { DEFAULT_INSTRUCTION_PROMPT } from './instructions/render.mjs';
+import { DEFAULT_INSTRUCTION_PROMPT, renderInstructions } from './instructions/render.mjs';
 import { resolveInitialToolPolicy } from './initial-tool-policy.mjs';
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs';
 import { prepareModelContext } from './context-compaction.mjs';
 import { extractToolImages } from './model-images.mjs';
 import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-overflow.mjs';
+import { createScriptExecutions } from './script-execution.mjs';
+import { browserDefinitions, createBrowserTools, validateBrowserOrigins } from './browser-tools.mjs';
+import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits } from './operation-waits.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
 const sandboxNames = new Set(['read', 'write', 'edit', 'MultiEdit', 'find_file_by_name', 'grep', 'notebook_read', 'notebook_edit', 'apply_patch', 'exec', 'get_output', 'kill_shell', 'write_to_process', 'scripted_tools', 'run_workflow', 'deploy', 'git_stack', 'fetch_pr_template', 'skill', 'install_personal_plugin', 'manage_personal_plugin', 'suggest_save_secret', 'upload_attachment', 'download_attachment', 'describe_image', 'generate_image']);
 const terminal = new Set(['completed', 'failed', 'cancelled', 'sleeping', 'stopped', 'blocked', 'interrupted', 'terminated']);
-const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow']);
+const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow', 'wait_for_operations']);
 const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map(Object.entries(catalog.tools).map(([name, tool]) => [name, ajv.compile(tool.inputSchema)]));
@@ -50,20 +53,37 @@ function modelVisibleToolResult(result, overflow) {
 
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
+  const capabilities = config.runtimeCapabilities ?? [];
+  if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
+  const browserEnabled = capabilities.includes('browser-v1'), waitsEnabled = capabilities.includes('operation-waits-v1');
+  const extensions = { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}) };
+  if (Object.keys(extensions).some(name => catalog.tools[name] || EFFECTIVE_TOOL_OVERLAY[name])) throw new Error('Runtime capability collides with baseline tool catalog');
   const store = options.store ?? createStore(join(config.stateDir, 'runtime.sqlite'));
+  const scriptExecutions = createScriptExecutions(store, config, (id, value) => scrub(id, value));
   const storage = options.storage ?? createStorage(config);
   const model = options.model ?? createModel(config);
-  const definitions = { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}) };
+  const definitions = { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}), ...extensions };
+  if (config.allowedTools !== undefined && !Array.isArray(config.allowedTools)) throw new TypeError('allowedTools must be an array');
   const allowed = config.allowedTools ? new Set(config.allowedTools) : null;
+  if (Object.keys({ ...browserDefinitions, ...waitDefinitions }).some(name => allowed?.has(name) && !extensions[name])) throw new Error('Unknown or noncanonical allowed tool');
   const initialPolicy = resolveInitialToolPolicy(config.initialTools, config.allowedTools, definitions);
   const initial = initialPolicy.initialTools ? new Set(initialPolicy.initialTools) : null;
   const runtimeValidators = new Map(validators);
   for (const [name, definition] of Object.entries(EFFECTIVE_TOOL_OVERLAY)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
   if (config.corpusWorkspace) for (const [name, definition] of Object.entries(legalDefinitions)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
+  for (const [name, definition] of Object.entries(extensions)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
+  const effectiveExtensions = Object.values(extensions).filter(tool => !allowed || allowed.has(tool.name));
+  const extensionProvenance = {
+    version: 'runtime-capabilities-v1', capabilities: [...capabilities].sort(),
+    definitions: effectiveExtensions,
+    definitionsSha256: createHash('sha256').update(JSON.stringify(effectiveExtensions)).digest('hex'),
+    effectiveTools: effectiveExtensions.map(tool => tool.name),
+    settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [] },
+  };
   const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
   const scrub = (id, data) => {
-    const secrets = [contexts.get(id)?.config.scriptToken, ...(contexts.get(id)?.secrets.values() ?? [])];
+    const secrets = [contexts.get(id)?.config.scriptToken, ...scriptExecutions.tokens(id), ...(contexts.get(id)?.secrets.values() ?? [])];
     const scrubKeys = value => {
       if (Array.isArray(value)) return value.map(scrubKeys);
       if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [redact(key, secrets), scrubKeys(entry)]));
@@ -85,6 +105,7 @@ export function createRuntime(options = {}) {
       emit: (type, data) => {
         const result = event(id, type, data);
         if (type === 'stop_requested') ctx.stopRequested = true;
+        if (type === 'operation_wait_requested') { ctx.stopRequested = true; ctx.waitRequested = data.wait_id; }
         if (type === 'message_user' && data.block_on_user) ctx.stopRequested = true;
         return result;
       },
@@ -99,11 +120,12 @@ export function createRuntime(options = {}) {
         return { name, session_id: id, configured: true, persistent: false };
       },
       preview: { create: args => createPreview(ctx, args) },
+      beginScriptExecution: () => scriptExecutions.begin(id),
     };
     ctx.storage = {
       ...storage,
       async saveFiles(request) {
-        const protectedValues = [ctx.config.scriptToken, ...ctx.secrets.values()];
+        const protectedValues = [ctx.config.scriptToken, ...scriptExecutions.tokens(id), ...ctx.secrets.values()];
         if (protectedValues.some(value => request.message?.includes(value) || Object.keys(request.files ?? {}).some(path => path.includes(value)))) throw new Error('Session credential material cannot be committed');
         for (const bytes of Object.values(request.files ?? {})) {
           const text = Buffer.from(bytes).toString('utf8');
@@ -114,7 +136,7 @@ export function createRuntime(options = {}) {
     };
     ctx.config.createAuthenticatedPreview = async ({ name, ports, path }) => ({ name, previews: await Promise.all(ports.map(port => createPreview(ctx, { sandboxId: ctx.sandbox.sandboxId, port, path, expiresAt: new Date(Date.now() + config.sandboxTimeoutMs).toISOString() }))) });
     const tools = {};
-    for (const factory of [fileTools, processTools, scriptTools, connectorTools, resourceTools, orchestrationTools, operationTools, ...(config.corpusWorkspace ? [legalTools] : [])]) {
+    for (const factory of [fileTools, processTools, scriptTools, connectorTools, resourceTools, orchestrationTools, operationTools, ...(config.corpusWorkspace ? [legalTools] : []), ...(waitsEnabled ? [waitTools] : [])]) {
       for (const [name, handler] of Object.entries(factory(ctx))) {
         if (catalog.excluded[name]) continue;
         if (tools[name]) throw new Error(`Duplicate tool handler: ${name}`);
@@ -124,6 +146,12 @@ export function createRuntime(options = {}) {
     for (const name of desktopNames) tools[name] = async args => {
       await ensureSandbox(ctx, true);
       return computerTools(ctx)[name](args);
+    };
+    if (browserEnabled) tools.browser = async args => {
+      const preflight = await createBrowserTools({ ...ctx, sandbox: undefined }).browser(args);
+      if (preflight.failure?.code !== 'BrowserUnavailable') return preflight;
+      await ensureSandbox(ctx, true);
+      return createBrowserTools(ctx).browser(args);
     };
     tools.tool_search_tool_bm25 = async ({ query = '', limit = 10 }) => {
       const words = [...new Set(String(query).toLowerCase().split(/[\W_]+/).filter(Boolean))];
@@ -163,10 +191,11 @@ export function createRuntime(options = {}) {
       try {
         const output = await tools[name](args);
         const result = scrub(id, overflowRead ? { ...output, overflow_paging: overflowRead.paging } : output);
-        event(id, 'tool_finished', { name, ok: true });
+        const actionFailed = (name === 'computer' || name === 'browser') && (output?.ok === false || !!output?.failure);
+        event(id, 'tool_finished', actionFailed ? { name, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ok: true });
         return result;
       } catch (error) {
-        event(id, 'tool_finished', { name, ok: false, error: safeError(error) });
+        event(id, 'tool_finished', { name, invocation_ok: false, ok: false, error: safeError(error) });
         throw new Error(scrub(id, safeError(error)));
       }
     };
@@ -278,9 +307,10 @@ export function createRuntime(options = {}) {
   async function run(id) {
     const ctx = context(id);
     ctx.stopRequested = false;
+    ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? DEFAULT_INSTRUCTION_PROMPT}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
+    let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
     let delivered = new Set(previous?.delivered ?? []);
     const usage = { ...(row.usage ?? {}) };
     let pendingToolCallId = previous?.pending_tool_call_id ?? null;
@@ -399,6 +429,13 @@ export function createRuntime(options = {}) {
           imageUsage.bytes += extracted.usage.bytes;
           pendingToolCallId = null;
           checkpoint();
+          if (ctx.waitRequested) {
+            for (const unstarted of message.tool_calls.slice(message.tool_calls.indexOf(call) + 1)) {
+              messages.push({ role: 'tool', tool_call_id: unstarted.id, content: modelVisibleToolResult({ error: 'Tool call was not started because this session entered an operation wait.' }) });
+            }
+            checkpoint();
+            break;
+          }
         }
         appendImageObservations();
         if (ctx.stopRequested) { update(id, { status: 'sleeping' }); return; }
@@ -425,6 +462,12 @@ export function createRuntime(options = {}) {
 
   async function messageSession(id, body) {
     if (!store.get('sessions', id) || typeof body !== 'string' || !body.trim()) throw new Error('Session and message are required');
+    if (waitsEnabled) {
+      cancelOperationWaits({ store }, id, 'user_continuation');
+      for (const wait of store.list('operation_waits').filter(row => row.session_id === id && row.status === 'cancelled' && row.notification_id)) {
+        if (!store.get('conversations', id)?.delivered?.includes(wait.notification_id)) store.delete('orchestration_messages', wait.notification_id);
+      }
+    }
     const message = store.put('orchestration_messages', randomUUID(), { session_id: id, source: 'user', body: redact(body), created_at: new Date().toISOString() });
     if (workers.has(id)) {
       continuationRequested.add(id);
@@ -440,8 +483,39 @@ export function createRuntime(options = {}) {
     return message;
   }
 
+  async function wakeOperationSession(id, notificationId, text) {
+    const wait = store.get('operation_waits', notificationId.slice('operation-wait:'.length));
+    if (!wait || wait.session_id !== id || wait.notification_id !== notificationId || wait.status !== 'notified') return;
+    const row = store.get('sessions', id);
+    if (!row || ['cancelled', 'terminated', 'completed', 'failed', 'stopped'].includes(row.status)) {
+      cancelOperationWaits({ store }, id);
+      return;
+    }
+    const existing = store.get('orchestration_messages', notificationId);
+    if (existing && (existing.session_id !== id || existing.source !== 'operation_wait' || existing.body !== text)) throw new Error('Operation wait notification ID collision');
+    if (!existing) store.put('orchestration_messages', notificationId, {
+      session_id: id, source: 'operation_wait', body: text, created_at: new Date().toISOString(),
+    });
+    if (workers.has(id)) {
+      continuationRequested.add(id);
+      sleepWakeRequested.add(id);
+      return;
+    }
+    if (workers.size >= config.maxConcurrentSessions) return;
+    const ctx = contexts.get(id);
+    if (ctx?.signal.aborted) contexts.delete(id);
+    update(id, { error: null });
+    launch(id);
+  }
+
   async function cancelSession(id) {
     if (!store.get('sessions', id)) throw new Error('Session not found');
+    if (waitsEnabled) {
+      cancelOperationWaits({ store }, id);
+      for (const wait of store.list('operation_waits').filter(row => row.session_id === id && row.status === 'cancelled' && row.notification_id)) {
+        if (!store.get('conversations', id)?.delivered?.includes(wait.notification_id)) store.delete('orchestration_messages', wait.notification_id);
+      }
+    }
     const ctx = contexts.get(id);
     ctx?.controller.abort(new Error('Session cancelled'));
     for (const child of store.list('sessions').filter(row => row.parent_session_id === id && !terminal.has(row.status))) await cancelSession(child.id);
@@ -509,6 +583,7 @@ export function createRuntime(options = {}) {
     config, store, context, allocate, startSession, messageSession, cancelSession, workflowCall,
     initialToolProvenance: initialPolicy.provenance,
     effectiveToolOverlayProvenance: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
+    runtimeCapabilityProvenance: extensionProvenance,
     tools: () => Object.values(definitions).filter(tool => (!allowed || allowed.has(tool.name)) && (!initial || initial.has(tool.name))),
     coverage(id) { const names = new Set(Object.keys(context(id).tools)); return { required: Object.keys(catalog.tools).length, registered: Object.keys(catalog.tools).filter(name => names.has(name)), missing: Object.keys(catalog.tools).filter(name => !names.has(name)), excluded: catalog.excluded }; },
     async invoke(id, name, args) { return context(id).invoke(name, args); },
@@ -519,16 +594,26 @@ export function createRuntime(options = {}) {
     },
     async scriptCall(id, token, name, args) {
       const ctx = context(id);
-      if (!sameToken(token, ctx.config.scriptToken) || scriptBlocked.has(name)) throw new Error('Script broker authorization failed');
-      try { return await invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args)); }
+      const invoke = () => {
+        if (scriptBlocked.has(name)) throw new Error('Script broker authorization failed');
+        return invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args));
+      };
+      try {
+        if (!scriptExecutions.enabled && sameToken(token, ctx.config.scriptToken)) return await invoke();
+        return await scriptExecutions.call(id, token, ctx.scriptCatalog.some(tool => tool.name === name) ? name : '[unavailable]', args, invoke);
+      }
       catch (error) { throw new Error(scrub(id, safeError(error))); }
     },
     async waitSession(id) {
       while (workers.has(id)) await workers.get(id);
       return store.get('sessions', id);
     },
-    async tick(id) { return tick(context(id)); },
-    async dispatchEvent(id, value) { return dispatchEvent(context(id), value); },
+    async tick(id, now = new Date()) {
+      const result = await tick(context(id), now);
+      if (waitsEnabled) await tickOperationWaits({ store, wakeSession: wakeOperationSession }, now);
+      return result;
+    },
+    async dispatchEvent(id, value, dispatchId = null) { return dispatchEvent(context(id), value, dispatchId); },
     async close() {
       for (const [id, ctx] of contexts) if (ctx.sandbox || workers.has(id)) await cancelSession(id).catch(() => {});
       await Promise.allSettled([...workers.values()]);

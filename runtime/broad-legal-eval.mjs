@@ -56,17 +56,72 @@ function validateWorkProduct(packet) {
 }
 
 function redactAudit(value) {
-  if (typeof value === 'string') return redact(value).replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
+  if (typeof value === 'string') return redact(value).replace(/(?:data:image\/[a-z0-9.+-]+;base64,)[A-Za-z0-9+/=]+/gi, '[redacted image data]')
+    .replace(/(?:[A-Za-z0-9+/]{80,}={0,2})/g, '[redacted encoded data]')
+    .replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
     try {
       const url = new URL(raw)
       return url.search || url.hash || url.username || url.password ? `${url.origin}${url.pathname}?[redacted]` : raw
     } catch { return raw }
   }).replace(/\bBearer\s+[A-Za-z0-9._~+/-]+/gi, 'Bearer [redacted]')
+    .replace(/\bBasic\s+[A-Za-z0-9+/=]+/gi, 'Basic [redacted]')
     .replace(/("(?:token|api_?key|secret|password|authorization)"\s*:\s*")[^"]*/gi, '$1[redacted]')
+    .replace(/\b(token|api_?key|secret|password|authorization)\s*[:=]\s*([A-Za-z0-9._~+/-]{8,})/gi, '$1=[redacted]')
   if (Array.isArray(value)) return value.map(redactAudit)
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) =>
-    [key, /^(?:api_?key|access_?token|token|secret|password|authorization|privatekey|scripttoken)$/i.test(key) ? '[redacted]' : redactAudit(item)]))
+    [key, /^(?:api_?key|(?:access|refresh|session|script)_?token|token|(?:client|private)_?secret|secret|credential|password|authorization|privatekey|image|image_?data|image_?url|data_?url|base64|bytes)$/i.test(key) ? '[redacted]' : redactAudit(item)]))
   return value
+}
+
+function savedTrajectory(store, rootId, terminal, runProvenance) {
+  const sessions = store.list('sessions')
+  const descendants = new Set([rootId])
+  for (let i = 0; i < sessions.length; i++) {
+    let changed = false
+    for (const row of sessions) if (descendants.has(row.parent_session_id) && !descendants.has(row.id)) {
+      descendants.add(row.id); changed = true
+    }
+    if (!changed) break
+  }
+  const allEvents = store.list('events').filter(row => descendants.has(row.session_id))
+  const allMessages = store.list('orchestration_messages').filter(row => descendants.has(row.session_id))
+  const scriptRuns = store.list('script_runs').filter(row => descendants.has(row.session_id))
+    .map(row => ({ ...row, visibility: row.session_id === rootId ? 'script-only' : 'child-only' }))
+  const scriptRunIds = new Set(scriptRuns.map(row => row.id))
+  const scriptCalls = store.list('script_calls').filter(row => descendants.has(row.session_id) || scriptRunIds.has(row.run_id))
+    .map(row => ({ ...row, visibility: row.session_id === rootId ? 'script-only' : 'child-only' }))
+  return redactAudit({ version: 'broad-trajectory-v1', provenance: runProvenance, rootSessionId: rootId,
+    visibility: 'Only root conversation tool responses are answerer-visible; child session contents and events are child-only.',
+    scriptLedgerPolicy: 'Script calls record IDs, names, timestamps, states and bounded redacted arguments/results. Script-only results are not parent-visible evidence unless returned in the root conversation tool response; truncated ledger values remain explicitly truncated.',
+    terminal, scriptRuns, scriptCalls, timeline: allEvents.map(({ id, session_id, type, data, created_at }) =>
+      ({ id, sessionId: session_id, type, data, createdAt: created_at })),
+    sessions: sessions.filter(row => descendants.has(row.id)).map(row => {
+      const events = allEvents.filter(event => event.session_id === row.id)
+      const conversation = store.get('conversations', row.id)
+      const messages = conversation?.messages ?? []
+      const modelEvents = events.filter(event => event.type === 'model_usage')
+      const toolEvents = events.filter(event => event.type === 'tool_finished')
+      let turn = 0, tool = 0
+      return { sessionId: row.id, parentSessionId: row.parent_session_id, visibility: row.id === rootId ? 'answerer' : 'child-only',
+        createdAt: row.created_at ?? null, updatedAt: row.updated_at ?? null, status: row.status, error: row.error ?? null,
+        output: row.id === rootId ? null : row.output ?? null, deliveredMessageIds: conversation?.delivered ?? [],
+        pendingToolCallId: conversation?.pending_tool_call_id ?? null,
+        messages: messages.map((message, index) => {
+          let anchor = null
+          if (message.role === 'assistant') anchor = modelEvents[turn++]
+          if (message.role === 'tool') {
+            const call = messages.slice(0, index).findLast(entry => entry.role === 'assistant' &&
+              entry.tool_calls?.some(item => item.id === message.tool_call_id))?.tool_calls?.find(item => item.id === message.tool_call_id)
+            const match = toolEvents.findIndex((event, i) => i >= tool && event.data?.name === call?.function?.name)
+            if (match >= 0) { anchor = toolEvents[match]; tool = match + 1 }
+          }
+          return { index, observedAt: anchor?.created_at ?? null,
+            timestampSource: anchor ? `event:${anchor.type}` : 'not-recorded', ...message }
+        }),
+        events: events.map(({ id, type, data, created_at }) => ({ id, type, data, createdAt: created_at })),
+        orchestrationMessages: allMessages.filter(message => message.session_id === row.id),
+      }
+    }) })
 }
 
 function corpusArchive(corpus, workspace) {
@@ -212,7 +267,7 @@ function auditMessages(messages, evidence, corpusSources) {
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
-  toolSurface = 'full-catalog-v1',
+  toolSurface = 'full-catalog-v1', instructionProfile,
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
   if (workProduct !== undefined) {
@@ -222,6 +277,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
@@ -245,8 +301,10 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     ? (nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt).replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
     : nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
   const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
-    profile: initialTools ? 'opulent-prepared-v2' : 'standalone-v1',
+    profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
     variant: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+  const scriptLimits = instructions.provenance.profile === 'opulent-knowledge-v3'
+    ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
     policy: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
@@ -255,7 +313,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION,
       workflowApproval: 'operator-approved exact script hashes required; none configured for this evaluation',
       builtinSkills: skills.skills.map(({ name, artifactSha256 }) => ({ name, path: `${skills.destinationRoot}/${name}/SKILL.md`, sha256: artifactSha256 })) } : {}),
-    instructions: instructions.provenance,
+    instructions: instructions.provenance, ...(scriptLimits ? { scriptLimits,
+      scriptLedger: 'runtime script_runs/script_calls with bounded redacted arguments/results and terminal statuses' } : {}),
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
@@ -278,6 +337,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
+        ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
@@ -510,6 +570,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
           ({ tool, args, rawArguments, output, result })) }), { mode: 0o600 })
         audit.evidenceArtifact = artifact
+        if (workProduct && session && runtime?.store?.list && runtime?.store?.get) {
+          const trajectoryPath = join(evidenceDir, `${session.id}-${sha256(question).slice(0, 12)}-trajectory.json`)
+          const trajectory = savedTrajectory(runtime.store, session.id, terminal, runProvenance)
+          writeFileSync(trajectoryPath, JSON.stringify(trajectory, null, 2) + '\n', { mode: 0o600 })
+          audit.trajectoryArtifact = trajectoryPath
+          audit.trajectorySha256 = sha256(readFileSync(trajectoryPath))
+        }
         const sessions = runtime?.store?.list('sessions') ?? []
         const descendants = new Set(session ? [session.id] : [])
         for (let i = 0; i < sessions.length; i++) {

@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, readdirSync, writeFileSync } from 'node:fs'
+import { closeSync, constants, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -34,9 +34,35 @@ function validateWorkProduct(input) {
 
 function hash(text) { return createHash('sha256').update(text).digest('hex') }
 
+function trajectoryAudit(artifacts) {
+  const path = join(artifacts, 'trajectory.jsonl')
+  if (!existsSync(path)) return {}
+  if (!lstatSync(artifacts).isDirectory() || !lstatSync(path).isFile() ||
+      realpathSync(path) !== path || realpathSync(artifacts) !== artifacts ||
+      (lstatSync(path).mode & 0o077) !== 0) throw new Error('Unsafe Harvey trajectory artifact')
+  return { trajectoryArtifact: path, trajectorySha256: hash(readFileSync(path)) }
+}
+
+function recordBridgeFailure(artifacts, reason, exitCode) {
+  mkdirSync(artifacts, { recursive: true, mode: 0o700 })
+  const path = join(artifacts, 'trajectory.jsonl')
+  if (existsSync(path)) trajectoryAudit(artifacts)
+  if (realpathSync(artifacts) !== artifacts) throw new Error('Unsafe Harvey trajectory directory')
+  const fd = openSync(path, constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600)
+  try {
+    writeFileSync(fd, JSON.stringify({ at: new Date().toISOString(), event: 'bridge_failure', reason, exitCode }) + '\n')
+    fsyncSync(fd)
+  } finally { closeSync(fd) }
+}
+
 function isWithin(path, root) {
   const rel = relative(root, path)
   return !rel || (rel !== '..' && !rel.startsWith(`..${sep}`))
+}
+
+function resolvedArtifactDirectory(path) {
+  if (existsSync(path)) return realpathSync(path)
+  return resolve(resolvedArtifactDirectory(dirname(path)), path.slice(dirname(path).length + 1))
 }
 
 function validateCorpus(corpus) {
@@ -87,7 +113,7 @@ function invoke(python, script, request, env, cwd, args = []) {
         stdoutBytes: Buffer.byteLength(stdout), stdoutSha256: hash(stdout) },
       [env.AI_GATEWAY_API_KEY, env.E2B_API_KEY, env.OPENAI_API_KEY])
       try {
-        mkdirSync(request.artifacts, { recursive: true, mode: 0o700 })
+        recordBridgeFailure(request.artifacts, reason, code)
         writeFileSync(join(request.artifacts, 'bridge-failure.json'), JSON.stringify(diagnostic) + '\n', { mode: 0o600, flag: 'wx' })
       } catch {}
       reject(new Error(message))
@@ -120,7 +146,8 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       usage: { input_tokens: response?.input_tokens ?? 0, output_tokens: response?.output_tokens ?? 0 },
       ...(workProduct ? { providerUsageRecords: response?.provider_usage_records ?? null } : {}),
       latencyMs: Math.round(performance.now() - start) },
-    audit: { calls: auditCalls, finalAnswer: typeof answer === 'string' ? redact(answer) : null } }
+    audit: { calls: auditCalls, finalAnswer: typeof answer === 'string' ? redact(answer) : null,
+      ...trajectoryAudit(artifacts) } }
 }
 
 export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, workProduct } = {}) {
@@ -136,7 +163,9 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   harveyRoot = realpathSync(harveyRoot)
   workspace = realpathSync(workspace)
   artifactsDir = resolve(artifactsDir)
-  if (isWithin(artifactsDir, workspace) || isWithin(artifactsDir, harveyRoot)) throw new Error('Harvey artifacts must be outside source repositories')
+  const artifactTarget = resolvedArtifactDirectory(artifactsDir)
+  if (isWithin(artifactTarget, workspace) || isWithin(artifactTarget, harveyRoot) ||
+      isWithin(artifactTarget, realpathSync(corpus.directory))) throw new Error('Harvey artifacts must be outside source repositories')
   validateCorpus(corpus)
   const script = resolve(workspace, 'eval/harvey-bridge.py')
   let prompt = readFileSync(join(harveyRoot, 'harness/system_prompt.md'), 'utf8')
@@ -179,7 +208,11 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
         throw error
       }
       if (response.prompt_sha256 !== provenance.system_prompt_sha256 || JSON.stringify(response.tool_names) !== JSON.stringify(TOOLS) ||
-          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE) throw new Error('Harvey upstream policy changed')
+          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE) {
+        const error = new Error('Harvey upstream policy changed')
+        error.audit = trajectoryAudit(artifacts)
+        throw error
+      }
       const output = collectEvidence(artifacts, corpus, response.answer, start, response, !!workProduct)
       if (workProduct) {
         if (!Array.isArray(response.deliverables) || !Array.isArray(response.missingDeliverables) ||

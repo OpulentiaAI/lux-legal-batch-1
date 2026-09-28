@@ -45,24 +45,85 @@ export function createTools(ctx) {
   return {
     async computer({ actions }) {
       if (!Array.isArray(actions)) throw new TypeError('actions must be an array');
+      const prepared = actions.map((action, index) => ({
+        index, action: action.action,
+        payload: action.action === 'read_dom' ? null : translate(action),
+      }));
       const results = [];
+      const action_records = [];
       let batch = [];
+      const failure = (attempt, phase, message, result, error_code) => ({
+        status: 'failed', phase, completed_actions: action_records.length, action_records,
+        results,
+        failure: { index: attempt?.index ?? null, action: attempt?.action ?? 'unknown', phase, message,
+          ...(error_code ? { error_code } : {}), ...(result ? { result } : {}) },
+        recovery: 'Observe the desktop before retrying; do not replay completed or uncertain actions automatically.',
+      });
       const flush = async () => {
-        if (!batch.length) return;
-        const result = await computer.action(batch);
-        if (!result.ok) throw new Error('Computer action batch failed');
-        results.push(result);
+        if (!batch.length) return null;
+        const current = batch;
         batch = [];
+        let result;
+        try {
+          result = await computer.action(current.map(item => item.payload));
+        } catch (error) {
+          return failure(current[0], 'unknown', String(error?.message ?? error));
+        }
+        results.push(result);
+        if (result?.ok === true) {
+          if (result.results !== undefined && !Array.isArray(result.results)) {
+            return failure(current[0], 'unknown', 'Computer daemon returned inconsistent action results');
+          }
+          for (const [index, item] of current.entries()) {
+            const record = result.results?.[index];
+            if (Array.isArray(result.results) && (record?.index !== index || record?.type !== item.payload.type || record?.ok !== true)) {
+              return failure(item, 'unknown', 'Computer daemon returned inconsistent action results');
+            }
+            action_records.push({ index: item.index, action: item.action, ok: true,
+              ...(record ? { result: record } : {}) });
+          }
+          if (Array.isArray(result.results) && result.results.length !== current.length) {
+            return failure({ index: null, action: 'screenshot_after' }, 'unknown', 'Computer daemon returned inconsistent action results');
+          }
+          return null;
+        }
+        let failed;
+        let next = current[0];
+        for (const [index, record] of (Array.isArray(result?.results) ? result.results : []).entries()) {
+          if (record?.index !== index) break;
+          if (index === current.length && record.type === 'screenshot_after' && record.ok === false) {
+            failed = { action: { index: null, action: 'screenshot_after' }, record, phase: 'after' };
+            break;
+          }
+          if (index >= current.length || record.type !== current[index].payload.type) break;
+          if (record.ok !== true) {
+            failed = { action: current[index], record, phase: record.output?.retry_safe === true && record.output?.emission_state === 'not_started' ? 'before' : 'unknown' };
+            break;
+          }
+          action_records.push({ index: current[index].index, action: current[index].action, ok: true, result: record });
+          next = current[index + 1] ?? { index: null, action: 'screenshot_after' };
+        }
+        return failure(failed?.action ?? next,
+          failed?.phase ?? 'unknown', failed?.record?.error ?? 'Computer action batch failed', failed?.record,
+          failed?.record?.error_code);
       };
-      for (const action of actions) {
-        if (action.action === 'read_dom') {
-          await flush();
-          results.push({ dom: await computer.browser.console('document.documentElement.outerHTML.slice(0, 1000000)') });
+      for (const item of prepared) {
+        if (item.action === 'read_dom') {
+          const failed = await flush();
+          if (failed) return failed;
+          try {
+            const dom = await computer.browser.console('document.documentElement.outerHTML.slice(0, 1000000)');
+            results.push({ dom });
+            action_records.push({ index: item.index, action: item.action, ok: true, result: { dom } });
+          } catch (error) {
+            return failure(item, 'unknown', String(error?.message ?? error));
+          }
         } else {
-          batch.push(translate(action));
+          batch.push(item);
         }
       }
-      await flush();
+      const failed = await flush();
+      if (failed) return failed;
       return results.length === 1 ? results[0] : { results };
     },
     async browser_console({ content = '' } = {}) {

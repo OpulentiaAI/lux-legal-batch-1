@@ -3,6 +3,8 @@ import { withLegacyNames } from './names.mjs';
 import { CronExpressionParser } from 'cron-parser';
 import recurrence from 'rrule';
 import { posix as path } from 'node:path';
+import { reconcileDispatch } from '../dispatch-recovery.mjs';
+import { redact, safeError } from '../security.mjs';
 
 const active = new Set(['queued', 'running', 'pending', 'starting']);
 const findingsSchema = {
@@ -30,6 +32,7 @@ const row = (ctx, collection, id) => {
   return result;
 };
 const record = (ctx, collection, value) => ctx.store.put(collection, value.id, value);
+const dispatchError = (ctx, error) => redact(safeError(error), [ctx.config?.scriptToken, ...(ctx.secrets?.values() ?? [])]);
 const history = (ctx, kind, id) => ctx.store.list('operation_runs').filter(r => r.kind === kind && r.source_id === id).map(r => {
   const session = r.session_id ? ctx.store.get('sessions', r.session_id) ?? null : null;
   return { ...r, status: r.status === 'delivered' ? 'delivered' : session?.status ?? r.status, session };
@@ -87,7 +90,7 @@ const validLimit = value => {
   return value;
 };
 
-async function runJob(ctx, kind, source, prompt, event = null, schema = null) {
+async function runJob(ctx, kind, source, prompt, event = null, schema = null, dispatchTag = null) {
   allowedRepo(ctx, source.repo);
   const runs = history(ctx, kind, source.id);
   if (source.max_runs != null && runs.length >= source.max_runs) return { skipped: 'run_limit' };
@@ -99,13 +102,13 @@ async function runJob(ctx, kind, source, prompt, event = null, schema = null) {
   }
   if (runs.filter(r => active.has(r.status)).length >= (source.max_concurrent ?? 1)) return { skipped: 'concurrency_limit' };
   const id = randomUUID();
-  record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'starting', event, created_at: new Date().toISOString() });
+  record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'starting', dispatch_tag: dispatchTag, event, created_at: new Date().toISOString() });
   try {
-    const session = await ctx.startSession({ title: `${kind}: ${source.name ?? source.repo}`, prompt, parent_session_id: ctx.sessionId, repos: source.repos ?? [source.repo], ...(schema ? { schema } : {}) });
+    const session = await ctx.startSession({ title: `${kind}: ${source.name ?? source.repo}`, prompt, parent_session_id: ctx.sessionId, repos: source.repos ?? [source.repo], ...(schema ? { schema } : {}), ...(dispatchTag ? { tags: [dispatchTag] } : {}) });
     if (!session?.id) throw new Error('startSession returned no session id');
-    return record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'running', session_id: session.id, event, created_at: new Date().toISOString() });
+    return record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'running', dispatch_tag: dispatchTag, session_id: session.id, event, created_at: new Date().toISOString() });
   } catch (error) {
-    record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'failed', error: String(error.message ?? error), event, created_at: new Date().toISOString() });
+    record(ctx, 'operation_runs', { id, kind, source_id: source.id, repo: source.repo, status: 'failed', dispatch_tag: dispatchTag, error: dispatchTag ? dispatchError(ctx, error) : String(error.message ?? error), event, created_at: new Date().toISOString() });
     throw error;
   }
 }
@@ -363,14 +366,14 @@ async function reviewTool(ctx, args) {
   throw new Error(`Unsupported review action: ${action}`);
 }
 
-async function runAutomation(ctx, source, event) {
+async function runAutomation(ctx, source, event, dispatchId = null) {
   const prior = history(ctx, 'automations', source.id);
   if (prior.filter(run => active.has(run.status)).length >= (source.max_concurrent ?? 1)) return [{ skipped: 'concurrency_limit' }];
   const invocation = source.limits?.invocations;
   if (invocation && prior.filter(run => Date.parse(run.created_at) >= Date.now() - invocation.window_seconds * 1000).length >= invocation.max_per_window) return [{ skipped: 'rate_limit' }];
   const results = [];
-  for (const item of source.actions) {
-    if (item.type === 'start_session') results.push(await runJob(ctx, 'automations', { ...source, max_concurrent: Number.MAX_SAFE_INTEGER, limits: null }, `${item.prompt}\n\nEvent data: ${JSON.stringify(event)}`, event));
+  for (const [index, item] of source.actions.entries()) {
+    if (item.type === 'start_session') results.push(await runJob(ctx, 'automations', { ...source, max_concurrent: Number.MAX_SAFE_INTEGER, limits: null }, `${item.prompt}\n\nEvent data: ${JSON.stringify(event)}`, event, null, dispatchId ? `dispatch:${dispatchId}:${source.id}:${index}` : null));
     else if (item.type === 'start_code_scan') {
       const scan = await scanTool(ctx, { action: 'create_scan', ...(item.scan_mode === 'multi' ? { repos: item.repos.map(entry => entry.repo_name) } : { repo_name: item.repo_name }), scan_type: item.scan_type, profile_id: item.profile_id });
       record(ctx, 'operation_runs', { id: randomUUID(), kind: 'automations', source_id: source.id, repo: source.repo, status: 'running', session_id: scan.session_id, event, created_at: new Date().toISOString() });
@@ -414,8 +417,8 @@ async function runAutomation(ctx, source, event) {
   return results;
 }
 
-async function dispatchRun(ctx, collection, source, event) {
-  const execute = () => collection === 'automations' ? runAutomation(ctx, source, event) : runJob(ctx, collection, source, `${source.prompt}\n\nEvent data: ${JSON.stringify(event)}`, event);
+async function dispatchRun(ctx, collection, source, event, dispatchId = null) {
+  const execute = () => collection === 'automations' ? runAutomation(ctx, source, event, dispatchId) : runJob(ctx, collection, source, `${source.prompt}\n\nEvent data: ${JSON.stringify(event)}`, event, null, dispatchId ? `dispatch:${dispatchId}:${source.id}:0` : null);
   const result = await execute();
   const skipped = Array.isArray(result) ? result[0]?.skipped : result.skipped;
   if (skipped !== 'concurrency_limit') return result;
@@ -429,6 +432,9 @@ export async function tick(ctx, now = new Date()) {
   const date = new Date(now);
   if (Number.isNaN(date.valueOf())) throw new Error('Invalid tick time');
   const results = [];
+  for (const occurrence of ctx.store.list('operation_occurrences').filter(item => item.status === 'received')) {
+    reconcileDispatch(ctx.store, 'operation_occurrences', occurrence.id);
+  }
   for (const collection of ['automations', 'schedules']) {
     for (const source of ctx.store.list(collection)) {
       if (!source.enabled) continue;
@@ -437,15 +443,27 @@ export async function tick(ctx, now = new Date()) {
       for (const scheduled of schedules) {
         if (!scheduled.rule || !scheduled.due || Date.parse(scheduled.due) > date.valueOf()) continue;
         const due = scheduled.due;
+        const id = `schedule:${collection}:${source.id}:${scheduled.index}:${due}`;
+        const existing = ctx.store.get('operation_occurrences', id);
+        if (!existing) record(ctx, 'operation_occurrences', { id, source_id: source.id, kind: collection, due, status: 'received',
+          expected_actions: collection === 'automations' ? source.actions.map((action, index) => ({ source_id: source.id, index, type: action.type })) : [{ source_id: source.id, index: 0, type: 'start_session' }],
+          created_at: new Date().toISOString() });
         const following = collection === 'automations' ? nextRecurrence(scheduled.rule, date) : source.schedule_type === 'one_time' ? null : nextDue(source.cron, source.timezone, date);
         if (collection === 'automations') {
           const next_due = [...source.next_due];
           next_due[scheduled.index] = following;
           record(ctx, collection, { ...source, next_due, enabled: next_due.some(Boolean) || source.triggers.some(t => t.event_type !== 'schedule:recurring'), last_due: due });
         } else record(ctx, collection, { ...source, next_due: following, enabled: following !== null, last_due: due });
+        if (existing) { results.push({ source_id: source.id, due, recovery: reconcileDispatch(ctx.store, 'operation_occurrences', id) }); continue; }
         try {
-          results.push({ source_id: source.id, due, result: collection === 'automations' ? await dispatchRun(ctx, collection, source, { type: 'schedule:recurring', repo: source.repo, due }) : await runJob(ctx, collection, source, source.prompt) });
+          const result = collection === 'automations' ? await dispatchRun(ctx, collection, source, { type: 'schedule:recurring', repo: source.repo, due }, id) : await runJob(ctx, collection, source, source.prompt, null, null, `dispatch:${id}:${source.id}:0`);
+          record(ctx, 'operation_occurrences', { ...ctx.store.get('operation_occurrences', id), status: 'completed', result });
+          results.push({ source_id: source.id, due, result });
         } catch (error) {
+          const occurrence = ctx.store.get('operation_occurrences', id);
+          const children = ctx.store.list('sessions').filter(session => session.tags?.some(tag => tag.startsWith(`dispatch:${id}:`)));
+          record(ctx, 'operation_occurrences', { ...occurrence, status: children.length ? 'uncertain' : 'failed',
+            ...(children.length ? { resolution_required: true, session_ids: children.map(child => child.id) } : {}), error: dispatchError(ctx, error) });
           results.push({ source_id: source.id, due, error: String(error.message ?? error) });
         }
       }
@@ -472,11 +490,21 @@ export async function tick(ctx, now = new Date()) {
   return results;
 }
 
-export async function dispatchEvent(ctx, event) {
+export async function dispatchEvent(ctx, event, dispatchId = null) {
   if (!event || typeof event !== 'object') throw new Error('event is required');
   const type = required(event.type, 'event.type');
   const repo = event.repo == null ? null : allowedRepo(ctx, event.repo);
   const results = [];
+  const expected_actions = [];
+  if (dispatchId) {
+    for (const collection of ['automations', 'oncall']) for (const source of ctx.store.list(collection)) {
+      if (!source.enabled || repo && source.repo !== repo || !source.triggers?.some(t => t.event_type === type && conditionsMatch(t.conditions, event))) continue;
+      if (collection === 'automations') expected_actions.push(...source.actions.map((action, index) => ({ source_id: source.id, index, type: action.type })));
+      else expected_actions.push({ source_id: source.id, index: 0, type: 'oncall' });
+    }
+    const receipt = ctx.store.get('webhook_receipts', dispatchId);
+    ctx.store.put('webhook_receipts', dispatchId, { ...receipt, expected_actions });
+  }
   for (const collection of ['automations', 'oncall']) {
     for (const source of ctx.store.list(collection)) {
       if (!source.enabled || repo && source.repo !== repo) continue;
@@ -485,7 +513,7 @@ export async function dispatchEvent(ctx, event) {
       if (!triggers.length) continue;
       const incident = collection === 'oncall' ? record(ctx, 'incidents', { id: randomUUID(), source_id: source.id, repo, event, created_at: new Date().toISOString(), status: 'triaging' }) : null;
       try {
-        const result = await dispatchRun(ctx, collection, source, event);
+        const result = await dispatchRun(ctx, collection, source, event, dispatchId);
         if (incident) record(ctx, 'incidents', { ...incident, status: result.queued ? 'queued' : result.skipped ? 'skipped' : 'triaging', run_id: result.id ?? null, reason: result.skipped ?? null });
         results.push({ source_id: source.id, incident_id: incident?.id, result });
       } catch (error) {

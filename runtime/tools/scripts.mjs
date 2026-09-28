@@ -197,6 +197,7 @@ export function createTools(ctx) {
     const broker = new URL(`/sessions/${encodeURIComponent(ctx.sessionId)}/tools`, runtimeUrl);
     if (!['http:', 'https:'].includes(broker.protocol)) throw new Error('Invalid runtimeUrl');
     const id = randomUUID();
+    const execution = ctx.beginScriptExecution?.();
     const script = `/tmp/runtime-script-${id}.py`;
     const launcher = `/tmp/runtime-launcher-${id}.py`;
     const catalogPath = `/tmp/runtime-catalog-${id}.json`;
@@ -204,7 +205,7 @@ export function createTools(ctx) {
     let abort;
     try {
       await ctx.sandbox.files.write([{ path: script, data: args.script }, { path: launcher, data: shim }, { path: catalogPath, data: JSON.stringify(ctx.scriptCatalog ?? []) }]);
-      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: scriptToken, RUNTIME_BLOCKED_TOOLS: JSON.stringify([...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
+      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_BLOCKED_TOOLS: JSON.stringify([...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
       const run = handle.wait().then(result => result, error => error);
       const result = await Promise.race([run, new Promise((_, reject) => {
         const timer = setTimeout(() => reject(new Error('Script timed out')), seconds * 1000);
@@ -212,7 +213,7 @@ export function createTools(ctx) {
         run.finally(() => clearTimeout(timer));
         if (ctx.signal?.aborted) abort(); else ctx.signal?.addEventListener('abort', abort, { once: true });
       })]);
-      const secrets = [scriptToken, ...(ctx.secrets?.values() ?? [])];
+      const secrets = [scriptToken, execution?.token, ...(ctx.secrets?.values() ?? [])].filter(Boolean);
       const stdout = redact(result.stdout, secrets);
       const stderr = redact(result.stderr, secrets);
       const overflow = JSON.stringify({ stdout, stderr }).length > 60000;
@@ -224,6 +225,7 @@ export function createTools(ctx) {
         await ctx.sandbox.files.write([{ path: overflowPath, data: JSON.stringify({ stdout, stderr, exit_code: result.exitCode }) }]);
       }
       if (result.exitCode !== 0) throw new Error(`Script exited ${result.exitCode}: ${stderr.slice(-8192)}${overflowPath ? ` Full output: ${overflowPath}` : ''}`);
+      execution?.finish('completed');
       if (!overflow) return { stdout, stderr, exit_code: result.exitCode };
       const preview = (text, half) => text.length > 2 * half ? text.slice(0, half) + '\n... truncated ...\n' + text.slice(-half) : text;
       let limit = 12000;
@@ -234,8 +236,10 @@ export function createTools(ctx) {
       }
       return output;
     } catch (error) {
+      execution?.finish('failed');
       if (handle) await handle.kill().catch(() => {});
-      throw error;
+      if (!execution) throw error;
+      throw new Error(`${redact(error.message, [scriptToken, execution.token, ...(ctx.secrets?.values() ?? [])])} (${execution.summary()})`);
     } finally {
       if (abort) ctx.signal?.removeEventListener('abort', abort);
       await Promise.allSettled([ctx.sandbox.files.remove(script), ctx.sandbox.files.remove(launcher), ctx.sandbox.files.remove(catalogPath)]);
