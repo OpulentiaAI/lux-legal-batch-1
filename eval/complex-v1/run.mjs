@@ -37,18 +37,26 @@ const outside = (path, root) => {
 }
 const modes = ['harvey', 'broad']
 const ids = Array.from({ length: 15 }, (_, i) => `task-${String(i + 1).padStart(2, '0')}`)
+const defaultMaxSteps = 80
+
+function validMaxSteps(value) {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error('Invalid max steps: expected a positive safe integer')
+  return value
+}
 
 export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
-    '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256' }
+    '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys)) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => key !== 'maxSteps')) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
+    validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
@@ -172,6 +180,7 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 }
 
 export async function run(options, dependencies = {}) {
+  const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const source = dependencies.workspace ?? workspace
   const suiteRoot = dependencies.suite ?? suite
   const manifestPath = join(suiteRoot, 'manifest.json')
@@ -197,7 +206,7 @@ export async function run(options, dependencies = {}) {
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
   broker.origin = options.brokerOrigin
   try {
-    const common = { workspace: source, corpus, maxSteps: 80, model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, workProduct: { maxCompletionTokens: 32768 } }
+    const common = { workspace: source, corpus, maxSteps, model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
@@ -205,7 +214,7 @@ export async function run(options, dependencies = {}) {
         nativeModuleHash, toolSurface: 'initial-scripted-v1' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps: 80, maxCompletionTokens: 32768,
+      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps, maxCompletionTokens: 32768,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
