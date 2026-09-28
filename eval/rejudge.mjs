@@ -74,7 +74,7 @@ export function preflightEvidenceV4({ data, workspace, artifacts, argumentCaptur
   const eligible = row => typeof row.answer === 'string' && !!row.answer.trim() &&
     (!row.error || row.failure_stage === 'judge')
   const unavailable = row => allowHarnessFailures && typeof row.error === 'string' && row.error.trim() &&
-    row.failure_stage === 'harness' && row.answer === '' && !row.audit?.finalAnswer &&
+    row.failure_stage === 'harness' && (row.answer === '' || !Object.hasOwn(row, 'answer')) && !row.audit?.finalAnswer &&
     Array.isArray(row.audit?.calls) && Number.isFinite(row.metrics?.errors) && row.metrics.errors > 0
   const checked = allowHarnessFailures ? original : selected
   if (!modes.length || modes.some(mode => !['harvey', 'broad'].includes(mode)) ||
