@@ -34,6 +34,26 @@ const nativeSystemPrompt = server => `Tu réponds à des questions de droit luxe
 
 const sha256 = value => createHash('sha256').update(value).digest('hex')
 const quote = value => `'${value.replaceAll("'", "'\\''")}'`
+const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
+const TASK_PATH = `${BROAD_SANDBOX_WORKSPACE}/task`
+const OUTPUT_PATH = `${BROAD_SANDBOX_WORKSPACE}/output`
+
+function validateWorkProduct(packet) {
+  const { task, materials } = packet ?? {}
+  if (!task || Object.keys(task).sort().join(',') !== 'deliverables,id,instructions,materials,scope,title' ||
+      !['id', 'title', 'instructions'].every(key => typeof task[key] === 'string' && task[key].trim()) ||
+      !task.scope || Object.keys(task.scope).sort().join(',') !== 'asOf,companyForm,jurisdiction' ||
+      !Object.values(task.scope).every(value => typeof value === 'string' && value.trim()) ||
+      !Array.isArray(task.deliverables) || !task.deliverables.length || !Array.isArray(task.materials) || !Array.isArray(materials) ||
+      task.deliverables.some(name => typeof name !== 'string' || !PUBLIC_FILE.test(name)) ||
+      task.materials.some(path => typeof path !== 'string' || !path.startsWith('materials/') || !PUBLIC_FILE.test(path.slice(10))) ||
+      materials.some(row => !row || Object.keys(row).sort().join(',') !== 'content,path' || typeof row.content !== 'string' || typeof row.path !== 'string') ||
+      new Set(task.deliverables.map(name => name.toLowerCase())).size !== task.deliverables.length ||
+      new Set(task.materials.map(name => name.toLowerCase())).size !== task.materials.length ||
+      new Set(materials.map(row => row.path)).size !== materials.length ||
+      materials.length !== task.materials.length || materials.some(row => !task.materials.includes(row.path))) throw new Error('Invalid public work-product task or materials')
+  return packet
+}
 
 function redactAudit(value) {
   if (typeof value === 'string') return redact(value).replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
@@ -71,12 +91,18 @@ function corpusArchive(corpus, workspace) {
   return execFileSync('tar', ['-czf', '-', '-C', directory, '.'], { maxBuffer: 256 * 1024 * 1024 })
 }
 
-export async function provisionCorpus(config, corpus, workspace, sandboxFactory) {
+export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet) {
   const archive = corpusArchive(corpus, workspace)
   const sandbox = await sandboxFactory(config)
   try {
     await sandbox.files.write('/tmp/broad-legal-corpus.tar.gz', archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength))
-    const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
+    if (packet) {
+      const prepared = await sandbox.commands.run(`sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE} && sudo -n install -d -m 0777 ${TASK_PATH} ${TASK_PATH}/materials && install -d -m 0777 ${OUTPUT_PATH}`)
+      if (prepared.exitCode !== 0) throw new Error('Work-product directories preparation failed')
+      await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
+      for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
+    }
+    const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
     if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
     const originalRun = sandbox.commands.run.bind(sandbox.commands)
     const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
@@ -184,18 +210,24 @@ function auditMessages(messages, evidence, corpusSources) {
   return { calls, sources: [...observed.values()] }
 }
 
-export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps = BROAD_MAX_STEPS,
+export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   toolSurface = 'full-catalog-v1',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
+  if (workProduct !== undefined) {
+    if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
+        !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
+    workProduct = { maxCompletionTokens: workProduct.maxCompletionTokens ?? 8000 }
+  }
+  maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
   if (provision !== undefined && typeof provision !== 'function') throw new Error('Sandbox provision must be a callback')
-  if (maxSteps !== BROAD_MAX_STEPS) throw new Error('Broad comparison uses exactly 40 steps')
+  if (workProduct ? !Number.isSafeInteger(maxSteps) || maxSteps < 1 : maxSteps !== BROAD_MAX_STEPS) throw new Error('Broad comparison uses exactly 40 steps in QA mode')
   if (mcp && (typeof mcp.provision !== 'function' || !Array.isArray(mcp.servers))) throw new Error('MCP requires operator-provisioned approved server state and provenance')
   if (nativeMcp && (typeof mcp?.server !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(mcp.server) || typeof mcp.verify !== 'function' || !mcp.servers.some(row => row.name === mcp.server && row.version && Array.isArray(row.tools)) ||
     !Array.isArray(mcp.probes) || mcp.probes.length !== NATIVE_LX_TOOLS.length || NATIVE_LX_TOOLS.some(name => mcp.probes.filter(probe => probe?.name === name && probe.arguments && typeof probe.arguments === 'object').length !== 1))) throw new Error('Native MCP requires a named, versioned server and one live probe per lx tool')
@@ -209,12 +241,16 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const allowedTools = [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS)]
   const initialTools = toolSurface === 'initial-scripted-v1' ? suppliedInitialToolsFor(allowedTools) : undefined
   const skills = initialTools ? JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8')) : null
-  const appendix = nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
+  const appendix = workProduct
+    ? (nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt).replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
+    : nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
   const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
     profile: initialTools ? 'opulent-prepared-v2' : 'standalone-v1',
     variant: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const provenance = {
-    policy: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: BROAD_COMPLETION_TOKENS,
+    policy: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
+    ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
     toolSurface, ...(initialTools ? { initialTools, initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
       initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION,
       workflowApproval: 'operator-approved exact script hashes required; none configured for this evaluation',
@@ -238,21 +274,43 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] })),
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
-  function runtimeOptions(stateDir, model, provisionedSandboxes) {
+  function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords) {
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(providerOnly ? { providerOnly } : {}),
-        maxSteps, systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
+        maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
       },
       storage: {},
       provision: async config => {
-        const sandbox = await (provision ? provision(config, corpus) : provisionCorpus(config, corpus, workspace, sandboxFactory))
+        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
         if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
         provisionedSandboxes.add(sandbox)
+        if (packet) {
+          const originalPause = sandbox.pause.bind(sandbox)
+          sandbox.pause = async (...args) => {
+            const deliverables = [], missingDeliverables = []
+            const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
+            if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
+            for (const file of packet.task.deliverables) {
+              const path = `${OUTPUT_PATH}/${file}`
+              const check = await sandbox.commands.run(`if test ! -e ${quote(path)} && test ! -L ${quote(path)}; then printf missing; elif test -f ${quote(path)} && test ! -L ${quote(path)} && test "$(stat -c %s ${quote(path)})" -le 1048576; then printf ok; else printf unsafe; fi`)
+              const status = check.stdout.trim()
+              if (status === 'missing') { missingDeliverables.push(file); continue }
+              if (status !== 'ok') throw new Error(`Unsafe or oversized work-product deliverable: ${file}`)
+              const bytes = await sandbox.files.read(path, { format: 'bytes' })
+              if (!(bytes instanceof Uint8Array)) throw new Error(`Unreadable work-product deliverable: ${file}`)
+              if (bytes.byteLength > 1_048_576) throw new Error(`Oversized work-product deliverable: ${file}`)
+              const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+              deliverables.push({ file, content, sha256: sha256(bytes) })
+            }
+            collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
+            return originalPause(...args)
+          }
+        }
         if (skills) {
           for (const { name, artifactSha256 } of skills.skills) {
             const path = `${skills.destinationRoot}/${name}/SKILL.md`
@@ -265,7 +323,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
-        return model(messages, { ...options, model: provenance.model })
+        const request = model(messages, { ...options, model: provenance.model, ...(workProduct ? { max_tokens: workProduct.maxCompletionTokens } : {}) })
+        if (!workProduct || !providerRecords) return request
+        return Promise.resolve(request).then(response => {
+          const raw = response.raw_response ?? response.rawResponse ?? response
+          const usage = raw.usage ?? response.usage ?? {}
+          const record = Object.fromEntries(Object.entries(usage)
+            .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number' && Number.isFinite(value)))
+          record.finishReason = typeof raw.choices?.[0]?.finish_reason === 'string' ? raw.choices[0].finish_reason : null
+          providerRecords.push(record)
+          return response
+        })
       },
     }
   }
@@ -334,36 +402,70 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         rmSync(stateDir, { recursive: true, force: true })
       }
     },
-    async run({ question, mode }) {
+    async run({ question, mode, workProduct: packet }) {
       if (mode !== 'broad' || typeof question !== 'string' || !question.trim()) throw new Error('Broad mode and question are required')
+      if (workProduct ? !packet : packet !== undefined) throw new Error('Work-product run mode mismatch')
+      if (workProduct) validateWorkProduct(packet)
+      const runProvenance = workProduct ? { ...provenance, taskSha256: sha256(JSON.stringify(packet.task)),
+        materialHashes: Object.fromEntries(packet.materials.map(row => [row.path, sha256(row.content)])),
+        deliverables: [...packet.task.deliverables] } : provenance
       const stateDir = mkdtempSync(join(tmpdir(), 'broad-legal-state-'))
       const evidenceDir = artifactsDir ? resolve(artifactsDir) : mkdtempSync(join(tmpdir(), 'broad-legal-evidence-'))
       const start = performance.now()
       const provisionedSandboxes = new Set()
+      const collected = new Map()
+      const providerRecords = []
       let runtime, session, completed, runError, runDetails, detachBroker
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
-        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes))
+        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
-          prompt: `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
+          prompt: workProduct
+            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée. Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}\n\n${packet.task.instructions}`
+            : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
         completed = await runtime.waitSession(session.id)
+        let deliverables, missingDeliverables
+        if (workProduct) {
+          const saved = collected.get(runtime.store.get('sessions', session.id)?.sandbox_id)
+          if (saved) ({ deliverables, missingDeliverables } = saved)
+          else if (completed.status === 'completed' && provisionedSandboxes.size === 0) {
+            deliverables = []
+            missingDeliverables = [...packet.task.deliverables]
+          } else if (completed.status === 'completed') throw new Error('Work-product sandbox unavailable for collection')
+        }
         const details = collect()
-        runDetails = details
+        runDetails = workProduct ? { ...details, deliverables: deliverables ?? [], missingDeliverables: missingDeliverables ?? [],
+          artifactPaths: [details.audit.evidenceArtifact] } : details
         if (completed.status !== 'completed' || typeof completed.output !== 'string' || details.trace.some(entry => entry.stage === 'sandbox_pause_failed')) {
           const error = new Error('Broad legal session failed')
-          Object.assign(error, details)
+          Object.assign(error, details, ...(workProduct ? [{ deliverables: deliverables ?? [], missingDeliverables: missingDeliverables ?? [],
+            artifactPaths: [details.audit.evidenceArtifact] }] : []))
           throw error
         }
-        return { answer: completed.output, ...details }
+        if (workProduct && missingDeliverables.length) {
+          details.metrics.errors++
+          const error = new Error(`Broad missing deliverables: ${missingDeliverables.join(', ')}`)
+          Object.assign(error, details, { deliverables, missingDeliverables, artifactPaths: [details.audit.evidenceArtifact] })
+          throw error
+        }
+        return { answer: completed.output, ...details, ...(workProduct ? { deliverables, missingDeliverables,
+          artifactPaths: [details.audit.evidenceArtifact] } : {}) }
       } catch (cause) {
-        if (cause?.message === 'Broad legal session failed' && cause.audit) runError = cause
+        if (cause?.audit && (cause.message === 'Broad legal session failed' || cause.message.startsWith('Broad missing deliverables:'))) runError = cause
         else {
           runError = new Error('Broad legal session failed')
           Object.assign(runError, collect())
           runError.metrics.errors = Math.max(runError.metrics.errors, 1)
+        }
+        if (workProduct) {
+          if (typeof completed?.output === 'string') runError.answer ??= completed.output
+          const saved = session && collected.get(runtime?.store?.get('sessions', session.id)?.sandbox_id)
+          runError.deliverables ??= saved?.deliverables ?? []
+          runError.missingDeliverables ??= saved?.missingDeliverables ?? []
+          if (runError.audit?.evidenceArtifact) runError.artifactPaths ??= [runError.audit.evidenceArtifact]
         }
         throw runError
       } finally {
@@ -378,7 +480,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           cleanupError.cleanup = { sandboxIds: failedIds, runtimeCloseFailed: closeFailed, stateDir }
           const details = runError ?? runDetails
           if (details) Object.assign(cleanupError, { audit: details.audit, trace: details.trace,
-            sources: details.sources, metrics: { ...details.metrics, errors: Math.max(details.metrics?.errors ?? 0, 1) } })
+            sources: details.sources, metrics: { ...details.metrics, errors: Math.max(details.metrics?.errors ?? 0, 1) },
+            ...(workProduct ? { deliverables: details.deliverables ?? [], missingDeliverables: details.missingDeliverables ?? [],
+              artifactPaths: details.artifactPaths ?? (details.audit?.evidenceArtifact ? [details.audit.evidenceArtifact] : []) } : {}) })
           throw cleanupError
         }
         rmSync(stateDir, { recursive: true, force: true })
@@ -396,11 +500,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         const observed = auditMessages(messages, evidence, corpus?.sources)
         const trace = events.map(event => ({ stage: event.type, ...(event.data?.name ? { tool: event.data.name } : {}),
           ...(event.data?.ok !== undefined ? { ok: event.data.ok } : {}) }))
-        if (completed) trace.push({ stage: 'session_terminal', status: completed.status })
-        const audit = { provenance, terminalStatus: completed?.status ?? null, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
+        const terminal = completed ? { status: completed.status,
+          ...(typeof completed.error === 'string' ? { error: redactAudit(completed.error) } : {}),
+          ...(Number.isSafeInteger(completed.steps) && completed.steps >= 0 ? { steps: completed.steps } : {}) } : null
+        if (terminal) trace.push({ stage: 'session_terminal', ...terminal })
+        const audit = { provenance: runProvenance, terminalStatus: terminal?.status ?? null, terminal, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
         const artifact = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}.json`)
-        writeFileSync(artifact, JSON.stringify({ provenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
+        writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
           ({ tool, args, rawArguments, output, result })) }), { mode: 0o600 })
         audit.evidenceArtifact = artifact
         const sessions = runtime?.store?.list('sessions') ?? []
@@ -421,6 +528,10 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           completed && completed.status !== 'completed' ? 1 : 0,
           childSessions.filter(row => row.status === 'failed').length)
         return { sources: observed.sources, trace, audit: redactAudit(audit), metrics: {
+          ...(workProduct ? { providerUsageRecords: providerRecords.length ? providerRecords : (runtime?.store?.list('events') ?? [])
+            .filter(event => descendants.has(event.session_id) && event.type === 'model_usage')
+            .map(event => Object.fromEntries(Object.entries(event.data?.usage ?? {})
+              .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number'))) } : {}),
           errors, toolCalls: observed.calls.length + childSessions.reduce((sum, row) => sum + (runtime.store.get('conversations', row.id)?.messages ?? [])
             .reduce((count, message) => count + (message.role === 'assistant' ? message.tool_calls?.length ?? 0 : 0), 0), 0),
           usage, latencyMs: Math.round(performance.now() - start),

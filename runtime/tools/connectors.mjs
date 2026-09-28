@@ -288,7 +288,9 @@ export function createTools(ctx) {
     },
     opulent_mcp: args => {
       const command = required(args.command, 'command');
-      if (command === 'list_tools') return { tools: ctx.availableToolDefinitions().filter(tool => tool.name !== 'opulent_mcp').map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) };
+      if (command === 'list_tools') return { tools: ctx.availableToolDefinitions()
+        .filter(tool => tool.name !== 'opulent_mcp' && (args.tool_name === undefined || tool.name === args.tool_name))
+        .map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) };
       if (command === 'call_tool') {
         const name = required(args.tool_name, 'tool_name');
         if (['opulent_mcp', 'devin_mcp'].includes(name)) throw new Error('Recursive opulent_mcp dispatch is not allowed');

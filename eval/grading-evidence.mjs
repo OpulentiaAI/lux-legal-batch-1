@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync, realpathSync } from 'node:fs'
 import { basename, join, relative, resolve, sep } from 'node:path'
 import { loadChunks, chunkText } from '../src/tp/manifest.ts'
+import { redact } from '../runtime/security.mjs'
 
 const hash = value => createHash('sha256').update(value).digest('hex')
 const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
@@ -131,17 +132,20 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
   }
   function visibleFileText(found, text, origin) {
-    const headed = [...text.matchAll(/(?:^|\n)(?:=== ([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt\n)?\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)]
+    const headed = [...text.matchAll(/(?:^|\n)(?:(#{2,}|={2,}) ([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt(?: (#{2,}|={2,}))?\n)?\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)]
     for (const [index, match] of headed.entries()) {
-      const id = match[2]
+      const id = match[4]
       if (!manifest.has(id)) continue
-      if (match[1] && match[1] !== id) throw new Error('Invalid evidence headed chunk identity')
+      if (match[2] && match[2] !== id) throw new Error('Invalid evidence headed chunk identity')
+      if (match[3] && match[3] !== match[1]) throw new Error('Invalid evidence heading markers')
       const source = sourceFor(id)
       const start = match.index + match[0].length
       const next = headed[index + 1]
       const block = text.slice(start, next ? next.index + Number(text[next.index] === '\n') : text.length)
+      const printed = block.endsWith('\n') ? block.slice(0, -1) : block
       const full = block.startsWith(`${source.text}\n`)
-      const excerpt = full ? source.text : block.replace(/\n{1,2}$/, '')
+      const excerpt = full ? source.text : printed.endsWith('\ufffd') &&
+        source.text.codePointAt(printed.length - 1) > 127 ? printed.slice(0, -1) : printed
       if (!full && (!origin.headPrinted || !excerpt || excerpt === source.text ||
           !source.text.startsWith(excerpt))) continue
       attach(found, id, excerpt, { ...origin, format: 'literal-chunk-header', outputStart: start },
@@ -166,7 +170,18 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       if (!Number.isSafeInteger(lineNumber) || lineNumber < 2) throw new Error('Invalid evidence grep coordinate')
       const lines = source.text.split('\n')
       const canonicalLine = lines[lineNumber - 2]
-      if (canonicalLine === undefined || !canonicalLine.includes(match[3])) throw new Error('Invalid evidence grep contents')
+      if (canonicalLine === undefined) throw new Error('Invalid evidence grep contents')
+      if (!canonicalLine.includes(match[3])) {
+        const redacted = redact(canonicalLine).replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
+          try {
+            const url = new URL(raw)
+            return url.search || url.hash || url.username || url.password ? `${url.origin}${url.pathname}?[redacted]` : raw
+          } catch { return raw }
+        }).replace(/\bBearer\s+[A-Za-z0-9._~+/-]+/gi, 'Bearer [redacted]')
+          .replace(/("(?:token|api_?key|secret|password|authorization)"\s*:\s*")[^"]*/gi, '$1[redacted]')
+        if (match[3] === redacted && redacted !== canonicalLine) continue
+        throw new Error('Invalid evidence grep contents')
+      }
       const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(match[3])
       attach(found, match[1], match[3], { ...origin, line: lineNumber }, 'excerpt', start)
       const existing = visibleLines.get(match[1]) ?? new Map()
@@ -302,7 +317,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         const section = call.result.split('\n').slice(args.offset === 0 ? 1 : 0).join('\n').replace(/\n$/, '')
         if (section) attach(found, id, section, origin, 'excerpt', source.text.split('\n').slice(0, start).join('\n').length + (start ? 1 : 0))
       }
-    } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, origin)
+    } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, {
+      ...origin, headPrinted: call.tool === 'bash' && /\bhead\s+-c\s+\d+\b/.test(args?.command ?? ''),
+    })
   }
   function verifyFullSources(row, found) {
     if (!Array.isArray(row.sources)) throw new Error('Invalid evidence source inventory')
@@ -316,7 +333,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
   }
   function replay(row) {
     if (!['harvey', 'broad'].includes(row.mode) || !Array.isArray(row.audit?.calls) ||
-        (row.error && (row.failure_stage !== 'judge' || typeof row.answer !== 'string' || !row.answer.trim()))) {
+        (row.answer === null && (row.mode !== 'broad' || !row.error || row.failure_stage === 'judge' ||
+          row.audit.finalAnswerHash !== null)) ||
+        (row.error && row.answer !== null && (row.failure_stage !== 'judge' || typeof row.answer !== 'string' || !row.answer.trim()))) {
       throw new Error('Invalid evidence replay row')
     }
     const found = new Map()
@@ -328,7 +347,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       if (!/^[a-f0-9-]+\.json$/.test(name)) throw new Error('Invalid evidence artifact identity')
       const artifact = JSON.parse(file(join(broadRoot, name), broadRoot))
       if (JSON.stringify(artifact.provenance) !== JSON.stringify(row.audit.provenance) ||
-          artifact.calls?.length !== row.audit.calls.length || hash(row.answer) !== row.audit.finalAnswerHash) throw new Error('Invalid evidence run identity')
+          artifact.calls?.length !== row.audit.calls.length ||
+          !(row.answer === null ? row.error && row.audit.finalAnswerHash === null :
+            typeof row.answer === 'string' && hash(row.answer) === row.audit.finalAnswerHash)) throw new Error('Invalid evidence run identity')
       artifact.calls.forEach((call, index) => {
         const audit = row.audit.calls[index]
         if (call.tool !== audit.tool ||

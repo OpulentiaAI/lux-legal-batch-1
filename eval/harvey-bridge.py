@@ -149,7 +149,7 @@ if __name__ == "__main__":
 '''
 
 
-def create_archive(root, documents, source_files, smoke=False):
+def create_archive(root, documents, source_files, smoke=False, work_product=None):
     stream = io.BytesIO()
     with tarfile.open(fileobj=stream, mode="w:gz") as archive:
         for path in [root / "harness/__init__.py", root / "harness/tools.py",
@@ -171,6 +171,19 @@ def create_archive(root, documents, source_files, smoke=False):
             info.mode = 0o444
             with path.open("rb") as source:
                 archive.addfile(info, source)
+        if work_product:
+            packet = work_product
+            for row in packet["materials"]:
+                data = row["content"].encode("utf-8")
+                info = tarfile.TarInfo(f"task/{row['path']}")
+                info.size = len(data)
+                info.mode = 0o444
+                archive.addfile(info, io.BytesIO(data))
+            data = json.dumps(packet["task"], ensure_ascii=False).encode("utf-8")
+            info = tarfile.TarInfo("task/task.json")
+            info.size = len(data)
+            info.mode = 0o444
+            archive.addfile(info, io.BytesIO(data))
         if smoke:
             fixture_root = root / "tasks/antitrust-competition/analyze-antitrust-hsr-strategy/documents"
             for extension, name in [("docx", "crescent-ic-memo.docx"), ("xlsx", "market-data-branches.xlsx")]:
@@ -186,6 +199,46 @@ def create_archive(root, documents, source_files, smoke=False):
 def corpus_checksum_command(documents):
     pipeline = f"find {shlex.quote(str(documents))} -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum"
     return f"bash -o pipefail -c {shlex.quote(pipeline)}"
+
+
+def collect_deliverables(sandbox, names):
+    output_root = sandbox.commands.run("if test -d /workspace/output && test ! -L /workspace/output; then printf ok; else printf unsafe; fi", cwd="/workspace", user="user")
+    if output_root.stdout.strip() != "ok":
+        raise RuntimeError("Harvey output directory is unsafe")
+    deliverables, missing = [], []
+    for name in names:
+        path = "/workspace/output/" + name
+        quoted = shlex.quote(path)
+        inspection = sandbox.commands.run(
+            f"if test ! -e {quoted} && test ! -L {quoted}; then printf missing; "
+            f"elif test -f {quoted} && test ! -L {quoted} && test \"$(stat -c %s {quoted})\" -le 1048576; "
+            "then printf ok; else printf unsafe; fi", cwd="/workspace", user="user")
+        status = inspection.stdout.strip()
+        if status == "missing":
+            missing.append(name)
+            continue
+        if status != "ok":
+            raise RuntimeError("Harvey deliverable is unsafe or oversized")
+        data = bytes(sandbox.files.read(path, format="bytes"))
+        if len(data) > 1048576:
+            raise RuntimeError("Harvey deliverable is oversized")
+        content = data.decode("utf-8", errors="strict")
+        deliverables.append({"file": name, "content": content, "sha256": hashlib.sha256(data).hexdigest()})
+    return deliverables, missing
+
+
+def final_answer_text(messages):
+    final_message = messages[-1] if messages else {}
+    final_content = final_message.get("content") if final_message.get("role") == "assistant" else None
+    if isinstance(final_content, str):
+        return final_content
+    if isinstance(final_content, list):
+        return "\n".join(item.get("text", "") for item in final_content if isinstance(item, dict))
+    return "\n".join(
+        content.get("text", "")
+        for message in final_message.get("output", []) if message.get("type") == "message"
+        for content in message.get("content", []) if isinstance(content, dict)
+    )
 
 
 def main():
@@ -228,7 +281,26 @@ def main():
     prompt = SYSTEM_PROMPT_PREAMBLE + load_skills(DEFAULT_SKILLS)
     artifacts.mkdir(parents=True, exist_ok=False)
     source_files = validate_corpus(documents, request["corpus_hash"])
-    archive = create_archive(root, documents, source_files, smoke=smoke)
+    work_product = request.get("work_product")
+    if work_product:
+        task = work_product["task"]
+        names = task["deliverables"]
+        paths = task["materials"]
+        valid = r"[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)"
+        if (set(task) != {"id", "title", "instructions", "scope", "deliverables", "materials"} or
+                set(task["scope"]) != {"jurisdiction", "companyForm", "asOf"} or
+                not all(isinstance(value, str) and value.strip() for value in
+                        [task["id"], task["title"], task["instructions"], *task["scope"].values()]) or
+                not isinstance(names, list) or not names or not all(isinstance(name, str) and re.fullmatch(valid, name) for name in names) or
+                not isinstance(paths, list) or not all(isinstance(path, str) and re.fullmatch("materials/" + valid, path) for path in paths) or
+                len({name.lower() for name in names}) != len(names) or len({path.lower() for path in paths}) != len(paths) or
+                not isinstance(work_product["materials"], list) or
+                len(work_product["materials"]) != len(paths) or
+                any(set(row) != {"path", "content"} or row["path"] not in paths or not isinstance(row["content"], str)
+                    for row in work_product["materials"]) or
+                {row["path"] for row in work_product["materials"]} != set(paths)):
+            raise ValueError("Invalid public work-product packet")
+    archive = create_archive(root, documents, source_files, smoke=smoke, work_product=work_product)
     sandbox = E2BSandbox.create(template=E2B_TEMPLATE, secure=True, allow_internet_access=False,
                                 timeout=3600, api_key=os.environ["E2B_API_KEY"])
     try:
@@ -245,7 +317,8 @@ def main():
             "cp /workspace/harvey/sandbox/parsers/parse_doc.py /usr/local/bin/parse-doc && chmod 755 /usr/local/bin/parse-doc && "
             "chown -R root:root /workspace/documents && "
             "find /workspace/documents -type d -exec chmod 555 {} + && "
-            "find /workspace/documents -type f -exec chmod 444 {} +",
+            "find /workspace/documents -type f -exec chmod 444 {} +" +
+            (" && chown -R root:root /workspace/task && find /workspace/task -type d -exec chmod 555 {} + && find /workspace/task -type f -exec chmod 444 {} +" if work_product else ""),
             cwd="/workspace", user="root", timeout=120)
         if unpack.exit_code != 0:
             raise RuntimeError("E2B corpus upload failed")
@@ -337,13 +410,20 @@ def main():
             spec = spec_from_file_location("harvey_modal_adapter", Path(__file__).with_name("harvey-modal-adapter.py"))
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-            adapter = module.ModalDeepSeekAdapter(model=model, max_tokens=4000)
+            adapter = module.ModalDeepSeekAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), capture_usage=bool(work_product))
         else:
-            adapter = OpenAIAdapter(model=model, max_tokens=4000)
+            adapter = OpenAIAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000))
         result = run_agent(
             adapter=adapter,
             system_prompt=prompt,
             user_prompt=(
+                ("Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
+                 "Lis les matériaux sous /workspace/task/materials et recherche les sources juridiques dans /workspace/documents. "
+                 "Écris chaque livrable déclaré dans /workspace/output/ sous son nom exact. "
+                 "Cite les identifiants de chunks [id] pour les affirmations juridiques importantes, "
+                 "signale les limites et ne cherche aucun barème ni corrigé. La réponse finale ne remplace pas les fichiers.\n\n"
+                 "Demande : " + request["question"] + "\n\n" + task["instructions"])
+                if work_product else
                 "Réponds à la question de droit luxembourgeois uniquement avec les fichiers du corpus "
                 "dans /workspace/documents. Cherche les passages pertinents avec les outils du workspace. "
                 "Réponds en français en 120 mots maximum dans output/response.md. Cite pour chaque affirmation "
@@ -359,13 +439,12 @@ def main():
         with (artifacts / "transcript.jsonl").open("w", encoding="utf-8") as stream:
             for message in result["messages"]:
                 stream.write(redact_local(json.dumps(message, default=str, ensure_ascii=False)) + "\n")
-        final_messages = result["messages"][-1].get("output", []) if result["messages"] else []
-        final_text = "\n".join(
-            content.get("text", "")
-            for message in final_messages if message.get("type") == "message"
-            for content in message.get("content", []) if isinstance(content, dict)
-        )
-        answer = sandbox.files.read("/workspace/output/response.md") if sandbox.files.exists("/workspace/output/response.md") else final_text
+        final_text = final_answer_text(result["messages"])
+        if work_product:
+            answer = final_text
+            deliverables, missing = collect_deliverables(sandbox, task["deliverables"])
+        else:
+            answer = sandbox.files.read("/workspace/output/response.md") if sandbox.files.exists("/workspace/output/response.md") else final_text
         final_hash = sandbox.commands.run(checksum, cwd="/workspace", user="user", timeout=120)
         if final_hash.exit_code != 0 or final_hash.stdout != initial_hash.stdout:
             raise RuntimeError("E2B source corpus changed during Harvey run")
@@ -384,6 +463,10 @@ def main():
         "tool_metrics": result["tool_metrics"],
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "tool_names": [tool["name"] for tool in tools],
+        **({"deliverables": deliverables, "missingDeliverables": missing,
+            "provider_usage_records": getattr(adapter, "usage_records", None),
+            "materialHashes": {row["path"]: hashlib.sha256(row["content"].encode("utf-8")).hexdigest() for row in work_product["materials"]},
+            "taskSha256": hashlib.sha256(json.dumps(task, ensure_ascii=False).encode("utf-8")).hexdigest()} if work_product else {}),
     }
     (artifacts / "bridge-result.json").write_text(redact_local(json.dumps(payload, ensure_ascii=False)), encoding="utf-8")
     print(json.dumps(payload, ensure_ascii=False))
