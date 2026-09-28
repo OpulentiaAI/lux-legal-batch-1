@@ -6,6 +6,7 @@ import { redact } from '../runtime/security.mjs'
 
 const hash = value => createHash('sha256').update(value).digest('hex')
 const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
+const printsHead = command => /\bhead\s+(?:-c\s+\d+|-(?:n\s+)?\d+)\b/.test(command ?? '')
 
 function inside(path, root) {
   const rel = relative(root, path)
@@ -132,6 +133,34 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
   }
   function visibleFileText(found, text, origin, command) {
+    const lineHead = typeof command === 'string' && !/\bhead\s+-c\s+\d+\b/.test(command) &&
+      command.match(/\bhead\s+-(?:n\s+)?(\d+)\b/)
+    const lineHeadLimit = lineHead ? Number(lineHead[1]) : null
+    const bareHeadLoop = typeof command === 'string' && command.match(/^cd \/tmp\/broad-legal-workspace\/corpus\/chunks; for f in ([A-Za-z0-9_:-]+(?: +[A-Za-z0-9_:-]+)*); do echo "=== \$f"; head -(?:n )?(\d+) \$f\.txt; done$/)
+    if (bareHeadLoop) {
+      const ids = bareHeadLoop[1].split(/ +/), limit = Number(bareHeadLoop[2])
+      if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('Invalid evidence head range')
+      let remaining = text
+      for (const [index, id] of ids.entries()) {
+        const caption = `=== ${id}\n[${id}]\n`
+        if (!remaining.startsWith(caption)) throw new Error('Invalid evidence headed chunk identity')
+        const outputStart = text.length - remaining.length + caption.length
+        remaining = remaining.slice(caption.length)
+        const next = remaining.indexOf('\n=== ')
+        const block = next < 0 ? remaining : remaining.slice(0, next + 1)
+        remaining = remaining.slice(block.length)
+        if (!manifest.has(id)) continue
+        const source = sourceFor(id)
+        const excerpt = block === `${source.text}\n` ? source.text : block
+        if (!excerpt || !source.text.startsWith(excerpt) ||
+            excerpt.split('\n').length + Number(!excerpt.endsWith('\n')) > limit) throw new Error('Invalid evidence head prefix')
+        attach(found, id, excerpt, { ...origin, format: 'literal-chunk-header', outputStart },
+          excerpt === source.text ? 'full' : 'excerpt', 0)
+        if (index < ids.length - 1 && next < 0) throw new Error('Invalid evidence headed chunk identity')
+      }
+      if (remaining) throw new Error('Invalid evidence headed chunk identity')
+      return
+    }
     const headLoop = typeof command === 'string' && command.match(/^cd \/workspace\/documents\/chunks && for f in ((?:[A-Za-z0-9_:-]+\.txt|"[A-Za-z0-9_:-]+\.txt")(?: +(?:[A-Za-z0-9_:-]+\.txt|"[A-Za-z0-9_:-]+\.txt"))*); do echo "=== \$f ==="; head -c (\d+) "\$f"; echo(; echo)?; done$/)
     if (headLoop) {
       const names = headLoop[1].split(/ +/).map(name => name.replace(/^"|"$/g, ''))
@@ -180,6 +209,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const excerpt = full ? source.text : printed.endsWith('\ufffd') &&
         source.text.codePointAt(printed.length - 1) > 127 ? printed.slice(0, -1) : printed
       if (!full && (!origin.headPrinted || !excerpt || excerpt === source.text ||
+          (lineHeadLimit !== null && (!Number.isSafeInteger(lineHeadLimit) || lineHeadLimit < 1 ||
+            excerpt.split('\n').length + Number(!excerpt.endsWith('\n')) > lineHeadLimit)) ||
           !source.text.startsWith(excerpt))) continue
       attach(found, id, excerpt, { ...origin, format: 'literal-chunk-header', outputStart: start },
         full ? 'full' : 'excerpt', 0)
@@ -351,7 +382,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (section) attach(found, id, section, origin, 'excerpt', source.text.split('\n').slice(0, start).join('\n').length + (start ? 1 : 0))
       }
     } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, {
-      ...origin, headPrinted: call.tool === 'bash' && /\bhead\s+-c\s+\d+\b/.test(args?.command ?? ''),
+      ...origin, headPrinted: call.tool === 'bash' && printsHead(args?.command),
     }, args?.command)
   }
   function verifyFullSources(row, found) {
@@ -409,7 +440,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
             outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
           if (call.tool === 'scripted_tools' || call.tool === 'exec' || call.tool === 'get_output') {
             printedStdout(found, modelVisibleMetadata, call.output, { ...origin,
-              headPrinted: call.tool === 'exec' && /\bhead\s+-c\s+\d+\b/.test(call.args?.command ?? '') }, call.tool === 'exec' ? call.args?.command : undefined)
+              headPrinted: call.tool === 'exec' && printsHead(call.args?.command) }, call.tool === 'exec' ? call.args?.command : undefined)
           } else if (call.tool === 'read' || call.tool === 'grep') {
             let output
             try { output = JSON.parse(call.output) } catch { output = null }
