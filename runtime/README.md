@@ -74,8 +74,34 @@ The computer-use implementation vendors the provider-neutral daemon from `Opulen
 
 Browser profiles use E2B persistent snapshots, never plaintext Git archives that could contain cookies. Session-only secret approvals inject values into sandbox calls in memory, redact returned text, and block artifact commits containing known secret values; they must be supplied again after control-plane restart. Durable secrets use E2B's write-only Secrets API. This runtime does not return secret values to its model.
 
-State survives process restart through SQLite. Interrupted model workers are marked interrupted, not completed. Messages explicitly resume them; completed workflow call IDs replay, while interrupted child calls run afresh. E2B pause retains inactive sandbox state; live workflows/previews retain their sandbox until their configured expiry. In-memory PTY handles and scoped tokens are not promised to survive control-plane restart. The E2B timeout remains the hard resource lifetime bound.
+State survives process restart through SQLite. Interrupted model workers are marked interrupted, not completed. Messages explicitly resume them. Model responses and individual tool replies are checkpointed; an interrupted call with an unknown external outcome is reported as uncertain rather than automatically replayed. Completed workflow call IDs replay, while interrupted workflow child calls run afresh. Late input is drained across final-response and asynchronous cleanup boundaries; automatic continuations share the current turn budget, while a new explicit message to an inactive session starts a fresh budget. E2B pause retains inactive sandbox state; live workflows/previews retain their sandbox until their configured expiry. In-memory PTY handles and scoped tokens are not promised to survive control-plane restart. The E2B timeout remains the hard resource lifetime bound.
 
 ## Verification
+
+The [reference audit](REFERENCE-AUDIT.md) distinguishes implemented capabilities, live verification, provider prerequisites and deliberately unimplemented platform-specific features.
+
+### Context and tool-result controls
+
+`modelInputImages` defaults to `true`: recognized `computer`, `view_image` and `generate_image` results are supplied to the next model request as labelled, untrusted image observations after the tool-call batch. This requires a vision-capable model. Set it to `false` for a text-only model; omitted pixels are explicitly reported rather than represented as observed. The default limits are four images per batch, 5 MiB per image and 10 MiB total, configurable through `modelInputImageMaxCount`, `modelInputImageMaxBytes` and `modelInputImageTotalBytes`.
+
+Oversized generic tool results retain a bounded text prefix. When `read` is permitted, they also provide a session-owned overflow path, hash and explicit head/tail read arguments. That artifact contains JSONL string chunks: read the needed pages, or decode and concatenate every page to recover the original serialized result. Reads of registered overflow files are capped at two lines and return the applied limit and next offset, preventing a large read from recursively overflowing again. The overflow file is not automatically inserted into model context or legal evidence. If persistence fails or reading is forbidden, no usable pointer is claimed.
+
+Context compaction is disabled unless explicitly configured. It changes the model-input projection, not the archived conversation, and accounts for summarizer usage separately from ordinary model turns in the request trace. A sample operator configuration is:
+
+```json
+{
+  "contextCompaction": {
+    "enabled": true,
+    "maxInputChars": 240000,
+    "maxSummaryInputChars": 120000,
+    "maxSummaryChars": 12000,
+    "maxSummaryTokens": 4000,
+    "recentGroups": 6,
+    "maxBatches": 12
+  }
+}
+```
+
+These are character budgets, not tokenizer estimates; choose them for the configured model's actual context window and image workload. Compaction preserves system instructions and complete recent tool-call groups. Summaries are derived assistant context and are reused only for matching transcript-prefix and effective-policy digests. Oversized indivisible groups, cancellation and summary failures stop visibly without silently dropping history. Historical legal benchmark configurations remain unchanged; enabling compaction creates a separately configured experiment.
 
 `npm test` runs offline contract, state, authenticated HTTP, MCP stdio and orchestration tests. Live E2B tests are explicitly skipped without `E2B_API_KEY`. Native X11 screenshot/action/recording validation can run locally against the vendored daemon, but that is **not** evidence of successful E2B provisioning. A provider live pass also needs code.storage round-trip, allowed GitHub operations, model completions, public broker reachability, and cleanup checks under scoped test credentials. The legal quality benchmark still needs its retrieval credentials; tool registration or green unit tests are not legal performance measurements.
