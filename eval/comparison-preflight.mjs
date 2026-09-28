@@ -111,6 +111,45 @@ export function createComparisonMcp({ workspace, corpus }) {
   }
 }
 
+export function attachNativeRelayLifecycle({ upstream, upstreamTransport, proxy, sessionEnd, stdin = process.stdin, signals = process }) {
+  let cleanupPromise
+  let closingProxy = false
+  const cleanup = () => {
+    if (cleanupPromise) return cleanupPromise
+    cleanupPromise = (async () => {
+      try {
+        const pid = upstreamTransport.pid
+        if (pid) { try { process.kill(pid, 'SIGTERM') } catch {} }
+        const force = setTimeout(() => { if (pid) { try { process.kill(pid, 'SIGKILL') } catch {} } }, 750)
+        force.unref()
+        let failure
+        try { await upstream.close() }
+        catch (error) {
+          failure = error
+          if (pid) { try { process.kill(pid, 'SIGKILL') } catch {} }
+        } finally { clearTimeout(force) }
+        closingProxy = true
+        try { await proxy.close() } catch (error) { failure ??= error }
+        try { sessionEnd() } catch (error) { failure ??= error }
+        if (failure) throw failure
+      } finally {
+        stdin.off('end', onEnd)
+        signals.off('SIGTERM', onSignal)
+        signals.off('SIGINT', onSignal)
+      }
+    })()
+    return cleanupPromise
+  }
+  const terminate = () => { void cleanup().then(() => process.exit(0), () => process.exit(1)) }
+  const onEnd = () => terminate()
+  const onSignal = () => terminate()
+  stdin.once('end', onEnd)
+  signals.on('SIGTERM', onSignal)
+  signals.on('SIGINT', onSignal)
+  proxy.onclose = () => { if (!closingProxy) terminate() }
+  return cleanup
+}
+
 async function runNativeRelay() {
   const { scratch, staged, adapter } = paths(process.env.ARSUMBRIS_SCRATCH)
   process.env.HOME = join(scratch, 'runtime-home')
@@ -129,22 +168,24 @@ async function runNativeRelay() {
   })
   if (hook.error || hook.status !== 0 || /au-codex startup:/.test(hook.stderr ?? '')) throw new Error('Native SessionStart failed')
   const upstream = new Client({ name: 'lux-legal-comparison-relay', version: '1.0.0' }, { capabilities: {} })
-  await upstream.connect(new StdioClientTransport({ command: process.execPath, args: ['--experimental-strip-types', serverPath], cwd: staged, env: childEnv, stderr: 'pipe' }))
+  const upstreamTransport = new StdioClientTransport({ command: process.execPath, args: ['--experimental-strip-types', serverPath], cwd: staged, env: childEnv, stderr: 'pipe' })
   const proxy = new Server({ name: 'au', version: '0.0.0' }, { capabilities: { tools: {} } })
+  const cleanup = attachNativeRelayLifecycle({ upstream, upstreamTransport, proxy, sessionEnd: () => {
+    spawnSync(process.execPath, ['--experimental-strip-types', join(adapter, 'hooks/session-end.ts')], {
+      cwd: staged, env: childEnv, input: JSON.stringify({ session_id: threadId, cwd: staged, source: 'shutdown' }),
+      encoding: 'utf8', timeout: 2000, maxBuffer: 4 * 1024 * 1024,
+    })
+  } })
+  try { await upstream.connect(upstreamTransport) }
+  catch (error) { await cleanup(); throw error }
   proxy.setRequestHandler(ListToolsRequestSchema, async () => exactTools(await upstream.listTools()))
   proxy.setRequestHandler(CallToolRequestSchema, async request => {
     if (!NATIVE_TOOLS.includes(request.params.name)) throw new Error('Native tool is not approved')
     return upstream.callTool({ name: request.params.name, arguments: request.params.arguments ?? {},
       _meta: { 'x-codex-turn-metadata': { thread_id: threadId } } })
   })
-  proxy.onclose = () => {
-    void upstream.close().finally(() => spawnSync(process.execPath, ['--experimental-strip-types', join(adapter, 'hooks/session-end.ts')], {
-      cwd: staged, env: childEnv, input: JSON.stringify({ session_id: threadId, cwd: staged, source: 'shutdown' }),
-      encoding: 'utf8', timeout: 3000, maxBuffer: 4 * 1024 * 1024,
-    }))
-  }
   try { await proxy.connect(new StdioServerTransport()) }
-  catch (error) { await upstream.close(); throw error }
+  catch (error) { await cleanup(); throw error }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
