@@ -397,8 +397,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
   }
   function replay(row) {
     if (!['harvey', 'broad'].includes(row.mode) || !Array.isArray(row.audit?.calls) ||
-        (row.answer === null && (row.mode !== 'broad' || !row.error || row.failure_stage === 'judge' ||
-          row.audit.finalAnswerHash !== null)) ||
+        (row.answer === null && (!row.error || row.failure_stage === 'judge' ||
+          (row.mode === 'harvey' ? typeof row.failure_stage !== 'string' || !row.failure_stage.trim() ||
+            row.audit.finalAnswer !== null : row.audit.finalAnswerHash !== null))) ||
         (row.error && row.answer !== null && (row.failure_stage !== 'judge' || typeof row.answer !== 'string' || !row.answer.trim()))) {
       throw new Error('Invalid evidence replay row')
     }
