@@ -1,5 +1,24 @@
 # Prepared fifteen-question comparison, audited v6 criteria
 
+## Corrected evidence replay and independent review
+
+The initial replay below is preserved but superseded for evidence coverage by `rejudged-v6-evidence-v2.json`, SHA-256 `592e9d31af44909d0a6b43cd714c3cb06e0d224c99b56b89a1c14288d4a45b32`. Independent Sol 6 medium review found that Opulent q11's allegedly unseen text was printed in `exec` calls 6 and 7. The old extractor omitted partial `head -c` reads. The corrected `verified-visible-head-prefix-v2` policy recovers only exact canonical prefixes actually printed, never unseen suffixes. All 29 available answers were rejudged with the same frozen rubric, explicit format prompt, Modal model, budget and retry limit; no answer was regenerated.
+
+| Corrected automated endpoint | Opulent | Harvey |
+| --- | ---: | ---: |
+| Accepted judgments | 14 | 14 |
+| Criterion passes / evaluated criteria | 48 / 50 | 48 / 50 |
+| Planned criteria | 54 | 54 |
+| Matched 13-question criteria | 44 / 46 | 46 / 46 |
+| Strict all-pass, including citations | 12 | 9 |
+| Correct / partial / wrong verdicts | 12 / 2 / 0 | 13 / 0 / 1 |
+
+The evaluated subsets still differ: Opulent q06 remains truncated and Harvey q07 remains unavailable. The unchanged Opulent q11 now passes 4/4, with its previously missing citation recovered. Opulent q13 also changes to 4/4 under the semantic reading of its quoted obligation definition. Harvey q06 now validates at 2/4, penalizing its erroneous attribution to the 1915 law. Its `wrong` severity should not be interpreted as independent legal adjudication.
+
+Judge instability remains material. Harvey q14 changes from 2/3 to 3/3 even though its unsupported corpus-wide SA/SARL-only assertion is unchanged; both independent reviewers upheld that original grounding criticism. Opulent q08 remains 3/4, but its omission rationale partly conflicts with the allowed single-regime path; the affirmative “nothing more/no distinction” overstatement is the defensible concern. Reviewers disagree about whether q12's direct citation to Belgian precedent triggers attribution despite the explicit independently supported-source exception. Preserve these disputes rather than manually selecting favorable scores. The corrected matched-subset gap is two points, but these unresolved interpretation and consistency issues prevent a conclusive quality ranking.
+
+The correction passed 66 scoped tests, typecheck and diff checks; CI passed on `df7f03e3`. Future Harvey bridge failures now retain only bounded fixed-class diagnostics, hashes and counts, not raw stderr or credentials; that cannot recover the lost q07 exception retrospectively. The historical result below documents the first replay and must not be quoted as the latest evidence-complete score.
+
 The fresh run produced 15 Opulent answers and 14 Harvey answers. Strict corrected grading accepted 27 of 29 available judgments. On the 13 mutually judged questions, automated criteria totals are Harvey 45/46 and Opulent 42/46. These are not a complete fifteen-question ranking, and the q12 automated penalty is disputed under the published rubric.
 
 ## Prospective audit and configuration
