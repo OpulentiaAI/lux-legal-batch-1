@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { evidenceV4 } from '../eval/grading-evidence.mjs'
-import { rejudgeEvidenceV4 } from '../eval/rejudge.mjs'
+import { preflightEvidenceV4, rejudgeEvidenceV4 } from '../eval/rejudge.mjs'
 import { questionHash } from '../eval/compose.mjs'
 import { MODAL_DEEPSEEK_MODEL } from '../runtime/eval-model-profile.mjs'
 
@@ -187,6 +187,38 @@ test('nested native evidence rejects wrong document, unrelated text and altered 
   assert.throws(() => evidenceV4(options).replay(broad), /call hash/)
 })
 
+test('native search metadata is preserved separately and bound to exact output hashes', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const metadata = { chunk_id: id, doc, doc_title: 'Model-visible heading', article: '13-2', path: ['Part', 'Chapter'],
+    preview: 'Second rule.' }
+  const call = { tool: 'mcp_call_tool', args: { name: 'lx_search' },
+    output: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ results: [metadata] }) }] }), result: { error: false } }
+  call.result.sha256 = hash(call.output)
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  const replay = evidenceV4(options).replay(broad)
+  assert.equal(replay.sources[0].text, 'Second rule.')
+  assert.deepEqual(replay.modelVisibleMetadata.map(({ origin, ...entry }) => entry),
+    [{ id, doc, doc_title: 'Model-visible heading', article: '13-2', path: ['Part', 'Chapter'] }])
+  assert.equal(replay.modelVisibleMetadata[0].origin.outputSha256, hash(call.output))
+  metadata.context = [{ chunk_id: id, preview: 'Third rule.' }, { chunk_id: id, preview: '' }]
+  metadata.article = null
+  call.output = JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ results: [metadata] }) }] })
+  call.result.sha256 = hash(call.output)
+  broad.audit.calls[0].result.sha256 = hash(call.output)
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  const expanded = evidenceV4(options).replay(broad)
+  assert.deepEqual(expanded.sources.map(source => source.text), ['Second rule.', 'Third rule.'])
+  assert.equal(expanded.sources[1].origin.field, 'context.preview')
+  assert.equal(expanded.modelVisibleMetadata[0].article, undefined)
+  metadata.doc_title = 'Changed heading'
+  call.output = JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ results: [metadata] }) }] })
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.throws(() => evidenceV4(options).replay(broad), /call hash/)
+})
+
 test('raw broad arguments bind to captured gateway responses without canonicalizing hashes', t => {
   const { root, options, row } = fixture(t)
   const args = { command: 'true' }
@@ -309,4 +341,63 @@ test('calibrated adjudication stays in planned denominator without passing', asy
   assert.equal(result.summary.harvey.all_pass, 0)
   assert.equal(result.summary.harvey.rubric_pass, 0)
   assert.equal(result.summary.harvey.provisional_rubric_pass, gold.rubric.length)
+})
+
+test('complete judge-stage error replays the captured answer but answer-stage failure cannot', async t => {
+  const { root, options, data, row } = fixture(t)
+  row.error = 'Invalid judge v4 source anchor'
+  row.failure_stage = 'judge'
+  const raw = JSON.stringify(data)
+  assert.equal(preflightEvidenceV4({ ...options, data, limit: 1 }).verified[0].result.answer, answer)
+  const result = await rejudgeEvidenceV4({ ...options, data, rawInput: { path: join(root, 'input.json'), text: raw },
+    output: join(root, 'rejudged.json'), judgeModel: 'openai/gpt-6-luna', chat: async () => ({ text: JSON.stringify({
+      verdict: 'correct', citation_ok: true, grounded: true,
+      rubric: gold.rubric.map(item => ({ item, pass: true, note: 'Verified' })), note: 'Verified',
+      adjudication: 'resolved', legal_truth: 'correct', document_compliance: 'met', criticisms: [],
+    }) }) })
+  assert.equal(result.rows[0].original_judge_error, row.error)
+  assert.equal(result.rows[0].answer, answer)
+  assert.equal(result.rows[0].error, undefined)
+  row.failure_stage = 'answer'
+  assert.throws(() => preflightEvidenceV4({ ...options, data, limit: 1 }), /input row identities/)
+  row.failure_stage = 'judge'
+  row.answer = ''
+  assert.throws(() => preflightEvidenceV4({ ...options, data, limit: 1 }), /input row identities/)
+})
+
+test('bounded judge retries record immutable raw failures and resume checks capture hashes', async t => {
+  const { root, options, data } = fixture(t)
+  const output = join(root, 'retry.json'), raw = JSON.stringify(data)
+  let calls = 0
+  const verdict = { verdict: 'correct', citation_ok: true, grounded: true,
+    rubric: gold.rubric.map(item => ({ item, pass: true, note: 'Verified' })), note: 'Verified',
+    adjudication: 'resolved', legal_truth: 'correct', document_compliance: 'met', criticisms: [] }
+  const inputs = { ...options, data, rawInput: { path: join(root, 'input.json'), text: raw }, output,
+    judgeModel: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'], judgeResponseFormat: 'json-schema', retries: 2,
+    chat: async request => {
+      calls++
+      assert.equal(request.responseFormat.type, 'json_schema')
+      assert.match(request.messages[1].content, /SOURCES VISIBLES/)
+      return { text: calls === 2 ? '{"verdict":"partial"}' : JSON.stringify(verdict),
+        rawResponse: { capture: calls, choices: [{ finish_reason: calls === 1 ? 'length' : 'stop' }] } }
+    } }
+  const result = await rejudgeEvidenceV4(inputs)
+  assert.equal(calls, 3)
+  assert.equal(result.rows[0].verdict, 'correct')
+  assert.equal(result.attempts[`${gold.id}/harvey`].length, 3)
+  assert.match(readFileSync(join(`${output}.attempts`, `${gold.id}-harvey-1.json`), 'utf8'), /Invalid judge v4 truncated gateway response/)
+  assert.match(readFileSync(join(`${output}.attempts`, `${gold.id}-harvey-2.json`), 'utf8'), /Invalid judge v4 verdict schema/)
+  assert.deepEqual(JSON.parse(readFileSync(join(`${output}.attempts`, `${gold.id}-harvey-3.json`), 'utf8')).rawResponse,
+    { capture: 3, choices: [{ finish_reason: 'stop' }] })
+  assert.equal(readdirSync(`${output}.attempts`).length, 3)
+  const checkpoint = JSON.parse(readFileSync(output, 'utf8'))
+  checkpoint.rows = []
+  writeFileSync(output, JSON.stringify(checkpoint))
+  await rejudgeEvidenceV4({ ...inputs, resume: true })
+  assert.equal(calls, 3)
+  assert.equal(JSON.parse(readFileSync(output, 'utf8')).rows[0].verdict, 'correct')
+  await assert.rejects(rejudgeEvidenceV4({ ...inputs, resume: true, judgeResponseFormat: 'none' }), /resume provenance/)
+  const file = join(`${output}.attempts`, `${gold.id}-harvey-1.json`)
+  writeFileSync(file, readFileSync(file, 'utf8') + 'tampered')
+  await assert.rejects(rejudgeEvidenceV4({ ...inputs, resume: true }), /resume attempt hash/)
 })

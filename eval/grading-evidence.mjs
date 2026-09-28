@@ -79,30 +79,55 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     if (!found.has(key)) found.set(key, { id, doc: source.doc, text, kind, sha256: hash(text),
       origin: { ...origin, start, end: start + text.length } })
   }
-  function native(found, value, origin, depth = 0) {
+  function native(found, metadata, value, origin, depth = 0) {
     if (depth > 8) return
     if (typeof value === 'string') {
       if (value.length > 1_000_000) return
-      try { native(found, JSON.parse(value), origin, depth + 1) } catch (error) {
+      try { native(found, metadata, JSON.parse(value), origin, depth + 1) } catch (error) {
         if (error?.message?.startsWith('Invalid evidence')) throw error
       }
       return
     }
     if (!value || typeof value !== 'object') return
-    if (Array.isArray(value)) { for (const child of value) native(found, child, origin, depth + 1); return }
+    if (Array.isArray(value)) { for (const child of value) native(found, metadata, child, origin, depth + 1); return }
     if (typeof value.chunk_id === 'string' && typeof value.doc === 'string') {
-      const source = sourceFor(value.chunk_id)
-      if (value.doc !== source.doc) throw new Error('Invalid evidence document association')
+      const meta = manifest.get(value.chunk_id)
+      if (!meta || !value.chunk_id.startsWith(`${meta.doc_id}:`)) throw new Error('Invalid evidence chunk ID')
+      if (value.doc !== meta.doc_id) throw new Error('Invalid evidence document association')
+      const visibleMetadata = { id: value.chunk_id, doc: meta.doc_id }
+      for (const field of ['doc_title', 'article', 'path', 'structure']) {
+        if (!Object.hasOwn(value, field)) continue
+        const item = value[field]
+        if (item == null) continue
+        if (field === 'path' || field === 'structure') {
+          if (!Array.isArray(item) || !item.every(part => typeof part === 'string')) throw new Error('Invalid evidence metadata')
+        } else if (typeof item !== 'string') throw new Error('Invalid evidence metadata')
+        visibleMetadata[field] = item
+      }
+      if (Object.keys(visibleMetadata).length > 2) metadata.push({ ...visibleMetadata, origin: { ...origin } })
       for (const field of ['text', 'preview']) {
         if (typeof value[field] === 'string' && value[field].trim()) {
+          const source = sourceFor(value.chunk_id)
           attach(found, source.id, value[field], { ...origin, field }, value[field] === source.text ? 'full' : 'excerpt')
+        }
+      }
+      if (Object.hasOwn(value, 'context')) {
+        if (!Array.isArray(value.context)) throw new Error('Invalid evidence context')
+        for (const [index, sibling] of value.context.entries()) {
+          if (typeof sibling?.chunk_id !== 'string' || typeof sibling.preview !== 'string') {
+            throw new Error('Invalid evidence context')
+          }
+          if (!sibling.preview.trim()) continue
+          const source = sourceFor(sibling.chunk_id)
+          attach(found, source.id, sibling.preview, { ...origin, field: 'context.preview', contextIndex: index },
+            sibling.preview === source.text ? 'full' : 'excerpt')
         }
       }
       return
     }
     for (const [key, child] of Object.entries(value)) {
-      if (key === 'content' || key === 'results') native(found, child, origin, depth + 1)
-      else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, child, origin, depth + 1)
+      if (key === 'content' || key === 'results') native(found, metadata, child, origin, depth + 1)
+      else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, metadata, child, origin, depth + 1)
     }
   }
   function harvey(found, call, origin) {
@@ -177,8 +202,12 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
   }
   function replay(row) {
-    if (!['harvey', 'broad'].includes(row.mode) || !Array.isArray(row.audit?.calls) || row.error) throw new Error('Invalid evidence replay row')
+    if (!['harvey', 'broad'].includes(row.mode) || !Array.isArray(row.audit?.calls) ||
+        (row.error && (row.failure_stage !== 'judge' || typeof row.answer !== 'string' || !row.answer.trim()))) {
+      throw new Error('Invalid evidence replay row')
+    }
     const found = new Map()
+    const modelVisibleMetadata = []
     const argumentHashUnverifiable = []
     if (row.mode === 'broad') {
       if (typeof row.audit.evidenceArtifact !== 'string') throw new Error('Invalid evidence artifact identity')
@@ -208,7 +237,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           if (call.tool !== 'mcp_call_tool' || !['lx_search', 'lx_chunk'].includes(call.args?.name)) throw new Error('Invalid evidence call argument hash')
           argumentHashUnverifiable.push(index)
         }
-        if (!call.result.error) native(found, call.output, { artifact: name, call: index, tool: call.tool,
+        if (!call.result.error) native(found, modelVisibleMetadata, call.output, { artifact: name, call: index, tool: call.tool,
           outputSha256: audit.result.sha256, argumentHashVerified: argsVerified })
       })
     } else {
@@ -229,7 +258,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       }
     }
     verifyFullSources(row, found)
-    return { answer: row.answer, sources: [...found.values()], trace: row.trace,
+    return { answer: row.answer, sources: [...found.values()], modelVisibleMetadata, trace: row.trace,
       proof: { binding_strength: row.mode === 'broad' ? 'recorded-output-sha256' : 'legacy-artifact-snapshot-arguments-canonical',
         argument_hash_unverifiable: argumentHashUnverifiable, historical_result_hash_missing: row.mode === 'harvey' },
       metrics: { errors: row.degraded ? Math.max(1, row.metrics?.errors ?? 0) : 0, replay: true, sourceCount: found.size } }

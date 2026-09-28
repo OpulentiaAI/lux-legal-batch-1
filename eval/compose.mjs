@@ -218,7 +218,7 @@ export async function evaluate({ gold, modes, output, resume = false, concurrenc
 export function gatewayChat({ key, model, providerOnly = null, timeoutMs = 12000, retries = 1, reasoningEffort = 'low', fetchImpl = fetch }) {
   if (!key) throw new Error('AI_GATEWAY_API_KEY is required before starting evaluation')
   if (providerOnly !== null) validateEvalModel(model, providerOnly)
-  return async ({ messages, maxTokens = 900, signal }) => {
+  return async ({ messages, maxTokens = 900, signal, responseFormat }) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         signal?.throwIfAborted()
@@ -226,6 +226,7 @@ export function gatewayChat({ key, model, providerOnly = null, timeoutMs = 12000
           method: 'POST', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ model, messages, max_completion_tokens: maxTokens, reasoning_effort: reasoningEffort,
+            ...(responseFormat ? { response_format: responseFormat } : {}),
             ...(providerOnly ? { providerOptions: { gateway: { only: providerOnly } } } : {}) }),
         })
         if (!response.ok) {
@@ -234,7 +235,7 @@ export function gatewayChat({ key, model, providerOnly = null, timeoutMs = 12000
         }
         const body = await response.json()
         if (typeof body.choices?.[0]?.message?.content !== 'string') throw new Error('Invalid gateway response')
-        return { text: body.choices[0].message.content, usage: body.usage ?? null }
+        return { text: body.choices[0].message.content, usage: body.usage ?? null, rawResponse: body }
       } catch (error) {
         if (signal?.aborted || attempt === retries || /^gateway 4\d\d$/.test(error.message)) throw error
         await delay(500 * (attempt + 1), undefined, { signal })

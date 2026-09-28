@@ -139,12 +139,15 @@ test('Modal judge request fails closed to only modal without changing Luna', asy
     return { ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }] }) }
   }
   await gatewayChat({ key: 'fixture', model: MODAL_DEEPSEEK_MODEL, providerOnly: ['modal'], reasoningEffort: 'high', fetchImpl })(
-    { messages: [{ role: 'user', content: 'Judge' }], maxTokens: 16000 })
+    { messages: [{ role: 'user', content: 'Judge' }], maxTokens: 16000,
+      responseFormat: { type: 'json_schema', json_schema: { name: 'probe', schema: { type: 'object' } } } })
   await gatewayChat({ key: 'fixture', model: 'openai/gpt-6-luna', fetchImpl })({ messages: [], maxTokens: 4000 })
   assert.deepEqual(outbound[0].providerOptions, { gateway: { only: ['modal'] } })
   assert.equal(outbound[0].max_completion_tokens, 16000)
   assert.equal(outbound[0].reasoning_effort, 'high')
+  assert.equal(outbound[0].response_format.type, 'json_schema')
   assert.equal(outbound[1].providerOptions, undefined)
+  assert.equal(outbound[1].response_format, undefined)
   assert.throws(() => gatewayChat({ key: 'fixture', model: MODAL_DEEPSEEK_MODEL, providerOnly: ['other'] }), /pairing/)
 })
 

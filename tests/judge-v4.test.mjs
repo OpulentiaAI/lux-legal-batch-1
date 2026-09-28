@@ -5,7 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { evaluate, JUDGE_POLICIES, parseOptions, validateJudge } from '../eval/compose.mjs'
-import { judgeV4Request, validateJudgeV4 } from '../eval/judge-v4.mjs'
+import { JUDGE_V4_RESPONSE_FORMAT, judgeV4Request, validateJudgeV4 } from '../eval/judge-v4.mjs'
 
 const sources = [{ id: 'law', doc: 'statute', text: 'Current rule: capital between 1 and 100 credits.', kind: 'excerpt' },
   { id: 'memo', doc: 'background', text: 'Proposal: no capital minimum. This is not the enacted rule.', kind: 'full' }]
@@ -168,6 +168,28 @@ test('unverified excerpts escalate without asserting absent full-document law', 
       materiality: 'limited', rubric_index, claim: '', note: 'No response to this criterion.',
       anchors: [{ id: 'snippet', quote: 'capital requirements' }] })) }
   assert.equal(validateJudgeV4(JSON.stringify(nonresponsive), rubric, 'I do not know.', excerpt).verdict, 'wrong')
+})
+
+test('rubric references can support legal criticism but cannot masquerade as model-visible support', () => {
+  const reference = [{ id: 'reference', doc: 'law', kind: 'full', text: 'The applicable statute sets a distinct rule.' }]
+  const visible = [{ id: 'visible', doc: 'memo', kind: 'excerpt', text: 'A preview about the topic.' }]
+  const response = 'The applicable statute always follows the memo [reference].'
+  const verdict = { ...base, verdict: 'wrong', legal_truth: 'incorrect', grounded: false,
+    rubric: [{ ...base.rubric[0], pass: false }, base.rubric[1]],
+    criticisms: [{ type: 'incorrect', rubric_index: 0, materiality: 'central', claim: 'always follows the memo',
+      note: 'Wrong governing rule.', anchors: [{ id: 'reference', quote: 'distinct rule' }] }] }
+  const context = { rubricReferences: reference, modelVisibleMetadata: [{ id: 'visible', doc: 'memo', doc_title: 'An unrelated memo',
+    article: '13-2', path: ['Chapter'], origin: { call: 1 } }] }
+  const prompt = judgeV4Request('Which law?', rubric, response, visible, '', undefined, context)
+  assert.match(prompt, /MÉTADONNÉES VISIBLES PAR LE MODÈLE/)
+  assert.match(prompt, /NON VISIBLES PAR LE MODÈLE RÉPONDANT/)
+  assert.equal(validateJudgeV4(JSON.stringify(verdict), rubric, response, visible, undefined, context).citation_ok, false)
+  assert.throws(() => validateJudgeV4(JSON.stringify(verdict), rubric, response, visible), /source anchor/)
+  const documentCriticism = { ...verdict, verdict: 'partial', legal_truth: 'incomplete',
+    criticisms: [{ ...verdict.criticisms[0], type: 'document_compliance', materiality: 'not_applicable', claim: '' }] }
+  assert.throws(() => validateJudgeV4(JSON.stringify(documentCriticism), rubric, response, visible, undefined, context), /source anchor/)
+  assert.deepEqual(JUDGE_V4_RESPONSE_FORMAT.json_schema.schema.required,
+    ['verdict', 'citation_ok', 'grounded', 'rubric', 'note', 'adjudication', 'legal_truth', 'document_compliance', 'criticisms'])
 })
 
 test('v4 evaluation emits separate structured judgment and no source text into checkpoint', async () => {
