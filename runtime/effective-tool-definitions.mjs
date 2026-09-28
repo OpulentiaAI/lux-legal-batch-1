@@ -5,11 +5,21 @@ const catalogBytes = readFileSync(new URL('./catalog.json', import.meta.url));
 const catalog = JSON.parse(catalogBytes);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 
-export const EFFECTIVE_TOOL_OVERLAY_VERSION = 'opulent-runtime-tool-overlay-v2';
+export const EFFECTIVE_TOOL_OVERLAY_VERSION = 'opulent-runtime-tool-overlay-v3';
 export const EFFECTIVE_TOOL_OVERLAY = Object.freeze({
   opulent_mcp: {
     ...catalog.tools.opulent_mcp,
-    description: "Runtime-local connector facade. 'list_tools' returns policy-allowed, registered local tool names, descriptions and input schemas (excluding this recursive facade); it is not external MCP server discovery. 'call_tool' dispatches one registered runtime handler by tool_name with tool_args as a JSON object string, subject to normal allowlist, authentication and approval checks. It can forward permitted runtime adapters mcp_list_tools, mcp_call_tool and mcp_tool with their required arguments (e.g. mcp_call_tool needs server, name and arguments); those adapters perform provider discovery/calls under their own protections. It cannot resolve arbitrary provider-side tool names directly: an external server's lx_search needs mcp_call_tool with server/name/arguments, while a separately configured, policy-allowed local lx_search handler is callable by name.",
+    description: "Runtime-local connector facade. Use list_tools with tool_name='run_workflow' (or another exact canonical name) to retrieve that permitted local tool's full description and inputSchema; the unfiltered catalog can exceed the model's tool-result size limit and truncate away later tools. Unknown, excluded or forbidden names return an empty tools list. Without tool_name, list_tools returns all policy-allowed, registered local tools except this recursive facade; it is not external MCP server discovery. 'call_tool' dispatches one registered runtime handler by tool_name with tool_args as a JSON object string, subject to normal allowlist, authentication and approval checks. It can forward permitted runtime adapters mcp_list_tools, mcp_call_tool and mcp_tool with their required arguments (e.g. mcp_call_tool needs server, name and arguments); those adapters perform provider discovery/calls under their own protections. It cannot resolve arbitrary provider-side tool names directly: an external server's lx_search needs mcp_call_tool with server/name/arguments, while a separately configured, policy-allowed local lx_search handler is callable by name.",
+    inputSchema: {
+      ...catalog.tools.opulent_mcp.inputSchema,
+      properties: {
+        ...catalog.tools.opulent_mcp.inputSchema.properties,
+        tool_name: {
+          ...catalog.tools.opulent_mcp.inputSchema.properties.tool_name,
+          description: 'For list_tools, optional exact canonical local tool name to return its full description and inputSchema without truncating the whole catalog (e.g. run_workflow, which is unavailable in scripted_tools discovery). Unknown, excluded or forbidden names return an empty tools list. For call_tool, required registered local handler name.',
+        },
+      },
+    },
   },
   scripted_tools: {
     ...catalog.tools.scripted_tools,

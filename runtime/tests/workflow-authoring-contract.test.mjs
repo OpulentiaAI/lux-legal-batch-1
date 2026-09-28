@@ -22,7 +22,7 @@ test('model-visible workflow definition and local discovery expose the injected 
     const locallyDiscovered = facade.tools.find(tool => tool.name === 'run_workflow');
     assert.equal(locallyDiscovered.description, discovered.description);
     assert.deepEqual(locallyDiscovered.inputSchema, discovered.inputSchema);
-    assert.match(EFFECTIVE_TOOL_OVERLAY_VERSION, /v2$/);
+    assert.match(EFFECTIVE_TOOL_OVERLAY_VERSION, /v3$/);
     const description = discovered.description;
     for (const term of ['await register_workflow(', 'await agent(', 'phase=', 'schema=', 'label', 'repos', 'mode', 'vm_mode', 'soft_time_limit_minutes',
       'await parallel(', 'await pipeline(', 'log(*values)', 'import asyncio', 'import json', 'asyncio.run(main())', 'opulent_tools',
