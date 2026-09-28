@@ -132,6 +132,34 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
   }
   function visibleFileText(found, text, origin, command) {
+    const headLoop = typeof command === 'string' && command.match(/^cd \/workspace\/documents\/chunks && for f in ((?:[A-Za-z0-9_:-]+\.txt|"[A-Za-z0-9_:-]+\.txt")(?: +(?:[A-Za-z0-9_:-]+\.txt|"[A-Za-z0-9_:-]+\.txt"))*); do echo "=== \$f ==="; head -c (\d+) "\$f"; echo(; echo)?; done$/)
+    if (headLoop) {
+      const names = headLoop[1].split(/ +/).map(name => name.replace(/^"|"$/g, ''))
+      const limit = Number(headLoop[2]), separator = headLoop[3] ? '\n\n' : '\n'
+      if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('Invalid evidence head range')
+      let remaining = text
+      for (const name of names) {
+        const id = name.slice(0, -4), caption = `=== ${name} ===\n[${id}]\n`
+        if (!remaining.startsWith(caption)) throw new Error('Invalid evidence headed chunk identity')
+        const outputStart = text.length - remaining.length + caption.length
+        remaining = remaining.slice(caption.length)
+        const next = remaining.indexOf(`${separator}=== `)
+        const block = next < 0 ? remaining : remaining.slice(0, next + separator.length)
+        if (!block.endsWith(separator)) throw new Error('Invalid evidence head separators')
+        remaining = remaining.slice(block.length)
+        if (!manifest.has(id)) continue
+        const source = sourceFor(id), printed = block.slice(0, -separator.length)
+        const excerpt = printed === `${source.text}\n` ? source.text :
+          printed.endsWith('\ufffd') && source.text.codePointAt(printed.length - 1) > 127
+            ? printed.slice(0, -1) : printed
+        if (!excerpt || !source.text.startsWith(excerpt) ||
+            Buffer.byteLength(`[${id}]\n${excerpt}`) > limit) throw new Error('Invalid evidence head prefix')
+        attach(found, id, excerpt, { ...origin, format: 'literal-chunk-header', outputStart },
+          excerpt === source.text ? 'full' : 'excerpt', 0)
+      }
+      if (remaining) throw new Error('Invalid evidence headed chunk identity')
+      return
+    }
     const printedCat = typeof command === 'string' && command.match(/^(?:cd [^;\n]+;\s*)?for f in ([A-Za-z0-9_:-]+\.txt(?: +[A-Za-z0-9_:-]+\.txt)*); do echo "=== \$f"; done; cat ([A-Za-z0-9_:-]+)\.txt(?:;|$)/)
     const catPrelude = printedCat && {
       id: printedCat[2], text: `${printedCat[1].split(/ +/).map(name => `=== ${name}`).join('\n')}\n`,
