@@ -97,6 +97,9 @@ test('independent scores, unresolved disagreement and execution failure remain d
         assert.equal(request.maxTokens, 32768)
         assert.deepEqual(request.responseFormat, { type: 'json_object' })
         assert.match(request.messages[0].content, /Quotes must|quotes exactly/i)
+        assert.match(request.messages[0].content, /contract contains metadata, not response fields: keys, answerSpanKeys, anchorKeys/)
+        assert.match(request.messages[0].content, /exactly these nine top-level properties: criterionId, verdict, reason, answerSpans, anchors, defectId, defectType, legalTruth, sourceCompliance/)
+        assert.match(request.messages[0].content, /No keys property or other metadata\/extra properties/)
         const verdict = data.criterion.id === '01-1' && calls === 2 ? 'fail' : 'pass'
         if (data.criterion.id === '01-2') return { text: '{malformed' }
         return { text: JSON.stringify(answerFor({ data }, verdict)) }
@@ -373,7 +376,7 @@ test('calibration is dev-only, records both independent raw outputs, and exclude
   } finally { cleanup(f) }
 })
 
-test('calibration uses v2 JSON transport and persists correction beside unchanged raw judgment', async () => {
+test('calibration uses v3 JSON transport and persists correction beside unchanged raw judgment', async () => {
   const f = fixture()
   try {
     let calls = 0

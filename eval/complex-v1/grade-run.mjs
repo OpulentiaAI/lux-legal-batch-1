@@ -12,8 +12,8 @@ import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY } from '../../runtime/eval-model-profi
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const suiteRoot = fileURLToPath(new URL('drafts', import.meta.url))
 const model = MODAL_DEEPSEEK_MODEL
-const transportInstruction = 'Return one JSON object. Copy evidence quotes exactly from the provided records. Coordinates are verified against those records and uniquely matching exact quotes may have their offsets mechanically resolved; do not change your legal judgment to fit an anchor.'
-const judgePolicy = Object.freeze({ version: 'complex-grader-v2', model, providerOnly: MODAL_ONLY,
+const transportInstruction = `Return one JSON object. The serialized contract contains metadata, not response fields: keys, answerSpanKeys, anchorKeys, anchorRoles, offsets, nonFailureDefect, evidenceRules, and enum lists must not be copied as properties. The response must contain exactly these nine top-level properties: ${JUDGE_RESPONSE_CONTRACT.keys.join(', ')}. No keys property or other metadata/extra properties. Copy evidence quotes exactly from the provided records. Coordinates are verified against those records and uniquely matching exact quotes may have their offsets mechanically resolved; do not change your legal judgment to fit an anchor.`
+const judgePolicy = Object.freeze({ version: 'complex-grader-v3', model, providerOnly: MODAL_ONLY,
   reasoningEffort: 'high', maxTokens: 32768, responseFormat: { type: 'json_object' },
   transportInstructionSha256: sha256(transportInstruction), normalization: 'unique-exact-quote-offset-v2',
   timeoutMs: 120000, retries: 2, evidence: 'original-recorded-tool-output-excerpts-v1', judges: 2 })
