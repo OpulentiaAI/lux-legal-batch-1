@@ -12,10 +12,14 @@ def console(encoded):
     import websockets.sync.client
 
     request = json.loads(base64.b64decode(encoded))
-    focus = subprocess.run(
-        ['xdotool', 'getwindowfocus', 'getwindowclassname'],
+    window = subprocess.run(
+        ['xdotool', 'getwindowfocus'],
         env={'DISPLAY': ':99'}, capture_output=True, text=True, check=True,
-    ).stdout.strip().lower()
+    ).stdout.strip()
+    focus = subprocess.run(
+        ['xprop', '-id', window, 'WM_CLASS'],
+        env={'DISPLAY': ':99'}, capture_output=True, text=True, check=True,
+    ).stdout.lower()
     if 'chrom' not in focus:
         raise RuntimeError('Chromium must be in the foreground')
     with urllib.request.urlopen('http://127.0.0.1:9222/json/list', timeout=5) as response:

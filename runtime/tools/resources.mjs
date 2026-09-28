@@ -22,6 +22,8 @@ const safeWorkspacePath = (workspace, value) => {
   if (resolved !== root && !resolved.startsWith(`${root}/`)) throw new Error('Path outside workspace');
   return resolved;
 };
+export const BUILTIN_SKILLS = Object.freeze(['managing-knowledge', 'managing-playbooks', 'managing-automations', 'managing-child-sessions', 'analyzing-sessions', 'data-analysis']);
+const builtinSkillPath = name => `/opt/opulent/skills/${name}/SKILL.md`;
 const publicAddress = address => {
   const v4 = address.startsWith('::ffff:') ? address.slice(7) : address;
   if (isIP(v4) === 4) {
@@ -145,8 +147,21 @@ export function createTools(ctx) {
       if (command === 'list' || command === 'search') {
         const root = safeWorkspacePath(ctx.workspace, args.path || '.agents/skills');
         const found = [];
+        if (!args.path) {
+          for (const name of BUILTIN_SKILLS) {
+            const p = builtinSkillPath(name);
+            const content = await ctx.sandbox.files.read(p);
+            if (!args.keywords?.length || (args.keywords_mode === 'and' ? args.keywords.every(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())) : args.keywords.some(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())))) found.push({ name, path: p });
+          }
+        }
         const scan = async folder => {
-          for (const entry of await ctx.sandbox.files.list(folder)) {
+          let entries;
+          try { entries = await ctx.sandbox.files.list(folder); }
+          catch (error) {
+            if (!args.path && folder === root && (error?.status === 404 || error?.code === 'ENOENT' || /not found|does not exist/i.test(error?.message || ''))) return;
+            throw error;
+          }
+          for (const entry of entries) {
             if (entry.type !== 'dir') continue;
             const name = entry.name;
             const p = path.posix.join(folder, name, 'SKILL.md');
@@ -161,8 +176,9 @@ export function createTools(ctx) {
         return found;
       }
       if (command !== 'invoke') throw new Error(`Unknown skill command: ${command}`);
-      const plugin = store.list('personal_plugins').find(item => item.name === args.skill && item.kind === 'skill' && item.status === 'installed');
-      const p = plugin ? plugin.entry_path : safeWorkspacePath(ctx.workspace, `.agents/skills/${safeName(args.skill)}/SKILL.md`);
+      const name = safeName(args.skill);
+      const plugin = store.list('personal_plugins').find(item => item.name === name && item.kind === 'skill' && item.status === 'installed');
+      const p = BUILTIN_SKILLS.includes(name) ? builtinSkillPath(name) : plugin ? safeWorkspacePath(ctx.workspace, plugin.entry_path) : safeWorkspacePath(ctx.workspace, `.agents/skills/${name}/SKILL.md`);
       if (!p.endsWith('/SKILL.md')) throw new Error('Skill entry must be SKILL.md');
       return { path: p, content: await ctx.sandbox.files.read(p) };
     },
@@ -302,13 +318,32 @@ export async function approveResource(ctx, { kind, id: requestId, approve, value
       const marketplace = request.marketplace_server_slug && ctx.store.list('mcp_marketplace').find(entry => entry.slug === request.marketplace_server_slug);
       if (request.marketplace_server_slug && !marketplace) throw new Error('Marketplace server not found');
       if (request.action === 'update' && !previous) throw new Error('MCP server not found');
-      const url = request.url || marketplace?.url || previous?.url;
-      if (!url || new URL(url).protocol !== 'https:' || !ctx.config.allowedMcpUrls?.includes(url)) throw new Error('MCP URL must be HTTPS and explicitly allowlisted');
-      const candidate = { ...previous, ...marketplace, name: request.name || marketplace?.name || previous?.name, url, transport: 'http', installed: true, enabled: true };
+      if (value !== undefined && (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['args', 'env', 'authEnv'].includes(key)))) throw new Error('MCP approval accepts only arguments and environment references');
+      const transport = String(marketplace?.transport || request.transport || previous?.transport || 'http').toLowerCase();
+      const candidate = { ...previous, ...marketplace, name: request.name || marketplace?.name || previous?.name, transport, installed: true, enabled: true };
+      if (transport === 'stdio') {
+        candidate.command = marketplace?.command || request.command || previous?.command;
+        candidate.args = marketplace?.args || value?.args || previous?.args || [];
+        candidate.env = marketplace?.env || value?.env || previous?.env || {};
+        if (!Array.isArray(candidate.args) || !candidate.args.every(arg => typeof arg === 'string') || !ctx.config.allowedMcpCommands?.some(entry => entry.command === candidate.command && JSON.stringify(entry.args) === JSON.stringify(candidate.args))) throw new Error('MCP stdio command and arguments must be explicitly allowlisted');
+        if (!candidate.env || typeof candidate.env !== 'object' || Array.isArray(candidate.env) || Object.entries(candidate.env).some(([key, reference]) => !/^[A-Za-z_][A-Za-z_0-9]*$/.test(key) || typeof reference !== 'string' || !/^[A-Za-z_][A-Za-z_0-9]*$/.test(reference))) throw new Error('MCP environment must contain variable-name references only');
+        delete candidate.url;
+        delete candidate.authEnv;
+      } else if (transport === 'http') {
+        candidate.url = request.url || marketplace?.url || previous?.url;
+        if (!candidate.url || new URL(candidate.url).protocol !== 'https:' || !ctx.config.allowedMcpUrls?.includes(candidate.url)) throw new Error('MCP URL must be HTTPS and explicitly allowlisted');
+        if (value?.authEnv !== undefined) {
+          if (typeof value.authEnv !== 'string' || !/^[A-Za-z_][A-Za-z_0-9]*$/.test(value.authEnv)) throw new Error('MCP authentication must reference an environment variable');
+          candidate.authEnv = value.authEnv;
+        }
+        delete candidate.command;
+        delete candidate.args;
+        delete candidate.env;
+      } else throw new Error('Unsupported MCP approval transport');
       const serverId = previous?.id || id();
       if (typeof ctx.probeMcp !== 'function') throw new Error('MCP probe provider required');
       await ctx.probeMcp({ ...candidate, id: serverId });
-      result = ctx.store.put('mcp_servers', serverId, candidate);
+      result = ctx.store.put('mcp_servers', serverId, { ...candidate, approved: true });
     }
   } else if (kind === 'secret' || kind === 'secret_save') {
     const name = kind === 'secret' ? request.secret_name : request.env_var_name;

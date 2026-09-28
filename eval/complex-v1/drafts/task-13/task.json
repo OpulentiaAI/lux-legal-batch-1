@@ -1,0 +1,8 @@
+{
+  "id": "task-13",
+  "title": "Financing choice: Belgian SRL versus Luxembourg SARL and SARL-S",
+  "instructions": "Advise the fictional founders in English in memo.md. Compare the three proposed vehicles against the supplied six-month runway and identify inputs needed for a two-year financial plan; distinguish legal formation floors from operational sufficiency, resolve the conflicting adviser shorthand, and recommend a conditional route. Use only the supplied corpus for legal propositions. Cite passages actually consulted by canonical chunk ID. Belgian law here is evidenced by a 2021 comparative doctrinal account, not a current Belgian statutory consolidation: describe its account and expressly qualify any present-day Belgian-law conclusion as unverified as of the scenario date. Luxembourg statutory propositions use the corpus's 29 May 2026 consolidation; do not assert later changes were checked. Do not assume missing eligibility, licensing, or binding subscription facts.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/runway.csv", "materials/adviser-note.md"],
+  "scope": { "jurisdiction": "Belgium and Luxembourg", "companyForm": "Belgian SRL/BV; Luxembourg SARL and SARL-S", "asOf": "2026-09-28" }
+}

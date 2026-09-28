@@ -1,0 +1,8 @@
+{
+  "id": "task-11",
+  "title": "Partial European split: allocation, universal transfer, and creditor fallback",
+  "instructions": "Using the corpus as the sole source of law, write memo.md as a corrected pre-approval asset-and-liability allocation instruction and risk note for counsel. Reconcile the hypothetical ledger and the CFO's erroneous claims under the 2025 European partial-split regime. Address who receives the shareholder consideration, the fate of Meridian, transferred employment relationships, and the IP third-party formalities. Separately analyze the expressly hypothetical future post-effect scenarios of a later-discovered EUR 900,000 warranty liability and a creditor left unsatisfied on an allocated debt; give the 2:1 allocation calculation only if final terms and their interpretation fail to allocate the later claim, and treat EUR 4m as a planning estimate, not a stipulated effective-date cap. Distinguish legal transfer from opposability; do not invent Belgian rules or say a pre-approval draft is already effective. Cite visible canonical corpus passages.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/ledger.csv"],
+  "scope": { "jurisdiction": "Luxembourg split company; Belgium beneficiary (Belgian procedural law unverified)", "companyForm": "Luxembourg SA; newly incorporated Belgian SRL", "asOf": "2026-10-01, applying Luxembourg statutory compilation through 2026-05-29" }
+}

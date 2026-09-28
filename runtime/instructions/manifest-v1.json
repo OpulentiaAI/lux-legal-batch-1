@@ -1,0 +1,370 @@
+{
+  "version": "opulent-standalone-v1",
+  "sourceZipSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+  "sourceSystemSha256": "147f3d7a0cc7ff08b446fe7be62cbc61a0a3a76d89f4465de253a82a4c15bee4",
+  "baseSha256": "a67b9bd23a5ea6ac16cfb53f38a758466f8cef3a87b95d7161d8b0f7b1b2f0a3",
+  "sourceLineCount": 511,
+  "lineHashRule": "SHA-256 of UTF-8 source bytes for inclusive 1-based line range, including original line terminators",
+  "spans": [
+    {
+      "lines": [
+        1,
+        6
+      ],
+      "action": "exclude",
+      "sha256": "0b33824429a7935421597b44faeeb2d88610f883256b6311ec3e317e4d11fb32",
+      "reason": "Transcription metadata and foreign session identity."
+    },
+    {
+      "lines": [
+        7,
+        7
+      ],
+      "action": "adapt",
+      "sha256": "f7248f356b4effade8c81d0a5827a4e3a45d206c272357448c8bd857674d12da",
+      "reason": "Replace Devin/Cognition identity with truthful standalone Opulent identity."
+    },
+    {
+      "lines": [
+        8,
+        13
+      ],
+      "action": "preserve",
+      "sha256": "88b9c7f3c4e3c31923ebe6455821ecf26b40acea9c460626d6986f4643b532dc",
+      "reason": "Analysis-only guard, headings and persistence topic."
+    },
+    {
+      "lines": [
+        14,
+        16
+      ],
+      "action": "adapt",
+      "sha256": "9eebea398a4b200b3ddea9244071f12708df313992bf8ca880075bad59c92198",
+      "reason": "Preserve persistence, checklist.txt and report_blocker; adapt only foreign identity/access wording."
+    },
+    {
+      "lines": [
+        17,
+        20
+      ],
+      "action": "preserve",
+      "sha256": "4219d61f7694484fd14f1cfadef8041d84fc1ed26ccee3fa36cd3ae1414ff253",
+      "reason": "False-precondition escalation."
+    },
+    {
+      "lines": [
+        21,
+        35
+      ],
+      "action": "adapt",
+      "sha256": "e176010e6eb056da854f275afbd74c16e5599fa06a58187246be65e81a7ed66e",
+      "reason": "Preserve three choices and available message_user/request_secret/list_secrets/suggest_save_secret workflow; adapt Devin naming and refusal/auth safeguards."
+    },
+    {
+      "lines": [
+        36,
+        39
+      ],
+      "action": "preserve",
+      "sha256": "93b5dd8f6eabf99c2b1831cb10003bc25d3e25b4647b70bc8cf67a843ab1042d",
+      "reason": "Parallel independent calls, verbatim in base."
+    },
+    {
+      "lines": [
+        40,
+        61
+      ],
+      "action": "adapt",
+      "sha256": "dcc8719c69bbc873f6f70c649b795256034ade283265b67757a3c4ed6b112f26",
+      "reason": "Keep terse communication, message_user/rename_title and report_blocker; remove PR references and foreign reporting-service guarantees while retaining actual notify enum."
+    },
+    {
+      "lines": [
+        62,
+        67
+      ],
+      "action": "adapt",
+      "sha256": "26654f490441e72a25d05c6ea009a0adbecb04caa1726998921b269f76222860",
+      "reason": "Keep one in-progress task and never silently drop; use available task interfaces."
+    },
+    {
+      "lines": [
+        68,
+        75
+      ],
+      "action": "adapt",
+      "sha256": "fbf9ebcb770f14697769bdc008f3093180fc16c8b46b068c60d57ca1b93afbeb",
+      "reason": "Keep tested-skill discipline; remove claims that Devin skills are installed."
+    },
+    {
+      "lines": [
+        76,
+        81
+      ],
+      "action": "adapt",
+      "sha256": "ad5993c472e2da63bff29c286f180a5d034c503508c287e9b7661559d253879a",
+      "reason": "Keep applicable rules/plugin concept and real skill discovery; remove foreign installed plugin inventory claims."
+    },
+    {
+      "lines": [
+        82,
+        91
+      ],
+      "action": "adapt",
+      "sha256": "cff0285faad9ee871de713a41571a51e4d4c74f6e44f797ea7cec4e8db9b27de",
+      "reason": "Keep README/setup/build verification; remove blueprint, pre-commit installation mandate and fixed CDP endpoint."
+    },
+    {
+      "lines": [
+        92,
+        106
+      ],
+      "action": "adapt",
+      "sha256": "5ab8e8824e9123b59fe7f9d6d7b98626f578ac8e48189548eb59eef2d2bc25ea",
+      "reason": "Keep task discovery, lint/typecheck and scoped-test cycle; remove defer-tests, PR mandate and message_user stop flow."
+    },
+    {
+      "lines": [
+        107,
+        129
+      ],
+      "action": "exclude",
+      "sha256": "f948df070e7f0f5db6904dd953e8e7e68f1cc32d70a21456ce99d05f49fcc920",
+      "reason": "Entire PR creation, branches, CI, reviews, bot feedback and comment workflow explicitly excluded."
+    },
+    {
+      "lines": [
+        130,
+        141
+      ],
+      "action": "adapt",
+      "sha256": "0418b65102188657dd98daef5833569c7f4bbe3b229fbf1a49f7c17ddb04d8da",
+      "reason": "Preserve code quality and security points; drop any PR-dependent or blanket test-edit prohibition that conflicts with adding requested regressions."
+    },
+    {
+      "lines": [
+        142,
+        147
+      ],
+      "action": "adapt",
+      "sha256": "269af32be4f76e4bd21cbf5708f245b5f2aaa7f373e0bd31cac3b604be91186a",
+      "reason": "Keep no-diff-comment guidance; remove PR-description redirection."
+    },
+    {
+      "lines": [
+        148,
+        153
+      ],
+      "action": "adapt",
+      "sha256": "777d628dac87746e69beb130a54c806c9a27552d5e59ede85ff81b8ccabc3867",
+      "reason": "Preserve effort estimates; remove foreign checkpoint guarantee."
+    },
+    {
+      "lines": [
+        154,
+        159
+      ],
+      "action": "preserve",
+      "sha256": "1404dbd9f7bb6b3ef3491da1d2ff00808312d0f72090f73d90b2554fd25422cd",
+      "reason": "Professional standards and calibrated claims, verbatim in base."
+    },
+    {
+      "lines": [
+        160,
+        166
+      ],
+      "action": "adapt",
+      "sha256": "055aa2a90c62969fe5f5ae13e4a841a03afa333f867221ee2f093c7ba7667d0e",
+      "reason": "Keep coding practices; remove commit/push directives and condition attachment handling on actual provider availability."
+    },
+    {
+      "lines": [
+        167,
+        177
+      ],
+      "action": "exclude",
+      "sha256": "9897cbda35fe82c663f06ac1a1602456bc3b3b33f9fe0c3dc454efc633fa41ce",
+      "reason": "Entire Git guidelines section excluded by request."
+    },
+    {
+      "lines": [
+        178,
+        201
+      ],
+      "action": "adapt",
+      "sha256": "e73582a44ddca914ae7bc6d85ac01ccdc15d77933ece63cb2c3bd53a36511ceb",
+      "reason": "Keep filesystem persistence only; drop foreign ref_file UI tags, repo layout, Git auth and Devin docs/mode links."
+    },
+    {
+      "lines": [
+        202,
+        207
+      ],
+      "action": "adapt",
+      "sha256": "2df282c3ed3fa893c226cd9ac52b315ec75c72f6fd9ae7e84acec1cc92ffb18a",
+      "reason": "Keep defensive security constraints while making safety language compatible with current runtime."
+    },
+    {
+      "lines": [
+        208,
+        224
+      ],
+      "action": "adapt",
+      "sha256": "87ae2f3e0a196c1e7be5f3cc88b5e134ffb61c078181e050806b900e4dc15258",
+      "reason": "Keep real grep/exec/notebook and one-shot shell guidance; adapt unsupported image-read promise and foreign shell/environment note guarantees."
+    },
+    {
+      "lines": [
+        225,
+        236
+      ],
+      "action": "adapt",
+      "sha256": "ff38cecd21beefd5e80819f7d7679c7015a7c2f4b775b8de8c23e69e79b1ab9e",
+      "reason": "Keep system event handling and tool-output boundary; remove Devin system-note taxonomy and pop-quiz injection."
+    },
+    {
+      "lines": [
+        237,
+        256
+      ],
+      "action": "adapt",
+      "sha256": "d878a5d3eabc4d06221c61e6ab79bd054ecaca16c4f95d7dc9c7369ae1b89996",
+      "reason": "Keep concise final delivery and verify UI when requested; remove PR/CI/comment rules, testing_agent and message_user/stop workflow."
+    },
+    {
+      "lines": [
+        257,
+        272
+      ],
+      "action": "exclude",
+      "sha256": "a7aff6fdf8339a2e800061757bc915b6a098be210dade1d87cd9e42a4304f7a4",
+      "reason": "Knowledge/blueprint/secret-file session mechanics unavailable and blueprint scope excluded."
+    },
+    {
+      "lines": [
+        273,
+        296
+      ],
+      "action": "adapt",
+      "sha256": "c7750347d1a8bc7d1fba5efd15f4d7cd4558b734e1731dcf8fa3f0ed750f3930",
+      "reason": "Keep computer observation practice; drop 1024x768, Chrome/DOM guarantees and fixed runtime coordinates."
+    },
+    {
+      "lines": [
+        297,
+        317
+      ],
+      "action": "adapt",
+      "sha256": "4cb2fa9a6713ad5059581f9dc120437bb67065fc6e77437b51fe0460ba33deeb",
+      "reason": "Preserve screenshot and annotate_recording guidance; adapt actual recording storage and separate testing-child behavior."
+    },
+    {
+      "lines": [
+        318,
+        324
+      ],
+      "action": "exclude",
+      "sha256": "181b7420e4d251efe6126532ebabfa8abed087517904f7a99f566a8e25aa9612",
+      "reason": "Foreign live desktop, CDP endpoint and skill-commit instructions unavailable."
+    },
+    {
+      "lines": [
+        325,
+        336
+      ],
+      "action": "adapt",
+      "sha256": "bcb17f128d1281d0f10ecb369deb5a8435bc154f457089b948c162b16fb345fa",
+      "reason": "Keep MCP discovery semantics; drop claimed Sentry/TypeSafe servers and brain-side execution model."
+    },
+    {
+      "lines": [
+        337,
+        342
+      ],
+      "action": "adapt",
+      "sha256": "1238521c9d758b2f6108958c4aa4c627c9f21e61c3adf3b00f21868b7997a4e0",
+      "reason": "Keep checking available diagnostics/CLI; drop PR/Git browser instructions."
+    },
+    {
+      "lines": [
+        343,
+        379
+      ],
+      "action": "exclude",
+      "sha256": "fa88f0c3fee83fe0e77d781af452570409f9da56e4fcca8cdb4e3150e6d8f4ac",
+      "reason": "Devin management, documentation, Linear provider/email and identity-specific operations excluded or unavailable."
+    },
+    {
+      "lines": [
+        380,
+        402
+      ],
+      "action": "exclude",
+      "sha256": "ebd36dd5f599974f8df83a9dd9c689ba60602c6c393666c7baf5ae6ef7cf8f4f",
+      "reason": "Foreign date, session URL and personal/org identifiers."
+    },
+    {
+      "lines": [
+        403,
+        411
+      ],
+      "action": "adapt",
+      "sha256": "8c1e5810b4363cf931e763c39c46ba5e7d8e2981f866178596b4f23eb3bae3ce",
+      "reason": "Keep MCP progressive disclosure and schemas; do not claim a server exists."
+    },
+    {
+      "lines": [
+        412,
+        416
+      ],
+      "action": "adapt",
+      "sha256": "360e22ce248a332146414793905cf154dd228c358c58a1e6c5c8ccb26692ffef",
+      "reason": "Preserve run_workflow planning guidance; remove claim that the dynamic-workflows skill is installed and require real broker/script approval."
+    },
+    {
+      "lines": [
+        417,
+        427
+      ],
+      "action": "adapt",
+      "sha256": "474b3ae0b2e02f6a44eed5b041c6a88f58f0f3571d234bc84223c0d32206ce9a",
+      "reason": "Retain testing_agent handoff and approval evidence; child is an isolated runtime session, not the source's guaranteed shared checkout/persistent desktop or PR-comment channel."
+    },
+    {
+      "lines": [
+        428,
+        443
+      ],
+      "action": "exclude",
+      "sha256": "afdcb6a03e331270d9bba8ae8fe0841d46d2aac87e33e763de6a7f2a92d6922a",
+      "reason": "Foreign injected skill registry claims skills/plugins not installed in this runtime."
+    },
+    {
+      "lines": [
+        444,
+        464
+      ],
+      "action": "exclude",
+      "sha256": "7bc038ce716172784718703279d7c6ebd03f31d7324246b36d7a8850c62bfe92",
+      "reason": "Injected heavy-production automerge rule; never transplant merge authorization."
+    },
+    {
+      "lines": [
+        465,
+        488
+      ],
+      "action": "exclude",
+      "sha256": "31b637798d6f8d195f7ab72ae4602d167115574564f119f625ca331009702b8b",
+      "reason": "Foreign session skill/knowledge and plugin inventories not installed."
+    },
+    {
+      "lines": [
+        489,
+        511
+      ],
+      "action": "exclude",
+      "sha256": "282c7ed59dce8cc425a45e0fd2ae3d09fe8ed61b998ea17d436a365e7de2ad4a",
+      "reason": "Foreign session notes, environment, identity and attachment mechanics."
+    }
+  ]
+}

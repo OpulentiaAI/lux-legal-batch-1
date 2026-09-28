@@ -1,0 +1,8 @@
+{
+  "id": "task-15",
+  "title": "Contractual-obligation triage and draft correction",
+  "instructions": "Prepare memo.md for the fictional Luxembourg client: a concise issue table for the signed services agreement, unsigned revised quote, and courtesy introduction; identify debtor, creditor, performance, and contractual status with uncertainty where appropriate. Then supply corrected replacement wording for the defective client draft clauses, separating primary performance from possible breach remedies. Use only the supplied corpus as legal authority, cite actual consulted canonical chunks, and do not pronounce a disputed negotiation conclusively binding without the missing assent facts. Contract analysis relies on a 2025 Luxembourg treatise rather than a current Civil Code consolidation; do not claim later statutory changes were checked.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/draft.md", "materials/chronology.csv"],
+  "scope": { "jurisdiction": "Luxembourg", "companyForm": "Commercial contracting parties (no company-form determination)", "asOf": "2026-09-28" }
+}

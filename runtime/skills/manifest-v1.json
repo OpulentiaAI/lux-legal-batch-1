@@ -1,0 +1,68 @@
+{
+  "source": "User-supplied six-skill attachment",
+  "sourceSha256": "f920a8a7710cc2480aca1cbdaa478ddc34c2ed14fc56ca7f00e873ae45e22406",
+  "lineCount": 942,
+  "destinationRoot": "/opt/opulent/skills",
+  "skills": [
+    {
+      "name": "managing-knowledge",
+      "sourceLines": [
+        8,
+        75
+      ],
+      "sourceSha256": "b44382c8102aee9b52b5904e234ef310196770656f7afcd79643a1f114b9efb7",
+      "artifactSha256": "29d64dee0a8a90a36a6794baac233b735df22f2fe3e683360c27c68f02d08ccf",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    },
+    {
+      "name": "managing-playbooks",
+      "sourceLines": [
+        76,
+        208
+      ],
+      "sourceSha256": "e7474fe93c92fe6ecde4b76f0befbb8e2186b292402c91500694f758da636081",
+      "artifactSha256": "2ebf1ec0df745d812ba860d39384739c56bde01326b6db9edbe8d3fa1efb9fd8",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    },
+    {
+      "name": "managing-automations",
+      "sourceLines": [
+        209,
+        615
+      ],
+      "sourceSha256": "ecf22cc244400ec3f5729922e6f5b34efc27a158dc0c6bb8aaad7ca142e4251c",
+      "artifactSha256": "97779c41ebe723a1ffac9efb006183c503b5bd1b769c8133a62b89607fbf67d5",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    },
+    {
+      "name": "managing-child-sessions",
+      "sourceLines": [
+        616,
+        830
+      ],
+      "sourceSha256": "e54748ec8e5f419266adb944b8d153ef695ce19beccdfd46264e009703f5d4d2",
+      "artifactSha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    },
+    {
+      "name": "analyzing-sessions",
+      "sourceLines": [
+        831,
+        888
+      ],
+      "sourceSha256": "d3698f862c7c19e98245b72db728eef8e36489b5a3b7a15f981ec7fc6341b868",
+      "artifactSha256": "d28de1b5113c3667818339fc6606478b4e98e71da66991c961a3701f07c697a6",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    },
+    {
+      "name": "data-analysis",
+      "sourceLines": [
+        889,
+        942
+      ],
+      "sourceSha256": "103730a3d5c7bdc792311b86b724be1002f37cec9df05bcf3e5a17dfd98488ec",
+      "artifactSha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3",
+      "disposition": "complete adapted source body retained; hosted-only statements subordinated to the operational contract and live schema"
+    }
+  ]
+}

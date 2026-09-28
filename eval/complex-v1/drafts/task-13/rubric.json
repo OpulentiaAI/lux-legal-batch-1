@@ -1,0 +1,60 @@
+{
+  "criteria": [
+    {
+      "id": "13-01", "requirement": "Correct Belgian SRL capital rule and reject zero-funding inference.",
+      "pass": "Accurately reports the comparative account: no fixed minimum share capital for Belgian SRL but sufficient initial equity/financial resources; does not approve €8,000 solely for lack of a floor. Temporal qualification is assessed only in 13-06.",
+      "fail": "Claims zero resources are legally/practically sufficient merely because the fixed capital floor was removed, or applies the abolition to every vehicle.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-05:s0050:c0","sha256":"634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad","quote":"Cette prescription d’un capital minimum est remplacée par l’exigence des capitaux propres suffisants pour réaliser l’activité projetée"}],
+      "factRefs": [{"file":"materials/client.md","quote":"We can pay in €8,000 cash at formation."}],
+      "minimalPass": "The comparative account says no Belgian SRL floor but sufficient resources; €8,000 is not automatically enough.", "nearMiss": "No Belgian minimum, so €8,000 is automatically enough.", "failureFamily": "legal-rule"
+    },
+    {
+      "id": "13-02", "requirement": "Convert the forecast into a financing decision and plan action.",
+      "pass": "Identifies negative closing cash from month 1 and the €11,000 low point in month 3, and states the funding gap needs resolution before operations; the 2021 Belgian doctrinal plan discussion calls for financing sources and a two-year projection, which cannot be calculated from this six-month exhibit. Does not treat the investor's conditional money as opening cash.",
+      "fail": "Only recites statutory floors or counts €35,000 as available at incorporation; no response to the negative runway.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-05:s0052:c0","sha256":"8d2b4c9643bb01e8425876cc7f7b6688d386e1021967dc99e9b75b5f80301a31","quote":"Une projection du compte de résultats et des budgets sur deux ans"},{"id":"doc-05:s0052:c0","sha256":"8d2b4c9643bb01e8425876cc7f7b6688d386e1021967dc99e9b75b5f80301a31","quote":"Un aperçu des sources de financement"}],
+      "factRefs": [{"file":"materials/runway.csv","quote":"3,-8000,6000,9000,-11000"},{"file":"materials/client.md","quote":"will provide €35,000 only after incorporation"}],
+      "minimalPass": "Closing cash is -€2,000 in month 1 and bottoms at -€11,000 in month 3; resolve the gap before operations, identify financing sources and obtain missing inputs for the two-year plan, without booking the post-incorporation €35,000 as opening cash.", "nearMiss": "€35,000 investment means the runway is positive from month 1.", "failureFamily": "fact-application"
+    },
+    {
+      "id": "13-03", "requirement": "Distinguish ordinary Luxembourg SARL's formation minimum.",
+      "pass": "States the ordinary SARL minimum share capital is €12,000 and €8,000 alone does not clear it, without confusing the Belgian rule or SARL-S floor.",
+      "fail": "Treats ordinary SARL as capital-free, €1-capital, or already funded by €8,000.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0095:c0","sha256":"926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896","quote":"Le capital social doit être de 12 000 euros au moins."}],
+      "factRefs": [{"file":"materials/client.md","quote":"We can pay in €8,000 cash at formation."}],
+      "minimalPass": "Ordinary SARL requires at least €12,000; the proposed €8,000 leaves a €4,000 formation gap.", "nearMiss": "The €1 SARL-S threshold also applies to ordinary SARL.", "failureFamily": "form-distinction"
+    },
+    {
+      "id": "13-04", "requirement": "State SARL-S statutory range and distinguish formation from viability.",
+      "pass": "States €1–€12,000 statutory capital range (at least the €1 floor) and explicitly rejects both zero-capital formation and the inference that €1 finances the forecast.",
+      "fail": "Says literal zero capital is allowed or recommends €1 as sufficient financing without confronting runway.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0109:c0","sha256":"7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea","quote":"Le capital social doit être compris entre 1 euro et 12 000 euros."}],
+      "factRefs": [{"file":"materials/client.md","quote":"whether €1 in the SARL-S is a practical solution"}],
+      "minimalPass": "SARL-S capital ranges from €1 to €12,000: zero is invalid and €1 does not finance the €11,000 forecast trough.", "nearMiss": "A €1 SARL-S solves the cash deficit because the legal minimum is met.", "failureFamily": "legal-vs-commercial"
+    },
+    {
+      "id": "13-05", "requirement": "Resolve investor eligibility under SARL-S and identify factual contingencies.",
+      "pass": "Rejects the corporate investor as a SARL-S associate at formation because only natural persons may associate; conditions any SARL-S route on eligible activity and confirmation of individuals' other SARL-S holdings, without inventing that these checks passed.",
+      "fail": "Admits North Quay as SARL-S founder, or declares SARL-S eligibility certain despite stated unknowns.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-06:s0108:c0","sha256":"990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d","quote":"les personnes physiques peuvent seules être associées d’une société à responsabilité limitée simplifiée"},{"id":"doc-06:s0109:c0","sha256":"7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea","quote":"L’objet de la société à responsabilité limitée simplifiée entre dans le champ d’application"}],
+      "factRefs": [{"file":"materials/client.md","quote":"North Quay Holdings SA, a corporate investor, wants a 15% founding stake"},{"file":"materials/client.md","quote":"The Luxembourg operating-permit category and each person's other SARL-S holdings have not yet been checked."}],
+      "minimalPass": "Corporate investor cannot be a SARL-S associate; activity and other holdings need checking.", "nearMiss": "All shareholders qualify because SARL-S accepts any investor.", "failureFamily": "eligibility"
+    },
+    {
+      "id": "13-06", "requirement": "Reconcile source authority and dates without converting the client deck to law.",
+      "pass": "Identifies the deck as unverified client assertion, the Belgian propositions as a 2021 comparative doctrinal account requiring current-law verification, and the Luxembourg provisions as the corpus's statute consolidated 29 May 2026; does not claim that either source proves later legal developments.",
+      "fail": "Uses the deck as legal authority, asserts the comparative account proves Belgian law unchanged through September 2026, or claims to have checked post-consolidation Luxembourg changes.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-05:s0011:c0","sha256":"fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501","quote":"le capital minimum pour une SARL « ordinaire »"},{"id":"doc-06:s0108:c0","sha256":"990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d","quote":"les personnes physiques peuvent seules être associées d’une société à responsabilité limitée simplifiée"}],
+      "factRefs": [{"file":"materials/adviser-note.md","quote":"Belgian SRL abolished capital, so we can fund with nothing; Luxembourg SARL-S is a €1 company for any shareholder; the ordinary SARL is basically the same except for paperwork."}],
+      "minimalPass": "Labels the deck as unverified client assertion, qualifies the 2021 Belgian doctrine for the scenario date, and identifies the Luxembourg statute as consolidated 29 May 2026 without claiming later changes were checked.", "nearMiss": "The 2021 comparative account conclusively proves Belgian law as of September 2026.", "failureFamily": "source-authority"
+    },
+    {
+      "id": "13-07", "requirement": "Deliver a conditional vehicle recommendation rather than a numerical-minimum ranking.",
+      "pass": "Recommends a route with explicit alternatives if day-one corporate equity is nonnegotiable versus deferred, and names eligibility and financing sufficiency as conditions that would flip the choice. Different defensible choices pass; this criterion assesses decision structure, not calculations or adequacy already scored in 13-01/02/03.",
+      "fail": "An unconditional choice based only on nominal capital, without addressing whether corporate founding equity is required or deferred.", "deliverables": ["memo.md"],
+      "sourceRefs": [{"id":"doc-05:s0050:c0","sha256":"634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad","quote":"l’on pourra tenir compte des autres moyens financiers dans l’appréciation des capitaux nécessaires"},{"id":"doc-06:s0095:c0","sha256":"926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896","quote":"Le capital social doit être de 12 000 euros au moins."}],
+      "factRefs": [{"file":"materials/client.md","quote":"We want the investor in the company from day one if lawful, but could instead defer its equity closing."}],
+      "minimalPass": "Day-one corporate equity excludes SARL-S; if deferred, reconsider SARL-S only after eligibility and sufficient-financing checks, otherwise choose a funded SRL or SARL subject to their conditions.", "nearMiss": "Choose SARL-S because its minimum is smallest, regardless of investor timing.", "failureFamily": "deliverable-synthesis"
+    }
+  ]
+}

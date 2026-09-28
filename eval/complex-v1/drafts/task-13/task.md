@@ -1,0 +1,3 @@
+# Task 13 — financing decision
+
+Produce `memo.md` for the fictional founders using the three client materials. Give a comparative financing decision, not a list of statutory minima. Apply the six-month forecast to the proposed cash contributions, identify what remains unverified for SARL-S eligibility, and separate the 2021 Belgian comparative account from the Luxembourg statute consolidated 29 May 2026. The corpus does not establish whether Belgian law changed after 2021 or Luxembourg law after the consolidation: qualify present-day advice accordingly. Cite only corpus passages actually consulted. No external legal sources are authorized.

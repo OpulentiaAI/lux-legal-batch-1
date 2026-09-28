@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { createComputer } from '../computer/index.mjs';
 import { createTools } from '../computer/tools.mjs';
 
@@ -29,6 +31,48 @@ test('daemon failure is not misreported as successful computer action', async ()
     return { stdout: JSON.stringify({ status: 422, data: Buffer.from(JSON.stringify({ code: 'validation_failed', message: 'secret' })).toString('base64') }) };
   } } };
   await assert.rejects(createComputer(sandbox).action([{ type: 'click' }]), /validation_failed/);
+});
+
+test('prepared image bootstrap needs no installation, sudo, or outbound network', async () => {
+  const commands = [];
+  const files = [];
+  const bridge = await readFile(new URL('../computer/bridge.py', import.meta.url));
+  const manifest = JSON.stringify({ schema: 1, python_package: 'modal-computer-use==2.0.2', bridge_sha256: createHash('sha256').update(bridge).digest('hex'), vendor_sha256: 'a'.repeat(64) });
+  const imageSha256 = createHash('sha256').update(manifest).digest('hex');
+  const sandbox = {
+    commands: { async run(command, options) {
+      commands.push({ command, options });
+      if (options?.background) return { disconnect: async () => {} };
+      if (command.includes('cat /opt/computer-use/image.json')) return { stdout: manifest };
+      if (command.startsWith('python3 /tmp/computer-use/bridge.py')) {
+        const request = JSON.parse(Buffer.from(command.match(/'([^']+)'$/)[1], 'base64'));
+        const data = request.path === '/readyz' ? { ready: true } : { primitives: ['actions', 'recordings'] };
+        return { stdout: JSON.stringify({ status: 200, data: Buffer.from(JSON.stringify(data)).toString('base64') }) };
+      }
+      return { stdout: '' };
+    } },
+    files: { async write(path) { files.push(path); } },
+  };
+  await createComputer(sandbox, { computerPreparedImage: true, computerImageSha256: imageSha256 }).bootstrap();
+  assert.deepEqual(files, ['/tmp/computer-use/bridge.py']);
+  assert.match(commands[0].command, /test -r \/opt\/computer-use\/image\.json/);
+  assert.match(commands[0].command, /test "\$\(id -u\)" != 0/);
+  assert.match(commands[1].command, /cat \/opt\/computer-use\/image\.json/);
+  assert.match(commands[2].command, /umask 077/);
+  assert.match(commands[3].command, /\/opt\/computer-use\/venv\/bin\/python -m modal_computer_use\.daemon/);
+  assert.match(commands[3].command, /COMPUTER_USE_BROWSER_GPU_MODE=off/);
+  assert.match(commands[3].command, /COMPUTER_USE_WINDOW_MANAGER=openbox/);
+  assert.match(commands[3].command, /--no-first-run/);
+  assert.equal(commands[3].options.background, true);
+  assert(!commands.some(({ command }) => /(?:apt-get|pip install|curl|sudo|source\.tar\.gz)/.test(command)));
+});
+
+test('prepared bootstrap fails closed when image prerequisites are missing', async () => {
+  const sandbox = { commands: { async run() { throw new Error('missing image marker'); } }, files: { write() { throw new Error('must not write'); } } };
+  await assert.rejects(createComputer(sandbox, { computerPreparedImage: true }).bootstrap(), /SHA-256 is required/);
+  await assert.rejects(createComputer(sandbox, { computerPreparedImage: true, computerImageSha256: 'a'.repeat(64) }).bootstrap(), /Sandbox computer command failed/);
+  const mismatch = { commands: { async run() { return { stdout: '{}' }; } }, files: { write() { throw new Error('must not write'); } } };
+  await assert.rejects(createComputer(mismatch, { computerPreparedImage: true, computerImageSha256: 'a'.repeat(64) }).bootstrap(), /manifest differs/);
 });
 
 test('recording stops only after durable video storage succeeds', async () => {

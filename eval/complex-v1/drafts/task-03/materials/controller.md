@@ -1,0 +1,3 @@
+# Hypothetical controller correspondence
+
+Our Luxembourg SA holds investments A, B and C. The finance ledger currently recognizes all three anticipated dividends as 2025 income because they appear on a December forecast. Please return a supported cut-off schedule and identify any reversals or pending evidence. We have not supplied record dates, tax information, distribution calculations or legal opinions on foreign issuers; assume all three issuers are Luxembourg SAs for this exercise. The A and B resolutions described in the events file are copies of issuer AG decisions; the C board slide is not an AG decision. Amounts are EUR.

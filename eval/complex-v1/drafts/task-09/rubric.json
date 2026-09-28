@@ -1,0 +1,211 @@
+{
+  "criteria": [
+    {
+      "id": "09-01",
+      "requirement": "Identify shareholder capital-increase authority versus valid delegation.",
+      "pass": "Treats new subscribed capital as AGM statutory-amendment decision unless a currently valid authorized-capital mandate exists; board cannot rely on expired 2020 authorization.",
+      "fail": "Allows board alone to issue under the expired clause.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0024:c0",
+          "sha256": "7d49407adc50cc9f59a2081664cf974b149c74139ee993c30acba894afeb1f2d",
+          "quote": "L'augmentation du capital est décidée par l'assemblée générale aux conditions requises pour la modification des statuts"
+        },
+        {
+          "id": "doc-06:s0024:c0",
+          "sha256": "7d49407adc50cc9f59a2081664cf974b149c74139ee993c30acba894afeb1f2d",
+          "quote": "une durée maximale de cinq ans"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "published on 1 July 2020"
+        },
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "No extension or renewal has been approved or published."
+        }
+      ],
+      "minimalPass": "2020 delegation ran out by 2025; proceed through valid AGM resolution, not independent 2026 board issuance.",
+      "nearMiss": "Five-year authority remains good because EUR 500k capacity was unused.",
+      "failureFamily": "authority"
+    },
+    {
+      "id": "09-02",
+      "requirement": "Compute first-meeting quorum against total share capital.",
+      "pass": "Computes 600 of 1,000 shares present, exceeding statutory one-half quorum, with proposed capital article on agenda.",
+      "fail": "Calls meeting inquorate because only 390 voted yes or uses voters rather than represented capital for quorum.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "quote": "la moitié au moins du capital est représentée"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "Of 1,000 shares, 600 were represented."
+        }
+      ],
+      "minimalPass": "The amended capital article was on the agenda; 600/1,000=60% represented, exceeding the first-meeting 50% quorum.",
+      "nearMiss": "Only 390/1,000 support, so quorum fails.",
+      "failureFamily": "calculation"
+    },
+    {
+      "id": "09-03",
+      "requirement": "Compute two-thirds expressed-vote majority excluding abstentions.",
+      "pass": "Counts 390 for and 150 against as 540 expressed, excludes 60 abstentions, calculates 390/540=72.22%, so the capital amendment passes the two-thirds threshold on stated votes.",
+      "fail": "Uses a bare majority or counts abstentions as votes expressed and reaches the wrong result.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "quote": "les deux tiers au moins des voix exprimées"
+        },
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "quote": "s'est abstenu ou a voté blanc ou nul"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "390 voted for, 150 against and 60 abstained"
+        }
+      ],
+      "minimalPass": "390/(390+150)=72.22%; the statutory amendment majority is met.",
+      "nearMiss": "390/600=65%, so the increase failed.",
+      "failureFamily": "calculation"
+    },
+    {
+      "id": "09-04",
+      "requirement": "Distinguish approval of increase from third-party allocation.",
+      "pass": "Explains passing capital amendment does not itself waive statutory preferential subscription rights or authorize all 300 cash shares for Larch immediately.",
+      "fail": "Treats the passed increase as automatic suppression of holder rights.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe",
+          "quote": "Les actions à souscrire en numéraire doivent être offertes par préférence aux actionnaires proportionnellement"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/ceo-instruction.md",
+          "quote": "Investor Larch Ventures wants all 300 new cash shares"
+        }
+      ],
+      "minimalPass": "Increase passes, but existing shareholders have first preference on cash shares before Larch can take unexercised shares.",
+      "nearMiss": "72.22% yes means the investor can sign for 300 shares tomorrow.",
+      "failureFamily": "preemption"
+    },
+    {
+      "id": "09-05",
+      "requirement": "Identify defective suppression notice and report.",
+      "pass": "If pursuing exclusion, requires a specially announced AGM proposal and detailed board justification including issue price; identifies both omissions in current file and proposes a properly convened new vote or valid delegation route.",
+      "fail": "Says board may silently waive the right after meeting or that current notice/report suffice.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe",
+          "quote": "Cette proposition doit être spécialement annoncée dans la convocation."
+        },
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe",
+          "quote": "La justification détaillée doit être exposée dans un rapport établi par le conseil d'administration"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "It did not announce any proposal to limit or suppress the preferential subscription right."
+        },
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "The board has not produced any justification of exclusion of preference rights or price of the Larch placement."
+        }
+      ],
+      "minimalPass": "Do not exclude on the present notice; prepare price-justified board report and specially noticed resolution.",
+      "nearMiss": "The board can waive preference unilaterally because the issue price equals par.",
+      "failureFamily": "process"
+    },
+    {
+      "id": "09-06",
+      "requirement": "Present compliant offer alternative and minimum exercise window.",
+      "pass": "Explains proportional preference for cash shares and an exercise period of at least 14 days (reckoned from publication when the offer is published); because all shares are registered, registered-letter notice may replace publication, while a different guaranteed notification route needs individual acceptance. Does not impose publication as indispensable or start the period before valid notice.",
+      "fail": "Issues shares immediately to Larch, gives only 48 hours, or insists registered-letter notification is invalid solely because it is not publication.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe",
+          "quote": "ne peut être inférieur à quatorze jours à compter de la publication de l’offre"
+        },
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe",
+          "quote": "lorsque toutes les actions sont nominatives, les actionnaires peuvent être informés par lettre recommandée"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/secretary-meeting-file.md",
+          "quote": "All shares are registered; holders have not individually accepted an alternative notice method."
+        }
+      ],
+      "minimalPass": "Offer cash shares pro rata, allow at least 14 days; for all-registered shares use registered letters instead of publication, or obtain individual acceptance for another guaranteed notice method.",
+      "nearMiss": "Publish or email holders with a 48-hour deadline; registered letters cannot replace publication.",
+      "failureFamily": "preemption"
+    },
+    {
+      "id": "09-08",
+      "requirement": "Quantify the share issuance and resulting subscribed capital.",
+      "pass": "Calculates 300 new EUR 1,000 shares, EUR 300,000 subscribed cash and EUR 1,300,000 resulting subscribed capital, keeping this transaction math distinct from the vote percentages.",
+      "fail": "Gets share count, cash proceeds or resulting capital materially wrong or omits the numeric consequences.",
+      "deliverables": [
+        "memo.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "doc-06:s0024:c0",
+          "sha256": "7d49407adc50cc9f59a2081664cf974b149c74139ee993c30acba894afeb1f2d",
+          "quote": "L'augmentation du capital est décidée par l'assemblée générale"
+        }
+      ],
+      "factRefs": [
+        {
+          "file": "materials/ceo-instruction.md",
+          "quote": "1,000 ordinary EUR 1,000 shares and EUR 1,000,000 subscribed capital"
+        },
+        {
+          "file": "materials/ceo-instruction.md",
+          "quote": "all 300 new cash shares at EUR 1,000 each, taking capital to EUR 1,300,000"
+        }
+      ],
+      "minimalPass": "300 × EUR 1,000 = EUR 300,000 cash; subscribed capital rises from EUR 1m to EUR 1.3m.",
+      "nearMiss": "The increase creates EUR 300,000 new shares and subscribed capital of EUR 1.03m.",
+      "failureFamily": "transaction_math"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# FICTIONAL CLIENT MATERIAL — founders' email, 21 September 2026
+
+We are launching a prototype-supply business. Elise (a Belgian individual) and Marc (a Luxembourg individual) will own it; North Quay Holdings SA, a corporate investor, wants a 15% founding stake and will provide €35,000 only after incorporation. We can pay in €8,000 cash at formation. We are choosing between a Belgian SRL/BV, a Luxembourg ordinary SARL, and a Luxembourg SARL-S. The Luxembourg operating-permit category and each person's other SARL-S holdings have not yet been checked. We want the investor in the company from day one if lawful, but could instead defer its equity closing.
+
+Please explain whether “no minimum capital” means zero funding, whether €1 in the SARL-S is a practical solution, and what the attached runway forecast means for each route. Give us a recommendation with conditions and the facts/documents to confirm before incorporation; don't promise that a later investor payment cures a day-one shortfall.

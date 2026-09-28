@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const BRIDGE = '/tmp/computer-use/bridge.py';
 const PACKAGE = 'modal-computer-use==2.0.2';
@@ -9,6 +10,8 @@ const archive = promisify(execFile);
 
 export function createComputer(sandbox, config = {}) {
   if (!sandbox?.commands?.run) throw new TypeError('connected E2B sandbox required');
+  const prepared = config.computerPreparedImage === true;
+  const python = prepared ? '/opt/computer-use/venv/bin/python' : '/tmp/computer-use/venv/bin/python';
   const run = async (command, timeoutMs = 120_000) => {
     try {
       return await sandbox.commands.run(command, { timeoutMs });
@@ -46,18 +49,33 @@ export function createComputer(sandbox, config = {}) {
   return {
     ready,
     async bootstrap() {
-      const apt = 'xvfb xfce4 openbox x11vnc novnc websockify xdotool libx11-6 libxcb1 libxcb-shm0 libxdamage1 libxtst6 wmctrl maim scrot ffmpeg xclip x11-utils x11-xserver-utils dbus-x11 curl util-linux python3 python3-venv';
-      await run(`set -e; if [ "$(id -u)" = 0 ]; then apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; else sudo -n apt-get update -qq && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; fi`, 600_000);
-      await run('set -e; mkdir -p /tmp/computer-use; if ! command -v chromium >/dev/null; then curl -fsSLo /tmp/computer-use/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; if [ "$(id -u)" = 0 ]; then DEBIAN_FRONTEND=noninteractive apt-get install -y -qq /tmp/computer-use/chrome.deb && ln -s /usr/bin/google-chrome /usr/local/bin/chromium; else sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq /tmp/computer-use/chrome.deb && sudo -n ln -s /usr/bin/google-chrome /usr/local/bin/chromium; fi; fi', 600_000);
-      await run(`python3 -m venv /tmp/computer-use/bootstrap && /tmp/computer-use/bootstrap/bin/pip install --disable-pip-version-check 'uv==0.12.3' && /tmp/computer-use/bootstrap/bin/uv python install 3.12 && /tmp/computer-use/bootstrap/bin/uv venv --python 3.12 /tmp/computer-use/venv && /tmp/computer-use/bootstrap/bin/uv pip install --python /tmp/computer-use/venv/bin/python '${PACKAGE}'`, 600_000);
-      const vendor = fileURLToPath(new URL('./vendor/', import.meta.url));
-      const bundle = await archive('tar', ['--sort=name', '--mtime=@0', '--owner=0', '--group=0', '--numeric-owner', '-C', vendor, '-czf', '-', 'src', 'LICENSE'], { encoding: 'buffer', maxBuffer: 5_000_000 });
-      await sandbox.files.write('/tmp/computer-use/source.tar.gz', bundle.stdout);
-      await run('mkdir -p /opt/modal-computer-use && tar -C /opt/modal-computer-use -xzf /tmp/computer-use/source.tar.gz');
-      await sandbox.files.write(BRIDGE, await readFile(fileURLToPath(new URL('./bridge.py', import.meta.url)), 'utf8'));
+      const bridge = await readFile(fileURLToPath(new URL('./bridge.py', import.meta.url)), 'utf8');
+      if (prepared) {
+        if (!/^[a-f0-9]{64}$/.test(config.computerImageSha256 ?? '')) throw new TypeError('Prepared computer image SHA-256 is required');
+        await run(`set -eu; test -r /opt/computer-use/image.json; test -x ${python}; test -d /opt/modal-computer-use/src; command -v chromium >/dev/null; test "$(id -u)" != 0; mkdir -m 700 -p /tmp/computer-use`);
+        const manifestText = (await run('cat /opt/computer-use/image.json')).stdout;
+        if (createHash('sha256').update(manifestText).digest('hex') !== config.computerImageSha256) throw new Error('Prepared computer image manifest differs from expected build');
+        let manifest;
+        try { manifest = JSON.parse(manifestText); } catch { throw new Error('Prepared computer image manifest is invalid'); }
+        if (manifest.schema !== 1 || manifest.python_package !== PACKAGE || manifest.bridge_sha256 !== createHash('sha256').update(bridge).digest('hex')) {
+          throw new Error('Prepared computer image is incompatible with this adapter');
+        }
+      } else {
+        const apt = 'xvfb xfce4 openbox x11vnc novnc websockify xdotool libx11-6 libxcb1 libxcb-shm0 libxdamage1 libxtst6 wmctrl maim scrot ffmpeg xclip x11-utils x11-xserver-utils dbus-x11 curl util-linux python3 python3-venv';
+        await run(`set -e; if [ "$(id -u)" = 0 ]; then apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; else sudo -n apt-get update -qq && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; fi`, 600_000);
+        await run('set -e; mkdir -p /tmp/computer-use; if ! command -v chromium >/dev/null; then curl -fsSLo /tmp/computer-use/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; if [ "$(id -u)" = 0 ]; then DEBIAN_FRONTEND=noninteractive apt-get install -y -qq /tmp/computer-use/chrome.deb && ln -s /usr/bin/google-chrome /usr/local/bin/chromium; else sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq /tmp/computer-use/chrome.deb && sudo -n ln -s /usr/bin/google-chrome /usr/local/bin/chromium; fi; fi', 600_000);
+        await run(`python3 -m venv /tmp/computer-use/bootstrap && /tmp/computer-use/bootstrap/bin/pip install --disable-pip-version-check 'uv==0.12.3' && /tmp/computer-use/bootstrap/bin/uv python install 3.12 && /tmp/computer-use/bootstrap/bin/uv venv --python 3.12 /tmp/computer-use/venv && /tmp/computer-use/bootstrap/bin/uv pip install --python /tmp/computer-use/venv/bin/python '${PACKAGE}'`, 600_000);
+        const vendor = fileURLToPath(new URL('./vendor/', import.meta.url));
+        const bundle = await archive('tar', ['--sort=name', '--mtime=@0', '--owner=0', '--group=0', '--numeric-owner', '-C', vendor, '-czf', '-', 'src', 'LICENSE'], { encoding: 'buffer', maxBuffer: 5_000_000 });
+        await sandbox.files.write('/tmp/computer-use/source.tar.gz', bundle.stdout);
+        await run('mkdir -p /opt/modal-computer-use && tar -C /opt/modal-computer-use -xzf /tmp/computer-use/source.tar.gz');
+      }
+      await sandbox.files.write(BRIDGE, bridge);
       await run('umask 077; python3 -c "import pathlib,secrets; p=pathlib.Path(\'/tmp/computer-use/token\'); p.write_text(secrets.token_urlsafe(48))"');
+      const browserArgs = ['--remote-debugging-port=9222', '--remote-debugging-address=127.0.0.1', '--remote-allow-origins=http://127.0.0.1:9222'];
+      if (prepared) browserArgs.push('--no-first-run', '--no-default-browser-check');
       try {
-        const process = await sandbox.commands.run('PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS=\'["--remote-debugging-port=9222","--remote-debugging-address=127.0.0.1","--remote-allow-origins=http://127.0.0.1:9222"]\' /tmp/computer-use/venv/bin/python -m modal_computer_use.daemon', { background: true, timeoutMs: 120_000 });
+        const process = await sandbox.commands.run(`PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium ${prepared ? 'COMPUTER_USE_WINDOW_MANAGER=openbox COMPUTER_USE_BROWSER_GPU_MODE=off ' : ''}COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS='${JSON.stringify(browserArgs)}' ${python} -m modal_computer_use.daemon`, { background: true, timeoutMs: 120_000 });
         await process.disconnect();
       } catch {
         throw new Error('Computer daemon could not start');
@@ -74,7 +92,7 @@ export function createComputer(sandbox, config = {}) {
       status: () => request('GET', '/v1/browser/status'),
       async console(content) {
         const payload = Buffer.from(JSON.stringify({ content })).toString('base64');
-        const result = await run(`/tmp/computer-use/venv/bin/python ${BRIDGE} console '${payload}'`);
+        const result = await run(`${python} ${BRIDGE} console '${payload}'`);
         try { return JSON.parse(result.stdout); } catch { throw new Error('Browser console unavailable'); }
       },
       async saveProfile() {

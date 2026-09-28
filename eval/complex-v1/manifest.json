@@ -1,0 +1,582 @@
+{
+  "protocol": "complex-v1-source-bound-design-freeze",
+  "status": "reviewed-design-not-live-calibrated",
+  "harveyDesignCommit": "1dd81403b2fbb60596f7aea3fcecafad7bf73143",
+  "corpus": {
+    "chunkCount": 8809,
+    "canonicalBodiesSha256": "bf87d17370a0e508d02766c9903400a7944e0e1328c3d373095ae066d5ccbc65",
+    "canonicalLoaderSha256": "86ab49a13df568dd35c8c021ec6e2d8b295af66b5707225db70bd255f49e057f",
+    "metadata": {
+      "corpus/documents.yaml": "e75fd154bced200226e1dd06c2c08e5aa8de44d9641e8e58f3b2cc2054930c8a",
+      "corpus/index/documents.json": "c39e223cd53ba7d41230810f1602f6a93d7511af3708e51a9910a71501e7c534",
+      "corpus/index/chunks.jsonl": "a73cff6c1f7d039b0301de88a214766919a40a571f004fdb8df0df6f188ef5f2"
+    }
+  },
+  "policy": {
+    "validate.mjs": "527f5702ae5f5bfb4f1ccb033d9f4d4edb0cbff6e6ae77fff71f53acb4000b48",
+    "judge.mjs": "88520aa3c712c1b05e51b81a148866a44b3d4ae4a8086da8b2c106f5c15c879e",
+    "freeze.mjs": "874df3470db2e1c606e6ee4d40e60ef4aa1b16f08a06c2d7abad18a03b061914",
+    "SCHEMA.md": "38ef775882c631f83b10a32c09a179ca7fdc3e3cffdbaf7399105a6b981595f7",
+    "README.md": "ff7dce1bc483c3c210d525c7ca9efa23832980fb6f5f2dee68263b8b2b014ae0"
+  },
+  "packets": [
+    {
+      "path": "task-01",
+      "id": "task-01",
+      "title": "Founder term-sheet redline and closing conditions",
+      "taskSha256": "a0061ca73649ca57224ced1f8791d3512192dbe772df84818b9feb1d73a25d10",
+      "rubricSha256": "a358db3e5dade260c6c2955b4cd1fdea0ff5c03e450344407b6726c9426eaef9",
+      "criteria": 7,
+      "materials": {
+        "materials/client.md": "128fde40cd3caffc7e7a2cd274def5bb26b400d9fc2413499b6d9521507c83bc",
+        "materials/funding.csv": "00b6e6335599d119574a085e84fe3fb77bd2e8bc816bc98e7b61246ed9dcea46",
+        "materials/term-sheet.md": "bca28885355acd88c1e8897e4fc8df91d3f66a42f242c8166c3de95f9e9f6bb2"
+      },
+      "references": [
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+        },
+        {
+          "id": "doc-06:art4201:c0",
+          "sha256": "26e6faa1ca43fc2239f8993c4abaa1ba822ab74c1b4f28e7a91f7733d54f9b3b"
+        },
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+        },
+        {
+          "id": "doc-06:s0095:c0",
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+        },
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+        },
+        {
+          "id": "doc-08:s0061:c0",
+          "sha256": "23cf8996e880de6e559756e6a45216c5e28c4e8781cf13b33c5bfd207ad0ba2d"
+        }
+      ]
+    },
+    {
+      "path": "task-02",
+      "id": "task-02",
+      "title": "Multi-entity closing exception and dependency checklist",
+      "taskSha256": "ebe46330c998ff371ff8e785081d8b84049aacc8f66edd3df090a6f10e13b477",
+      "rubricSha256": "dfaa1f15a677143679e8794f35764fce7e04bc1ca59a9271aa2f30a6952163aa",
+      "criteria": 7,
+      "materials": {
+        "materials/instructions.md": "754550abf78ec30dad872e7df14912457524b4e240d6f6fa6dc2114ba7cf928b",
+        "materials/allocation.csv": "4eb1bc0f2ea8cb3fd1f10baec123f7d99521140673be1589acf01d6de0c07e5e",
+        "materials/closing-log.md": "c4276647071bb9ebc642b9db1a27d4e474cfa914e5f65c4fc2335b84b4346cc9"
+      },
+      "references": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+        },
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+        },
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a"
+        },
+        {
+          "id": "doc-06:s0158:c1",
+          "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115"
+        },
+        {
+          "id": "doc-06:s0159:c0",
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+        },
+        {
+          "id": "doc-06:s0160:c0",
+          "sha256": "678cbc97b5085e79ed42f4f82ca385192461eda82754eff3c8db1cd2c270fa4e"
+        }
+      ]
+    },
+    {
+      "path": "task-03",
+      "id": "task-03",
+      "title": "Year-end dividend income cut-off and assertion workpaper",
+      "taskSha256": "887339cd55d80d7edc84d816eb4adca8684391648c260f05228f3d237881d035",
+      "rubricSha256": "f676fe3cac2c4339b9a7313fe53465dcf1d6413f57c16e96a6cd302ea1f4662b",
+      "criteria": 6,
+      "materials": {
+        "materials/controller.md": "911660911a1877afa6a0f05336163f1e7df2a679b7cc1a52549771a143ab7eff",
+        "materials/events.csv": "9eb8215427717d76631778d7b66ab284c9ff2faef8bbd42047d1a537e5b4c7cf"
+      },
+      "references": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+        },
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9"
+        }
+      ]
+    },
+    {
+      "path": "task-04",
+      "id": "task-04",
+      "title": "Listed remuneration report evidence and publication audit",
+      "taskSha256": "7bdf40aa75b4e3a43a7f09b66d0e78461b1cf455570a4ba5ef4082d7ab8fc33e",
+      "rubricSha256": "65f595998b60df1fdf77b1f78283ff7ff51cb048118a6335f1a60514d9625aa8",
+      "criteria": 8,
+      "materials": {
+        "materials/secretary.md": "45b14bd750d680f20b6716f7f89b2f539295857150c11f9ec003489456775cfe",
+        "materials/draft-report.md": "9cb1dd539b3e29a3e8905b14bd6bb11893b7cb01707d09ea9f4a0aea3e97cda3"
+      },
+      "references": [
+        {
+          "id": "doc-06:s0315:c0",
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        },
+        {
+          "id": "doc-06:s0315:c1",
+          "sha256": "788327c589a50dbbe87a0c6e54c13eed0a38eeeeeb329c02b1ff47d14b538a84"
+        }
+      ]
+    },
+    {
+      "path": "task-05",
+      "id": "task-05",
+      "title": "Research memo authority audit and citation repair",
+      "taskSha256": "4daa11bde003d3ed2149760302a863786a269c0fb287edf24f6b81a3340fa00c",
+      "rubricSha256": "05dcd021ab91044f1812950696c3e85b0f86995af976b4bc53acc1c1c46bdeb2",
+      "criteria": 6,
+      "materials": {
+        "materials/partner.md": "30cd307e831b729fad40716e72e82f897b1e1ace6461d489501bf69a2b3c1a7e",
+        "materials/junior-memo.md": "59f007cf202adf11e67b9add34c5967491813edd9e84f4c335e0d8f0fcbaa8a9"
+      },
+      "references": [
+        {
+          "id": "doc-05:s0011:c0",
+          "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501"
+        },
+        {
+          "id": "doc-06:art13-2:c0",
+          "sha256": "4b188aedbf21584a429e728fadab976167e3df3ecc2e7ac78eae1563345dcb56"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+        },
+        {
+          "id": "doc-06:s0159:c0",
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-08:s0443:c1",
+          "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4"
+        }
+      ]
+    },
+    {
+      "path": "task-06",
+      "id": "task-06",
+      "title": "Parallel capital actions: vote-tabulation and board certification pack",
+      "taskSha256": "028035e37a5dec6eef0808aff64372098a689dc1327b92f61b612cff7fccd4f6",
+      "rubricSha256": "330ba5518d6fad263faf2641378028edb2454bedb57b5a1ea54ce22e9da06d7f",
+      "criteria": 4,
+      "materials": {
+        "materials/secretary.md": "07bf8da83cadc43cfcafc5842558bcc101a67eafe91738ae52cc3556e8723c07",
+        "materials/vote-tallies.csv": "c3969159612c8699d7def5915458f68da16770ee9e04b40c4849da56d6407347"
+      },
+      "references": [
+        {
+          "id": "doc-06:art3105:c0",
+          "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468"
+        },
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+        },
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+        }
+      ]
+    },
+    {
+      "path": "task-07",
+      "id": "task-07",
+      "title": "Listed-SA remuneration vote and payment remediation",
+      "taskSha256": "bef5a5c482393d8dd1b05b98c1d67dfc5654a202b52e41c5e3bcc2ed0447ce0d",
+      "rubricSha256": "10ed79a4e21ab404663e71a17f514df41285a5fdd4222af67577bd77d1a97f45",
+      "criteria": 8,
+      "materials": {
+        "materials/chair-email.md": "6b89506bf36d26eb9de9bca1e2bf6b4528e3c123b1df6f864d2678080e4866b8",
+        "materials/secretariat-record.md": "073a8f38cc46176b69859272ab586a44b21ac18dc19cb78c62eb34bed58df529",
+        "materials/payroll-extract.csv": "b1656b3bbcedb2867e57f944aa0de4adcd483a549d0ba72f5df38dc5ded63803"
+      },
+      "references": [
+        {
+          "id": "doc-06:s0301:c0",
+          "sha256": "dc122774a3fdcd45add0a49de9098cf876945f63c21cd98f7e2d0c295e18ba48"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+        },
+        {
+          "id": "doc-06:s0315:c0",
+          "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+        }
+      ]
+    },
+    {
+      "path": "task-08",
+      "id": "task-08",
+      "title": "SA in-year reserve distribution and interim-dividend close",
+      "taskSha256": "cecb84e11ba2ca7c22f11d4dfed1b936cd1badf83c2e637ce819d00e0b76055d",
+      "rubricSha256": "dd13a38adca11688737dd7ebc1947c45c218421eaa910c6541607101667b3d99",
+      "criteria": 7,
+      "materials": {
+        "materials/treasury-email.md": "a2c74580682f53791216eae2f34c934870e2e136b97574a33139a7780cf2061a",
+        "materials/accounts-and-minutes.md": "2aceb1bb0f1e133e87e5f309bc6361250be4658b3eab89a4ca0d794bfdc345a2",
+        "materials/distribution-ledger.csv": "77b71ee15337bb7c3919c9271900c08ceb5f141e9a7ef4ba8d92443a9a15bd71"
+      },
+      "references": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+        },
+        {
+          "id": "doc-06:s0055:c0",
+          "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008"
+        },
+        {
+          "id": "doc-07:s0083:c0",
+          "sha256": "b1fe514db128f70978fc83e757e839c7a283f93407b46a395c4014aa6ce0b33b"
+        },
+        {
+          "id": "doc-09:s0456:c0",
+          "sha256": "26ce05d104012a274f77ea94971f759a17de3f8ebf2f996f4c4d3f3625f8e299"
+        },
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9"
+        }
+      ]
+    },
+    {
+      "path": "task-09",
+      "id": "task-09",
+      "title": "SA capital-increase resolution and board execution",
+      "taskSha256": "78254bc56bd3bc5c6b3f52c0e505b952515f5b74568f4098f4aee6488f9fe824",
+      "rubricSha256": "9762bb1e9c9a6bc2d7c596a8b948b51ac9a0c8f75ca866e50e6a4bcfb79cde0d",
+      "criteria": 7,
+      "materials": {
+        "materials/ceo-instruction.md": "8e87d4927039a7ea49e91987556338efbff3863264815214a855d24bfd7c443d",
+        "materials/secretary-meeting-file.md": "d2dd25dd6ef9d73b53a9c164cae0872fab540bd53112fb83fd504618d7ff05f1",
+        "materials/cap-table.csv": "46f189cb8ba7f838e57a8e558f44dbe96e0a8d6d51f8e96dd080fa395a7b14cc"
+      },
+      "references": [
+        {
+          "id": "doc-06:s0024:c0",
+          "sha256": "7d49407adc50cc9f59a2081664cf974b149c74139ee993c30acba894afeb1f2d"
+        },
+        {
+          "id": "doc-06:s0025:c0",
+          "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe"
+        },
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+        }
+      ]
+    },
+    {
+      "path": "task-10",
+      "id": "task-10",
+      "title": "Luxembourg–France complete split: executable closing sequence",
+      "taskSha256": "1de6e43b0c6b0423447aaf896c77cec5218e56647e53f8b1f28d8fbfe107985d",
+      "rubricSha256": "1d4f20dac40d4a9fc8d35bf18bc937658a9a6cff0206fb6edbc3a91777c315f8",
+      "criteria": 8,
+      "materials": {
+        "materials/client.md": "a2a7acfc7baaabb7c6f964d386ff2fc0e2ae97d5309a89cf9d0f5e6d593b8575",
+        "materials/workplan.md": "818638d4b77a45bb9ccca9d4d0af438a3f88019eb5528505bfc9f875c3c5b31c"
+      },
+      "references": [
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a"
+        },
+        {
+          "id": "doc-06:s0159:c0",
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+        },
+        {
+          "id": "doc-06:s0163:c0",
+          "sha256": "fad77beb45a9f2f43558c76a785f9c48fdc1b4d8c604c5b3ef24f1e1a9432d4f"
+        },
+        {
+          "id": "doc-06:s0165:c0",
+          "sha256": "78f8aca89f0b207d58ec7efb7455a2aac9032ea6b2f4a3634d0b6eb7619c7150"
+        },
+        {
+          "id": "doc-06:s0166:c0",
+          "sha256": "a490d4c52b421763b023145102aaf6d528be3da266c043cb9b3b242de13507b1"
+        },
+        {
+          "id": "doc-06:s0166:c1",
+          "sha256": "ff351d73553ad51a57f57393807926fe74cc892f3203d6ce4ce9240703414498"
+        },
+        {
+          "id": "doc-06:s0167:c0",
+          "sha256": "2c279d296962f64a6ba1829a1aebc4206e27469986e8db661d5525e85734f787"
+        },
+        {
+          "id": "doc-06:s0168:c0",
+          "sha256": "7b8e6641565765dcf76f7699d76a4418f87f04bd3171bcc5d0d1a6b37069dc24"
+        },
+        {
+          "id": "doc-06:s0170:c0",
+          "sha256": "e889183b014739d0aceb4bde02b5bcbe01d9d7eff19d7bf87c42df38363107ce"
+        },
+        {
+          "id": "doc-06:s0171:c0",
+          "sha256": "8f1234a4998d6ceb082df93b517a2da00b3b94b675b688c2cd8cb22a7035b8e1"
+        },
+        {
+          "id": "doc-06:s0172:c0",
+          "sha256": "16e6f68f0f31e5982fca5c60bea623ae9b59d7b8df84310e662dd7d50dbdabba"
+        },
+        {
+          "id": "doc-06:s0173:c0",
+          "sha256": "288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f"
+        }
+      ]
+    },
+    {
+      "path": "task-11",
+      "id": "task-11",
+      "title": "Partial European split: allocation, universal transfer, and creditor fallback",
+      "taskSha256": "7d3fe2cd1e6a49dd535972f6e795c00ffd7a0b3034524cdb991e03d1b4514078",
+      "rubricSha256": "1ea0f8d055a79ef2abbff775173512dc21419d3a7b1d57c8992db1dd8a30fd2e",
+      "criteria": 8,
+      "materials": {
+        "materials/client.md": "171580175f52bfe7e301b53b14b20f7845dd7e3109e7777039b125560c10b1ca",
+        "materials/ledger.csv": "90c417f66243e28babeb190f3ba8584cd9f1a3312cd81dfba30f5adf7f62f954"
+      },
+      "references": [
+        {
+          "id": "doc-06:s0163:c0",
+          "sha256": "fad77beb45a9f2f43558c76a785f9c48fdc1b4d8c604c5b3ef24f1e1a9432d4f"
+        },
+        {
+          "id": "doc-06:s0166:c0",
+          "sha256": "a490d4c52b421763b023145102aaf6d528be3da266c043cb9b3b242de13507b1"
+        },
+        {
+          "id": "doc-06:s0169:c0",
+          "sha256": "9a320cf4ef490ae5c3a8fdfa549393f4288998395540f82aeff611b844d14c62"
+        },
+        {
+          "id": "doc-06:s0173:c0",
+          "sha256": "288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f"
+        },
+        {
+          "id": "doc-06:s0173:c1",
+          "sha256": "6a566b2433048b59e9dd752c19721dbad5da112e7fd5b435cbc22304090ba830"
+        }
+      ]
+    },
+    {
+      "path": "task-12",
+      "id": "task-12",
+      "title": "Commandite selection and limited-partner governance diligence",
+      "taskSha256": "bdf2615745eb1966ebbce15bc77e16e75608068967833f11752aaaf02a5c3e8c",
+      "rubricSha256": "2bdf0edaff5fd052805dd1fe80de524fcbb7d2d74ce44e3d321c22a268e4bed8",
+      "criteria": 7,
+      "materials": {
+        "materials/client.md": "46ef402809ce1da953cb6f339ae82b7c593362266f68f3796fbc169932029371",
+        "materials/term-sheet.md": "cdb4aced7c9084bb4f266abcdbbc1eff4cb07a0a85f813dd8f511280b22a7337"
+      },
+      "references": [
+        {
+          "id": "doc-06:art1002:c0",
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+        },
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+        },
+        {
+          "id": "doc-06:art3103:c0",
+          "sha256": "57fdb9885f88132cfd20285f95ec870bb1766ac5bcb199bdadad218fc5df573c"
+        },
+        {
+          "id": "doc-06:art3104:c0",
+          "sha256": "9091f668d4169c2607374b9825a40e39bbc0635556f8f8a0121ad86cf01ec583"
+        },
+        {
+          "id": "doc-06:art6001:c0",
+          "sha256": "281d5fed9ae51e3097303754060b39cfe8c6858ceff2b8ada090887488203931"
+        },
+        {
+          "id": "doc-06:s0013:c0",
+          "sha256": "bcf23e9600761c21c9adc1c880f56c899fa8c98dec99db25c2ac4783c2439559"
+        },
+        {
+          "id": "doc-06:s0092:c0",
+          "sha256": "c8d6a350aa4994af839ffee5f02a77f1c3d783065c1015fc60177766fb4cf4f0"
+        }
+      ]
+    },
+    {
+      "path": "task-13",
+      "id": "task-13",
+      "title": "Financing choice: Belgian SRL versus Luxembourg SARL and SARL-S",
+      "taskSha256": "bbfef433cf8dbcfc82df50bfa87faf08063d51d31db306df7a3885eac7f8f509",
+      "rubricSha256": "b9a39bc16cb83fffa6efb162ea4f553bb60d3a9efd6a7249f816b86f5ec0af3a",
+      "criteria": 7,
+      "materials": {
+        "materials/client.md": "acc7eec7c956469836b00433df4a9184c513eae8a2030f8662774d1b55c39927",
+        "materials/runway.csv": "3e2f52d3e1a0eaf0e3b9db02c5f3e500ecf734ca79733e27be7f12bc6d2b2101",
+        "materials/adviser-note.md": "de14b7c106305643cb530d62d351808aef529954dc5d466a2b0f71f73782ce41"
+      },
+      "references": [
+        {
+          "id": "doc-05:s0011:c0",
+          "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501"
+        },
+        {
+          "id": "doc-05:s0050:c0",
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad"
+        },
+        {
+          "id": "doc-05:s0052:c0",
+          "sha256": "8d2b4c9643bb01e8425876cc7f7b6688d386e1021967dc99e9b75b5f80301a31"
+        },
+        {
+          "id": "doc-06:s0095:c0",
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+        },
+        {
+          "id": "doc-06:s0108:c0",
+          "sha256": "990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+        }
+      ]
+    },
+    {
+      "path": "task-14",
+      "id": "task-14",
+      "title": "Industry contributions and capital/rights structuring",
+      "taskSha256": "e38d8390a569027d946ffb32d9e639bdba1de59acb5030b6abb7ff3db71a0f2c",
+      "rubricSha256": "77a9d3076d2e3594b98cc2c7cff209f8ccbdfcb2bcfcbed320e78910baf0f7ab",
+      "criteria": 7,
+      "materials": {
+        "materials/client.md": "757f9efa4c653f9da5042adff401eeaaed7c0ea0aa61a38680f42f3f0829feef",
+        "materials/contributions.csv": "7d8bcb65bd935058254ce46014e3bf8148e3b4b7f80d3697ee06a7e2cf555238",
+        "materials/terms.md": "9f60ede5416f34d25e90747d7ea5d15944fa036c80275b33524b9b6370cfbfa1"
+      },
+      "references": [
+        {
+          "id": "doc-05:s0050:c0",
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad"
+        },
+        {
+          "id": "doc-05:s0054:c0",
+          "sha256": "093eacd0d3bbc6041cf01be025f5a27f74ca84293b271c0f3e2a412bef4842e4"
+        },
+        {
+          "id": "doc-05:s0055:c0",
+          "sha256": "b9baf3e7522449d09c8f2730dafb112db3d74e356ff974e9ab9c52310c62372e"
+        },
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+        },
+        {
+          "id": "doc-06:s0095:c0",
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+        },
+        {
+          "id": "doc-06:s0096:c0",
+          "sha256": "a48558d06271c9a387f72daa9bb27f3c39b39673e221db79ef66926c389ca054"
+        },
+        {
+          "id": "doc-06:s0108:c0",
+          "sha256": "990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+        },
+        {
+          "id": "doc-06:s0110:c0",
+          "sha256": "0713986d4db57fc0246d2f2d4371e7f0c1231a534ed84090ee914dc9dba87234"
+        },
+        {
+          "id": "doc-08:s0061:c0",
+          "sha256": "23cf8996e880de6e559756e6a45216c5e28c4e8781cf13b33c5bfd207ad0ba2d"
+        }
+      ]
+    },
+    {
+      "path": "task-15",
+      "id": "task-15",
+      "title": "Contractual-obligation triage and draft correction",
+      "taskSha256": "ef7e5d614fba01e944f3f29a5b32ce2cceaa70f65f028f406e3bc8776177dff6",
+      "rubricSha256": "54f8ec964dcf8c4abd1b641a5f63088ce5b3f8eb0a39bfb12ed9f0aa8fbc3d23",
+      "criteria": 4,
+      "materials": {
+        "materials/client.md": "b44882c2d1d83fa14ccbc96a52be10969816c06b62c4bb8ef841aa1a6a404ed3",
+        "materials/draft.md": "7384a20c479be307781c3ff6c5a42c0fe7791128d42b28099ff86be5926f5dba",
+        "materials/chronology.csv": "f54da2460a2ed104729d83f92e9ea38034bfac044cc121ac280a2288aa0de12b"
+      },
+      "references": [
+        {
+          "id": "doc-01:s0014:c0",
+          "sha256": "28b4874e535b358f2ec2b04b2533d5397c12ae10dbf80ac633f1cafee2584d45"
+        },
+        {
+          "id": "doc-01:s0015:c0",
+          "sha256": "b16f3c8f6dc81dd4ea00a90c8b124eabad4966ccc1f7fd9c0616e9b2b086274f"
+        },
+        {
+          "id": "doc-01:s0015:c3",
+          "sha256": "05e70709d2ccc5c61a57d93ed114ad5c4d979778e7dd090eccb90a3fcf0bd2ea"
+        },
+        {
+          "id": "doc-01:s0016:c0",
+          "sha256": "6c7d7951e6c74087bf92f0d9be4aeab81b41e373ff06bfeb4b34267a4e9f3584"
+        },
+        {
+          "id": "doc-01:s0016:c1",
+          "sha256": "dfe8c3c49d272ed94d3a058733934cbd928f4c66b4f06153025691e0fa8d559a"
+        },
+        {
+          "id": "doc-01:s0017:c13",
+          "sha256": "2b2086bd202d5d087e16c9fe1f536b467d3df4e8b581deb63a120c2d63ed664d"
+        },
+        {
+          "id": "doc-01:s0034:c0",
+          "sha256": "a17f678973ff882a625f999972dcbc576d6c8dc2cb0b926c9214d45c6f077bc5"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+item,kind,asset_book_value_eur,proposed_destination,notes
+Belgian operating equipment,asset,6000000,North,Move with Belgian branch
+Belgian receivables and cash,asset,3500000,North,Move with Belgian branch
+Luxembourg headquarters portfolio,asset,4500000,Meridian,Remain with split company
+Belgian supplier debt,liability,0,North,"Face amount EUR 1500000; value of allocated net assets stated separately below"
+Luxembourg headquarters debt,liability,0,Meridian,Face amount EUR 500000
+Belgian software licence and associated IP registration,asset,0,North,Registration/opposability check outstanding
+Belgian team employment relationships,employment,0,North,Five employees assigned to Belgian branch
+Future warranty claim stress test,conditional future liability,0,UNALLOCATED,"If a EUR 900000 warranty claim is first discovered after legal effect and final terms and their interpretation do not allocate it, test the statutory residual fallback; no such claim is known now"
+Plan valuation and future creditor stress test,assumption,0,North and Meridian,"For this hypothetical calculation only, the split plan estimates net assets of EUR 8 million to North and EUR 4 million retained by Meridian (2:1), after deducting the listed supplier and headquarters debts respectively. These are planning figures, not stipulated values at legal effect. If, after legal effect, the creditor on the EUR 1.5 million Belgian supplier debt seeks payment from North without success, assess secondary creditor recourse; no such failed collection has happened now. The Luxembourg headquarters debt remains proposed for Meridian. No creditor has yet applied for additional security."

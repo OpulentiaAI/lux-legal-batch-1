@@ -1,0 +1,5 @@
+holder,existing_shares,meeting_presence,vote_on_increase
+Founder_A,390,present,for
+Founder_B,150,present,against
+Founder_C,60,present,abstain
+Other_holders,400,absent,no_vote

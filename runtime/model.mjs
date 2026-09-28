@@ -6,7 +6,8 @@ export function createModel(config, fetchImpl = fetch) {
       method: 'POST',
       signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(120000)]) : AbortSignal.timeout(120000),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}), max_completion_tokens: options.max_tokens ?? 4000 }),
+      body: JSON.stringify({ model: options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}), max_completion_tokens: options.max_tokens ?? 4000,
+        ...(config.providerOnly ? { providerOptions: { gateway: { only: config.providerOnly } } } : {}) }),
     });
     if (!response.ok) throw new Error(`Model provider failed (${response.status})`);
     const result = await response.json();

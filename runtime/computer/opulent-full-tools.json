@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "name": "opulent-full-tools-v1",
+  "base": "ubuntu:24.04",
+  "python": "Ubuntu Python 3.12; /opt/opulent-tools/venv, --system-site-packages",
+  "requirements": "opulent-full-tools-requirements.txt",
+  "requested_inventories_sha256": {
+    "python": "f05d4de4d606d1e6fe0fea688b7a1b43d182c81f1f44ce4cb0673ffccbe44bf8",
+    "utilities": "1d9e75f0bf1530b6b259ab7bc4aa6a5b24de6db756a8872a04c33abd6a985672"
+  },
+  "apt_packages": [
+    "apparmor", "apparmor-utils", "software-properties-common", "apt-utils",
+    "binutils", "build-essential", "gcc-11", "g++-11", "bzip2", "xz-utils",
+    "zip", "unzip", "pigz", "fdisk", "gdisk", "fio", "fzf", "git-lfs",
+    "gh", "groff", "gdb", "htop", "hwloc", "imagemagick", "iperf3",
+    "default-jdk", "python3-apt", "python3-gi", "python3-dbus",
+    "python3-pip", "python3-cairo", "tmux", "strace", "vim", "nano",
+    "ripgrep", "libncurses-dev", "openvpn", "docker.io",
+    "docker-compose-v2", "docker-compose", "rootlesskit", "slirp4netns",
+    "expect", "catdoc", "rustc", "cargo", "rustfmt", "rust-clippy",
+    "npm", "nodejs", "scala", "direnv", "cpuid",
+    "qttools5-dev-tools", "qt5-qmake", "qtchooser", "qtbase5-dev",
+    "qtdeclarative5-dev-tools", "qmlscene", "plasma-desktop", "konsole",
+    "dolphin", "kwin-x11", "kdialog", "tigervnc-standalone-server",
+    "tigervnc-tools", "linuxptp", "uuid-runtime", "lzip", "lzma",
+    "usbutils", "patch", "perl", "libfile-which-perl", "net-tools",
+    "python-is-python3", "xxd", "vim-tiny", "python3-rsa", "gpg-wks-server",
+    "gnupg-utils", "trace-cmd", "msr-tools", "rsh-redone-client",
+    "kwrite", "kfind", "kate", "keditbookmarks", "systemsettings",
+    "kde-cli-tools", "plasma-workspace", "tigervnc-scraping-server",
+    "rust-gdb", "rust-lldb", "util-linux-extra", "dpkg-dev",
+    "qtbase5-dev-tools", "x11-apps", "x11-xkb-utils"
+  ],
+  "additional_python_cli": ["uv==0.12.19", "poetry==2.5.1"],
+  "additional_npm_cli": "corepack@0.31.0",
+  "public_releases": [
+    {
+      "name": "scala-cli", "format": "gzip",
+      "url": "https://github.com/VirtusLab/scala-cli/releases/download/v1.17.1/scala-cli-x86_64-pc-linux.gz",
+      "sha256": "4186bfac6552097fbfd3939bdf2ecdec1cb55baafcbf6259bef5c04e08858eb3"
+    },
+    {
+      "name": "cs", "format": "gzip",
+      "url": "https://github.com/coursier/coursier/releases/download/v2.1.25/cs-x86_64-pc-linux.gz",
+      "sha256": "415fa0e9514dcffd521eca13dbf05bddaf3f542795faec728021defcaa25abdf"
+    },
+    {
+      "name": "sbt", "format": "sbt-tar",
+      "url": "https://github.com/sbt/sbt/releases/download/v2.0.9/sbt-2.0.9.tgz",
+      "sha256": "351087fb5ad0d8b271f21b4c6f8e4912c8f6dbf81e1d06fe215bb165f14668b3"
+    },
+    {
+      "name": "scalafmt", "format": "zip",
+      "url": "https://github.com/scalameta/scalafmt/releases/download/v3.11.5/scalafmt-x86_64-pc-linux.zip",
+      "sha256": "7b0e44cc193eeff06daa14b394dc0489d8eaa4537eb945522f7f267641ed8c2b"
+    },
+    {
+      "name": "amm", "format": "binary",
+      "url": "https://github.com/com-lihaoyi/Ammonite/releases/download/3.0.9/2.13-3.0.9",
+      "sha256": "34207966e5be0aac45958635d2617a4d41dd665d44f1017280f7725b616d09ee"
+    },
+    {
+      "name": "rust-analyzer", "format": "gzip",
+      "url": "https://github.com/rust-lang/rust-analyzer/releases/download/2026-09-21/rust-analyzer-x86_64-unknown-linux-gnu.gz",
+      "sha256": "b2d24ce2bda2ea05b1ad7c2917d205f8111775f703ccd908e6061803ae8257d0"
+    },
+    {
+      "name": "rustup", "format": "binary",
+      "url": "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init",
+      "sha256": "dda7234360b7f578ca8b0ddcb80145646fa61a67c1720a5abc7051b35c9fcb71"
+    },
+    {
+      "name": "ngrok", "format": "ngrok-tar",
+      "url": "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz",
+      "sha256": "cec0b4997fcc5f529dfc74bac89050354d11a915f968720600039738fdf330cf"
+    },
+    {
+      "name": "frpc", "format": "frp-tar",
+      "url": "https://github.com/fatedier/frp/releases/download/v0.71.0/frp_0.71.0_linux_amd64.tar.gz",
+      "sha256": "84f27e39f11169f7adcef8e8b70c9329de17747b1f14dad9fb95eef5682ea716"
+    }
+  ],
+  "side_by_side_python": "3.10.20",
+  "extracted_ubuntu_binaries": [
+    {
+      "package": "systemd-boot", "version": "255.4-1ubuntu8.17", "binary": "bootctl",
+      "deb_sha256": "6ad381521beef119ff18ac33730950378ca07a37369a2575ff9e47cd27a1bd2d"
+    },
+    {
+      "package": "systemd-resolved", "version": "255.4-1ubuntu8.17", "binary": "resolvectl",
+      "deb_sha256": "5d87c0ae134eb027e4e8dbfd920699ab03d2c12b36e2cd1b1bc8dfedfe6bc26b"
+    }
+  ]
+}

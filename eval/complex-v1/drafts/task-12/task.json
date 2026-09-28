@@ -1,0 +1,8 @@
+{
+  "id": "task-12",
+  "title": "Commandite selection and limited-partner governance diligence",
+  "instructions": "Using only the corpus for Luxembourg law and these hypothetical sponsor facts, draft memo.md recommending and defending one of SCS, SCSp and SCA. Include a compact comparison of personality, partner exposure, instruments and governance as relevant to this mandate; correct the sponsor's SCSp/personality claim; distinguish permissible limited-partner reserved approvals and advice from external management/signature exposure; and turn the unsigned term sheet into a prioritized diligence and drafting checklist. State what would change the recommendation. Cite visible canonical corpus passages; do not invent tax, regulatory, or property-transfer advice.",
+  "deliverables": ["memo.md"],
+  "materials": ["materials/client.md", "materials/term-sheet.md"],
+  "scope": { "jurisdiction": "Luxembourg company law", "companyForm": "Selection among SCS, SCSp, and SCA", "asOf": "2026-10-01, applying Luxembourg statutory compilation through 2026-05-29" }
+}

@@ -22,7 +22,7 @@ export async function createSandbox(config = {}) {
     template: config.snapshotId ?? config.sandboxTemplate ?? 'base',
     timeoutMs: config.sandboxTimeoutMs ?? 300_000,
     secure: true,
-    network: { allowPublicTraffic: false },
+    network: { ...config.network, allowPublicTraffic: false },
     ...(Object.keys(volumeMounts).length ? { volumeMounts } : {}),
     apiKey: config.apiKey ?? process.env.E2B_API_KEY,
   });

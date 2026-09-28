@@ -1,0 +1,7 @@
+issuer,amount_eur,record,event_date,event
+A,10000,issuer AG resolution copy,2025-12-29,distribution of identified available reserves approved
+A,10000,bank statement,2026-01-15,cash received
+B,7000,issuer AG resolution copy,2026-01-04,distribution approved
+B,7000,bank statement,2026-01-20,cash received
+C,5000,board presentation,2025-12-20,proposed in-year advance from current unapproved results
+C,5000,forecast ledger,2025-12-31,finance booked anticipated income
