@@ -162,8 +162,15 @@ def create_archive(root, documents, source_files, smoke=False):
                 parts = path.relative_to(root / "harness/skills").parts
                 if len(parts) >= 3 and parts[1] == "scripts":
                     archive.add(path, arcname=f"skills/{path.relative_to(root / 'harness/skills')}")
+        for path in (documents, documents / "chunks"):
+            info = archive.gettarinfo(path, arcname=f"documents/{path.relative_to(documents)}" if path != documents else "documents")
+            info.mode = 0o555
+            archive.addfile(info)
         for path in source_files:
-            archive.add(path, arcname=f"documents/{path.relative_to(documents)}")
+            info = archive.gettarinfo(path, arcname=f"documents/{path.relative_to(documents)}")
+            info.mode = 0o444
+            with path.open("rb") as source:
+                archive.addfile(info, source)
         if smoke:
             fixture_root = root / "tasks/antitrust-competition/analyze-antitrust-hsr-strategy/documents"
             for extension, name in [("docx", "crescent-ic-memo.docx"), ("xlsx", "market-data-branches.xlsx")]:
@@ -174,6 +181,11 @@ def create_archive(root, documents, source_files, smoke=False):
             info.mode = 0o644
             archive.addfile(info, io.BytesIO(pdf))
     return stream.getvalue()
+
+
+def corpus_checksum_command(documents):
+    pipeline = f"find {shlex.quote(str(documents))} -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum"
+    return f"bash -o pipefail -c {shlex.quote(pipeline)}"
 
 
 def main():
@@ -226,16 +238,18 @@ def main():
         sandbox.files.write("/workspace/corpus-and-harvey.tar.gz", archive)
         sandbox.files.write("/workspace/harvey-rpc.py", REMOTE_EXECUTOR)
         unpack = sandbox.commands.run(
-            "tar --no-same-owner -xzf /workspace/corpus-and-harvey.tar.gz -C /workspace && "
+            "tar --no-same-owner --same-permissions --delay-directory-restore -xzf /workspace/corpus-and-harvey.tar.gz -C /workspace && "
             "mkdir -p /workspace/output && chown root:root /workspace/output && chmod 1777 /workspace/output && "
             "chown root:root /workspace/corpus-and-harvey.tar.gz /workspace/harvey-rpc.py && "
             "chmod 444 /workspace/harvey-rpc.py && chmod 400 /workspace/corpus-and-harvey.tar.gz && "
             "cp /workspace/harvey/sandbox/parsers/parse_doc.py /usr/local/bin/parse-doc && chmod 755 /usr/local/bin/parse-doc && "
-            "chmod -R a-w /workspace/documents",
+            "chown -R root:root /workspace/documents && "
+            "find /workspace/documents -type d -exec chmod 555 {} + && "
+            "find /workspace/documents -type f -exec chmod 444 {} +",
             cwd="/workspace", user="root", timeout=120)
         if unpack.exit_code != 0:
             raise RuntimeError("E2B corpus upload failed")
-        checksum = "find /workspace/documents -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum"
+        checksum = corpus_checksum_command("/workspace/documents")
         initial_hash = sandbox.commands.run(checksum, cwd="/workspace", user="user", timeout=120)
         if initial_hash.exit_code != 0:
             raise RuntimeError("E2B corpus integrity preflight failed")
