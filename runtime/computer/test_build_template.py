@@ -7,6 +7,8 @@ import io
 import json
 import pathlib
 import sys
+import tarfile
+import tempfile
 import types
 import unittest
 from unittest.mock import patch
@@ -86,6 +88,59 @@ class ImageBuilderTests(unittest.TestCase):
                     self.assertIn("apt-get download", commands)
                     self.assertTrue(any(x[0] == "apt_install" and x[2].get("no_install_recommends") for x in steps))
                 self.assertEqual(json.loads(output.getvalue())["alias"], "test-alias")
+
+    def test_skill_archive_requires_six_regular_skills_and_hashes_contents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = pathlib.Path(tmp) / "skills"
+            source.mkdir()
+            for index in range(6):
+                directory = source / f"skill-{index}"
+                directory.mkdir()
+                (directory / "SKILL.md").write_text(f"# Skill {index}\n")
+            archive = pathlib.Path(tmp) / "skills.tar.gz"
+            manifest = builder.skill_archive(source, archive)
+            self.assertEqual(len(manifest["names"]), 6)
+            self.assertEqual(len(manifest["files"]), 6)
+            self.assertEqual(manifest["files"][0]["path"], "skill-0/SKILL.md")
+            with tarfile.open(archive) as stream:
+                self.assertEqual([member.mode for member in stream.getmembers()], [0o444] * 6)
+            original = manifest["bundle_sha256"]
+            (source / "skill-0" / "SKILL.md").write_text("# Updated\n")
+            self.assertNotEqual(builder.skill_archive(source, archive)["bundle_sha256"], original)
+            declared = {"destinationRoot": "/opt/opulent/skills", "skills": [
+                {"name": name, "artifactSha256": hashlib.sha256((source / name / "SKILL.md").read_bytes()).hexdigest()}
+                for name in manifest["names"]]}
+            (source / "manifest-v1.json").write_text(json.dumps(declared))
+            self.assertEqual(len(builder.skill_archive(source, archive)["files"]), 7)
+            (source / "README.md").write_text("# Skills\n")
+            self.assertEqual(len(builder.skill_archive(source, archive)["files"]), 8)
+            declared["skills"][0]["artifactSha256"] = "a" * 64
+            (source / "manifest-v1.json").write_text(json.dumps(declared))
+            with self.assertRaisesRegex(ValueError, "source manifest differs"):
+                builder.skill_archive(source, archive)
+            (source / "manifest-v1.json").unlink()
+            (source / "skill-0" / "unsafe").symlink_to("/etc/passwd")
+            with self.assertRaisesRegex(ValueError, "regular files"):
+                builder.skill_archive(source, archive)
+
+    def test_expanded_skills_install_is_read_only_and_minimal_remains_unmodified(self):
+        manifest = {"install_path": "/opt/opulent/skills", "names": [f"skill-{i}" for i in range(6)],
+                    "files": [{"path": f"skill-{i}/SKILL.md", "sha256": "a" * 64} for i in range(6)],
+                    "bundle_sha256": "b" * 64}
+        profile, requirements = builder.expanded_inputs()
+        self.assertEqual(builder.image_manifest("a" * 64, profile, requirements, manifest)["expanded_profile"]["skills"], manifest)
+        FakeTemplate.steps = []
+        output = io.StringIO()
+        path = builder.HERE.parent / "builtin-skills" / "fixture"
+        with patch.object(builder, "skill_archive", return_value=manifest), patch.object(sys, "argv", [str(BUILDER), "--profile", "opulent-full-tools", "--skills-dir", str(path)]), contextlib.redirect_stdout(output):
+            builder.main()
+        steps = FakeTemplate.steps
+        commands = "\n".join(x[1][0] for x in steps if x[0] == "run_cmd")
+        self.assertIn("chown -R root:root /opt/opulent/skills", commands)
+        self.assertIn("-type f -exec chmod 0444", commands)
+        self.assertIn("-type d -exec chmod 0555", commands)
+        self.assertEqual([x for x in steps if x[0] == "set_user"][-1][1], ("user",))
+        self.assertEqual(json.loads(output.getvalue())["alias"], "lux-legal-desktop-amd64")
 
 
 if __name__ == "__main__":

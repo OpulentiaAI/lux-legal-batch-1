@@ -171,28 +171,48 @@ export function createRuntime(options = {}) {
   async function ensureSandbox(ctx, desktop = false) {
     if (!ctx.sandbox) {
       ctx.provisioning ??= (async () => {
+        ctx.signal.throwIfAborted();
         const row = store.get('sessions', ctx.sessionId);
-        const sandbox = row.sandbox_id
-          ? await (options.connect ?? connectSandbox)(row.sandbox_id, { ...config, desktop: false })
-          : await (options.provision ?? createSandbox)({ ...config, desktop: false });
-        ctx.sandbox = sandbox;
-        for (const [api, method] of [[sandbox.commands, 'run'], [sandbox.pty, 'create']]) {
-          if (!api?.[method]) continue;
-          const original = api[method].bind(api);
-          api[method] = method === 'run'
-            ? (command, opts = {}) => original(command, { ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } })
-            : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
-        }
-        await sandbox.files.makeDir(ctx.workspace);
-        update(ctx.sessionId, { sandbox_id: sandbox.sandboxId });
-        if (!row.sandbox_id) {
-          for (const entry of row.repos ?? []) {
-            const repo = typeof entry === 'string' ? entry : entry.repo;
-            const branch = typeof entry === 'object' ? entry.branch : undefined;
-            if (!config.allowedRepos.includes(repo) || !/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('Invalid session repository');
-            const path = row.repos.length === 1 ? ctx.workspace : `${ctx.workspace}/${repo}`;
-            await sandbox.git.clone(`https://github.com/${repo}.git`, { path, ...(branch ? { branch } : {}), ...(process.env.GITHUB_TOKEN ? { username: 'x-access-token', password: process.env.GITHUB_TOKEN, dangerouslyStoreCredentials: false } : {}) });
+        let sandbox;
+        try {
+          sandbox = row.sandbox_id
+            ? await (options.connect ?? connectSandbox)(row.sandbox_id, { ...config, desktop: false })
+            : await (options.provision ?? createSandbox)({ ...config, desktop: false });
+          ctx.signal.throwIfAborted();
+          ctx.sandbox = sandbox;
+          for (const [api, method] of [[sandbox.commands, 'run'], [sandbox.pty, 'create']]) {
+            if (!api?.[method]) continue;
+            const original = api[method].bind(api);
+            api[method] = method === 'run'
+              ? (command, opts = {}) => original(command, { ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } })
+              : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
           }
+          await sandbox.files.makeDir(ctx.workspace);
+          ctx.signal.throwIfAborted();
+          if (!row.sandbox_id) {
+            for (const entry of row.repos ?? []) {
+              const repo = typeof entry === 'string' ? entry : entry.repo;
+              const branch = typeof entry === 'object' ? entry.branch : undefined;
+              if (!config.allowedRepos.includes(repo) || !/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('Invalid session repository');
+              const path = row.repos.length === 1 ? ctx.workspace : `${ctx.workspace}/${repo}`;
+              await sandbox.git.clone(`https://github.com/${repo}.git`, { path, ...(branch ? { branch } : {}), ...(process.env.GITHUB_TOKEN ? { username: 'x-access-token', password: process.env.GITHUB_TOKEN, dangerouslyStoreCredentials: false } : {}) });
+              ctx.signal.throwIfAborted();
+            }
+          }
+          ctx.signal.throwIfAborted();
+          update(ctx.sessionId, { sandbox_id: sandbox.sandboxId });
+        } catch (error) {
+          if (sandbox) {
+            ctx.sandbox = undefined;
+            let cleanupError;
+            try { await sandbox.kill(); } catch (failure) { cleanupError = failure; }
+            update(ctx.sessionId, { sandbox_id: cleanupError ? sandbox.sandboxId : null, desktop_ready: false });
+            if (cleanupError) {
+              event(ctx.sessionId, 'sandbox_kill_failed', { error: safeError(cleanupError), provisioning_error: safeError(error) });
+              throw cleanupError;
+            }
+          }
+          throw error;
         }
       })();
       try { await ctx.provisioning; } finally { ctx.provisioning = undefined; }
@@ -202,6 +222,7 @@ export function createRuntime(options = {}) {
         const computer = (options.computerFactory ?? createComputer)(ctx.sandbox, config);
         if (store.get('sessions', ctx.sessionId).desktop_ready || config.snapshotId) await computer.ready();
         else await computer.bootstrap();
+        ctx.signal.throwIfAborted();
         ctx.computer = computer;
         update(ctx.sessionId, { desktop_ready: true });
       })();
@@ -313,13 +334,24 @@ export function createRuntime(options = {}) {
     const ctx = contexts.get(id);
     ctx?.controller.abort(new Error('Session cancelled'));
     for (const child of store.list('sessions').filter(row => row.parent_session_id === id && !terminal.has(row.status))) await cancelSession(child.id);
-    if (ctx?.sandbox) { await ctx.sandbox.kill(); ctx.sandbox = undefined; }
-    else if (store.get('sessions', id).sandbox_id) {
-      const sandbox = await (options.connect ?? connectSandbox)(store.get('sessions', id).sandbox_id, { ...config, desktop: false });
-      await sandbox.kill();
+    if (ctx?.provisioning) await ctx.provisioning.catch(() => {});
+    if (ctx?.desktopStarting) await ctx.desktopStarting.catch(() => {});
+    const sandboxId = ctx?.sandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
+    let cleanupError;
+    try {
+      if (ctx?.sandbox) { const sandbox = ctx.sandbox; ctx.sandbox = undefined; await sandbox.kill(); }
+      else if (sandboxId) {
+        const sandbox = await (options.connect ?? connectSandbox)(sandboxId, { ...config, desktop: false });
+        await sandbox.kill();
+      }
+    } catch (error) {
+      cleanupError = error;
+      event(id, 'sandbox_kill_failed', { error: safeError(error) });
     }
-    update(id, { status: 'cancelled', sandbox_id: null, desktop_ready: false });
+    update(id, { status: 'cancelled', sandbox_id: cleanupError ? sandboxId : null, desktop_ready: false });
+    if (ctx) ctx.computer = undefined;
     ctx?.secrets.clear();
+    if (cleanupError) throw cleanupError;
   }
 
   function workflowBroker(ctx, { runId, sessionId }) {

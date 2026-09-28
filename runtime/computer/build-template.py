@@ -41,6 +41,44 @@ def source_archive(destination):
     return digest.hexdigest()
 
 
+def skill_archive(source, destination):
+    names = sorted(path.name for path in source.iterdir() if path.is_dir() and not path.is_symlink())
+    if len(names) != 6 or any(not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name) for name in names):
+        raise ValueError("Expected exactly six named skill directories")
+    if any(not (source / name / "SKILL.md").is_file() or not (source / name / "SKILL.md").stat().st_size for name in names):
+        raise ValueError("Every skill needs a nonempty SKILL.md")
+    paths = sorted(source.rglob("*"))
+    if any(path.is_symlink() or not (path.is_file() or path.is_dir()) for path in paths):
+        raise ValueError("Skill bundle may contain only regular files and directories")
+    if any(path.parent == source and path.is_file() and path.name not in {"manifest-v1.json", "README.md"} for path in paths):
+        raise ValueError("Skill bundle root may contain only README.md and manifest-v1.json")
+    source_manifest = source / "manifest-v1.json"
+    if source_manifest.is_file():
+        declared = json.loads(source_manifest.read_text())
+        entries = declared.get("skills", [])
+        if (declared.get("destinationRoot") != "/opt/opulent/skills" or
+                {item.get("name"): item.get("artifactSha256") for item in entries} !=
+                {name: hashlib.sha256((source / name / "SKILL.md").read_bytes()).hexdigest() for name in names}):
+            raise ValueError("Skill source manifest differs from skill contents")
+    files = []
+    digest = hashlib.sha256()
+    with tarfile.open(destination, "w:gz") as archive:
+        for path in paths:
+            if not path.is_file():
+                continue
+            relative = path.relative_to(source).as_posix()
+            data = path.read_bytes()
+            digest.update(relative.encode() + b"\0" + data)
+            files.append({"path": relative, "sha256": hashlib.sha256(data).hexdigest()})
+            info = tarfile.TarInfo(relative)
+            info.size = len(data)
+            info.mode = 0o444
+            info.mtime = 0
+            archive.addfile(info, io.BytesIO(data))
+    return {"install_path": "/opt/opulent/skills", "names": names, "files": files,
+            "bundle_sha256": digest.hexdigest()}
+
+
 def expanded_inputs():
     profile = json.loads(EXPANDED_PROFILE.read_text())
     requirements = HERE / profile["requirements"]
@@ -72,7 +110,7 @@ def expanded_inputs():
     return profile, requirements
 
 
-def image_manifest(source_hash, profile=None, requirements=None):
+def image_manifest(source_hash, profile=None, requirements=None, skills=None):
     marker = {
         "schema": 1,
         "base": "ubuntu:24.04",
@@ -99,6 +137,8 @@ def image_manifest(source_hash, profile=None, requirements=None):
             "side_by_side_python": profile["side_by_side_python"],
             "extracted_ubuntu_binaries": profile["extracted_ubuntu_binaries"],
         }
+        if skills is not None:
+            marker["expanded_profile"]["skills"] = skills
     return marker
 
 
@@ -106,13 +146,26 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--alias", default="lux-legal-desktop-amd64")
     parser.add_argument("--profile", choices=["minimal", "opulent-full-tools"], default="minimal")
+    parser.add_argument("--skills-dir", type=pathlib.Path,
+                        help="final six-skill source directory under runtime/skills or runtime/builtin-skills")
     args = parser.parse_args()
+    if args.skills_dir and args.profile != "opulent-full-tools":
+        parser.error("Skills are available only in the expanded profile")
+    if args.skills_dir:
+        try:
+            parts = args.skills_dir.resolve().relative_to(HERE.parent).parts
+        except ValueError:
+            parser.error("Skills must come from this repository's runtime directory")
+        if not parts or parts[0] not in {"skills", "builtin-skills"}:
+            parser.error("Skills must come from runtime/skills or runtime/builtin-skills")
     profile, requirements = expanded_inputs() if args.profile == "opulent-full-tools" else (None, None)
     with tempfile.TemporaryDirectory(prefix=".desktop-build-", dir=HERE) as tmp:
         bundle = pathlib.Path(tmp) / "source.tar.gz"
         source_hash = source_archive(bundle)
+        skills_bundle = pathlib.Path(tmp) / "skills.tar.gz"
+        skills = skill_archive(args.skills_dir, skills_bundle) if args.skills_dir else None
         marker = pathlib.Path(tmp) / "image.json"
-        marker.write_text(json.dumps(image_manifest(source_hash, profile, requirements), indent=2) + "\n")
+        marker.write_text(json.dumps(image_manifest(source_hash, profile, requirements, skills), indent=2) + "\n")
         template = (
             Template().from_image("ubuntu:24.04")
             .set_user("root")
@@ -200,6 +253,14 @@ def main():
                     "install -m 755 extracted/usr/bin/" + entry["binary"] + " /usr/local/bin/" + entry["binary"] + " && "
                     "ldd /usr/local/bin/" + entry["binary"] + " | grep -q libsystemd-shared && "
                     "rm -rf /tmp/opulent-deb")
+            if skills is not None:
+                template = (template.make_dir("/opt/opulent/skills")
+                            .copy(str(skills_bundle.relative_to(HERE)), "/opt/opulent/skills/source.tar.gz")
+                            .run_cmd("tar -C /opt/opulent/skills -xzf /opt/opulent/skills/source.tar.gz && "
+                                     "rm /opt/opulent/skills/source.tar.gz && "
+                                     "chown -R root:root /opt/opulent/skills && "
+                                     "find /opt/opulent/skills -type f -exec chmod 0444 {} + && "
+                                     "find /opt/opulent/skills -type d -exec chmod 0555 {} +"))
         template = template.set_user("user")
         info = Template.build(template, alias=args.alias, cpu_count=2, memory_mb=4096, on_build_logs=default_build_logger())
         print(json.dumps({"template_id": info.template_id, "build_id": info.build_id,

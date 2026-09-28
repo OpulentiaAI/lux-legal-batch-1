@@ -26,6 +26,20 @@ export const EFFECTIVE_TOOL_OVERLAY = Object.freeze({
       },
     },
   },
+  run_workflow: {
+    ...catalog.tools.run_workflow,
+    description: 'Run a deterministic Python workflow that orchestrates child Opulent sessions in the sandbox. When requireWorkflowApproval is enabled, only source bytes whose SHA-256 is preapproved in operator configuration may run; an empty approval list denies all. This runtime does not provide an agent approval action.',
+    inputSchema: {
+      ...catalog.tools.run_workflow.inputSchema,
+      properties: {
+        ...catalog.tools.run_workflow.inputSchema.properties,
+        script_path: {
+          ...catalog.tools.run_workflow.inputSchema.properties.script_path,
+          description: 'Absolute path to the workflow Python source. The sandbox file is read once before execution. When workflow approval is required, its exact UTF-8 bytes must match an operator-approved SHA-256 (and path, if pinned); edits require a new operator approval.',
+        },
+      },
+    },
+  },
 });
 
 export const EFFECTIVE_TOOL_OVERLAY_PROVENANCE = Object.freeze({

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { posix as path } from 'node:path';
 import { withLegacyNames } from './names.mjs';
 
@@ -269,7 +269,22 @@ export function createTools(ctx) {
     const scriptPath = requireText(args.script_path, 'script_path');
     if (!path.isAbsolute(scriptPath)) throw new Error('script_path must be absolute');
     const seconds = bounded(args.timeout_secs, 604800, 604800);
-    const source = await ctx.sandbox.files.read(scriptPath);
+    let source;
+    let sourceHash;
+    if (ctx.config?.requireWorkflowApproval === true) {
+      const bytes = await ctx.sandbox.files.read(scriptPath, { format: 'bytes' });
+      if (!(bytes instanceof Uint8Array)) throw new Error('Workflow approval requires byte-readable script source');
+      sourceHash = createHash('sha256').update(bytes).digest('hex');
+      source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      const approvals = ctx.config.approvedWorkflowHashes ?? [];
+      if (!Array.isArray(approvals)) throw new Error('Invalid approvedWorkflowHashes configuration');
+      for (const entry of approvals) {
+        const hash = typeof entry === 'string' ? entry : entry?.sha256;
+        if (!/^[a-f0-9]{64}$/.test(hash) || typeof entry === 'object' && (!entry || Array.isArray(entry) || Object.keys(entry).some(key => !['sha256', 'script_path'].includes(key)) || entry.script_path !== undefined && typeof entry.script_path !== 'string')) throw new Error('Invalid approvedWorkflowHashes configuration');
+      }
+      if (!approvals.some(entry => typeof entry === 'string'
+        ? entry === sourceHash : entry.sha256 === sourceHash && (entry.script_path === undefined || entry.script_path === scriptPath))) throw new Error('Workflow source is not operator-approved');
+    } else source = await ctx.sandbox.files.read(scriptPath);
     if (typeof source !== 'string') throw new Error('workflow script must be UTF-8 text');
     if (!/^wfr-[a-f0-9]{32}$/.test(id)) throw new Error('invalid workflow run id');
     if (args.run_id) {
@@ -277,7 +292,7 @@ export function createTools(ctx) {
       if (previous.status === 'running' && running.has(id)) throw new Error('workflow is already running');
     }
     store.put('workflows', id, { ...(args.run_id ? runRow(id) : {}), id, owner_session_id: sessionId,
-      name: requireText(args.workflow_name, 'workflow_name'), script_path: scriptPath, status: 'running', started_at: now(), updated_at: now() });
+      name: requireText(args.workflow_name, 'workflow_name'), script_path: scriptPath, ...(sourceHash ? { source_sha256: sourceHash } : {}), status: 'running', started_at: now(), updated_at: now() });
     let broker;
     try {
       broker = await ctx.createWorkflowBroker({ runId: id, sessionId });

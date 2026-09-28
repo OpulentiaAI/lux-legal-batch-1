@@ -50,6 +50,7 @@ test('every prepared sandbox verifies builtin skill bytes and immutable permissi
       } })
     await harness.run({ question: 'Neutral fixture', mode: 'broad' })
     assert.deepEqual(options.config.initialTools, suppliedInitialToolsFor(NATIVE_BROAD_TOOLS))
+    assert.equal(options.config.requireWorkflowApproval, true)
     assert.match(options.config.systemPrompt, /\/opt\/opulent\/skills\/managing-child-sessions\/SKILL\.md/)
     assert.match(options.config.systemPrompt, /mcp_tool/)
     assert.equal(await options.provision(options.config), sandbox)
