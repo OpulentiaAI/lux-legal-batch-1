@@ -500,8 +500,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         const observed = auditMessages(messages, evidence, corpus?.sources)
         const trace = events.map(event => ({ stage: event.type, ...(event.data?.name ? { tool: event.data.name } : {}),
           ...(event.data?.ok !== undefined ? { ok: event.data.ok } : {}) }))
-        if (completed) trace.push({ stage: 'session_terminal', status: completed.status })
-        const audit = { provenance: runProvenance, terminalStatus: completed?.status ?? null, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
+        const terminal = completed ? { status: completed.status,
+          ...(typeof completed.error === 'string' ? { error: redactAudit(completed.error) } : {}),
+          ...(Number.isSafeInteger(completed.steps) && completed.steps >= 0 ? { steps: completed.steps } : {}) } : null
+        if (terminal) trace.push({ stage: 'session_terminal', ...terminal })
+        const audit = { provenance: runProvenance, terminalStatus: terminal?.status ?? null, terminal, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
         const artifact = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}.json`)
         writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>

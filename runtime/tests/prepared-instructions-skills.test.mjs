@@ -66,7 +66,10 @@ test('built-ins resolve from fixed allowlisted root before colliding plugins or 
     { name: 'project', path: `${workspace}/.agents/skills/project/SKILL.md` },
   ])
   await assert.rejects(tools.skill({ skill: '../../etc/passwd' }), /Invalid name/)
-  await assert.rejects(tools.skill({ command: 'list', path: '/opt/opulent/skills' }), /outside workspace/)
+  assert.deepEqual(await tools.skill({ command: 'list', path: '/opt/opulent/skills' }),
+    BUILTIN_SKILLS.map(name => ({ name, path: `/opt/opulent/skills/${name}/SKILL.md` })))
+  await assert.rejects(tools.skill({ command: 'list', path: '/opt/opulent' }), /outside workspace/)
+  await assert.rejects(tools.skill({ command: 'list', path: '/opt/opulent/skills/..' }), /outside workspace/)
   files.delete('/opt/opulent/skills/data-analysis/SKILL.md')
   await assert.rejects(tools.skill({ skill: 'data-analysis' }), /missing \/opt\/opulent\/skills\/data-analysis/)
 })

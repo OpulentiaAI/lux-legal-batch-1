@@ -92,10 +92,12 @@ export function checkpointFor(config, previous) {
 }
 
 function failure(error, stage) {
-  const missingOutput = stage === 'answerer' && error?.missingDeliverables?.length > 0
+  const terminalStatus = error?.trace?.find(entry => entry.stage === 'session_terminal')?.status ?? error?.audit?.terminalStatus
+  const sessionFailed = stage === 'answerer' && ['failed', 'cancelled'].includes(terminalStatus)
+  const missingOutput = stage === 'answerer' && !sessionFailed && error?.missingDeliverables?.length > 0
   return { status: 'failed', stage: missingOutput ? 'deliverable' : stage,
-    kind: missingOutput ? 'MissingDeliverable' : error?.preflightStage ?? error?.name ?? 'Error',
-    message: missingOutput ? 'Required work-product files missing' : /^(?:Invalid|Missing|Checkpoint|Full comparison blocked)/.test(error?.message ?? '') ? error.message : 'Evaluation operation failed',
+    kind: sessionFailed ? terminalStatus === 'cancelled' ? 'SessionCancelled' : 'SessionFailed' : missingOutput ? 'MissingDeliverable' : error?.preflightStage ?? error?.name ?? 'Error',
+    message: sessionFailed ? 'Evaluation session failed' : missingOutput ? 'Required work-product files missing' : /^(?:Invalid|Missing|Checkpoint|Full comparison blocked)/.test(error?.message ?? '') ? error.message : 'Evaluation operation failed',
     answer: typeof error?.answer === 'string' ? redact(error.answer) : null, trace: error?.trace ?? [],
     metrics: error?.metrics ?? null, sources: error?.sources ?? [], audit: error?.audit ?? null,
     deliverables: error?.deliverables ?? [], missingDeliverables: error?.missingDeliverables ?? [],

@@ -1,16 +1,23 @@
 import { randomUUID } from 'node:crypto';
+import { BUILTIN_SKILLS, BUILTIN_SKILL_ROOT } from './resources.mjs';
 
 const helper = String.raw`import json, os, sys, re, fnmatch, tempfile, subprocess
 a=json.load(open(sys.argv[1])); root=os.path.realpath(a['workspace']); op=a['op']; p=a.get('args',{})
+builtin_paths=set(a['builtin_paths'])
 def checked(path, existing=False):
     if not isinstance(path,str) or not path: raise ValueError('A nonempty path is required')
+    if op=='read' and path in builtin_paths:
+        if os.path.realpath(path)!=path: raise ValueError('Path escapes workspace')
+        if existing and not os.path.isfile(path): raise FileNotFoundError(path)
+        return path
     path=os.path.abspath(os.path.join(root,path))
     real=os.path.realpath(path)
     if os.path.commonpath((root,real))!=root: raise ValueError('Path escapes workspace')
     if existing and not os.path.exists(path): raise FileNotFoundError(path)
     return path
 def read(path):
-    with open(checked(path,True),encoding='utf-8') as f: return f.read()
+    path=checked(path,True)
+    with open(path,encoding='utf-8',opener=(lambda name,flags: os.open(name,flags|os.O_NOFOLLOW)) if path in builtin_paths else None) as f: return f.read()
 def write(path,data):
     path=checked(path); os.makedirs(os.path.dirname(path),exist_ok=True)
     fd,tmp=tempfile.mkstemp(prefix='.runtime-',dir=os.path.dirname(path))
@@ -182,7 +189,7 @@ export function createTools(ctx) {
     const id = randomUUID();
     const script = `/tmp/runtime-files-${id}.py`;
     const input = `/tmp/runtime-files-${id}.json`;
-    await ctx.sandbox.files.write([{ path: script, data: helper }, { path: input, data: JSON.stringify({ op, args, workspace: ctx.workspace || '/home/user/workspace' }) }]);
+    await ctx.sandbox.files.write([{ path: script, data: helper }, { path: input, data: JSON.stringify({ op, args, workspace: ctx.workspace || '/home/user/workspace', builtin_paths: BUILTIN_SKILLS.map(name => `${BUILTIN_SKILL_ROOT}/${name}/SKILL.md`) }) }]);
     try {
       const result = await ctx.sandbox.commands.run(`python3 ${script} ${input}`, { timeoutMs: 60_000, signal: ctx.signal });
       const parsed = JSON.parse(result.stdout);

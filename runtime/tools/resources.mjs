@@ -23,7 +23,8 @@ const safeWorkspacePath = (workspace, value) => {
   return resolved;
 };
 export const BUILTIN_SKILLS = Object.freeze(['managing-knowledge', 'managing-playbooks', 'managing-automations', 'managing-child-sessions', 'analyzing-sessions', 'data-analysis']);
-const builtinSkillPath = name => `/opt/opulent/skills/${name}/SKILL.md`;
+export const BUILTIN_SKILL_ROOT = '/opt/opulent/skills';
+const builtinSkillPath = name => `${BUILTIN_SKILL_ROOT}/${name}/SKILL.md`;
 const publicAddress = address => {
   const v4 = address.startsWith('::ffff:') ? address.slice(7) : address;
   if (isIP(v4) === 4) {
@@ -145,9 +146,10 @@ export function createTools(ctx) {
     skill: async args => {
       const command = args.command || 'invoke';
       if (command === 'list' || command === 'search') {
-        const root = safeWorkspacePath(ctx.workspace, args.path || '.agents/skills');
+        const builtinRoot = args.path === BUILTIN_SKILL_ROOT;
+        const root = builtinRoot ? BUILTIN_SKILL_ROOT : safeWorkspacePath(ctx.workspace, args.path || '.agents/skills');
         const found = [];
-        if (!args.path) {
+        if (!args.path || builtinRoot) {
           for (const name of BUILTIN_SKILLS) {
             const p = builtinSkillPath(name);
             const content = await ctx.sandbox.files.read(p);
@@ -172,7 +174,7 @@ export function createTools(ctx) {
             if (command === 'search') await scan(path.posix.join(folder, name));
           }
         };
-        await scan(root);
+        if (!builtinRoot) await scan(root);
         return found;
       }
       if (command !== 'invoke') throw new Error(`Unknown skill command: ${command}`);
