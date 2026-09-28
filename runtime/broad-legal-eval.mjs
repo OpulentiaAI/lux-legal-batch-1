@@ -12,8 +12,9 @@ import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
 import { redact } from './security.mjs'
 import { renderInstructions } from './instructions/render.mjs'
-import { suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION } from './initial-tool-policy.mjs'
+import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
+import { RLM_CAPABILITY_VERSION, rlmDefinitions } from './rlm.mjs'
 
 export const BROAD_MODEL = LUNA_MODEL
 export const BROAD_MAX_STEPS = 40
@@ -277,7 +278,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const rlm = instructionProfile === 'opulent-rlm-v4'
+  if (rlm && (toolSurface !== 'initial-scripted-v1' || !nativeMcp || !workProduct)) throw new Error('RLM comparison requires the prepared native work-product tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
@@ -294,22 +297,28 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     const path = relative(resolve(workspace), resolve(artifactsDir))
     if (!path || path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path)) throw new Error('Evidence artifacts must stay outside the source repository')
   }
-  const allowedTools = [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS)]
-  const initialTools = toolSurface === 'initial-scripted-v1' ? suppliedInitialToolsFor(allowedTools) : undefined
+  const allowedTools = [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS), ...(rlm ? ['ipython'] : [])]
+  const initialTools = toolSurface === 'initial-scripted-v1' ? rlm ? rlmInitialToolsFor(allowedTools) : suppliedInitialToolsFor(allowedTools) : undefined
   const skills = initialTools ? JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8')) : null
   const appendix = workProduct
     ? (nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt).replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
     : nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
-  const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
+  const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
-    variant: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
-  const scriptLimits = instructions.provenance.profile === 'opulent-knowledge-v3'
+    variant: rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+  const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
-    toolSurface, ...(initialTools ? { initialTools, initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
+    toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: RLM_INITIAL_TOOL_POLICY,
+      initialToolPolicySha256: sha256(JSON.stringify({ ...RLM_INITIAL_TOOL_POLICY, initialTools })),
+      definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
+      sourcesSha256: Object.fromEntries(['rlm.mjs', 'rlm-kernel.py'].map(path =>
+        [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])),
+      settings: { maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } } } : {}),
+    ...(initialTools ? { initialTools, initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
       initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION,
       workflowApproval: 'operator-approved exact script hashes required; none configured for this evaluation',
       builtinSkills: skills.skills.map(({ name, artifactSha256 }) => ({ name, path: `${skills.destinationRoot}/${name}/SKILL.md`, sha256: artifactSha256 })) } : {}),
@@ -333,10 +342,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] })),
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
-  function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords) {
+  function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors) {
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
+        ...(rlm ? { runtimeCapabilities: [RLM_CAPABILITY_VERSION], maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } : {}),
         ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
@@ -350,8 +360,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
         provisionedSandboxes.add(sandbox)
         if (packet) {
-          const originalPause = sandbox.pause.bind(sandbox)
-          sandbox.pause = async (...args) => {
+          const collectWorkProduct = async () => {
             const deliverables = [], missingDeliverables = []
             const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
             if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
@@ -368,6 +377,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
               deliverables.push({ file, content, sha256: sha256(bytes) })
             }
             collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
+          }
+          collectors?.set(sandbox.sandboxId, collectWorkProduct)
+          const originalPause = sandbox.pause.bind(sandbox)
+          sandbox.pause = async (...args) => {
+            await collectWorkProduct()
             return originalPause(...args)
           }
         }
@@ -474,13 +488,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const start = performance.now()
       const provisionedSandboxes = new Set()
       const collected = new Map()
+      const collectors = new Map()
       const providerRecords = []
       let runtime, session, completed, runError, runDetails, detachBroker
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
-        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords))
+        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: workProduct
@@ -489,7 +504,16 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         completed = await runtime.waitSession(session.id)
         let deliverables, missingDeliverables
         if (workProduct) {
-          const saved = collected.get(runtime.store.get('sessions', session.id)?.sandbox_id)
+          const sandboxId = runtime.store.get('sessions', session.id)?.sandbox_id
+          if (rlm && !collected.has(sandboxId) && collectors.has(sandboxId)) {
+            try { await collectors.get(sandboxId)() }
+            catch (error) {
+              const failure = new Error(`Invalid resident work-product collection: ${redactAudit(error instanceof Error ? error.message : String(error))}`)
+              failure.preflightStage = 'resident-work-product-collection'
+              throw failure
+            }
+          }
+          const saved = collected.get(sandboxId)
           if (saved) ({ deliverables, missingDeliverables } = saved)
           else if (completed.status === 'completed' && provisionedSandboxes.size === 0) {
             deliverables = []
@@ -516,7 +540,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       } catch (cause) {
         if (cause?.audit && (cause.message === 'Broad legal session failed' || cause.message.startsWith('Broad missing deliverables:'))) runError = cause
         else {
-          runError = new Error('Broad legal session failed')
+          runError = new Error(cause?.preflightStage === 'resident-work-product-collection' ? cause.message : 'Broad legal session failed')
+          if (cause?.preflightStage === 'resident-work-product-collection') runError.preflightStage = cause.preflightStage
           Object.assign(runError, collect())
           runError.metrics.errors = Math.max(runError.metrics.errors, 1)
         }

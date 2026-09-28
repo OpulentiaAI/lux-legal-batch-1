@@ -1,0 +1,14 @@
+{
+  "version": "opulent-rlm-v4",
+  "profile": "opulent-rlm-v4",
+  "inheritedVersion": "opulent-knowledge-v3",
+  "inheritedBaseSha256": "5257b9af33c2b8476155bd08ccb65202c88352459dc60d4bb48d2c26168862b8",
+  "inheritedManifestSha256": "ed43a97a4c8880d0742e4204ccdab72c962a9b3b6b8c675d8340856657a2bfb9",
+  "addendumSha256": "8c00d166a3dd042483abf2f4dba372f11e9949711eb3504ab7b6ae3a9b0bffa3",
+  "reference": {
+    "repository": "prime-reference/repo",
+    "commit": "08ff1b2e2794ea9e8f4a08d12bc95408a66e1074",
+    "path": "packages/coding-agent/docs/rlm.md",
+    "status": "design reference only; not a claim of Prime feature parity"
+  }
+}

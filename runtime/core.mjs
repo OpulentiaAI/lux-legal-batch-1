@@ -27,12 +27,13 @@ import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-
 import { createScriptExecutions } from './script-execution.mjs';
 import { browserDefinitions, createBrowserTools, validateBrowserOrigins } from './browser-tools.mjs';
 import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits } from './operation-waits.mjs';
+import { rlmDefinitions, createRlmTools } from './rlm.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
 const sandboxNames = new Set(['read', 'write', 'edit', 'MultiEdit', 'find_file_by_name', 'grep', 'notebook_read', 'notebook_edit', 'apply_patch', 'exec', 'get_output', 'kill_shell', 'write_to_process', 'scripted_tools', 'run_workflow', 'deploy', 'git_stack', 'fetch_pr_template', 'skill', 'install_personal_plugin', 'manage_personal_plugin', 'suggest_save_secret', 'upload_attachment', 'download_attachment', 'describe_image', 'generate_image']);
 const terminal = new Set(['completed', 'failed', 'cancelled', 'sleeping', 'stopped', 'blocked', 'interrupted', 'terminated']);
-const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow', 'wait_for_operations']);
+const scriptBlocked = new Set(['scripted_tools', 'ipython', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow', 'wait_for_operations']);
 const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map(Object.entries(catalog.tools).map(([name, tool]) => [name, ajv.compile(tool.inputSchema)]));
@@ -54,9 +55,10 @@ function modelVisibleToolResult(result, overflow) {
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
   const capabilities = config.runtimeCapabilities ?? [];
-  if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
-  const browserEnabled = capabilities.includes('browser-v1'), waitsEnabled = capabilities.includes('operation-waits-v1');
-  const extensions = { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}) };
+  if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1', 'rlm-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
+  const browserEnabled = capabilities.includes('browser-v1'), waitsEnabled = capabilities.includes('operation-waits-v1'), rlmEnabled = capabilities.includes('rlm-v1');
+  if (rlmEnabled && (![config.maxRlmChildren ?? 16, config.maxRlmHostCallsPerCell ?? 64].every(value => Number.isSafeInteger(value) && value > 0))) throw new Error('RLM budgets must be positive integers');
+  const extensions = { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}), ...(rlmEnabled ? rlmDefinitions : {}) };
   if (Object.keys(extensions).some(name => catalog.tools[name] || EFFECTIVE_TOOL_OVERLAY[name])) throw new Error('Runtime capability collides with baseline tool catalog');
   const store = options.store ?? createStore(join(config.stateDir, 'runtime.sqlite'));
   const scriptExecutions = createScriptExecutions(store, config, (id, value) => scrub(id, value));
@@ -65,7 +67,7 @@ export function createRuntime(options = {}) {
   const definitions = { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}), ...extensions };
   if (config.allowedTools !== undefined && !Array.isArray(config.allowedTools)) throw new TypeError('allowedTools must be an array');
   const allowed = config.allowedTools ? new Set(config.allowedTools) : null;
-  if (Object.keys({ ...browserDefinitions, ...waitDefinitions }).some(name => allowed?.has(name) && !extensions[name])) throw new Error('Unknown or noncanonical allowed tool');
+  if (Object.keys({ ...browserDefinitions, ...waitDefinitions, ...rlmDefinitions }).some(name => allowed?.has(name) && !extensions[name])) throw new Error('Unknown or noncanonical allowed tool');
   const initialPolicy = resolveInitialToolPolicy(config.initialTools, config.allowedTools, definitions);
   const initial = initialPolicy.initialTools ? new Set(initialPolicy.initialTools) : null;
   const runtimeValidators = new Map(validators);
@@ -78,7 +80,9 @@ export function createRuntime(options = {}) {
     definitions: effectiveExtensions,
     definitionsSha256: createHash('sha256').update(JSON.stringify(effectiveExtensions)).digest('hex'),
     effectiveTools: effectiveExtensions.map(tool => tool.name),
-    settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [] },
+    settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [],
+      ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
+        maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions } : {}) },
   };
   const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
@@ -147,6 +151,11 @@ export function createRuntime(options = {}) {
       await ensureSandbox(ctx, true);
       return computerTools(ctx)[name](args);
     };
+    if (rlmEnabled) {
+      const rlm = createRlmTools(ctx);
+      ctx.rlm = rlm;
+      tools.ipython = async args => { rlm.assertAvailable(); await ensureSandbox(ctx); return rlm.ipython(args); };
+    }
     if (browserEnabled) tools.browser = async args => {
       const preflight = await createBrowserTools({ ...ctx, sandbox: undefined }).browser(args);
       if (preflight.failure?.code !== 'BrowserUnavailable') return preflight;
@@ -199,6 +208,8 @@ export function createRuntime(options = {}) {
         throw new Error(scrub(id, safeError(error)));
       }
     };
+    ctx.rlmInvoke = (execution, name, args, blocked = scriptBlocked) => scriptExecutions.call(id, execution.token, name, args,
+      () => invocationPolicy.run({ blocked }, () => ctx.invoke(name, args)));
     contexts.set(id, ctx);
     return ctx;
   }
@@ -219,7 +230,10 @@ export function createRuntime(options = {}) {
             if (!api?.[method]) continue;
             const original = api[method].bind(api);
             api[method] = method === 'run'
-              ? (command, opts = {}) => original(command, { ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } })
+              ? (command, opts = {}) => {
+                const { rlmNoSecrets, ...rest } = opts;
+                return original(command, { ...rest, envs: { ...(rlmNoSecrets ? {} : Object.fromEntries(ctx.secrets)), ...rest.envs } });
+              }
               : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
           }
           await sandbox.files.makeDir(ctx.workspace);
@@ -286,7 +300,7 @@ export function createRuntime(options = {}) {
 
   function launch(id) {
     update(id, { status: 'queued' });
-    const pending = Promise.resolve().then(() => run(id)).finally(() => {
+    const pending = Promise.resolve().then(() => invocationPolicy.run(undefined, () => run(id))).finally(() => {
       workers.delete(id);
       const requested = continuationRequested.delete(id);
       const wakeFromSleep = sleepWakeRequested.delete(id);
@@ -453,7 +467,7 @@ export function createRuntime(options = {}) {
       checkpoint();
       const livePreview = store.list('previews').some(preview => preview.session_id === id && Date.parse(preview.expires_at) > Date.now());
       const liveWorkflow = store.list('workflows').some(workflow => workflow.owner_session_id === id && workflow.status === 'running');
-      if (ctx.sandbox && !ctx.signal.aborted && !livePreview && !liveWorkflow) {
+      if (ctx.sandbox && !ctx.signal.aborted && !livePreview && !liveWorkflow && !(rlmEnabled && ctx.rlm?.resident())) {
         try { await ctx.sandbox.pause(); ctx.sandbox = undefined; ctx.computer = undefined; }
         catch (error) { event(id, 'sandbox_pause_failed', { error: safeError(error) }); await ctx.sandbox.kill().catch(() => {}); ctx.sandbox = undefined; update(id, { sandbox_id: null, desktop_ready: false }); }
       }
@@ -519,6 +533,7 @@ export function createRuntime(options = {}) {
     const ctx = contexts.get(id);
     ctx?.controller.abort(new Error('Session cancelled'));
     for (const child of store.list('sessions').filter(row => row.parent_session_id === id && !terminal.has(row.status))) await cancelSession(child.id);
+    await ctx?.rlm?.close();
     if (ctx?.provisioning) await ctx.provisioning.catch(() => {});
     if (ctx?.desktopStarting) await ctx.desktopStarting.catch(() => {});
     const sandboxId = ctx?.sandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
