@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -21,6 +21,9 @@ import { redact, safeError, sameToken } from './security.mjs';
 import { DEFAULT_INSTRUCTION_PROMPT } from './instructions/render.mjs';
 import { resolveInitialToolPolicy } from './initial-tool-policy.mjs';
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs';
+import { prepareModelContext } from './context-compaction.mjs';
+import { extractToolImages } from './model-images.mjs';
+import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-overflow.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -31,18 +34,18 @@ const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map(Object.entries(catalog.tools).map(([name, tool]) => [name, ajv.compile(tool.inputSchema)]));
 
-function modelVisibleToolResult(result) {
+function modelVisibleToolResult(result, overflow) {
   const serialized = JSON.stringify(result) ?? 'null';
   if (serialized.length <= MAX_TOOL_RESULT_CHARS) return serialized;
   const characters = Array.from(serialized.slice(0, MAX_TOOL_RESULT_CHARS));
   let lower = 0, upper = characters.length;
   while (lower < upper) {
     const middle = Math.ceil((lower + upper) / 2);
-    const envelope = JSON.stringify({ truncated: true, prefix: characters.slice(0, middle).join('') });
+    const envelope = JSON.stringify({ truncated: true, prefix: characters.slice(0, middle).join(''), ...overflow });
     if (envelope.length <= MAX_TOOL_RESULT_CHARS) lower = middle;
     else upper = middle - 1;
   }
-  return JSON.stringify({ truncated: true, prefix: characters.slice(0, lower).join('') });
+  return JSON.stringify({ truncated: true, prefix: characters.slice(0, lower).join(''), ...overflow });
 }
 
 export function createRuntime(options = {}) {
@@ -57,7 +60,7 @@ export function createRuntime(options = {}) {
   const runtimeValidators = new Map(validators);
   for (const [name, definition] of Object.entries(EFFECTIVE_TOOL_OVERLAY)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
   if (config.corpusWorkspace) for (const [name, definition] of Object.entries(legalDefinitions)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
-  const contexts = new Map(), workers = new Map(), workflowTokens = new Map(), workflowCalls = new Map();
+  const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
   const scrub = (id, data) => {
     const secrets = [contexts.get(id)?.config.scriptToken, ...(contexts.get(id)?.secrets.values() ?? [])];
@@ -153,10 +156,13 @@ export function createRuntime(options = {}) {
       if (name === 'report_blocker' && args?.notify === 'cognition') args = { ...args, notify: 'opulent' };
       const validate = runtimeValidators.get(name);
       if (validate && !validate(args)) throw new Error(`Invalid ${name} arguments: ${ajv.errorsText(validate.errors)}`);
+      const overflowRead = name === 'read' ? normalizeOverflowRead({ ctx, store, args }) : null;
+      if (overflowRead) args = overflowRead.args;
       if (sandboxNames.has(name)) await ensureSandbox(ctx);
       event(id, 'tool_started', { name });
       try {
-        const result = scrub(id, await tools[name](args));
+        const output = await tools[name](args);
+        const result = scrub(id, overflowRead ? { ...output, overflow_paging: overflowRead.paging } : output);
         event(id, 'tool_finished', { name, ok: true });
         return result;
       } catch (error) {
@@ -251,7 +257,20 @@ export function createRuntime(options = {}) {
 
   function launch(id) {
     update(id, { status: 'queued' });
-    const pending = Promise.resolve().then(() => run(id)).finally(() => workers.delete(id));
+    const pending = Promise.resolve().then(() => run(id)).finally(() => {
+      workers.delete(id);
+      const requested = continuationRequested.delete(id);
+      const wakeFromSleep = sleepWakeRequested.delete(id);
+      const row = store.get('sessions', id);
+      const delivered = new Set(store.get('conversations', id)?.delivered ?? []);
+      const queued = store.list('orchestration_messages').some(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
+      if (!requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || row.status === 'sleeping' && !wakeFromSleep) return;
+      if ((row.steps ?? 0) >= config.maxSteps) {
+        update(id, { status: 'failed', error: 'Agent step budget exhausted; queued messages remain undelivered.' });
+        return;
+      }
+      launch(id);
+    });
     workers.set(id, pending);
     return pending;
   }
@@ -260,25 +279,80 @@ export function createRuntime(options = {}) {
     const ctx = context(id);
     ctx.stopRequested = false;
     const row = store.get('sessions', id);
-    let messages = store.get('conversations', id)?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? DEFAULT_INSTRUCTION_PROMPT}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
-    let delivered = new Set(store.get('conversations', id)?.delivered ?? []);
+    const previous = store.get('conversations', id);
+    let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? DEFAULT_INSTRUCTION_PROMPT}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
+    let delivered = new Set(previous?.delivered ?? []);
     const usage = { ...(row.usage ?? {}) };
+    let pendingToolCallId = previous?.pending_tool_call_id ?? null;
+    let contextCheckpoint = previous?.context_checkpoint;
+    let imageObservations = previous?.pending_image_observations ?? [];
+    let imageUsage = previous?.pending_image_usage ?? { images: 0, bytes: 0 };
+    const checkpoint = () => store.put('conversations', id, {
+      messages: scrub(id, messages), delivered: [...delivered], pending_tool_call_id: pendingToolCallId,
+      context_checkpoint: scrub(id, contextCheckpoint), pending_image_observations: scrub(id, imageObservations), pending_image_usage: imageUsage,
+    });
+    const queuedMessages = () => store.list('orchestration_messages').filter(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
+    const appendImageObservations = () => {
+      messages.push(...imageObservations);
+      imageObservations = [];
+      imageUsage = { images: 0, bytes: 0 };
+      checkpoint();
+    };
     try {
       update(id, { status: 'running' });
       if (row.repos?.length) await ensureSandbox(ctx);
-      for (let step = 0; step < config.maxSteps; step++) {
+      const assistantIndex = messages.findLastIndex(entry => entry.role === 'assistant');
+      const last = messages[assistantIndex];
+      if (last?.tool_calls?.length) {
+        const answered = new Set();
+        for (const entry of messages.slice(assistantIndex + 1)) if (entry.role === 'tool') answered.add(entry.tool_call_id);
+        for (const call of last.tool_calls) {
+          if (answered.has(call.id)) continue;
+          const error = call.id === pendingToolCallId
+            ? 'Tool execution was interrupted; its side effects are uncertain. Inspect the external state before deciding whether to retry.'
+            : 'Tool call was not started before interruption; no result was recorded.';
+          messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult({ error }) });
+        }
+        pendingToolCallId = null;
+        appendImageObservations();
+      } else if (pendingToolCallId) {
+        throw new Error('Invalid persisted tool-call checkpoint');
+      }
+      while ((store.get('sessions', id).steps ?? 0) < config.maxSteps) {
         ctx.signal.throwIfAborted();
-        for (const message of store.list('orchestration_messages').filter(item => item.session_id === id && !delivered.has(item.id))) {
+        for (const message of queuedMessages()) {
           messages.push({ role: 'user', content: message.body });
           delivered.add(message.id);
         }
-        const tools = ctx.availableToolDefinitions().filter(tool => !initial || initial.has(tool.name)).map(tool => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: tool.inputSchema } }));
-        const response = await model(messages, { tools, signal: ctx.signal });
+        checkpoint();
+        const availableDefinitions = ctx.availableToolDefinitions();
+        const tools = availableDefinitions.filter(tool => !initial || initial.has(tool.name)).map(tool => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: tool.inputSchema } }));
+        const policyFingerprint = createHash('sha256').update(JSON.stringify({ availableDefinitions, initialTools: tools.map(tool => tool.function.name),
+          modelInputImages: config.modelInputImages, modelInputImageMaxBytes: config.modelInputImageMaxBytes,
+          modelInputImageMaxCount: config.modelInputImageMaxCount, modelInputImageTotalBytes: config.modelInputImageTotalBytes,
+        })).digest('hex');
+        const prepared = await prepareModelContext({ messages, checkpoint: contextCheckpoint, config: {
+          ...config, contextCompaction: config.contextCompaction && {
+            ...config.contextCompaction, policyFingerprint,
+          },
+        }, model, signal: ctx.signal });
+        contextCheckpoint = prepared.checkpoint;
+        for (const [key, value] of Object.entries(prepared.usage)) usage[key] = (usage[key] ?? 0) + value;
+        if (Object.keys(prepared.usage).length) update(id, { usage });
+        if (prepared.compacted) event(id, 'context_compacted', {
+          before_chars: JSON.stringify(messages).length, after_chars: JSON.stringify(prepared.messages).length,
+          prefix_digest: contextCheckpoint.prefixDigest, usage: prepared.usage,
+        });
+        checkpoint();
+        update(id, { steps: (store.get('sessions', id).steps ?? 0) + 1 });
+        const response = await model(prepared.messages, { tools, signal: ctx.signal });
+        ctx.signal.throwIfAborted();
         for (const [key, value] of Object.entries(response.usage ?? {})) if (typeof value === 'number') usage[key] = (usage[key] ?? 0) + value;
-        update(id, { usage, steps: step + 1 });
+        update(id, { usage });
         event(id, 'model_usage', { usage: response.usage ?? {} });
         const message = response.choices[0].message;
         messages.push(message);
+        checkpoint();
         if (!message.tool_calls?.length) {
           let output = message.content ?? '';
           if (row.schema) {
@@ -286,28 +360,60 @@ export function createRuntime(options = {}) {
             const validate = ajv.compile(row.schema);
             if (!validate(output)) throw new Error('Agent output does not match requested schema');
           }
+          if (queuedMessages().length) continue;
+          ctx.signal.throwIfAborted();
           update(id, { status: 'completed', output, usage });
           event(id, 'session_completed', {});
           return;
         }
         for (const call of message.tool_calls) {
           let result;
+          ctx.signal.throwIfAborted();
+          pendingToolCallId = call.id;
+          checkpoint();
+          let args;
           try {
             if (initial && !initial.has(call.function.name)) throw new Error(`Tool is not visible for direct model calls: ${call.function.name}`);
-            result = await ctx.invoke(call.function.name, JSON.parse(call.function.arguments));
+            args = JSON.parse(call.function.arguments);
+            result = await ctx.invoke(call.function.name, args);
           }
-          catch (error) { result = { error: safeError(error) }; }
-          messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult(result) });
+          catch (error) {
+            if (ctx.signal.aborted) throw error;
+            result = { error: safeError(error) };
+          }
+          const requestedName = catalog.aliases[call.function.name] ?? call.function.name;
+          const imageName = requestedName === 'opulent_mcp' && args?.command === 'call_tool'
+            ? catalog.aliases[args.tool_name] ?? args.tool_name
+            : requestedName;
+          const extracted = extractToolImages(imageName, result, {
+            ...config,
+            modelInputImageMaxCount: Math.max(0, (config.modelInputImageMaxCount ?? 4) - imageUsage.images),
+            modelInputImageTotalBytes: Math.max(0, (config.modelInputImageTotalBytes ?? 10 * 1024 * 1024) - imageUsage.bytes),
+          });
+          const scrubbed = scrub(id, extracted.result);
+          const overflow = await persistToolResultOverflow({ ctx, store, ensureSandbox,
+            scrubbedSerialized: JSON.stringify(scrubbed) ?? 'null', canRead: (!allowed || allowed.has('read')) && !!ctx.tools.read });
+          messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult(scrubbed, overflow) });
+          imageObservations.push(...extracted.observations);
+          imageUsage.images += extracted.usage.images;
+          imageUsage.bytes += extracted.usage.bytes;
+          pendingToolCallId = null;
+          checkpoint();
         }
-        store.put('conversations', id, { messages: scrub(id, messages), delivered: [...delivered] });
+        appendImageObservations();
         if (ctx.stopRequested) { update(id, { status: 'sleeping' }); return; }
       }
       throw new Error('Agent step budget exhausted');
     } catch (error) {
+      for (const [key, value] of Object.entries(error.compactionUsage ?? {})) usage[key] = (usage[key] ?? 0) + value;
+      if (error.compactionUsage) {
+        update(id, { usage });
+        event(id, 'context_compaction_failed', { usage: error.compactionUsage, error: safeError(error) });
+      }
       update(id, { status: ctx.signal.aborted ? 'cancelled' : 'failed', error: safeError(error) });
       event(id, 'session_failed', { error: safeError(error) });
     } finally {
-      store.put('conversations', id, { messages: scrub(id, messages), delivered: [...delivered] });
+      checkpoint();
       const livePreview = store.list('previews').some(preview => preview.session_id === id && Date.parse(preview.expires_at) > Date.now());
       const liveWorkflow = store.list('workflows').some(workflow => workflow.owner_session_id === id && workflow.status === 'running');
       if (ctx.sandbox && !ctx.signal.aborted && !livePreview && !liveWorkflow) {
@@ -320,10 +426,15 @@ export function createRuntime(options = {}) {
   async function messageSession(id, body) {
     if (!store.get('sessions', id) || typeof body !== 'string' || !body.trim()) throw new Error('Session and message are required');
     const message = store.put('orchestration_messages', randomUUID(), { session_id: id, source: 'user', body: redact(body), created_at: new Date().toISOString() });
-    if (!workers.has(id)) {
+    if (workers.has(id)) {
+      continuationRequested.add(id);
+      if (store.get('sessions', id).status === 'sleeping') sleepWakeRequested.add(id);
+    }
+    else {
       if (workers.size >= config.maxConcurrentSessions) throw new Error('Concurrent session limit reached');
       const ctx = contexts.get(id);
       if (ctx?.signal.aborted) contexts.delete(id);
+      update(id, { steps: 0, error: null });
       launch(id);
     }
     return message;
@@ -378,8 +489,7 @@ export function createRuntime(options = {}) {
         const child = await ctx.startSession({ prompt: body.prompt, title: body.options?.label, repos: body.options?.repos, schema: body.options?.schema });
         agent = store.put('workflow_agents', key, { run_id: runId, session_id: child.id, phase: body.options?.phase, status: 'running', soft_time_limit_minutes: body.options?.soft_time_limit_minutes });
       }
-      await workers.get(agent.session_id);
-      const child = store.get('sessions', agent.session_id);
+      const child = await runtime.waitSession(agent.session_id);
       if (child.status !== 'completed') throw new Error(`Workflow child ${child.status}`);
       store.put('workflow_agents', key, { ...agent, status: 'completed', result: child.output });
       return child.output;
@@ -413,7 +523,10 @@ export function createRuntime(options = {}) {
       try { return await invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args)); }
       catch (error) { throw new Error(scrub(id, safeError(error))); }
     },
-    async waitSession(id) { await workers.get(id); return store.get('sessions', id); },
+    async waitSession(id) {
+      while (workers.has(id)) await workers.get(id);
+      return store.get('sessions', id);
+    },
     async tick(id) { return tick(context(id)); },
     async dispatchEvent(id, value) { return dispatchEvent(context(id), value); },
     async close() {
