@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { loadChunks, chunkText } from '../src/tp/manifest.ts'
 import { evaluate, gatewayChat, implementationHash, JUDGE_POLICIES, parseOptions, questionHash, summarize, safeError } from './compose.mjs'
 import { evidenceV4 } from './grading-evidence.mjs'
-import { JUDGE_V4_POLICY, JUDGE_V4_RESPONSE_FORMAT, judgeV4Request, validateJudgeV4 } from './judge-v4.mjs'
+import { JUDGE_V4_POLICY, JUDGE_V4_EXPLICIT_FORMAT_POLICY, JUDGE_V4_RESPONSE_FORMAT, judgeV4Request, validateJudgeV4 } from './judge-v4.mjs'
 import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY, validateEvalModel } from '../runtime/eval-model-profile.mjs'
 
 const sha256 = value => createHash('sha256').update(value).digest('hex')
@@ -99,16 +99,19 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
   argumentCaptures,
   judgeModel, providerOnly = null, judgeEffort = 'high', judgeMaxTokens = 4000, timeoutMs = 60000, retries = 1,
   judgeResponseFormat = 'none',
+  judgeFormatPolicy = 'historical',
   limit, concurrency = 1, resume = false, allowHarnessFailures = false, chat }) {
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16 ||
       !Number.isInteger(judgeMaxTokens) || judgeMaxTokens < 256 || judgeMaxTokens > 16000 ||
       !Number.isInteger(timeoutMs) || timeoutMs < 1 || !Number.isInteger(retries) || retries < 0 || retries > 5 ||
       !['none', 'low', 'medium', 'high', 'xhigh', 'max'].includes(judgeEffort) ||
-      !['none', 'json-schema'].includes(judgeResponseFormat) || typeof allowHarnessFailures !== 'boolean') {
+      !['none', 'json-schema'].includes(judgeResponseFormat) ||
+      !['historical', 'explicit-v1'].includes(judgeFormatPolicy) || typeof allowHarnessFailures !== 'boolean') {
     throw new Error('Invalid evidence-v4 judge configuration')
   }
   try { validateEvalModel(judgeModel, providerOnly) }
   catch { throw new Error('Invalid evidence-v4 judge configuration') }
+  const judgePolicy = judgeFormatPolicy === 'explicit-v1' ? JUDGE_V4_EXPLICIT_FORMAT_POLICY : JUDGE_V4_POLICY
   if (!rawInput || JSON.stringify(JSON.parse(rawInput.text)) !== JSON.stringify(data)) throw new Error('Invalid evidence-v4 raw input identity')
   for (const repo of [realpathSync(workspace), realpathSync(new URL('..', import.meta.url))]) {
     const outputRelative = relative(repo, resolve(output))
@@ -134,7 +137,8 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
       job.rubricReferences.map(({ id, sha256 }) => ({ id, sha256 }))])),
     evidence_writer_sha256: sha256(readFileSync(new URL('./grading-evidence.mjs', import.meta.url))),
     replay_writer_sha256: sha256(readFileSync(new URL('./rejudge.mjs', import.meta.url))),
-    judge_model: judgeModel, judge_provider_only: providerOnly, judge_policy_sha256: sha256(JUDGE_V4_POLICY),
+    judge_model: judgeModel, judge_provider_only: providerOnly, judge_format_policy: judgeFormatPolicy,
+    judge_policy_sha256: sha256(judgePolicy),
     judge_validator_sha256: sha256(readFileSync(new URL('./judge-v4.mjs', import.meta.url))),
     rubric_file_sha256: rubrics ? sha256(rubrics.raw) : null,
     judge_reasoning_effort: judgeEffort, judge_max_tokens: judgeMaxTokens, timeout_ms: timeoutMs, retries,
@@ -205,7 +209,7 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
       const key = `${g.id}/${mode}`
       const request = { role: 'judge', maxTokens: judgeMaxTokens,
         ...(judgeResponseFormat === 'json-schema' ? { responseFormat: JUDGE_V4_RESPONSE_FORMAT } : {}), messages: [
-          { role: 'system', content: JUDGE_V4_POLICY },
+          { role: 'system', content: judgePolicy },
           { role: 'user', content: judgeV4Request(g.q, g.rubric, replay.answer, replay.sources, g.evidence,
             g.criteria_metadata, { modelVisibleMetadata: replay.modelVisibleMetadata, rubricReferences }) },
         ] }
@@ -276,7 +280,7 @@ export async function rejudgeEvidenceV4({ data, rawInput, output, workspace, art
 
 async function v4Main(input, output, args) {
   const names = { '--artifacts': 'artifacts', '--argument-captures': 'argumentCaptures', '--judge-model': 'judgeModel', '--rubrics': 'rubricsFile',
-    '--limit': 'limit', '--concurrency': 'concurrency', '--judge-effort': 'judgeEffort', '--judge-max-tokens': 'judgeMaxTokens', '--timeout-ms': 'timeoutMs', '--retries': 'retries', '--judge-response-format': 'judgeResponseFormat' }
+    '--limit': 'limit', '--concurrency': 'concurrency', '--judge-effort': 'judgeEffort', '--judge-max-tokens': 'judgeMaxTokens', '--timeout-ms': 'timeoutMs', '--retries': 'retries', '--judge-response-format': 'judgeResponseFormat', '--judge-format-policy': 'judgeFormatPolicy' }
   const opts = {}
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--resume') { opts.resume = true; continue }

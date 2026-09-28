@@ -1,0 +1,2078 @@
+{
+  "version": "rubrics-v6",
+  "baselineSha256": "eb1cb2c47ca53bf7f9cef33bbd5332fa0eb5a83e69da090e91e4810609a65047",
+  "hashAlgorithm": "sha256",
+  "sourceHashPolicy": "SHA-256 of UTF-8 canonical chunkText(workspace, row) from src/tp/manifest.ts; excludes Markdown frontmatter and trims body",
+  "entries": {
+    "q01": {
+      "originalQuestion": "Quelles sociétés sont commerciales selon la loi du 10 août 1915 ?",
+      "originalQuestionSha256": "011cff06783fccb0048e24a23f05c33c9e3f240db72f7f960407dd682f5ad21f",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Accept either a materially accurate art. 100-1 commercial-object definition or a materially accurate art. 100-2 recognised-forms classification. The ambiguous question does not require both, nor an exhaustive list of forms."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "dimension": "legal_correctness",
+          "replacement": "Assess only additional qualifications or contradictions actually asserted within the chosen art. 100-1 or art. 100-2 reading (for example, falsely claiming every recognised form has personality). If there is no additional assertion, pass this slot; absence of the alternative reading is not a second failure."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art1001:c0",
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 100-1 defines commercial companies by commercial object; art. 100-2 lists forms, including the distinction for participation companies. The question wording does not settle whether both are required; the two statute editions carry the same art. 100-1 rule. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5. Benchmark interpretation: either supported art. 100-1 or art. 100-2 reading suffices, without both or an exhaustive list. In v6 slot 0 judges the chosen reading; slot 3 tests only volunteered, distinct qualifications or contradictions."
+    },
+    "q02": {
+      "originalQuestion": "Que prévoit l'article 7bis de la loi de 1915 sur la politique de rémunération ?",
+      "originalQuestionSha256": "500ebe4eb17f9be1e25f7c9ef6ad84152623b3717710cbb84594339ac3bec887",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « politique de rémunération » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "State the core art. 7bis duties in the listed-company setting: establish a directors’ remuneration policy, submit it to shareholders at the general meeting, and remunerate in accordance with the voted policy. Do not also score vote type here or demand endorsement of the question’s erroneous 1915-law attribution."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Assess actual asserted propositions against model-visible evidence (including separately labeled metadata as context, which alone cannot establish governing law), not omissions. A bare “loi de 1915” label copied from the question is premise contamination to note separately, not a policy-substance or grounding failure; novel claims about legislative origin, date, or scope still require support and are assessed."
+        },
+        {
+          "original": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "dimension": "legal_correctness",
+          "replacement": "State the vote type accurately: normally consultative, with a binding vote possible under the articles. If timing or legislative origin is additionally asserted, it must be accurate (material changes and at least every four years; the listed-company regime is the 24 May 2011 law, including accurate 2019 amending-law attribution). Do not require unasked policy-content details or penalize bare repetition of the question’s 1915 label twice."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:s0004:c3",
+          "sha256": "4cb9a3405ceaa24ddfbd81803454cbcb18f55fe53c16c816f6eee330ce9fb399",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0314:c1",
+          "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:s0578:c0",
+          "sha256": "eb624055debfc2c0e0016962fa2e05e87e29659e0a8ad240764eb4c95f2c8725",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art13-2:c0",
+          "sha256": "4b188aedbf21584a429e728fadab976167e3df3ecc2e7ac78eae1563345dcb56",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The doc-06 table of contents (s0004:c3) labels Annex II as the 24 May 2011 listed-shareholder-rights law; its art. 13 citation clause (art13-2:c0) confirms that law's name. Annex art. 7bis (s0314:c0/c1) provides the normally consultative policy vote and binding-vote option, duplicated in doc-07; the question misattributes the statute. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5. Benchmark interpretation: grade policy substance while noting mere repetition of the faulty question label separately as premise contamination; accept the accurate 24 May 2011 attribution and do not excuse independent unsupported claims. A bare 1915-law label carried over from the question is not penalized; novel legislative origin, date, or scope claims remain independently assessable against evidence. In v6 the first substantive slot tests duties; the last tests vote type and accuracy of any volunteered timing or origin."
+    },
+    "q03": {
+      "originalQuestion": "Qu'est-ce que la scission par absorption ?",
+      "originalQuestionSha256": "f36d382bdcbfe380a665972dabc9e77f621dc52ac39c86da032bb2183cd80fe6",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « scission par absorption est l’opération » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Define scission par absorption as the split company transferring its estate by absorption to existing beneficiary companies; do not require both statutory branches in this core-definition slot. Assess a missing branch only under completeness."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06 / doc-07.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": "Cover both branches: dissolution without liquidation and transfer of the entire active and passive estate to several beneficiaries; or no dissolution and transfer of part or all of the estate to one or more beneficiaries, with shares or interests attributed to members. Missing a branch affects completeness, not grounding."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-07:art10303:c0",
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 1030-3 has two distinct branches: dissolution without liquidation transfers the whole estate to multiple recipients; without dissolution transfers some or all assets and liabilities to one or more recipients. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5."
+    },
+    "q04": {
+      "originalQuestion": "Quel est le capital social minimum d'une SA au Luxembourg ?",
+      "originalQuestionSha256": "b79e3c463617e4386a78cadae744077d0039b34c80ffd648213e098643f25c3e",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « 30.000 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "State the Luxembourg SA minimum share capital as EUR 30,000; do not confuse it with the SE EUR 120,000 threshold or a minimum amount already paid in cash."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-07 / doc-09.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art4201:c0",
+          "sha256": "26e6faa1ca43fc2239f8993c4abaa1ba822ab74c1b4f28e7a91f7733d54f9b3b",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 420-1 states at least EUR 30,000 for an SA and separately EUR 120,000 for an SE. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5."
+    },
+    "q05": {
+      "originalQuestion": "Une SARL-S peut-elle être constituée sans capital minimum ?",
+      "originalQuestionSha256": "e901ff15524317583bb8f13da46137621b4b1fb92b641158e42ee8a539db82a7",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « sans capital minimum » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Reject literal zero-capital formation: the SARL-S has a legal minimum of EUR 1, despite the policy shorthand “sans capital minimum”. Accept a qualified yes (‘effectively no substantial minimum, but legally EUR 1’) as well as a direct no with the EUR 1 floor. Do not require the unasked upper bound."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-08:s0443:c0",
+          "sha256": "286c65d2a71562a835c0cea4018ad334b94402005d983552ff5d5e049472c48d",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-08:s0443:c1",
+          "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise describes the legislative objective as no minimum but immediately specifies symbolic EUR 1; art. 720-4 expressly sets EUR 1–12,000. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5."
+    },
+    "q06": {
+      "originalQuestion": "Qu'est-ce que le « say on pay » en droit luxembourgeois des sociétés ?",
+      "originalQuestionSha256": "d864164613259970b5e84a623384eb81e5fdaf6ef99bfb07e2e9ad412eaeaad3",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « say on pay » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Explain the say-on-pay concept as members’/shareholders’ say over managers’ remuneration: accept either the doctrinal general-meeting rule absent contrary articles or the listed-company art. 7bis policy vote. Neither both regimes nor an exact legislative date is mandatory here."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": "Assess scope and attribution only for claims actually asserted: the general-meeting rule is doctrinal, whereas art. 7bis concerns listed companies under the 24 May 2011 law (an accurate 2019 amending-law attribution is acceptable). If both regimes are asserted, distinguish them; do not universalize the listed-company vote or convert doctrine into a statute. A date need not be given."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-08:s0179:c2",
+          "sha256": "f1a2d52e45bef616fe6559ea5dda584fd2482a8b4403f96a608275c5be916e98",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0314:c0",
+          "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art13-2:c0",
+          "sha256": "4b188aedbf21584a429e728fadab976167e3df3ecc2e7ac78eae1563345dcb56",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise uses say on pay for members deciding managers’ remuneration absent a statutory provision; art. 7bis separately regulates shareholder votes on listed-company policy. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5. Annex II art. 13-2 identifies the 24 May 2011 statute, not a 1915-law art. 7bis. V6 separates the concept from scope/attribution of volunteered claims; neither both regimes nor an exact law date is mandatory."
+    },
+    "q07": {
+      "originalQuestion": "Qu'est-ce que la transmission universelle de patrimoine (TUP) dans une scission ?",
+      "originalQuestionSha256": "f3de48be634a5c2882c382d69b2f3b216e7d2838f6dd3ee5513c19459f56bff8",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « transmission universelle de patrimoine » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Identify TUP in a scission as a transfer by operation of law under the scission, rather than a series of individual assignments; assess the scope and recipients under completeness."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02 / doc-06 / doc-07.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Judge actual asserted propositions against model-visible evidence (including separately labeled metadata as context, which alone cannot establish governing law). Unsupported absolutes about guarantees, contractual consent, or third-party opposability fail; omission of exceptions is not a hallucination."
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": "Explain that the assets and liabilities allocated under the scission pass from the split company to beneficiary companies; do not require every exception or ancillary formality."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-02:s0024:c2",
+          "sha256": "70dca1a8033a3679c94e4b2f67e26b5c5a822455fd2fd24389626935fa60a364",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art10303:c0",
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art103116:c0",
+          "sha256": "07e6ed5ee89e2b92b8722c60dc6a103a527ee92310bc0dcb095351ac58a62ffb",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The scission materials discuss universal transfer of assets and liabilities into beneficiary companies rather than a series of individual assignments. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5. Art. 1031-16(1) directly describes the operation-of-law transfer according to the allocation plan, while paragraph (2) qualifies third-party opposability; avoid generalizing cessation of the split company to every partial scission."
+    },
+    "q08": {
+      "originalQuestion": "Comment est fixée la date de prise d'effet d'une scission transfrontalière ?",
+      "originalQuestionSha256": "dd27d67e6fde1b221cd1d720c9672ec9037b6976cc6d597166ce55dc2bbb2ab4",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « date de prise d'effet » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "State the operative choice-of-law rule: the legal effective date of a cross-border split is determined by the law of the split company’s state (including the special European regime’s split-company member state), not a universal calendar date or automatically each beneficiary’s law. A conditional answer is appropriate where the state and regime are unspecified; distinguish legal and accounting effect only if both are discussed."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "Les étapes ou exigences essentielles sont couvertes.",
+          "dimension": "completeness",
+          "replacement": "Explain the realization trigger only conditionally for the regime addressed: under Luxembourg general scission law concordant decisions of the companies concerned realize the split; under Luxembourg special European cross-border law publication of realization fixes its realization date. If the split company’s state is unspecified, explain that realization depends on completion of that state’s relevant decisions/publication/formalities without guessing which one applies; merely repeating the choice-of-law rule does not complete this slot. Do not demand a multi-regime survey, conflate the triggers, or present older doctrinal competing theories as current positive law."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-02:s0033:c10",
+          "sha256": "27ad2373558a8e2931f2512ee2017dc31e748494b18d323d5688bc6dca30f54b",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-02:s0033:c15",
+          "sha256": "e991a820e8690bfa7139c25fd9803f4fa1beb06bea9f0de49b6aa405806b83a0",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-02:s0033:c31",
+          "sha256": "87bb744a58f19beec25d0261d2cf5efc92227c86e43309e2f6fc38c116a3ec23",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0159:c0",
+          "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0172:c0",
+          "sha256": "16e6f68f0f31e5982fca5c60bea623ae9b59d7b8df84310e662dd7d50dbdabba",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0158:c0",
+          "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise contrasts different member-state effective-date rules and discusses recipient-state law and formalities; the question does not state governing jurisdictions or an operation type. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5. Benchmark interpretation: accept supported conditional answers; no guessed jurisdiction or universal effective date is demanded, and a proposed doctrinal solution is not universally binding law. V6 primary arts. 1031-14 and 1034-15 establish split-company-state choice of law and different general/European realization triggers; art. 1030-3 identifies regimes. The retained doc-02 sources describe historical doctrinal theories, not superseding statutory rules. Benchmark interpretation: conditional answer path without a guessed state or unasked multi-form survey."
+    },
+    "q09": {
+      "originalQuestion": "Quelles formes de commandites connaît le droit luxembourgeois ?",
+      "originalQuestionSha256": "c7e489fab936b8db5312d646382b2fa6a4846ce5f02e413d7d2eaeb4400051b1",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « société en commandite simple » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Identify the three Luxembourg commandite forms: société en commandite simple (SCS), société en commandite spéciale (SCSp), and société en commandite par actions (SCA). No exhaustive tax or regime analysis is required."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-03:s0002:c0",
+          "sha256": "53dcf46c809a371b913426e0a47124101de1573f9b8874ff6f82ab0e891140e4",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art1002:c0",
+          "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The commandite treatise names SCS, SCA and SCSp; art. 100-2 distinguishes the special partnership without separate personality. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5."
+    },
+    "q10": {
+      "originalQuestion": "À quelle date les dividendes doivent-ils être comptabilisés ?",
+      "originalQuestionSha256": "4e2ed4de4bfde734c75c74b0e9da42aace1f0daf443a454815f2f51b4002933a",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « comptabilisés à la date » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Dividends are recognized when the right to them is acquired, normally when the general meeting decides their distribution, not when cash is received. Do not require a tax or payment procedure."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-04.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-04:s0240:c0",
+          "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The accounting text puts dividend recognition at acquisition, normally the meeting deciding distribution, not receipt of cash. The original criterion’s document-family wording is retained solely as descriptive historical metadata, not an accuracy or citation gate in v5."
+    },
+    "q11": {
+      "originalQuestion": "La réforme belge a-t-elle supprimé l'obligation de capital social minimum ?",
+      "originalQuestionSha256": "6ca201180a678662375ca85ef249d9d25292fecc78e7c19bde0d3ffbb8ed6299",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « suppression du capital » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Answer yes for the Belgian SRL/BV: the reform abolished its fixed minimum share capital. Do not claim abolition for every Belgian company or Luxembourg company."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-05.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La réponse met explicitement en contraste les régimes visés.",
+          "dimension": "completeness",
+          "replacement": "Explain that the fixed minimum is replaced by adequate initial equity/financial resources for the projected activity and a financial plan. A Luxembourg comparison or founder-liability discussion is optional, not required; assess it for accuracy only if asserted."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-05:s0011:c0",
+          "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-05:s0050:c0",
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Belgian SRL/BV abolition is contrasted with the Luxembourg ordinary SARL minimum and Belgian sufficient initial equity/financial plan. V6 benchmark interpretation confines abolition to the Belgian SRL and makes adequate initial equity/financial planning, not an unasked Luxembourg contrast or founder liability, the separate completeness target."
+    },
+    "q12": {
+      "originalQuestion": "L'assemblée générale peut-elle distribuer un dividende en cours d'exercice ?",
+      "originalQuestionSha256": "2a18795e52075ec7faa0c1e0178aad8ce5f0cc4f67dfd149e49f7df5ea0df96c",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « tout moment au cours de l’exercice » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "In the discussed SA setting, accept an AG’s in-year distribution from available reserves, but distinguish it from a conditional interim dividend/acompte against current unapproved results reserved to the board/directoire. Also accept a qualified no-universal-answer because the question gives no company form, provided the answer accurately explains this available-reserves versus board-acompte distinction rather than denying the supported conditional possibility. Bare ‘it depends’ without that explanation does not pass."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-09 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": "If relying on the cited affirmative holding, attribute it to Belgian Court of Cassation precedent as discussed in a Luxembourg company-law manual; do not represent it as a binding universal Luxembourg holding. An independently supported rule need not mention the Belgian case. An answer may explicitly qualify that the case does not establish every Luxembourg form’s rule. Do not require a specific citation family; the separate citation slot tests visible support."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-09:s0492:c0",
+          "sha256": "b85bcd7486ae22012f83ee13f7302e7bc638fec440cb7f1cd0bc65ea1a341bdb",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-09:s0492:c1",
+          "sha256": "c1b1a8709fa835ba96d5b88426837a435a535eaa54e1187125a45261a2b82fe2",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Within the treatise's sociétés par actions discussion invoking Belgian jurisprudence, the general meeting may distribute available reserves in-year but not decide an interim dividend reserved to the board under conditions; this does not establish a universal rule for an unnamed form. Benchmark interpretation: conditional SA available-reserves answer or a qualified no-universal-answer with that same distinction passes; the quoted decision is Belgian precedent, not universal Luxembourg positive law. No undisclosed form-specific target is imposed."
+    },
+    "q13": {
+      "originalQuestion": "Qu'est-ce que l'obligation contractuelle et quels sont ses éléments constitutifs ?",
+      "originalQuestionSha256": "73bb8f4cf02dbeae1bbfcf753b83c968805d59fba03b1858c195b1dee0de038a",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « obligation contractuelle » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Define an obligation contractuelle as an obligation arising from a legally binding contract, not a merely social/moral promise or solely a later damages duty caused by breach."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "completeness",
+          "replacement": "Identify the debtor, creditor, owed performance/object, and binding contractual/legal relationship produced by an agreement intended to have legal effects. Ordinary enforceability may be mentioned; do not demand a formal contract-validity checklist, actual breach, or the optional faire/ne pas faire/donner taxonomy."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0015:c3",
+          "sha256": "05e70709d2ccc5c61a57d93ed114ad5c4d979778e7dd090eccb90a3fcf0bd2ea",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-01:s0017:c13",
+          "sha256": "2b2086bd202d5d087e16c9fe1f536b467d3df4e8b581deb63a120c2d63ed664d",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-01:s0016:c0",
+          "sha256": "6c7d7951e6c74087bf92f0d9be4aeab81b41e373ff06bfeb4b34267a4e9f3584",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-01:s0016:c1",
+          "sha256": "dfe8c3c49d272ed94d3a058733934cbd928f4c66b4f06153025691e0fa8d559a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The contract treatise distinguishes an intention to be legally bound from a merely social agreement and describes obligations arising from the contract. V6 adds the directly defining treatise chunks. “Éléments constitutifs” is interpreted as parties, owed prestation, and contractual bond, not an unstated statutory checklist or three cumulative performance types."
+    },
+    "q14": {
+      "originalQuestion": "Quelle majorité est requise pour une augmentation de capital décidée par l'assemblée ?",
+      "originalQuestionSha256": "3c4f132e63af7a88e4c507146c681b6b783085f417da57777b5f31bfdab035bd",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « majorité absolue » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "No single majority follows from an unspecified company form and transaction. Accept a correctly scoped conditional threshold for a capital increase requiring a statutory amendment (e.g. SA extraordinary assembly: at least two thirds of votes expressed; SARL default statutory amendment: associates representing three quarters of total share capital, not merely capital present at the meeting), OR an explanation that no universal threshold exists with at least one accurately supported applicable statutory-amendment example. Bare ‘it depends’ without a supported example does not pass. Never require “majorité absolue”: the cited reserve-capitalization passage describes it only as a hypothetical."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06 / doc-07.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-08:s0264:c1",
+          "sha256": "cf810ef3399364d52f6854e258cfc9ff55e3e99bcd6c952ec82096df7a95f17a",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art3105:c0",
+          "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0102:c0",
+          "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The statute gives a two-thirds rule for SA extraordinary resolutions; the treatise calls absolute majority merely a counterfactual for reserve capitalization, and other forms have other voting rules. Benchmark interpretation: publish conditional SA/SARL statutory-amendment capital-increase paths or an explained no-single-threshold answer with an accurate statutory-amendment example; a bare 'depends' is insufficient. No mandatory multi-form survey, quorum, or unanimity unless asserted; distinguish SA votes expressed from SARL's three quarters of total share capital, not capital present at the meeting. This resolves scoring ambiguity prospectively, not the unqualified question as universal law."
+    },
+    "q15": {
+      "originalQuestion": "L'apport en industrie est-il admis dans les sociétés luxembourgeoises ?",
+      "originalQuestionSha256": "59931e5dcb8b9fe17e4c994e2e0ddeef2e945a385fd39008984041c3d27a2abf",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « apport en industrie » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Answer yes, with at least one eligible Luxembourg company-form example: industry contributions are admitted in an SCS or, subject to the articles, a SARL. Do not generalize eligibility to every form or claim an industry contribution forms capital."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09 / doc-03.",
+          "dimension": "source_compliance",
+          "replacement": "Accept any relevant cited corpus passage actually visible to the model, whether a full chunk or an excerpt, if its visible text supports the answer. No particular document family or chunk ID is required."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": "Fail only an actual unsupported proposition asserted by the answer against model-visible evidence (including separately labeled metadata as context); metadata alone cannot establish governing law. An omitted detail is a completeness issue, not a hallucination, and must not be double-penalized as invention."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-08:s0443:c1",
+          "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0096:c0",
+          "sha256": "a48558d06271c9a387f72daa9bb27f3c39b39673e221db79ef66926c389ca054",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0110:c0",
+          "sha256": "0713986d4db57fc0246d2f2d4371e7f0c1231a534ed84090ee914dc9dba87234",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-08:s0061:c0",
+          "sha256": "23cf8996e880de6e559756e6a45216c5e28c4e8781cf13b33c5bfd207ad0ba2d",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "A commandite statute permits industry contributions, while the treatise explains industry contributions do not enter SARL-S share capital. V6 adds the updated 2026 SARL statutory provision permitting non-capital industry shares under the articles and SARL-S statutory cash/in-kind restriction. The older précis cannot override the later provision. No unasked survey or noncapital explanation is mandatory unless capital is discussed; an eligible example suffices."
+    },
+    "q16": {
+      "originalQuestion": "Quel est le capital minimum d'une SARL classique ?",
+      "originalQuestionSha256": "0a45534f62e033e5272faec524d92e97b63ea4dcb2791c58003352c6fdda3efa",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « 12.000 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-09 / doc-07.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:s0095:c0",
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 710-5 sets the ordinary SARL minimum at EUR 12,000."
+    },
+    "q17": {
+      "originalQuestion": "What is the minimum share capital for a Luxembourg SARL?",
+      "originalQuestionSha256": "3b6e7908d55efa03f07ea40978da686854d91dcfb99335e8c1ae6813aac94fb8",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « 12.000 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-06 / doc-09 / doc-07.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:s0095:c0",
+          "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The ordinary SARL minimum is EUR 12,000 under art. 710-5; distinguish the SARL-S."
+    },
+    "q18": {
+      "originalQuestion": "Quel texte définit les sociétés commerciales au Luxembourg ?",
+      "originalQuestionSha256": "929aba56f393119b8641c6749347a2aa0cd13308b26f6aac9c5374471c0428b2",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « Loi du 10 août 2 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Name the Law of 10 August 1915 concerning commercial companies, rather than require the truncated fragment “Loi du 10 août 2”."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06.",
+          "dimension": "source_compliance",
+          "replacement": "Accept the law’s corresponding art. 100-1 text in doc-06 or doc-07 as legal support; report historical doc-06-only compliance separately."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art1001:c0",
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Both editions identify the Law of 10 August 1915 and reproduce its art. 100-1; the reference fragment is truncated mid-date."
+    },
+    "q19": {
+      "originalQuestion": "Quel principe impose aux parties d'exécuter le contrat de bonne foi ?",
+      "originalQuestionSha256": "d08a0024ad24ef668b78c487f106097092ce93e3e16f4900562a9b6d7059b494",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « bonne foi » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0022:c1",
+          "sha256": "3fc5e75ee82471662f9727539c36ffcdfd3f2ed811d073ac300ffe0fdd93bdd8",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-01:s0009:c0",
+          "sha256": "a6b865f06b11d1df04e7f2ee10754d1d2c45e3da2d93463e09b887bfe487f4af",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The contract treatise discusses good faith in contractual relations and the civilian contractual tradition."
+    },
+    "q20": {
+      "originalQuestion": "Qu'est-ce que la réticence dolosive ?",
+      "originalQuestionSha256": "ab47becdf16735c646ee7a16cf32f94a331726232a4c464a731d1843c8225df4",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « réticence dolosive » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0067:c0",
+          "sha256": "e31b14b86cfa5212d11d25ea62eadfb8f6a381baa12d021cccc4dc0e9d5df417",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-01:s0067:c1",
+          "sha256": "1e4e2466b7b6bf80c00f8906e13115f4405042b77a66418854896989e0485e53",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise defines intentional non-disclosure and relates it to a duty to disclose; silence alone does not always establish fraud."
+    },
+    "q21": {
+      "originalQuestion": "Le créancier peut-il exiger l'exécution en nature de l'obligation ?",
+      "originalQuestionSha256": "1cda97f45b33f3d754c06285e17347b80c9ca4535d23309f2d09bd28449862b2",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « exécution en nature » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0241:c0",
+          "sha256": "2c20bebcc23df4f3f241a3d403a6980c8dfb3bbd145a9bf66abcdb1045291498",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise states a creditor in Luxembourg may in principle seek specific performance through a court; it is not an unconditional right in every case."
+    },
+    "q22": {
+      "originalQuestion": "Comment le droit luxembourgeois des contrats se rattache-t-il à la tradition française ?",
+      "originalQuestionSha256": "affa1adc51a1805781a0762521baf5f957b4bcaed0da84a259a05ba51f450d94",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « conception consensualiste » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0008:c0",
+          "sha256": "46d10341f0f9be07958447f5eea1f4e8b4c3018ad8e35f319260e064571adc48",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise connects the Luxembourg civilian tradition with French-code consensualism, against Roman formalism."
+    },
+    "q23": {
+      "originalQuestion": "Quelle réforme française de 2016 a transformé le droit des obligations ?",
+      "originalQuestionSha256": "a9998cabc56211176a301e3291e67ea5895bceca27ce216b480d018244a726ea",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « ordonnance de 2016 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0001:c3",
+          "sha256": "d56d4b70384574c61119a59a4ea917fb6b60b92e9c76223d804b77cf45192b51",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise distinguishes the French 2016 ordonnance from later Belgian reform and Luxembourg law."
+    },
+    "q24": {
+      "originalQuestion": "Quel document les sociétés doivent-elles établir avant une scission ?",
+      "originalQuestionSha256": "9202ef03ac58c59152a41e30e5a3c74e96c5609b5d79deb76ecb0e9c16bb78a6",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « projet commun de scission » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "Les étapes ou exigences essentielles sont couvertes.",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-02:s0011:c5",
+          "sha256": "f43b100faff05fa45affe9059a7ccfa454d52f48b9a84aab401aa71678539a2a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise lists the common draft scission plan as the first of seven described steps."
+    },
+    "q25": {
+      "originalQuestion": "Une scission transfrontalière bénéficie-t-elle d'une neutralité fiscale ?",
+      "originalQuestionSha256": "b61b507270b1ff465822349a9c51c041538a75c98900ae66e15ac220af38b1fd",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « neutralité fiscale » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "State that tax neutrality may apply only when the relevant regime’s conditions are met; it is not an automatic consequence of every cross-border scission."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-02:s0059:c73",
+          "sha256": "28fb9089a112f77fff978cb8f25072f05d11e5d16caf6a0cbe891bf852b4cc22",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The fiscal discussion conditions neutrality on the applicable tax directive and a cash adjustment cap, not automatic neutrality for every operation."
+    },
+    "q26": {
+      "originalQuestion": "Qui supporte la responsabilité illimitée dans une société en commandite ?",
+      "originalQuestionSha256": "3d37abaf52f117fa231d343868c1c5b1141d91a8e97301b1923b36d4ca6c3517",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « associé commandité » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-03:s0010:c0",
+          "sha256": "560e8a9a8078cdd6ba95c6ec6b7423a5c101cdb6dfa1527d47a5d3207accc7de",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The commandite definition places unlimited joint liability on the commandités and a bounded contribution on commanditaires."
+    },
+    "q27": {
+      "originalQuestion": "Qu'est-ce qu'une commandite par actions ?",
+      "originalQuestionSha256": "05727a73c10c134ea7edb2e2a24ede7d9cb78ea8b2e557bd8bc1d0140a9f1eba",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « commandite par actions » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-03 / doc-08 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art6001:c0",
+          "sha256": "281d5fed9ae51e3097303754060b39cfe8c6858ceff2b8ada090887488203931",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 600-1 defines the SCA through fully liable shareholders alongside shareholders contributing a limited stake."
+    },
+    "q28": {
+      "originalQuestion": "Quel plan organise la comptabilité des entreprises luxembourgeoises ?",
+      "originalQuestionSha256": "8f0fc761f31df1bc9e68ef001e32fbafded80d2f95eac0e3af8f3737c7979eb9",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « plan comptable normalisé » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-04.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-04:s0018:c0",
+          "sha256": "6529d98ccf18b196ed46aec90745217f2b210d1d681752bef1eab1dc7671639b",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The accounting treatise identifies the plan comptable normalisé as the Luxembourg accounting framework."
+    },
+    "q29": {
+      "originalQuestion": "Quels documents composent les comptes annuels ?",
+      "originalQuestionSha256": "451df3a98ab3becda7c92ca7825808c9f64db92ca96d99707bc59b652b4b3a18",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « compte de profits et pertes » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Identify annual-accounts components, including the balance sheet and profit-and-loss account; do not award a list-only answer for merely repeating “compte de profits et pertes”."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-04.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-04:s0018:c0",
+          "sha256": "6529d98ccf18b196ed46aec90745217f2b210d1d681752bef1eab1dc7671639b",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-04:s0013:c0",
+          "sha256": "8cc80ba44ebe92b5444ad65f1ae251cf914f62c4e5dcf019a0f9b9a6d252b453",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The accounting text names balance sheet and profit-and-loss statement in annual accounts; assess additional components only if established by the cited source."
+    },
+    "q30": {
+      "originalQuestion": "Auprès de quel organisme les bilans sont-ils centralisés ?",
+      "originalQuestionSha256": "78d34f59ad46d1b32690c8c586ac12e070772b6db8ae4dfd67ccf98ecc6a9395",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « centrale des bilans » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-04.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-04:s0605:c0",
+          "sha256": "0de0d1ab10261a95ca53caebaf6ef32f2a0f6a53ece31a069f9c68aec51171c2",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "STATEC is described as operating the centrale des bilans; distinguish the centralisation body from filing procedures."
+    },
+    "q31": {
+      "originalQuestion": "Comment s'appelle la société belge à responsabilité limitée après la réforme ?",
+      "originalQuestionSha256": "cd38f4bdf44e7468b41a4b77f5e2dd02f9cfcbc8ac85f56784462441405e7175",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « société à responsabilité limitée » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-05.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La réponse met explicitement en contraste les régimes visés.",
+          "dimension": "completeness",
+          "replacement": "A correct Belgian post-reform name (SRL/BV) answers this naming question; comparison with the Luxembourg SARL is optional, not a required condition."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-05:s0011:c0",
+          "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-05:s0049:c0",
+          "sha256": "69d301ec24177845e542f52880a54b4ecc2e271aecddcf638a16066955ce9516",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The Belgian reform’s SRL/BV is the reformed limited-liability form; the question asks only its name, so the frozen comparison requirement does not measure the requested answer."
+    },
+    "q32": {
+      "originalQuestion": "La SRL belge conserve-t-elle un capital minimum ?",
+      "originalQuestionSha256": "a44deb5b48b36405ecc63661be0f8409a84932f227bdd67e33770615c5234361",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « capital minimum » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-05.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La réponse met explicitement en contraste les régimes visés.",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-05:s0050:c0",
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The Belgian SRL abandons a fixed minimum but requires sufficient equity and a financial plan."
+    },
+    "q33": {
+      "originalQuestion": "Une société irrégulièrement constituée risque-t-elle la nullité ?",
+      "originalQuestionSha256": "681767c3c239f1629b8a797b57e342e5010381c23546bbe0372fa4ebac799a27",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « nullité » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "An irregular constitution may risk nullity for statutory grounds such as the formation form in art. 100-3; do not say every defect automatically annuls the company."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art1003:c0",
+          "sha256": "84cf9f5dde659346608087c2e1fa0d1c64007c9d8b6f5174650740d1650f223f",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 100-3 states nullity sanctions for failure to observe specified formation formalities; not every irregularity causes automatic nullity."
+    },
+    "q34": {
+      "originalQuestion": "Dans quels cas une société peut-elle être dissoute ?",
+      "originalQuestionSha256": "bfd70c2f11c3a52b6cac2a5b024870b04dfebcabbddc7ec96f19281bb4900663",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": true,
+        "reason": "The requested universe of dissolution cases and company form is unstated; a single exhaustive checklist is not supported by this broad wording."
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « dissolution » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06 / doc-08 / doc-09.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art1865:c0",
+          "sha256": "646b50053604adf17d9dec995de287d07a43ce093e768144701bcf6471251202",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art1003:c0",
+          "sha256": "84cf9f5dde659346608087c2e1fa0d1c64007c9d8b6f5174650740d1650f223f",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The appended Civil Code article lists several ways a society ends, while other statutes provide company-form-specific causes; the question asks for cases without specifying form or exhaustiveness."
+    },
+    "q36": {
+      "originalQuestion": "Quel seuil déclenche une offre publique d'achat obligatoire ?",
+      "originalQuestionSha256": "448383a5706f22673c62b56fb2815fbfe097b93db956c7c0abf756a4b8113c2d",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": true,
+        "reason": "Only indirect secondary commentary on the 33.33% threshold was located in the canonical corpus; exact trigger, denominator and boundary need legal adjudication before unambiguous threshold scoring."
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « 33,33 » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Do not infer an exact mandatory-offer trigger solely from the 33.33% voting-rights waiver illustration; verify the operative OPA provision and threshold before scoring."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-07.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-07:s0078:c2",
+          "sha256": "d55f76bc3d9599b039c40e73c597e40248afce99a17a27755d86d295af408e92",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The cited commentary mentions 33.33% voting rights in a voluntary non-exercise example to avoid a mandatory bid; it is not the full operative statutory trigger text."
+    },
+    "q37": {
+      "originalQuestion": "Un actionnaire peut-il renoncer à l'exercice de ses droits de vote ?",
+      "originalQuestionSha256": "3453f6ae6e3438af20a8a7447128fc5386de1c55d7e62a125d7e423bcd229526",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « droits de vote » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-07 / doc-06 / doc-09.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-07:s0078:c2",
+          "sha256": "d55f76bc3d9599b039c40e73c597e40248afce99a17a27755d86d295af408e92",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art4501:c0",
+          "sha256": "e66785ca5740a217e206ee8227ff5c97436b4fddd8fa6afbdf9e18c4e68d5f80",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The commentary cites art. 450-1(9) for voluntary renunciation of all or some voting rights, subject to notice and statutory constraints."
+    },
+    "q39": {
+      "originalQuestion": "Avec quel capital symbolique peut-on constituer une SARL-S ?",
+      "originalQuestionSha256": "28f4a41641e868239f2d13cb8e7e2dbda8a044dff326a2c0eddd35004e146a3c",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « un euro » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-08:s0443:c1",
+          "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:s0109:c0",
+          "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise identifies EUR 1 as symbolic SARL-S capital and art. 720-4 supplies the EUR 1 lower bound."
+    },
+    "q40": {
+      "originalQuestion": "Qu'est-ce qu'une société en participation ?",
+      "originalQuestionSha256": "1b1599971181290eabe66101ad17195ea2c34608a907b09275d5521e171e78e0",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « société en participation » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art9002:c0",
+          "sha256": "5bc77ef0b22689e5dca9daad8a526e404761f3a88b1f7abfe2b1479c0ba84fc8",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 900-2 defines participation as parties interested in operations managed by others in their own names."
+    },
+    "q41": {
+      "originalQuestion": "Quelle fraction des voix est requise pour les décisions extraordinaires ?",
+      "originalQuestionSha256": "9c8dc7812663eb376f9f5d6b73622360f2d5b3994cc6dbeeaf0743273e4c2ce1",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": true,
+        "reason": "Neither company form nor the type of extraordinary decision is stated; two-thirds is not a universal threshold."
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « deux tiers » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Two-thirds of votes cast applies to the cited SA statutory-amendment rule; do not require it for every form or every extraordinary decision without further facts."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:s0052:c0",
+          "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-06:art3105:c0",
+          "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Two-thirds of votes cast applies to specified SA extraordinary statutory amendments, whereas commandite decisions under art. 310-5 have different rules."
+    },
+    "q42": {
+      "originalQuestion": "Qu'est-ce que le quorum dans une assemblée générale ?",
+      "originalQuestionSha256": "266a9e201df436873871c5319b80056e04547a93bb1d0638c6682e042e79996e",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « quorum » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-08 / doc-09 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-08:s0129:c5",
+          "sha256": "c1dd993cd9e119c54187fb7413a88e1de491cf229a81e241b935ac45e1040707",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise separates a quorum (minimum represented capital for valid deliberation) from the majority needed to approve a resolution."
+    },
+    "q43": {
+      "originalQuestion": "Qu'est-ce qu'une société coopérative au Luxembourg ?",
+      "originalQuestionSha256": "c880ae89c944a639dcb495a985c1e08a39f1ca16db799b37f846286fc951ac0f",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « société coopérative » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "Define the cooperative by variable associates or contributions and non-transferable third-party shares; naming the form alone is insufficient."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-09 / doc-06 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art8111:c0",
+          "sha256": "b2b131e5a8b8e3981c0c241c18c613b2dce543f60b745dd8390d9aa74fbfb1e8",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 811-1 defines cooperative membership/contributions as variable and shares as non-transferable to third parties; liability can be limited or unlimited."
+    },
+    "q44": {
+      "originalQuestion": "L'assemblée générale peut-elle décider un acompte sur dividende à tout moment ?",
+      "originalQuestionSha256": "0944bc35b9b55e3bc96906ea798f6bfd20c2a0e2b52a061a219ef2298ba52417",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": true,
+        "reason": "The question does not name a company form, while the cited doctrinal prohibition is in a sociétés par actions chapter and discusses Belgian jurisprudence; its application to all forms is not established by this source."
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « tout moment au cours » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": "In the cited sociétés par actions discussion, answer no for a general-meeting acompte sur dividende; distinguish it from an available-reserves dividend during the year. Do not universalize this passage to unspecified company forms."
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-09 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-09:s0492:c0",
+          "sha256": "b85bcd7486ae22012f83ee13f7302e7bc638fec440cb7f1cd0bc65ea1a341bdb",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-09:s0493:c0",
+          "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Within the treatise's sociétés par actions chapter, the cited passage invokes Belgian jurisprudence for reserve-funded dividends at any time but excludes general-meeting interim dividends, reserved to the board under conditions. It does not establish the rule for every company form."
+    },
+    "q45": {
+      "originalQuestion": "What does the law of 10 August 1915 provide on company dissolution?",
+      "originalQuestionSha256": "bd4895737414f01619aab64cbea273ed6d8cb5836520cf687c1035d6b9d24ff0",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": true,
+        "reason": "No company form or dissolution context is identified, so a unique exhaustive content checklist would be arbitrary."
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « dissolution » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art11001:c0",
+          "sha256": "ec758abf77aa23ace51880bd3b912e37bcc91b724041aa72ea8716323fa6c22a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The 1915 law's art. 1100-1 preserves the dissolved company's existence for liquidation, with specified exceptions; the open-ended question does not identify a form or a particular dissolution provision."
+    },
+    "q47": {
+      "originalQuestion": "Quelle différence de responsabilité entre associé commandité et commanditaire ?",
+      "originalQuestionSha256": "7c9e2278c5e9924b2d8121789cfc62f3587e1f9a8770a8029533848774234615",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « commanditaire » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-03 / doc-06 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La définition est complète (pas seulement une occurrence du terme).",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art3101:c0",
+          "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 310-1 contrasts commandité unlimited and joint liability with commanditaire liability bounded by a contribution."
+    },
+    "q48": {
+      "originalQuestion": "Did the Belgian reform abolish the minimum share capital for the SRL/BV?",
+      "originalQuestionSha256": "f8f4feb67dbcafd5eefa7e9c37d46031e52c72c00542109a62ec4425f2c98a8e",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « capital minimum » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-05.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-05:s0011:c0",
+          "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-05:s0050:c0",
+          "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The Belgian SRL abolition is distinct from Luxembourg SARL capital and does not eliminate the financial-plan/sufficient-funding requirement."
+    },
+    "q49": {
+      "originalQuestion": "Quelle distinction entre obligation de moyens et obligation de résultat ?",
+      "originalQuestionSha256": "e57eb9f803b3894b0d861b10538da6759a388f9bd942a585f1bd112875f6339d",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « obligation de moyens » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-01.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle ou le principe est correctement attribué à sa source.",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-01:s0017:c1",
+          "sha256": "75834e0485eb62b3e34af8a2ac1a21b6db00295e4ef939c13f18a65b9d8ab622",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise distinguishes an obligation of result (nonachievement suffices) from means (claimant proves failure to use appropriate care)."
+    },
+    "q50": {
+      "originalQuestion": "Quelles sont les grandes étapes d'une scission transfrontalière ?",
+      "originalQuestionSha256": "b52b9f4216f54bb8b9870e1522a563e8a80f8d7e407fca8a56b32654b97d9e80",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « scission transfrontalière » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "Les étapes ou exigences essentielles sont couvertes.",
+          "dimension": "completeness",
+          "replacement": "Describe the major stages in the cited seven-stage account while identifying it as the described European regime; do not assert identical procedural detail in every state."
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-02:s0011:c5",
+          "sha256": "f43b100faff05fa45affe9059a7ccfa454d52f48b9a84aab401aa71678539a2a",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The treatise expressly enumerates seven broad stages from common draft to registration and effect; it describes a European-legislative proposal rather than proof every jurisdiction enacted identical steps."
+    },
+    "q35": {
+      "originalQuestion": "Comment les titres des associés sont-ils échangés lors d'une scission ?",
+      "originalQuestionSha256": "68d746db20c4db08ea5ecb1b6c8df732d29163f9c8d616bbbfc4391f267a7ab4",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « échange de titres » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-02 / doc-06.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "Les étapes ou exigences essentielles sont couvertes.",
+          "dimension": "completeness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-07:art10303:c0",
+          "sha256": "5dd80cce4bf696194704119b72c9b303d50d79f41445b1fabbe270181789060c",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-02:s0021:c2",
+          "sha256": "269b9991373c2b8c212a9839ec61f1396449866ba81c03fbe81eb4edf9b5655d",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "The scission definition provides for shares/units in beneficiaries to members of the split company and possibly limited cash adjustment."
+    },
+    "q46": {
+      "originalQuestion": "Que prévoit l'article 100-1 de la loi sur les sociétés commerciales ?",
+      "originalQuestionSha256": "b059616f2bc70b54d3e67ed4168d4ebedb3b7ca5578b6a94ae3307a326acd2bf",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « actes de commerce » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-06.",
+          "dimension": "source_compliance",
+          "replacement": "Accept the equivalent art. 100-1 text from doc-06 or doc-07 for legal source compliance; keep historical doc-06-only scoring visible separately."
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-06:art1001:c0",
+          "sha256": "229f5624731715fb4595bccb99180f2f7330719369392a4478001c307f251a33",
+          "hashOf": "canonical-chunk-text"
+        },
+        {
+          "id": "doc-07:art1001:c0",
+          "sha256": "7b1e84a14f974b29cbeef069fca5644c096b9308a7ca8476f130abb7162e35ec",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 100-1 in both editions defines commercial object and identifies participation/temporary companies."
+    },
+    "q51": {
+      "originalQuestion": "Que prévoit l'article 450-1 sur les pouvoirs de l'assemblée générale ?",
+      "originalQuestionSha256": "937c5ec4f7e281b7c4a1a30e93f181b2ec205c5801f231bf281050ee551e6d30",
+      "reviewStatus": "reviewed",
+      "ambiguity": {
+        "needsAdjudication": false,
+        "reason": null
+      },
+      "criteria": [
+        {
+          "original": "La réponse porte effectivement sur « pouvoirs les plus étendus » (le fait attendu).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        },
+        {
+          "original": "La réponse cite au moins un chunk issu de doc-07 / doc-08.",
+          "dimension": "source_compliance",
+          "replacement": null
+        },
+        {
+          "original": "Aucune affirmation n'est inventée au-delà des sources fournies.",
+          "dimension": "grounding",
+          "replacement": null
+        },
+        {
+          "original": "La règle posée par l'article est paraphrasée fidèlement (pas d'invention de seuils ou de délais).",
+          "dimension": "legal_correctness",
+          "replacement": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "doc-07:art4501:c0",
+          "sha256": "e66785ca5740a217e206ee8227ff5c97436b4fddd8fa6afbdf9e18c4e68d5f80",
+          "hashOf": "canonical-chunk-text"
+        }
+      ],
+      "rationale": "Art. 450-1 grants the shareholders’ general meeting broad power to act or ratify matters concerning the company; this is not unlimited power beyond reserved competences."
+    }
+  }
+}

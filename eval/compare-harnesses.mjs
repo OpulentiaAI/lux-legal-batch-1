@@ -39,7 +39,7 @@ export function parseComparisonOptions(args) {
     options.nativeModule = resolve(options.nativeModule)
   }
   if (options.diagnostic && options.previous) throw new Error('Diagnostic mode cannot use --previous')
-  if (options.diagnostic && options.limit !== 10) throw new Error('Diagnostic mode requires --limit 10')
+  if (options.diagnostic && ![10, 15].includes(options.limit)) throw new Error('Diagnostic mode requires --limit 10 or 15')
   if (options.limit > 2 && !options.previous && !options.diagnostic) throw new Error('A successful preceding gate is required')
   return options
 }
