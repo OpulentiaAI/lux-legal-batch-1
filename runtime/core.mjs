@@ -19,6 +19,8 @@ import { createTools as operationTools, tick, dispatchEvent } from './tools/oper
 import { createTools as legalTools, definitions as legalDefinitions } from './tools/legal.mjs';
 import { redact, safeError, sameToken } from './security.mjs';
 import { DEFAULT_INSTRUCTION_PROMPT } from './instructions/render.mjs';
+import { resolveInitialToolPolicy } from './initial-tool-policy.mjs';
+import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -48,9 +50,12 @@ export function createRuntime(options = {}) {
   const store = options.store ?? createStore(join(config.stateDir, 'runtime.sqlite'));
   const storage = options.storage ?? createStorage(config);
   const model = options.model ?? createModel(config);
-  const definitions = { ...catalog.tools, ...(config.corpusWorkspace ? legalDefinitions : {}) };
+  const definitions = { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}) };
   const allowed = config.allowedTools ? new Set(config.allowedTools) : null;
+  const initialPolicy = resolveInitialToolPolicy(config.initialTools, config.allowedTools, definitions);
+  const initial = initialPolicy.initialTools ? new Set(initialPolicy.initialTools) : null;
   const runtimeValidators = new Map(validators);
+  for (const [name, definition] of Object.entries(EFFECTIVE_TOOL_OVERLAY)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
   if (config.corpusWorkspace) for (const [name, definition] of Object.entries(legalDefinitions)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
   const contexts = new Map(), workers = new Map(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
@@ -129,6 +134,7 @@ export function createRuntime(options = {}) {
       }, 0) })).filter(tool => tool.score > 0).sort((a, b) => b.score - a.score).slice(0, Math.min(Math.max(Number(limit) || 10, 1), 50));
     };
     ctx.tools = tools;
+    ctx.availableToolDefinitions = () => Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)));
     ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !scriptBlocked.has(tool.name));
     ctx.invoke = async (requestedName, args = {}) => {
       const name = catalog.aliases[requestedName] ?? requestedName;
@@ -144,6 +150,7 @@ export function createRuntime(options = {}) {
       if (invocationPolicy.getStore()?.blocked.has(name)) throw new Error('Script broker authorization failed');
       if (!tools[name] || catalog.excluded[name]) throw new Error(`Tool is not in the configured runtime: ${name}`);
       if (ctx.signal.aborted) throw new Error('Session is cancelled');
+      if (name === 'report_blocker' && args?.notify === 'cognition') args = { ...args, notify: 'opulent' };
       const validate = runtimeValidators.get(name);
       if (validate && !validate(args)) throw new Error(`Invalid ${name} arguments: ${ajv.errorsText(validate.errors)}`);
       if (sandboxNames.has(name)) await ensureSandbox(ctx);
@@ -244,7 +251,7 @@ export function createRuntime(options = {}) {
           messages.push({ role: 'user', content: message.body });
           delivered.add(message.id);
         }
-        const tools = Object.values(definitions).filter(tool => ctx.tools[tool.name] && (!allowed || allowed.has(tool.name))).map(tool => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: tool.inputSchema } }));
+        const tools = ctx.availableToolDefinitions().filter(tool => !initial || initial.has(tool.name)).map(tool => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: tool.inputSchema } }));
         const response = await model(messages, { tools, signal: ctx.signal });
         for (const [key, value] of Object.entries(response.usage ?? {})) if (typeof value === 'number') usage[key] = (usage[key] ?? 0) + value;
         update(id, { usage, steps: step + 1 });
@@ -264,7 +271,10 @@ export function createRuntime(options = {}) {
         }
         for (const call of message.tool_calls) {
           let result;
-          try { result = await ctx.invoke(call.function.name, JSON.parse(call.function.arguments)); }
+          try {
+            if (initial && !initial.has(call.function.name)) throw new Error(`Tool is not visible for direct model calls: ${call.function.name}`);
+            result = await ctx.invoke(call.function.name, JSON.parse(call.function.arguments));
+          }
           catch (error) { result = { error: safeError(error) }; }
           messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult(result) });
         }
@@ -355,7 +365,9 @@ export function createRuntime(options = {}) {
 
   const runtime = {
     config, store, context, allocate, startSession, messageSession, cancelSession, workflowCall,
-    tools: () => Object.values(definitions).filter(tool => !allowed || allowed.has(tool.name)),
+    initialToolProvenance: initialPolicy.provenance,
+    effectiveToolOverlayProvenance: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
+    tools: () => Object.values(definitions).filter(tool => (!allowed || allowed.has(tool.name)) && (!initial || initial.has(tool.name))),
     coverage(id) { const names = new Set(Object.keys(context(id).tools)); return { required: Object.keys(catalog.tools).length, registered: Object.keys(catalog.tools).filter(name => names.has(name)), missing: Object.keys(catalog.tools).filter(name => !names.has(name)), excluded: catalog.excluded }; },
     async invoke(id, name, args) { return context(id).invoke(name, args); },
     async approve(id, args) {

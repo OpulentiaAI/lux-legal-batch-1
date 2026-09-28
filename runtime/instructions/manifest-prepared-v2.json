@@ -1,0 +1,113 @@
+{
+  "version": "opulent-prepared-v2",
+  "profile": "opulent-prepared-v2",
+  "inheritedBaselineVersion": "opulent-standalone-v1",
+  "inheritedBaseSha256": "a67b9bd23a5ea6ac16cfb53f38a758466f8cef3a87b95d7161d8b0f7b1b2f0a3",
+  "identityNormalization": "Prepared profile replaces the inherited baseline's legacy report_blocker notify=cognition destination token with notify=opulent; standalone-v1 baseline bytes remain unchanged.",
+  "sourceSystemSha256": "669446e956cbfd8cdc73656b006fb40b678da1f59f23298459e7c65953b9e88d",
+  "sourceLineCount": 385,
+  "addendumSha256": "870dc4dd7dbaa55c638d00caed0ca0ecb7df027f0ef34b3320e35d8ae9fe1575",
+  "builtinSkillsManifestSha256": "5fc2a73e3c7f4eaafec02badfdc781cda359382030cf537c1d75150c7a0a392d",
+  "lineHashRule": "SHA-256 of UTF-8 source bytes for inclusive 1-based line range including original line terminators",
+  "spans": [
+    {
+      "lines": [
+        1,
+        93
+      ],
+      "action": "adapt",
+      "sha256": "32f2121e17b68714803b0e462635127f68c864b6671f2ca288a4a9596a5d67d4",
+      "reason": "Identity, persistence, authentication, task and skill procedures adapted in inherited audited base; no PR mandate."
+    },
+    {
+      "lines": [
+        94,
+        113
+      ],
+      "action": "exclude",
+      "sha256": "2912404c0d3bc928aab2c4a0d54bec7b292d342ad183c4cab6b3ab502b9637fc",
+      "reason": "Git/PR creation, CI and source-hosted review workflow out of scope."
+    },
+    {
+      "lines": [
+        114,
+        143
+      ],
+      "action": "adapt",
+      "sha256": "9f9723673eb78632f800ea76a31365528ad76cae28970d7593f56ce4ba55652b",
+      "reason": "Code quality, security, comments and professional standards retained by inherited base."
+    },
+    {
+      "lines": [
+        144,
+        152
+      ],
+      "action": "exclude",
+      "sha256": "10a7ff525d9dc2f6b44a0919a7915ee30f288162223d7035ff0d08a1f3c25de2",
+      "reason": "Source Git workflow excluded."
+    },
+    {
+      "lines": [
+        153,
+        205
+      ],
+      "action": "adapt",
+      "sha256": "1e22ed1ec810b75419b4d59db9203670886157ef6ef056e5bdca9f86eb6c6a87",
+      "reason": "Filesystem, security, tool and system-event practices adapted without fixed VM/browser or source precedence injection."
+    },
+    {
+      "lines": [
+        206,
+        225
+      ],
+      "action": "adapt",
+      "sha256": "cbb04c4e1f0030d55e45bccc605192de2312948687660b71973200367b59bfa0",
+      "reason": "Communication and schema discovery retained through base and addendum; hosted knowledge injection not assumed."
+    },
+    {
+      "lines": [
+        226,
+        274
+      ],
+      "action": "exclude",
+      "sha256": "04691c87261807f969e89f40d4fe0190f8265529e2372b7268d09f998a589b0c",
+      "reason": "Foreign date, session URL, user/org IDs, VM identity and previous work logs."
+    },
+    {
+      "lines": [
+        275,
+        282
+      ],
+      "action": "adapt",
+      "sha256": "42e50fc9d1c699a4093ead749083a4aa087fb7954f24289235ea0f26de20f060",
+      "reason": "Image handling requires an available tool, not a presumed source capability."
+    },
+    {
+      "lines": [
+        283,
+        371
+      ],
+      "action": "exclude",
+      "sha256": "690d553d20c55846e34d57f3ace49d4f7ec3fdca86e9728b8ee7cee65e7d7725",
+      "reason": "Foreign secret inventory and project knowledge are not this session\u2019s data."
+    },
+    {
+      "lines": [
+        372,
+        381
+      ],
+      "action": "adapt",
+      "sha256": "2175ce8ee8c05fa79f024ef1e9b9d375cb94c6018c0d3daa2ab1299a7a259962",
+      "reason": "Six skills mapped to concrete prepared-image paths and safe runtime tool names."
+    },
+    {
+      "lines": [
+        382,
+        385
+      ],
+      "action": "exclude",
+      "sha256": "a26376410fdfa1d2812e6cf3249a8fb874ed2bfd1336e95f911495a49dc352c6",
+      "reason": "Foreign source system guidance not copied into runtime authority."
+    }
+  ]
+}

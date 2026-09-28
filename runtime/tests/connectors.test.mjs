@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { after, before, test } from 'node:test';
 import { createTools } from '../tools/connectors.mjs';
+import catalog from '../catalog.json' with { type: 'json' };
 
 const calls = [];
 const server = createServer(async (request, response) => {
@@ -32,6 +33,7 @@ before(async () => {
     config: { allowedRepos: ['acme/project'], githubApiBase: `http://127.0.0.1:${server.address().port}` },
     store: { list: () => [], get: () => ({ session_id: 'current-session' }), delete: (_collection, id) => calls.push({ deleted: id }) },
     invoke: async (name, args) => ({ name, args }),
+    availableToolDefinitions: () => Object.values(catalog.tools),
     model: async () => ({ choices: [{ message: { content: 'A picture' } }] }),
   };
   tools = createTools(ctx);

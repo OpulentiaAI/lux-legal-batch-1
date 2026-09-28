@@ -120,6 +120,7 @@ test('script catalog discovers allowed schemas and dispatches approved native MC
   const runtime = createRuntime({ store: createStore(':memory:'), config: {
     workspace, runtimeUrl: `http://127.0.0.1:${broker.port}`, corpusWorkspace: fileURLToPath(new URL('../..', import.meta.url)),
     allowedTools: ['scripted_tools', 'mcp_list_tools', 'mcp_call_tool', 'opulent_mcp_server_manage', 'lx_chunk', 'lx_search'],
+    initialTools: ['scripted_tools'],
     allowedMcpCommands: [{ command, args }],
   } });
   const detach = broker.attach(runtime);

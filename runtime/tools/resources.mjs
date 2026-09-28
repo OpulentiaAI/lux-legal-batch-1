@@ -22,6 +22,8 @@ const safeWorkspacePath = (workspace, value) => {
   if (resolved !== root && !resolved.startsWith(`${root}/`)) throw new Error('Path outside workspace');
   return resolved;
 };
+export const BUILTIN_SKILLS = Object.freeze(['managing-knowledge', 'managing-playbooks', 'managing-automations', 'managing-child-sessions', 'analyzing-sessions', 'data-analysis']);
+const builtinSkillPath = name => `/opt/opulent/skills/${name}/SKILL.md`;
 const publicAddress = address => {
   const v4 = address.startsWith('::ffff:') ? address.slice(7) : address;
   if (isIP(v4) === 4) {
@@ -145,8 +147,21 @@ export function createTools(ctx) {
       if (command === 'list' || command === 'search') {
         const root = safeWorkspacePath(ctx.workspace, args.path || '.agents/skills');
         const found = [];
+        if (!args.path) {
+          for (const name of BUILTIN_SKILLS) {
+            const p = builtinSkillPath(name);
+            const content = await ctx.sandbox.files.read(p);
+            if (!args.keywords?.length || (args.keywords_mode === 'and' ? args.keywords.every(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())) : args.keywords.some(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())))) found.push({ name, path: p });
+          }
+        }
         const scan = async folder => {
-          for (const entry of await ctx.sandbox.files.list(folder)) {
+          let entries;
+          try { entries = await ctx.sandbox.files.list(folder); }
+          catch (error) {
+            if (!args.path && folder === root && (error?.status === 404 || error?.code === 'ENOENT' || /not found|does not exist/i.test(error?.message || ''))) return;
+            throw error;
+          }
+          for (const entry of entries) {
             if (entry.type !== 'dir') continue;
             const name = entry.name;
             const p = path.posix.join(folder, name, 'SKILL.md');
@@ -161,8 +176,9 @@ export function createTools(ctx) {
         return found;
       }
       if (command !== 'invoke') throw new Error(`Unknown skill command: ${command}`);
-      const plugin = store.list('personal_plugins').find(item => item.name === args.skill && item.kind === 'skill' && item.status === 'installed');
-      const p = plugin ? plugin.entry_path : safeWorkspacePath(ctx.workspace, `.agents/skills/${safeName(args.skill)}/SKILL.md`);
+      const name = safeName(args.skill);
+      const plugin = store.list('personal_plugins').find(item => item.name === name && item.kind === 'skill' && item.status === 'installed');
+      const p = BUILTIN_SKILLS.includes(name) ? builtinSkillPath(name) : plugin ? safeWorkspacePath(ctx.workspace, plugin.entry_path) : safeWorkspacePath(ctx.workspace, `.agents/skills/${name}/SKILL.md`);
       if (!p.endsWith('/SKILL.md')) throw new Error('Skill entry must be SKILL.md');
       return { path: p, content: await ctx.sandbox.files.read(p) };
     },

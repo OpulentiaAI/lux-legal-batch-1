@@ -12,7 +12,7 @@ export const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
 export function parseComparisonOptions(args) {
   const options = { limit: 2, concurrency: 1, profile: 'luna-baseline' }
   const keys = { '--limit': 'limit', '--concurrency': 'concurrency', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python', '--artifacts': 'artifactsDir', '--previous': 'previous',
-    '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort', '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--profile': 'profile' }
+    '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort', '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--profile': 'profile', '--tool-surface': 'toolSurface' }
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--diagnostic') {
       if (options.diagnostic) throw new Error('Duplicate diagnostic option')
@@ -25,6 +25,7 @@ export function parseComparisonOptions(args) {
   }
   if (![2, 4, 10, 15].includes(options.limit)) throw new Error('Comparison limit must be 2, 4, 10 or 15')
   if (!Object.hasOwn(COMPARISON_PROFILES, options.profile)) throw new Error('Invalid comparison profile')
+  if (options.toolSurface !== undefined && !['full-catalog-v1', 'initial-scripted-v1'].includes(options.toolSurface)) throw new Error('Invalid comparison tool surface')
   if (!Number.isInteger(options.concurrency) || options.concurrency < 1 || options.concurrency > 4) throw new Error('Comparison concurrency must be 1..4')
   for (const key of ['output', 'harveyRoot', 'python', 'artifactsDir']) {
     if (!options[key]) throw new Error(`Missing comparison option: ${key}`)
@@ -91,7 +92,7 @@ export async function main(args = process.argv.slice(2)) {
     const harvey = createHarveyHarness({ workspace, harveyRoot: options.harveyRoot, python: options.python, corpus, artifactsDir: resolve(options.artifactsDir, 'harvey'), maxSteps: 40, model, providerOnly })
     const broad = createBroadHarness({ workspace, corpus, artifactsDir: resolve(options.artifactsDir, 'broad'), maxSteps: 40,
       nativeMcp: true, mcp, broker, sandboxTemplate: options.sandboxTemplate,
-      computerImageSha256: options.computerImageSha256, nativeModuleHash, model, providerOnly })
+      computerImageSha256: options.computerImageSha256, nativeModuleHash, model, providerOnly, toolSurface: options.toolSurface })
     const config = {
       protocol: 'harvey-vs-broad-corpus-v1', ...gateMetadata(options), profile: options.profile, model, provider_only: providerOnly, judge_model: model, judge_provider_only: providerOnly,
       judge_policy: 'evidence-v3', judge_effort: 'high', judge_max_tokens: judgeMaxTokens, judge_timeout_ms: 120000, judge_retries: 1,

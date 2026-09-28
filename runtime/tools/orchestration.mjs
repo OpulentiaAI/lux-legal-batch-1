@@ -77,8 +77,8 @@ export function createTools(ctx) {
     },
     async report_blocker(args) {
       requireText(args.headline, 'headline');
-      if (!['user', 'org_admin', 'cognition'].includes(args.notify)) throw new Error('invalid notify target');
-      const row = store.put('blockers', randomUUID(), { ...args, owner_session_id: sessionId, created_at: now() });
+      if (!['user', 'org_admin', 'opulent', 'cognition'].includes(args.notify)) throw new Error('invalid notify target');
+      const row = store.put('blockers', randomUUID(), { ...args, notify: args.notify === 'cognition' ? 'opulent' : args.notify, owner_session_id: sessionId, created_at: now() });
       ctx.emit('blocker_reported', { blocker_id: row.id, headline: args.headline });
       return row;
     },

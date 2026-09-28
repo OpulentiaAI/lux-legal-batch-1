@@ -12,6 +12,8 @@ import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
 import { redact } from './security.mjs'
 import { renderInstructions } from './instructions/render.mjs'
+import { suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION } from './initial-tool-policy.mjs'
+import { EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
 
 export const BROAD_MODEL = LUNA_MODEL
 export const BROAD_MAX_STEPS = 40
@@ -184,8 +186,11 @@ function auditMessages(messages, evidence, corpusSources) {
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps = BROAD_MAX_STEPS,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
+  toolSurface = 'full-catalog-v1',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
+  if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
+  if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
@@ -202,11 +207,19 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     if (!path || path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path)) throw new Error('Evidence artifacts must stay outside the source repository')
   }
   const allowedTools = [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS)]
-  const instructions = renderInstructions({ appendix: nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt,
-    variant: nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+  const initialTools = toolSurface === 'initial-scripted-v1' ? suppliedInitialToolsFor(allowedTools) : undefined
+  const skills = initialTools ? JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8')) : null
+  const appendix = nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
+  const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
+    profile: initialTools ? 'opulent-prepared-v2' : 'standalone-v1',
+    variant: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const provenance = {
-    policy: nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: BROAD_COMPLETION_TOKENS,
+    policy: initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: BROAD_COMPLETION_TOKENS,
+    toolSurface, ...(initialTools ? { initialTools, initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
+      initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION,
+      builtinSkills: skills.skills.map(({ name, artifactSha256 }) => ({ name, path: `${skills.destinationRoot}/${name}/SKILL.md`, sha256: artifactSha256 })) } : {}),
     instructions: instructions.provenance,
+    effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
     sandbox: { provider: 'E2B', ...(nativeMcp ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
@@ -227,6 +240,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   function runtimeOptions(stateDir, model, provisionedSandboxes) {
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
+        ...(initialTools ? { initialTools } : {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
@@ -238,6 +252,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         const sandbox = await (provision ? provision(config, corpus) : provisionCorpus(config, corpus, workspace, sandboxFactory))
         if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
         provisionedSandboxes.add(sandbox)
+        if (skills) {
+          for (const { name, artifactSha256 } of skills.skills) {
+            const path = `${skills.destinationRoot}/${name}/SKILL.md`
+            if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
+            const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
+            if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
+          }
+        }
         return sandbox
       },
       model: (messages, options = {}) => {
