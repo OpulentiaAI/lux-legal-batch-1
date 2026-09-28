@@ -24,7 +24,7 @@ export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
 const sandboxNames = new Set(['read', 'write', 'edit', 'MultiEdit', 'find_file_by_name', 'grep', 'notebook_read', 'notebook_edit', 'apply_patch', 'exec', 'get_output', 'kill_shell', 'write_to_process', 'scripted_tools', 'run_workflow', 'deploy', 'git_stack', 'fetch_pr_template', 'skill', 'install_personal_plugin', 'manage_personal_plugin', 'suggest_save_secret', 'upload_attachment', 'download_attachment', 'describe_image', 'generate_image']);
 const terminal = new Set(['completed', 'failed', 'cancelled', 'sleeping', 'stopped', 'blocked', 'interrupted', 'terminated']);
-const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow']);
+const scriptBlocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow']);
 const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map(Object.entries(catalog.tools).map(([name, tool]) => [name, ajv.compile(tool.inputSchema)]));
@@ -54,7 +54,15 @@ export function createRuntime(options = {}) {
   if (config.corpusWorkspace) for (const [name, definition] of Object.entries(legalDefinitions)) runtimeValidators.set(name, ajv.compile(definition.inputSchema));
   const contexts = new Map(), workers = new Map(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
-  const scrub = (id, data) => redact(data, [...(contexts.get(id)?.secrets.values() ?? [])]);
+  const scrub = (id, data) => {
+    const secrets = [contexts.get(id)?.config.scriptToken, ...(contexts.get(id)?.secrets.values() ?? [])];
+    const scrubKeys = value => {
+      if (Array.isArray(value)) return value.map(scrubKeys);
+      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [redact(key, secrets), scrubKeys(entry)]));
+      return value;
+    };
+    return scrubKeys(redact(data, secrets));
+  };
   const update = (id, data) => store.put('sessions', id, { ...store.get('sessions', id), ...scrub(id, data), updated_at: new Date().toISOString() });
   const event = (id, type, data) => store.put('events', randomUUID(), { session_id: id, type, data: scrub(id, data), created_at: new Date().toISOString() });
   for (const row of store.list('sessions')) if (['queued', 'running', 'starting'].includes(row.status)) update(row.id, { status: 'interrupted', error: 'Control-plane restarted; explicitly resume this session.' });
@@ -87,9 +95,11 @@ export function createRuntime(options = {}) {
     ctx.storage = {
       ...storage,
       async saveFiles(request) {
+        const protectedValues = [ctx.config.scriptToken, ...ctx.secrets.values()];
+        if (protectedValues.some(value => request.message?.includes(value) || Object.keys(request.files ?? {}).some(path => path.includes(value)))) throw new Error('Session credential material cannot be committed');
         for (const bytes of Object.values(request.files ?? {})) {
           const text = Buffer.from(bytes).toString('utf8');
-          if ([...ctx.secrets.values()].some(value => text.includes(value))) throw new Error('Session credential material cannot be committed');
+          if (protectedValues.some(value => text.includes(value))) throw new Error('Session credential material cannot be committed');
         }
         return storage.saveFiles(request);
       },
@@ -119,6 +129,7 @@ export function createRuntime(options = {}) {
       }, 0) })).filter(tool => tool.score > 0).sort((a, b) => b.score - a.score).slice(0, Math.min(Math.max(Number(limit) || 10, 1), 50));
     };
     ctx.tools = tools;
+    ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !scriptBlocked.has(tool.name));
     ctx.invoke = async (requestedName, args = {}) => {
       const name = catalog.aliases[requestedName] ?? requestedName;
       if (requestedName !== name && catalog.tools[name]) {
@@ -352,7 +363,12 @@ export function createRuntime(options = {}) {
       if (['secret_save', 'skill'].includes(args.kind)) await ensureSandbox(ctx);
       return redact(await approveResource(ctx, args));
     },
-    async scriptCall(id, token, name, args) { const ctx = context(id); if (!sameToken(token, ctx.config.scriptToken) || scriptBlocked.has(name)) throw new Error('Script broker authorization failed'); return invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args)); },
+    async scriptCall(id, token, name, args) {
+      const ctx = context(id);
+      if (!sameToken(token, ctx.config.scriptToken) || scriptBlocked.has(name)) throw new Error('Script broker authorization failed');
+      try { return await invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args)); }
+      catch (error) { throw new Error(scrub(id, safeError(error))); }
+    },
     async waitSession(id) { await workers.get(id); return store.get('sessions', id); },
     async tick(id) { return tick(context(id)); },
     async dispatchEvent(id, value) { return dispatchEvent(context(id), value); },
