@@ -219,6 +219,160 @@ test('native search metadata is preserved separately and bound to exact output h
   assert.throws(() => evidenceV4(options).replay(broad), /call hash/)
 })
 
+test('scripted stdout JSON and JSONL recover only printed canonical corpus evidence', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const call = { tool: 'scripted_tools', args: { script: 'print(payload)' }, output: '', result: { error: false, sha256: '' } }
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  const save = envelope => {
+    call.output = JSON.stringify(envelope)
+    call.result.sha256 = hash(call.output)
+    writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  }
+  const hidden = { id, doc, text, doc_title: 'Not printed' }
+  save({ stdout: JSON.stringify({ summary: { records: [{ id, doc, text: 'Second rule.',
+    doc_title: 'Printed title', structure: ['Part I'], article: '13-2' }] } }), stderr: JSON.stringify(hidden),
+    subcalls: [{ result: hidden }], exit_code: 0 })
+  let replay = evidenceV4(options).replay(broad)
+  assert.deepEqual(replay.sources.map(source => [source.kind, source.text]), [['excerpt', 'Second rule.']])
+  assert.equal(replay.sources[0].origin.outputSha256, hash(call.output))
+  assert.equal(replay.sources[0].origin.stdoutSha256, hash(JSON.parse(call.output).stdout))
+  assert.equal(replay.modelVisibleMetadata[0].doc_title, 'Printed title')
+  assert.equal(replay.modelVisibleMetadata[0].origin.channel, 'stdout')
+  save({ stdout: [JSON.stringify({ source: { id, doc, text: 'Second rule.' } }),
+    JSON.stringify({ mcp: { content: [{ type: 'text', text: JSON.stringify({ chunk_id: id, doc, text }) }] } })].join('\n'),
+  stderr: '', exit_code: 0 })
+  replay = evidenceV4(options).replay(broad)
+  assert.deepEqual(replay.sources.map(source => [source.kind, source.text]), [['excerpt', 'Second rule.'], ['full', text]])
+  assert.equal(replay.sources[1].origin.stdoutRecord, 1)
+  save({ stdout: 'Summary: two hits, without printed text', stderr: JSON.stringify(hidden),
+    subcalls: [{ result: hidden }], exit_code: 0 })
+  broad.sources = [{ id, doc, chars: text.length, sha256: hash(text) }]
+  assert.deepEqual(evidenceV4(options).replay(broad).sources, [])
+  save({ stdout: JSON.stringify({ results: [{ id, doc, text: 'A forged legal rule.' }] }), stderr: '', exit_code: 0 })
+  assert.throws(() => evidenceV4(options).replay(broad), /coordinates/)
+  save({ stdout: JSON.stringify({ results: [{ id, doc, text: 'Second rule.' }] }), stderr: '', exit_code: 0 })
+  broad.audit.calls[0].result.sha256 = hash('other output')
+  assert.throws(() => evidenceV4(options).replay(broad), /call hash/)
+})
+
+test('exec stdout uses the same visible boundary and never reads unprinted child output', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const call = { tool: 'exec', args: { command: 'python3 printed.py' },
+    output: JSON.stringify({ stdout: JSON.stringify({ value: { chunk_id: id, doc, preview: 'Third rule.' } }),
+      stderr: JSON.stringify({ chunk_id: id, doc, text }), childOutput: { chunk_id: id, doc, text }, exit_code: 0 }),
+    result: { error: false } }
+  call.result.sha256 = hash(call.output)
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => source.text), ['Third rule.'])
+  call.output = JSON.stringify({ truncated: true, prefix: call.output })
+  call.result.sha256 = hash(call.output)
+  writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  assert.deepEqual(evidenceV4(options).replay(broad).sources, [])
+})
+
+test('Opulent read verifies one-based line range and exact returned body', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const full = `[${id}]\n${text}\n`
+  const call = { tool: 'read', args: { file_path: `/home/user/workspace/corpus/chunks/${id}.txt`, offset: 2, limit: 2 },
+    output: '', result: { error: false, sha256: '' } }
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  const save = result => {
+    call.output = JSON.stringify(result)
+    call.result.sha256 = hash(call.output)
+    writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  }
+  save({ content: 'First rule.\nSecond rule.\n', total_lines: 4 })
+  const excerpt = evidenceV4(options).replay(broad).sources[0]
+  assert.equal(excerpt.text, 'First rule.\nSecond rule.\n')
+  assert.equal(excerpt.kind, 'excerpt')
+  assert.equal(excerpt.origin.start, 0)
+  assert.equal(excerpt.origin.outputSha256, hash(call.output))
+  save({ content: 'First rule.\nForged rule.\n', total_lines: 4 })
+  assert.throws(() => evidenceV4(options).replay(broad), /Opulent read contents/)
+  save({ content: 'First rule.\nSecond rule.\n', total_lines: 3 })
+  assert.throws(() => evidenceV4(options).replay(broad), /Opulent read contents/)
+  call.args = { file_path: call.args.file_path }
+  broad.audit.calls[0].argsHash = hash(JSON.stringify(call.args))
+  save({ content: full, total_lines: 4 })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => [source.kind, source.text]), [['full', text]])
+  save({ content: `[${id}]\n`, total_lines: 4 })
+  assert.throws(() => evidenceV4(options).replay(broad), /Opulent read contents/)
+})
+
+test('structured Opulent grep verifies file line and context coordinates', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const call = { tool: 'grep', args: { path: '/home/user/workspace/corpus/chunks', pattern: 'Second', context_lines: 1 },
+    output: '', result: { error: false, sha256: '' } }
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  const match = { path: `/home/user/workspace/corpus/chunks/${id}.txt`, line_number: 3, line: 'Second rule.',
+    context_before: ['First rule.'], context_after: ['Third rule.'] }
+  const save = () => {
+    call.output = JSON.stringify({ matches: [match] })
+    call.result.sha256 = hash(call.output)
+    writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  }
+  save()
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => [source.kind, source.text]),
+    [['excerpt', 'First rule.'], ['excerpt', 'Second rule.'], ['excerpt', 'Third rule.'], ['full', text]])
+  match.context_before = []
+  match.context_after = []
+  save()
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => [source.kind, source.text]),
+    [['excerpt', 'Second rule.']])
+  match.context_before = ['First rule.']
+  match.context_after = ['Forged rule.']
+  save()
+  assert.throws(() => evidenceV4(options).replay(broad), /Opulent grep context/)
+  match.context_after = ['Third rule.']
+  match.line_number = 2
+  save()
+  assert.throws(() => evidenceV4(options).replay(broad), /Opulent grep line/)
+})
+
+test('cat, get_output and scripted printed reads recover only contiguous visible source text', t => {
+  const { root, options, row } = fixture(t)
+  const artifact = join(root, 'artifacts/broad/abcdef.json')
+  const call = { tool: 'exec', args: { command: 'cat corpus/chunks/*.txt' }, output: '', result: { error: false, sha256: '' } }
+  const broad = { ...row, mode: 'broad', audit: { provenance: { version: 1 }, evidenceArtifact: '/other/abcdef.json',
+    finalAnswerHash: hash(answer), calls: [{ tool: call.tool, argsHash: hash(JSON.stringify(call.args)), result: call.result }] } }
+  const save = output => {
+    call.output = JSON.stringify(output)
+    call.result.sha256 = hash(call.output)
+    writeFileSync(artifact, JSON.stringify({ provenance: broad.audit.provenance, calls: [call] }))
+  }
+  save({ shell_id: 'shell', stdout: `[${id}]\n${text}\n`, stderr: '', exit_code: 0, running: false, truncated: false })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => source.kind), ['full'])
+  save({ shell_id: 'shell', stdout: `chunks/${id}.txt:3: Second rule.\n`, stderr: '', exit_code: 0, running: false, truncated: false })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => source.text), ['Second rule.'])
+  call.tool = 'get_output'
+  call.args = { shell_id: 'shell', incremental: true }
+  broad.audit.calls[0].tool = call.tool
+  broad.audit.calls[0].argsHash = hash(JSON.stringify(call.args))
+  save({ shell_id: 'shell', stdout: `[${id}]\n${text}\n`, stderr: '', exit_code: 0, running: false, truncated: false })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => source.kind), ['full'])
+  call.tool = 'scripted_tools'
+  call.args = { script: 'print(await tools.read(...))' }
+  broad.audit.calls[0].tool = call.tool
+  broad.audit.calls[0].argsHash = hash(JSON.stringify(call.args))
+  save({ stdout: JSON.stringify({ content: `[${id}]\n${text}\n`, total_lines: 4 }), stderr: '', exit_code: 0 })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources.map(source => source.kind), ['full'])
+  save({ stdout: JSON.stringify({ content: `[${id}]\nFirst rule.\n`, total_lines: 4 }), stderr: '', exit_code: 0 })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources, [])
+  save({ stdout: `[${id}]\nFirst rule.\n... truncated ...\nThird rule.\n`, stderr: '', exit_code: 0 })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources, [])
+  save({ stdout: `[${id}]\n${text}\n`, stderr: '', exit_code: 0, truncated: true })
+  assert.deepEqual(evidenceV4(options).replay(broad).sources, [])
+})
+
 test('raw broad arguments bind to captured gateway responses without canonicalizing hashes', t => {
   const { root, options, row } = fixture(t)
   const args = { command: 'true' }

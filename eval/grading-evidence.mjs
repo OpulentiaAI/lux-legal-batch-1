@@ -130,6 +130,152 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, metadata, child, origin, depth + 1)
     }
   }
+  function visibleFileText(found, text, origin) {
+    for (const match of text.matchAll(/(?:^|\n)\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)) {
+      const id = match[1]
+      if (!manifest.has(id)) continue
+      const source = sourceFor(id)
+      const start = match.index + match[0].length
+      if (text.slice(start, start + source.text.length + 1) === `${source.text}\n`) {
+        attach(found, id, source.text, { ...origin, format: 'literal-chunk-header', outputStart: start }, 'full', 0)
+      }
+    }
+    const headers = [...text.matchAll(/(?:^|\n)(?:[^:\n]*\/)?([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt:(\d+): ?/g)]
+    for (let i = 0; i < headers.length; i++) {
+      const id = headers[i][1]
+      if (!manifest.has(id)) continue
+      const block = text.slice(headers[i].index + headers[i][0].length, headers[i + 1]?.index ?? text.length)
+      if (Number(headers[i][2]) === 2 && (block === sourceFor(id).text || block === `${sourceFor(id).text}\n`)) {
+        attach(found, id, sourceFor(id).text, { ...origin, line: 2 }, 'full', 0)
+      }
+    }
+    const visibleLines = new Map()
+    for (const line of text.split('\n')) {
+      const match = line.match(/(?:^|\/)([^/\s]+)\.txt:(\d+):\s?(.*)$/)
+      if (!match || !manifest.has(match[1]) || !match[3].trim()) continue
+      const source = sourceFor(match[1])
+      const lineNumber = Number(match[2])
+      if (!Number.isSafeInteger(lineNumber) || lineNumber < 2) throw new Error('Invalid evidence grep coordinate')
+      const lines = source.text.split('\n')
+      const canonicalLine = lines[lineNumber - 2]
+      if (canonicalLine === undefined || !canonicalLine.includes(match[3])) throw new Error('Invalid evidence grep contents')
+      const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(match[3])
+      attach(found, match[1], match[3], { ...origin, line: lineNumber }, 'excerpt', start)
+      const existing = visibleLines.get(match[1]) ?? new Map()
+      if (existing.has(lineNumber) && existing.get(lineNumber) !== match[3]) throw new Error('Invalid evidence ambiguous grep line')
+      existing.set(lineNumber, match[3])
+      visibleLines.set(match[1], existing)
+    }
+    for (const [id, lines] of visibleLines) {
+      const source = sourceFor(id)
+      const all = source.text.split('\n')
+      if (all.every((line, index) => lines.get(index + 2) === line)) attach(found, id, source.text, origin, 'full', 0)
+    }
+  }
+  function chunkFile(path) {
+    if (typeof path !== 'string') return null
+    const id = path.match(/(?:^|\/)chunks\/([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt$/)?.[1]
+    return id && manifest.has(id) ? id : null
+  }
+  function opulentRead(found, args, result, origin) {
+    const id = chunkFile(args?.file_path)
+    if (!id) return
+    const source = sourceFor(id)
+    const full = `[${id}]\n${source.text}\n`
+    const lines = full.match(/[^\n]*\n|[^\n]+$/g) ?? []
+    const offset = args.offset ?? 1, limit = args.limit ?? 2000
+    if (!Number.isSafeInteger(offset) || offset < 1 || !Number.isSafeInteger(limit) || limit < 1 ||
+        typeof result?.content !== 'string' || result.total_lines !== lines.length ||
+        result.content !== lines.slice(offset - 1, offset - 1 + limit).join('')) {
+      throw new Error('Invalid evidence Opulent read contents or range')
+    }
+    const start = lines.slice(0, offset - 1).join('').length
+    const bodyStart = id.length + 3
+    const first = Math.max(start, bodyStart)
+    const last = Math.min(start + result.content.length, bodyStart + source.text.length)
+    if (last > first && full.slice(first, last).trim()) {
+      attach(found, id, full.slice(first, last), { ...origin, line: offset, format: 'opulent-read-1based' },
+        first === bodyStart && last === bodyStart + source.text.length ? 'full' : 'excerpt', first - bodyStart)
+    }
+  }
+  function opulentGrep(found, result, origin) {
+    if (!Array.isArray(result?.matches)) return
+    const visibleLines = new Map()
+    for (const match of result.matches) {
+      const id = chunkFile(match?.path)
+      if (!id) continue
+      const full = `[${id}]\n${sourceFor(id).text}\n`
+      const lines = full.match(/[^\n]*\n|[^\n]+$/g)?.map(line => line.replace(/\n$/, '')) ?? []
+      const number = match.line_number
+      if (!Number.isSafeInteger(number) || number < 1 || !Array.isArray(match.context_before) ||
+          !Array.isArray(match.context_after) || typeof match.line !== 'string' ||
+          match.line !== lines[number - 1] || number > lines.length) throw new Error('Invalid evidence Opulent grep line')
+      const seen = [
+        ...match.context_before.map((line, index) => [number - match.context_before.length + index, line]),
+        [number, match.line], ...match.context_after.map((line, index) => [number + index + 1, line]),
+      ]
+      for (const [lineNumber, line] of seen) {
+        if (typeof line !== 'string' || lines[lineNumber - 1] !== line) throw new Error('Invalid evidence Opulent grep context')
+        if (lineNumber < 2 || !line.trim()) continue
+        const source = sourceFor(id)
+        const position = source.text.split('\n').slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0)
+        attach(found, id, line, { ...origin, line: lineNumber, format: 'opulent-grep' }, 'excerpt', position)
+        const linesForId = visibleLines.get(id) ?? new Map()
+        if (linesForId.has(lineNumber) && linesForId.get(lineNumber) !== line) throw new Error('Invalid evidence ambiguous grep line')
+        linesForId.set(lineNumber, line)
+        visibleLines.set(id, linesForId)
+      }
+    }
+    for (const [id, lines] of visibleLines) {
+      if (sourceFor(id).text.split('\n').every((line, index) => lines.get(index + 2) === line)) {
+        attach(found, id, sourceFor(id).text, { ...origin, format: 'opulent-grep-complete' }, 'full', 0)
+      }
+    }
+  }
+  function printedStdout(found, metadata, output, origin) {
+    let envelope
+    try { envelope = JSON.parse(output) } catch { return }
+    if (!envelope || Array.isArray(envelope) || typeof envelope !== 'object' ||
+        typeof envelope.stdout !== 'string' || envelope.truncated === true ||
+        envelope.stdout.includes('\n... truncated ...\n')) return
+    const stdout = envelope.stdout.trim()
+    if (!stdout || stdout.length > 1_000_000) return
+    let records
+    try { records = [JSON.parse(stdout)] } catch {
+      const lines = stdout.split(/\r?\n/).filter(line => line.trim())
+      if (lines.length >= 2 && lines.length <= 1000) {
+        try { records = lines.map(line => JSON.parse(line)) } catch {}
+      }
+      if (!records) {
+        visibleFileText(found, envelope.stdout, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout) })
+        return
+      }
+    }
+    function visible(value, recordOrigin, depth = 0) {
+      if (depth > 8 || value == null) return
+      if (typeof value === 'string') {
+        if (value.length > 1_000_000) return
+        try { visible(JSON.parse(value), recordOrigin, depth + 1) } catch (error) {
+          if (error?.message?.startsWith('Invalid evidence')) throw error
+          visibleFileText(found, value, recordOrigin)
+        }
+        return
+      }
+      if (Array.isArray(value)) { for (const child of value) visible(child, recordOrigin, depth + 1); return }
+      if (typeof value !== 'object') return
+      const id = value.chunk_id ?? value.id
+      if (typeof id === 'string' && typeof value.doc === 'string' &&
+          (Object.hasOwn(value, 'text') || Object.hasOwn(value, 'preview') ||
+            ['doc_title', 'article', 'path', 'structure'].some(field => Object.hasOwn(value, field)))) {
+        if (manifest.has(id)) native(found, metadata, { ...value, chunk_id: id }, recordOrigin)
+        else if (typeof value.chunk_id === 'string' && /^doc-[^:]+:/.test(id)) throw new Error('Invalid evidence chunk ID')
+        return
+      }
+      if (Array.isArray(value.matches)) opulentGrep(found, value, recordOrigin)
+      for (const child of Object.values(value)) visible(child, recordOrigin, depth + 1)
+    }
+    records.forEach((record, index) => visible(record, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout), stdoutRecord: index }))
+  }
   function harvey(found, call, origin) {
     let args
     try { args = JSON.parse(call.arguments) } catch { throw new Error('Invalid evidence Harvey arguments') }
@@ -148,48 +294,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         const section = call.result.split('\n').slice(args.offset === 0 ? 1 : 0).join('\n').replace(/\n$/, '')
         if (section) attach(found, id, section, origin, 'excerpt', source.text.split('\n').slice(0, start).join('\n').length + (start ? 1 : 0))
       }
-    } else if (call.tool === 'grep' || call.tool === 'bash') {
-      for (const match of call.result.matchAll(/(?:^|\n)\[([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\]\n/g)) {
-        const id = match[1]
-        if (!manifest.has(id)) continue
-        const source = sourceFor(id)
-        const start = match.index + match[0].length
-        if (call.result.slice(start, start + source.text.length + 1) === `${source.text}\n`) {
-          attach(found, id, source.text, { ...origin, format: 'literal-chunk-header', outputStart: start }, 'full', 0)
-        }
-      }
-      const headers = [...call.result.matchAll(/(?:^|\n)(?:[^:\n]*\/)?([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)\.txt:(\d+): ?/g)]
-      for (let i = 0; i < headers.length; i++) {
-        const id = headers[i][1]
-        if (!manifest.has(id)) continue
-        const block = call.result.slice(headers[i].index + headers[i][0].length, headers[i + 1]?.index ?? call.result.length)
-        if (Number(headers[i][2]) === 2 && (block === sourceFor(id).text || block === `${sourceFor(id).text}\n`)) {
-          attach(found, id, sourceFor(id).text, { ...origin, line: 2 }, 'full', 0)
-        }
-      }
-      const visibleLines = new Map()
-      for (const line of call.result.split('\n')) {
-        const match = line.match(/(?:^|\/)([^/\s]+)\.txt:(\d+):\s?(.*)$/)
-        if (!match || !manifest.has(match[1]) || !match[3].trim()) continue
-        const source = sourceFor(match[1])
-        const lineNumber = Number(match[2])
-        if (!Number.isSafeInteger(lineNumber) || lineNumber < 2) throw new Error('Invalid evidence grep coordinate')
-        const lines = source.text.split('\n')
-        const canonicalLine = lines[lineNumber - 2]
-        if (canonicalLine === undefined || !canonicalLine.includes(match[3])) throw new Error('Invalid evidence grep contents')
-        const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(match[3])
-        attach(found, match[1], match[3], { ...origin, line: lineNumber }, 'excerpt', start)
-        const existing = visibleLines.get(match[1]) ?? new Map()
-        if (existing.has(lineNumber) && existing.get(lineNumber) !== match[3]) throw new Error('Invalid evidence ambiguous grep line')
-        existing.set(lineNumber, match[3])
-        visibleLines.set(match[1], existing)
-      }
-      for (const [id, lines] of visibleLines) {
-        const source = sourceFor(id)
-        const all = source.text.split('\n')
-        if (all.every((line, index) => lines.get(index + 2) === line)) attach(found, id, source.text, origin, 'full', 0)
-      }
-    }
+    } else if (call.tool === 'grep' || call.tool === 'bash') visibleFileText(found, call.result, origin)
   }
   function verifyFullSources(row, found) {
     if (!Array.isArray(row.sources)) throw new Error('Invalid evidence source inventory')
@@ -237,8 +342,20 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           if (call.tool !== 'mcp_call_tool' || !['lx_search', 'lx_chunk'].includes(call.args?.name)) throw new Error('Invalid evidence call argument hash')
           argumentHashUnverifiable.push(index)
         }
-        if (!call.result.error) native(found, modelVisibleMetadata, call.output, { artifact: name, call: index, tool: call.tool,
-          outputSha256: audit.result.sha256, argumentHashVerified: argsVerified })
+        if (!call.result.error) {
+          const origin = { artifact: name, call: index, tool: call.tool,
+            outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
+          if (call.tool === 'scripted_tools' || call.tool === 'exec' || call.tool === 'get_output') {
+            printedStdout(found, modelVisibleMetadata, call.output, origin)
+          } else if (call.tool === 'read' || call.tool === 'grep') {
+            let output
+            try { output = JSON.parse(call.output) } catch { output = null }
+            if (output && !output.truncated) {
+              if (call.tool === 'read') opulentRead(found, call.args, output, origin)
+              else opulentGrep(found, output, origin)
+            }
+          } else native(found, modelVisibleMetadata, call.output, origin)
+        }
       })
     } else {
       const matches = []

@@ -103,20 +103,22 @@ The profile is a daemon-side tool reduction, not a prompt or an `AU_MCP_TOOLS` e
 
 ## Native startup and stdio probe
 
-Use one consistent `HOME` for **both** daemons, the upstream launcher/hook, and the MCP server. The engine and kernel sockets are workspace-keyed files under `$HOME/.arsumbris/au-engine/run/` and `$HOME/.arsumbris/au-mcp/run/`; changing either `HOME` or the canonical workspace path selects different sockets. The tested HOME was `$root/runtime-home`. Start the two commands in separate foreground terminals (or a process supervisor), then run status and membership checks in a third terminal:
+Use one consistent `HOME` for **both** daemons, the upstream launcher/hook, and the MCP server. The engine and kernel sockets are workspace-keyed files under `$HOME/.arsumbris/au-engine/run/` and `$HOME/.arsumbris/au-mcp/run/`; changing either `HOME` or the canonical workspace path selects different sockets. The tested HOME was `$root/runtime-home`. Set `LX_RETRIEVAL_PROFILE=voyage` on **both daemon starts**, with the existing provider variables available to their environment. Start the two commands in separate foreground terminals (or a process supervisor), then run status and membership checks in a third terminal:
 
 ```sh
 root=/home/user/.capy/work/arsumbris-runtime
 workspace="$root/lux-legal-batch-1"
 mkdir -p "$root/runtime-home"
-HOME="$root/runtime-home" "$root/au-engine/target/release/au" daemon start "$workspace"
+HOME="$root/runtime-home" LX_RETRIEVAL_PROFILE=voyage "$root/au-engine/target/release/au" daemon start "$workspace"
 # In a separate foreground process, after the engine is ready:
-HOME="$root/runtime-home" node --experimental-strip-types "$root/au-mcp/src/cli.ts" start "$workspace"
+HOME="$root/runtime-home" LX_RETRIEVAL_PROFILE=voyage node --experimental-strip-types "$root/au-mcp/src/cli.ts" start "$workspace"
 # In a third process:
 HOME="$root/runtime-home" "$root/au-engine/target/release/au" daemon status "$workspace"
 HOME="$root/runtime-home" node --experimental-strip-types "$root/au-mcp/src/cli.ts" status "$workspace"
 HOME="$root/runtime-home" "$root/au-engine/target/release/au" members "$workspace" --json
 ```
+
+The daemons own the plugin environment: `src/tp/client.ts` selects the retrieval profile when its module loads, defaulting to legacy/Jina if the variable is unset. Exporting `LX_RETRIEVAL_PROFILE=voyage` only for a later client, hook, or probe cannot change an already-running daemon's profile. If either daemon was started without the Voyage profile, stop **only this workspace's** engine and MCP daemons, then restart both with the commands above; status commands do not need the profile or provider variables. This corrects a current restart defect, not the historical scored run, which had a successful Voyage preflight; it is not retroactive evidence that run used legacy retrieval.
 
 The successful local status was engine `up`, reference `ready`, `ready=true`, and MCP `running (contract v0)`; engine version is a live rebuild counter, not a pinned release number. The native stdio adapter executable in this Linux test was `/usr/local/share/nvm/versions/node/v24.18.0/bin/node`, with arguments `--experimental-strip-types /home/user/.capy/work/arsumbris-runtime/au-mcp-adapter-codex/bin/mcp-server.ts`. That exact command/argument pair must match the runtime's stdio allowlist; when moving the checkout, regenerate both paths consistently.
 
