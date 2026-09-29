@@ -42,6 +42,17 @@ export function suppliedInitialToolsFor(allowedTools) {
   return SUPPLIED_INITIAL_TOOL_NAMES.filter(name => allowed.has(name));
 }
 
+export const RLM_INITIAL_TOOL_POLICY = Object.freeze({
+  version: 'opulent-rlm-initial-v1',
+  inheritedInventory: 'supplied-initial-tools-v1',
+  added: Object.freeze(['ipython']),
+});
+
+export function rlmInitialToolsFor(allowedTools) {
+  if (!Array.isArray(allowedTools) || !allowedTools.includes('ipython')) throw new Error('RLM initial tool requires ipython in the execution allowlist');
+  return [...suppliedInitialToolsFor(allowedTools), 'ipython'];
+}
+
 export function resolveInitialToolPolicy(initialTools, allowedTools, definitions) {
   if (initialTools === undefined) return { initialTools: null, provenance: null };
   const supplied = initialTools === 'supplied-initial-tools-v1';

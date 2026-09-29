@@ -63,12 +63,13 @@ export function parseOptions(args) {
   }
   for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
     validConcurrency(/^[1-9]\d*$/.test(options.concurrency) ? Number(options.concurrency) : NaN)
   if (options.instructionProfile === 'opulent-knowledge-v3' && options.maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
+  if (options.instructionProfile === 'opulent-rlm-v4' && options.maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
@@ -222,8 +223,9 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
+  if (options.instructionProfile === 'opulent-rlm-v4' && maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
   const source = dependencies.workspace ?? workspace
   const suiteRoot = dependencies.suite ?? suite
   const manifestPath = join(suiteRoot, 'manifest.json')
