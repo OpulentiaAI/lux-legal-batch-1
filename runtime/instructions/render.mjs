@@ -21,12 +21,35 @@ const rlmManifestText = readFileSync(new URL('./manifest-opulent-rlm-v4.json', i
 const rlmManifest = JSON.parse(rlmManifestText)
 if (sha256(rlm) !== rlmManifest.addendumSha256 || rlmManifest.inheritedBaseSha256 !== knowledgeManifest.baseSha256 ||
     rlmManifest.inheritedManifestSha256 !== sha256(knowledgeManifestText)) throw new Error('RLM Opulent instructions differ from the audited manifest')
+const unrestricted = readFileSync(new URL('./opulent-rlm-unrestricted-v5.md', import.meta.url), 'utf8').trimEnd()
+const unrestrictedManifestText = readFileSync(new URL('./manifest-opulent-rlm-unrestricted-v5.json', import.meta.url), 'utf8')
+const unrestrictedManifest = JSON.parse(unrestrictedManifestText)
+if (sha256(unrestricted) !== unrestrictedManifest.addendumSha256 ||
+    unrestrictedManifest.inheritedManifestSha256 !== sha256(rlmManifestText) ||
+    unrestrictedManifest.inheritedAddendumSha256 !== rlmManifest.addendumSha256) throw new Error('Unrestricted RLM instructions differ from the audited manifest')
 
 export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
-  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile === 'opulent-rlm-unrestricted-v5') {
+    variant ??= profile
+    const prompt = `${knowledge}\n\n${rlm}\n\n${unrestricted}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      variant, version: unrestrictedManifest.version, profile,
+      sourceZipSha256: knowledgeManifest.sourceZipSha256,
+      sourceSystemSha256: knowledgeManifest.sourceSystemSha256,
+      baseSha256: knowledgeManifest.baseSha256,
+      inheritedKnowledgeManifestSha256: sha256(knowledgeManifestText),
+      inheritedRlmManifestSha256: unrestrictedManifest.inheritedManifestSha256,
+      inheritedRlmAddendumSha256: unrestrictedManifest.inheritedAddendumSha256,
+      addendumSha256: unrestrictedManifest.addendumSha256,
+      manifestSha256: sha256(unrestrictedManifestText),
+      effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
   if (profile === 'opulent-rlm-v4') {
     variant ??= profile
     const prompt = `${knowledge}\n\n${rlm}`

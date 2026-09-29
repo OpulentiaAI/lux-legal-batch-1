@@ -2,7 +2,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { sameToken } from './security.mjs';
 
 export function createScriptExecutions(store, config, scrub) {
-  const enabled = config.maxScriptToolCalls !== undefined || config.maxConcurrentScriptToolCalls !== undefined;
+  const enabled = config.unrestrictedTools !== true && (config.maxScriptToolCalls !== undefined || config.maxConcurrentScriptToolCalls !== undefined);
   const maxCalls = config.maxScriptToolCalls ?? 64;
   const maxConcurrent = config.maxConcurrentScriptToolCalls ?? 8;
   if (enabled && (![maxCalls, maxConcurrent].every(value => Number.isSafeInteger(value) && value > 0))) {

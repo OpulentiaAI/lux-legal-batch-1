@@ -205,7 +205,7 @@ export function createTools(ctx) {
     let abort;
     try {
       await ctx.sandbox.files.write([{ path: script, data: args.script }, { path: launcher, data: shim }, { path: catalogPath, data: JSON.stringify(ctx.scriptCatalog ?? []) }]);
-      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_BLOCKED_TOOLS: JSON.stringify([...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
+      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_BLOCKED_TOOLS: JSON.stringify(ctx.config.unrestrictedTools === true ? ['scripted_tools', 'ipython'] : [...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
       const run = handle.wait().then(result => result, error => error);
       const result = await Promise.race([run, new Promise((_, reject) => {
         const timer = setTimeout(() => reject(new Error('Script timed out')), seconds * 1000);

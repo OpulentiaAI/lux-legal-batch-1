@@ -1,5 +1,15 @@
 # Persistent RLM execution
 
+## Expanded 250-step comparison
+
+`opulent-rlm-unrestricted-v5` is a separate user-requested experiment. It exposes every implemented canonical catalog tool, the direct corpus tools, and browser/wait/RLM extensions initially and through the dispatcher. It enables general outbound sandbox networking while keeping public inbound traffic disabled. It sets `unrestrictedTools: true`, removing the additional script-call, Python host-call, child-count, recursion-depth and session-concurrency caps. Both answerer arms use 250 steps; the outer comparison still schedules two attempts concurrently.
+
+`sidekick` and direct child-session tools can be called from Python in this mode. Only structural recursive entry into `ipython`/`scripted_tools` remains blocked. Authentication, configured repository and MCP authorization, human workflow approvals, secret protection, cell timeouts and the 250-step model budget remain in force. Exposing a handler does not configure its provider: storage and any other missing credentials remain unavailable and report failures. The requested compatibility revert restores the `rlm.cancel` response label `cancelled`; its underlying session termination status remains `terminated`.
+
+Use a fresh output directory, never resume the stopped 160-step run under this policy. Prior profile definitions and historical evidence remain separately available; the effective v5 tool list, network policy and unrestricted limits are recorded in provenance.
+
+## Original RLM profile
+
 The opt-in `rlm-v1` runtime capability adds `ipython({ code, timeout_secs? })`. The `opulent-rlm-v4` evaluation profile includes it in both the initial model-visible toolset and the dispatcher allowlist, while retaining the other permitted tools. Earlier instruction profiles and the closed-corpus baseline remain unchanged. Use a separate output directory for this experiment; checkpoint provenance binds its prompt, definitions, implementation sources and limits.
 
 This is an Opulent implementation of Prime's core RLM programming model, not an installation of the Prime Agent CLI or full Prime Agent compatibility. The reference is [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent/tree/08ff1b2e2794ea9e8f4a08d12bc95408a66e1074), pinned at `08ff1b2e2794ea9e8f4a08d12bc95408a66e1074`, and the [E2B integration guide](https://docs.e2b.dev/agents/prime).

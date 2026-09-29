@@ -53,6 +53,23 @@ export function rlmInitialToolsFor(allowedTools) {
   return [...suppliedInitialToolsFor(allowedTools), 'ipython'];
 }
 
+export const UNRESTRICTED_INITIAL_TOOL_POLICY = Object.freeze({
+  version: 'opulent-rlm-unrestricted-initial-v1',
+  inventory: 'canonical implemented catalog, corpus and enabled runtime capability definitions',
+  addedDefinitions: Object.freeze(['lx_search', 'lx_chunk', 'lx_documents', 'browser', 'wait_for_operations', 'ipython']),
+});
+
+export function unrestrictedInitialToolsFor(allowedTools) {
+  if (!Array.isArray(allowedTools)) throw new TypeError('allowedTools must be an array');
+  const canonical = new Set([...Object.keys(catalog.tools), ...UNRESTRICTED_INITIAL_TOOL_POLICY.addedDefinitions]);
+  if (allowedTools.some(name => !canonical.has(name) || catalog.excluded[name] || catalog.aliases[name]) ||
+      new Set(allowedTools).size !== allowedTools.length) throw new Error('Unrestricted initial tools require unique canonical implemented definitions');
+  for (const name of canonical) {
+    if (!allowedTools.includes(name)) throw new Error(`Unrestricted initial tools require ${name}`);
+  }
+  return [...allowedTools];
+}
+
 export function resolveInitialToolPolicy(initialTools, allowedTools, definitions) {
   if (initialTools === undefined) return { initialTools: null, provenance: null };
   const supplied = initialTools === 'supplied-initial-tools-v1';

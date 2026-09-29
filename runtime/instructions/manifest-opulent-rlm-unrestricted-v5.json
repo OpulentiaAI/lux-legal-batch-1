@@ -1,0 +1,14 @@
+{
+  "version": "opulent-rlm-unrestricted-v5",
+  "profile": "opulent-rlm-unrestricted-v5",
+  "inheritedVersion": "opulent-rlm-v4",
+  "inheritedManifestSha256": "19e864ad357b6a7f673ae83c9281efdc4bb3ef189e44aa6efae804c47315fa48",
+  "inheritedAddendumSha256": "8c00d166a3dd042483abf2f4dba372f11e9949711eb3504ab7b6ae3a9b0bffa3",
+  "addendumSha256": "e6349096d903fe1d44d9aaddfe00aae35f78a968e178a09945db0ca718315519",
+  "reference": {
+    "repository": "prime-reference/repo",
+    "commit": "08ff1b2e2794ea9e8f4a08d12bc95408a66e1074",
+    "path": "packages/coding-agent/docs/rlm.md",
+    "status": "design reference only; implemented capabilities and live provider status require separate verification"
+  }
+}
