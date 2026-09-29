@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createRuntime } from '../core.mjs';
+import { createRuntimeServer } from '../server.mjs';
 import { createStore } from '../store.mjs';
 import { rlmDefinitions } from '../rlm.mjs';
 
@@ -16,22 +17,26 @@ function localSandbox(directory) {
     files: {
       async makeDir(path) { mkdirSync(path, { recursive: true }); },
       async write(files) { for (const { path, data } of files) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, data); } },
+      async read(path, options) { return options?.format === 'bytes' ? new Uint8Array(readFileSync(path)) : readFileSync(path, 'utf8'); },
       async remove(path) { rmSync(path, { force: true }); },
     },
     commands: {
       async run(command, options) {
-        if (!command.startsWith('python3 -u ')) throw new Error(`Unexpected command: ${command}`);
+        if (!command.startsWith('python3 -u ') && !command.startsWith('python3 /tmp/runtime-launcher-')) throw new Error(`Unexpected command: ${command}`);
         sandbox.starts.push(options);
-        const process = spawn('python3', ['-u', command.slice('python3 -u '.length)], { cwd: options.cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+        const process = spawn('python3', command.split(' ').slice(1), {
+          cwd: options.cwd, stdio: ['pipe', 'pipe', 'pipe'], env: { PATH: globalThis.process.env.PATH, HOME: globalThis.process.env.HOME, ...options.envs },
+        });
         processes.add(process);
         process.once('exit', () => processes.delete(process));
         process.stdin.on('error', () => {});
-        process.stdout.on('data', chunk => options.onStdout(chunk.toString()));
-        process.stderr.on('data', chunk => options.onStderr(chunk.toString()));
+        let stdout = '', stderr = '';
+        process.stdout.on('data', chunk => { stdout += chunk.toString(); options.onStdout?.(chunk.toString()); });
+        process.stderr.on('data', chunk => { stderr += chunk.toString(); options.onStderr?.(chunk.toString()); });
         return { sendStdin: async text => { process.stdin.write(text); }, kill: async () => { process.kill('SIGKILL'); },
           wait: () => new Promise((resolve, reject) => {
             process.once('error', reject);
-            process.once('exit', (code, signal) => resolve({ exitCode: code ?? (signal ? -1 : 0) }));
+            process.once('exit', (code, signal) => resolve({ stdout, stderr, exitCode: code ?? (signal ? -1 : 0) }));
           }) };
       },
     },
@@ -146,7 +151,7 @@ test('spawn requires the child-creation policy permission; cancel is scoped', as
     assert.match(deniedOther.stderr, /Child not found in this parent session/);
     const cancelled = await runtime.invoke(parent.id, 'ipython', { code: 'await rlm.cancel(worker["rlm_child_id"])' });
     assert.equal(cancelled.ok, true, cancelled.stderr);
-    assert.match(cancelled.result, /'status': 'terminated'/);
+    assert.match(cancelled.result, /'status': 'cancelled'/);
     assert.equal(runtime.store.get('sessions', childId).status, 'terminated');
   } finally { await close(); }
 });
@@ -161,22 +166,72 @@ test('simultaneous child admissions share one bounded root budget', async () => 
   } finally { await close(); }
 });
 
-test('sidekick cannot bypass root child budget through direct, MCP facade, or legacy alias', async () => {
-  const { runtime, close } = fixture({ maxRlmChildren: 1, maxConcurrentSessions: 3 });
+test('unrestricted mode admits more than 16 children, more than 64 calls, and direct sidekick', async () => {
+  const { runtime, close } = fixture({ unrestrictedTools: true, maxRlmChildren: 1, maxRlmHostCallsPerCell: 1,
+    maxScriptToolCalls: 1, maxConcurrentScriptToolCalls: 1, maxSessionDepth: 0, maxConcurrentSessions: 1,
+    allowedTools: ['ipython', 'noop', 'wait', 'sidekick', 'opulent_session_create', 'opulent_session_search', 'read_subagent', 'opulent_session_interact'] });
   try {
-    const parent = runtime.allocate({ prompt: 'bounded children' });
-    const admitted = await runtime.invoke(parent.id, 'ipython', { code: "await rlm.spawn('legitimate child', name='legitimate')" });
-    assert.equal(admitted.ok, true, admitted.stderr);
-    for (const name of ['sidekick', 'opulent_mcp', 'devin_mcp']) {
-      const args = name === 'sidekick' ? { message: 'grandchild', block: false }
-        : { command: 'call_tool', tool_name: 'sidekick', tool_args: JSON.stringify({ message: 'grandchild', block: false }) };
-      const denied = await runtime.invoke(parent.id, 'ipython', { code: `import json\nawait tools.call(${JSON.stringify(name)}, json.loads(${JSON.stringify(JSON.stringify(args))}))` });
-      assert.equal(denied.ok, false, name);
-      assert.match(denied.stderr, /Script broker authorization failed/, name);
-    }
-    assert.equal(runtime.store.list('sessions').filter(row => row.parent_session_id === parent.id).length, 1);
-    assert.equal(runtime.store.list('script_calls').filter(call => call.name === 'sidekick' && call.status === 'completed').length, 0);
+    const parent = runtime.allocate({ prompt: 'unrestricted' });
+    const admitted = await runtime.invoke(parent.id, 'ipython', { code: "children = [await rlm.spawn('task', name=f'worker-{i}') for i in range(17)]\nlen(children)" });
+    assert.equal(admitted.result, '17', admitted.stderr);
+    const direct = await runtime.invoke(parent.id, 'ipython', { code: "await tools.call('sidekick', {'message':'another task', 'block':False})" });
+    assert.equal(direct.ok, true, direct.stderr);
+    assert.equal(runtime.store.list('sessions').filter(row => row.parent_session_id === parent.id).length, 18);
+    const calls = await runtime.invoke(parent.id, 'ipython', { code: "for i in range(70):\n    await tools.call('noop', {})\nprint('70 calls succeeded')" });
+    assert.equal(calls.stdout, '70 calls succeeded\n', calls.stderr);
+    assert.equal(runtime.store.list('script_calls').filter(call => call.name === 'noop' && call.status === 'completed').length, 70);
+    assert.ok(runtime.store.list('script_runs').some(run => run.max_tool_calls === null && run.max_concurrent_tool_calls === null));
+    const concurrent = await runtime.invoke(parent.id, 'ipython', { code: "import asyncio\nawait asyncio.gather(*[tools.call('wait', {'seconds':.03, 'message':'concurrent'}) for _ in range(2)])" });
+    assert.equal(concurrent.ok, true, concurrent.stderr);
+    assert.equal(runtime.store.list('script_calls').filter(call => call.name === 'wait' && call.status === 'completed').length, 2);
+    const childId = runtime.store.list('sessions').find(row => row.parent_session_id === parent.id && row.title === 'worker-0').id;
+    const recursive = await runtime.invoke(childId, 'ipython', { code: "await rlm.spawn('nested task', name='nested')" });
+    assert.equal(recursive.ok, true, recursive.stderr);
+    assert.equal(runtime.store.list('sessions').filter(row => row.depth === 2).length, 1);
   } finally { await close(); }
+});
+
+test('unrestricted tools still enforce configured allowlists, repositories, and workflow approval', async () => {
+  const denied = fixture({ unrestrictedTools: true, allowedTools: ['ipython', 'noop'] });
+  try {
+    const parent = denied.runtime.allocate({ prompt: 'policy' });
+    const attempt = await denied.runtime.invoke(parent.id, 'ipython', { code: "await tools.call('sidekick', {'message':'forbidden','block':False})" });
+    assert.equal(attempt.ok, false);
+    assert.match(attempt.stderr, /Tool forbidden by execution policy: sidekick/);
+    assert.equal(denied.runtime.store.list('sessions').length, 1);
+  } finally { await denied.close(); }
+
+  const { runtime, sandbox, directory, close } = fixture({ unrestrictedTools: true, requireWorkflowApproval: true,
+    approvedWorkflowHashes: [], allowedRepos: [], allowedTools: ['ipython', 'opulent_session_create', 'run_workflow'] });
+  try {
+    const parent = runtime.allocate({ prompt: 'approval' });
+    const escapedRepo = await runtime.invoke(parent.id, 'ipython', { code: "await tools.call('opulent_session_create', {'sessions':[{'prompt':'child','repos':['outside/repo']}]})" });
+    assert.equal(escapedRepo.ok, false);
+    assert.match(escapedRepo.stderr, /repository outside allowlist/);
+    await sandbox.files.write([{ path: `${directory}/workflow.py`, data: "print('not approved')\n" }]);
+    const unapproved = await runtime.invoke(parent.id, 'ipython', { code: `await tools.call('run_workflow', {'workflow_name':'unapproved','script_path':${JSON.stringify(`${directory}/workflow.py`)}})` });
+    assert.equal(unapproved.ok, false);
+    assert.match(unapproved.stderr, /Workflow source is not operator-approved/);
+    assert.equal(runtime.store.list('workflows').length, 0);
+  } finally { await close(); }
+});
+
+test('unrestricted scripted_tools Python reaches a previously blocked permitted host tool', async () => {
+  const { runtime, close } = fixture({ unrestrictedTools: true, allowedTools: ['ipython', 'scripted_tools', 'message_user'] });
+  const server = createRuntimeServer(runtime, { token: 'test-runtime-broker-token-at-least-32-characters' });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  runtime.config.runtimeUrl = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const session = runtime.allocate({ prompt: 'script transport' });
+    const script = "from opulent_tools import call_tool_sync\nprint(call_tool_sync('message_user', {'message':'shim reached host','block_on_user':False,'attachments':[]}))";
+    const result = await runtime.invoke(session.id, 'scripted_tools', { script });
+    assert.match(result.stdout, /message_id/);
+    assert.ok(runtime.store.list('orchestration_messages').some(message => message.session_id === session.id && message.body === 'shim reached host'));
+    assert.ok(runtime.store.list('script_calls').some(call => call.name === 'message_user' && call.status === 'completed'));
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await close();
+  }
 });
 
 test('spawned model worker starts outside the parent nested-tool policy and uses its own ipython', async () => {

@@ -12,9 +12,12 @@ import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
 import { redact } from './security.mjs'
 import { renderInstructions } from './instructions/render.mjs'
-import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION } from './initial-tool-policy.mjs'
-import { EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
+import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
+import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
 import { RLM_CAPABILITY_VERSION, rlmDefinitions } from './rlm.mjs'
+import { browserDefinitions } from './browser-tools.mjs'
+import { definitions as waitDefinitions } from './operation-waits.mjs'
+import { definitions as legalDefinitions } from './tools/legal.mjs'
 
 export const BROAD_MODEL = LUNA_MODEL
 export const BROAD_MAX_STEPS = 40
@@ -278,8 +281,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const rlm = instructionProfile === 'opulent-rlm-v4'
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const unrestricted = instructionProfile === 'opulent-rlm-unrestricted-v5'
+  const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
   if (rlm && (toolSurface !== 'initial-scripted-v1' || !nativeMcp || !workProduct)) throw new Error('RLM comparison requires the prepared native work-product tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
   const evalModel = model
@@ -292,49 +296,68 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     !Array.isArray(mcp.probes) || mcp.probes.length !== NATIVE_LX_TOOLS.length || NATIVE_LX_TOOLS.some(name => mcp.probes.filter(probe => probe?.name === name && probe.arguments && typeof probe.arguments === 'object').length !== 1))) throw new Error('Native MCP requires a named, versioned server and one live probe per lx tool')
   if (broker && (typeof broker.attach !== 'function' || !broker.origin)) throw new Error('A scoped broker and public origin are required')
   if (nativeMcp && (!mcp || !broker || !sandboxTemplate || !/^[a-zA-Z0-9_-]+$/.test(sandboxTemplate) || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Native comparison requires approved MCP, broker, prepared template and computer image SHA-256')
-  const network = broker ? brokerNetwork(broker.origin) : { allowPublicTraffic: false, denyOut: ['0.0.0.0/0'] }
+  const brokerOnlyNetwork = broker ? brokerNetwork(broker.origin) : { allowPublicTraffic: false, denyOut: ['0.0.0.0/0'] }
+  const network = unrestricted ? { allowPublicTraffic: false } : brokerOnlyNetwork
   if (artifactsDir) {
     const path = relative(resolve(workspace), resolve(artifactsDir))
     if (!path || path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path)) throw new Error('Evidence artifacts must stay outside the source repository')
   }
-  const allowedTools = [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS), ...(rlm ? ['ipython'] : [])]
-  const initialTools = toolSurface === 'initial-scripted-v1' ? rlm ? rlmInitialToolsFor(allowedTools) : suppliedInitialToolsFor(allowedTools) : undefined
+  const effectiveDefinitions = unrestricted ? { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...legalDefinitions, ...browserDefinitions, ...waitDefinitions, ...rlmDefinitions } : null
+  const allowedTools = unrestricted ? Object.keys(effectiveDefinitions) : [...(nativeMcp ? NATIVE_BROAD_TOOLS : BROAD_TOOLS), ...(rlm ? ['ipython'] : [])]
+  const initialTools = toolSurface === 'initial-scripted-v1' ? unrestricted ? unrestrictedInitialToolsFor(allowedTools) : rlm ? rlmInitialToolsFor(allowedTools) : suppliedInitialToolsFor(allowedTools) : undefined
   const skills = initialTools ? JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8')) : null
+  const nativeAppendix = nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
+  const permittedAppendix = unrestricted ? nativeAppendix.replace('Les accès directs lx_search, lx_chunk et lx_documents du runtime ne sont pas autorisés.', 'Les accès directs lx_search, lx_chunk et lx_documents du runtime sont autorisés sous la politique du corpus configuré.') : nativeAppendix
   const appendix = workProduct
-    ? (nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt).replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
-    : nativeMcp ? nativeSystemPrompt(mcp.server) : systemPrompt
-  const instructions = renderInstructions({ appendix: initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix,
+    ? permittedAppendix.replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
+    : permittedAppendix
+  const initialAppendix = unrestricted
+    ? `${appendix}\nLes outils mcp_list_tools, mcp_call_tool, lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement. Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels. Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
+    : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
+  const instructions = renderInstructions({ appendix: initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
-    variant: rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+    variant: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
-    toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: RLM_INITIAL_TOOL_POLICY,
-      initialToolPolicySha256: sha256(JSON.stringify({ ...RLM_INITIAL_TOOL_POLICY, initialTools })),
+    toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
+      initialToolPolicySha256: sha256(JSON.stringify({ ...(unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY), initialTools })),
       definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
       sourcesSha256: Object.fromEntries(['rlm.mjs', 'rlm-kernel.py'].map(path =>
         [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])),
-      settings: { maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } } } : {}),
-    ...(initialTools ? { initialTools, initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
-      initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION,
+      settings: unrestricted ? { unrestrictedTools: true, maxRlmHostCallsPerCell: null, maxRlmChildren: null,
+        maxSessionDepth: null, maxConcurrentSessions: null, maxScriptToolCalls: null, maxConcurrentScriptToolCalls: null }
+        : { maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } } } : {}),
+    ...(unrestricted ? { unrestrictedTools: true, runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION],
+      effectiveDefinitionsSha256: sha256(JSON.stringify(allowedTools.map(name => effectiveDefinitions[name]))),
+      effectiveDefinitionSourcesSha256: Object.fromEntries(['catalog.json', 'core.mjs', 'initial-tool-policy.mjs', 'browser-tools.mjs',
+        'operation-waits.mjs', 'rlm.mjs', 'rlm-kernel.py', 'script-execution.mjs', 'tools/legal.mjs', 'e2b.mjs'].map(path =>
+        [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])),
+      excludedCategories: catalog.excluded, networkPolicy: network,
+      availability: { storage: 'tools registered; no storage provider configured', browserOrigins: [],
+        externalProviders: 'tools registered; credentials and live connectivity not assumed' } } : {}),
+    ...(initialTools ? { initialTools,
+      ...(!unrestricted ? { initialToolSourceSha256: SUPPLIED_INITIAL_TOOL_SOURCE_SHA256,
+        initialToolNormalization: SUPPLIED_INITIAL_TOOL_NORMALIZATION } : {}),
       workflowApproval: 'operator-approved exact script hashes required; none configured for this evaluation',
       builtinSkills: skills.skills.map(({ name, artifactSha256 }) => ({ name, path: `${skills.destinationRoot}/${name}/SKILL.md`, sha256: artifactSha256 })) } : {}),
     instructions: instructions.provenance, ...(scriptLimits ? { scriptLimits,
       scriptLedger: 'runtime script_runs/script_calls with bounded redacted arguments/results and terminal statuses' } : {}),
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
-    allowedTools, excluded: BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
+    allowedTools, excluded: unrestricted ? [] : BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
     sandbox: { provider: 'E2B', ...(nativeMcp ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
-      integrity: 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; tree hash checked before pause' },
+      integrity: unrestricted ? 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed'
+        : 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; tree hash checked before pause' },
     integrations: { webSearch: process.env.BRAVE_SEARCH_API_KEY ? 'configured, not probed' : 'available tool; BRAVE_SEARCH_API_KEY unavailable',
       imageGeneration: process.env.OPENAI_API_KEY ? 'configured, not probed' : 'available tool; OPENAI_API_KEY unavailable',
       github: process.env.GITHUB_TOKEN ? 'credential present; repository allowlist empty' : 'available tools; GITHUB_TOKEN unavailable and repository allowlist empty',
       runtimeBroker: broker ? { status: 'scoped authenticated broker configured; verify live before scoring', origin: broker.origin, network } : 'available tools; authenticated runtime URL not configured',
       desktop: nativeMcp ? { status: 'prepared template configured; live verification required' } : 'available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot',
-      storage: 'unconfigured; storage-dependent operations omitted',
+      storage: unrestricted ? 'unconfigured; storage tools visible but provider calls unavailable' : 'unconfigured; storage-dependent operations omitted',
       mcp: mcp ? { status: 'operator provisioned; live connection not verified',
         servers: redact(mcp.servers.map(({ name, version, tools }) => ({ name, version, tools }))),
         ...(nativeMcp ? { nativeManifest: redactAudit(mcp.manifest) } : {}),
@@ -346,7 +369,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
-        ...(rlm ? { runtimeCapabilities: [RLM_CAPABILITY_VERSION], maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } : {}),
+        ...(unrestricted ? { runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION], unrestrictedTools: true }
+          : rlm ? { runtimeCapabilities: [RLM_CAPABILITY_VERSION], maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } : {}),
         ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
@@ -435,10 +459,18 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
           if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
         }
-        stage = 'direct-corpus-denial'
-        let directDenied = false
-        try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
-        if (!directDenied) throw new Error('Direct corpus dispatch remains accessible')
+        if (unrestricted) {
+          stage = 'direct-corpus-access'
+          const source = corpus.sources[0]
+          if (!source) throw new Error('Prepared corpus source required for direct-corpus verification')
+          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Direct corpus chunk response differs from prepared source')
+        } else {
+          stage = 'direct-corpus-denial'
+          let directDenied = false
+          try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
+          if (!directDenied) throw new Error('Direct corpus dispatch remains accessible')
+        }
         stage = 'broker-callback'
         const brokerCall = await runtime.invoke(session.id, 'scripted_tools', {
           script: 'import asyncio\nfrom opulent_tools import tools\nasync def main():\n    print(await tools.noop())\nasyncio.run(main())', timeout_secs: 30,
@@ -460,10 +492,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         stage = 'no-new-privileges'
         const privilege = await sandbox.commands.run('test "$(id -u)" != 0 && grep -q "NoNewPrivs:[[:space:]]*1" /proc/self/status')
         if (privilege.exitCode !== 0) throw new Error('Sandbox no-new-privs protection failed')
-        stage = 'outbound-denial'
-        const outbound = await sandbox.commands.run("python3 - <<'PY'\nimport socket\ns=socket.socket(); s.settimeout(4)\ntry:\n s.connect(('1.1.1.1',80))\n s.sendall(b'GET / HTTP/1.1\\r\\nHost: 1.1.1.1\\r\\nConnection: close\\r\\n\\r\\n')\n print('reachable' if s.recv(4096) else 'blocked')\nexcept OSError:\n print('blocked')\nfinally:\n s.close()\nPY")
-        if (outbound.exitCode !== 0 || outbound.stdout.trim() !== 'blocked') throw new Error('Sandbox outbound deny failed')
-        return { mcp: { verified: true, tools: NATIVE_LX_TOOLS }, runtimeBroker: { verified: true }, desktop: { verified: true }, sandbox: { verified: true } }
+        if (unrestricted) {
+          stage = 'outbound-https-access'
+          const outbound = await sandbox.commands.run("python3 - <<'PY'\nimport urllib.request\ntry:\n with urllib.request.urlopen('https://example.com/',timeout=12) as response:\n  print('reachable' if response.status == 200 else 'unavailable')\nexcept Exception:\n print('unavailable')\nPY")
+          if (outbound.exitCode !== 0 || outbound.stdout.trim() !== 'reachable') throw new Error('Sandbox general outbound HTTPS unavailable')
+        } else {
+          stage = 'outbound-denial'
+          const outbound = await sandbox.commands.run("python3 - <<'PY'\nimport socket\ns=socket.socket(); s.settimeout(4)\ntry:\n s.connect(('1.1.1.1',80))\n s.sendall(b'GET / HTTP/1.1\\r\\nHost: 1.1.1.1\\r\\nConnection: close\\r\\n\\r\\n')\n print('reachable' if s.recv(4096) else 'blocked')\nexcept OSError:\n print('blocked')\nfinally:\n s.close()\nPY")
+          if (outbound.exitCode !== 0 || outbound.stdout.trim() !== 'blocked') throw new Error('Sandbox outbound deny failed')
+        }
+        return { mcp: { verified: true, tools: NATIVE_LX_TOOLS }, runtimeBroker: { verified: true }, desktop: { verified: true }, sandbox: { verified: true },
+          ...(unrestricted ? { egress: { network, configured: 'general outbound without public inbound', verified: true, probe: 'https://example.com/' } } : {}) }
       } catch (error) {
         if (error && typeof error === 'object') error.preflightStage = stage
         throw error

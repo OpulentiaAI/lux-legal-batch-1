@@ -15,7 +15,7 @@ export const rlmDefinitions = {
 
 const source = readFileSync(new URL('./rlm-kernel.py', import.meta.url), 'utf8');
 const denied = new Set(['ipython', 'scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow', 'wait_for_operations']);
-export const rlmGenericBlocked = new Set([...denied, 'opulent_session_create', 'opulent_session_interact', 'opulent_session_search', 'opulent_session_events', 'read_subagent', 'testing_agent', 'sidekick']);
+export const rlmGenericBlocked = new Set([...denied, 'opulent_session_create', 'opulent_session_interact', 'opulent_session_search', 'opulent_session_events', 'read_subagent', 'testing_agent']);
 
 export function createRlmTools(ctx) {
   const { store, sessionId } = ctx;
@@ -44,7 +44,7 @@ export function createRlmTools(ctx) {
   async function request(packet) {
     const cell = active;
     if (!cell || !cell.open || packet.cell !== cell.id || !pending.has(cell.id)) return;
-    if (++cell.calls > (ctx.config.maxRlmHostCallsPerCell ?? 64)) {
+    if (++cell.calls > (ctx.config.maxRlmHostCallsPerCell ?? 64) && ctx.config.unrestrictedTools !== true) {
       await send({ type: 'host_reply', id: packet.id, error: 'RLM cell host-call budget exhausted' });
       return;
     }
@@ -54,12 +54,12 @@ export function createRlmTools(ctx) {
       let result;
       if (operation === 'tool') {
         if (typeof args?.name !== 'string') throw new Error('Tool name must be a string');
-        result = await ctx.rlmInvoke(cell.execution, args.name, args.args ?? {}, rlmGenericBlocked);
+        result = await ctx.rlmInvoke(cell.execution, args.name, args.args ?? {}, ctx.config.unrestrictedTools === true ? new Set(['ipython', 'scripted_tools']) : rlmGenericBlocked);
       } else if (operation === 'spawn') {
         if (typeof args?.prompt !== 'string' || !args.prompt.trim() || typeof args.name !== 'string' || !args.name.trim()) throw new Error('Child prompt and name are required');
         if (args.model !== null && args.model !== undefined) throw new Error('Child model override is not supported by this runtime');
         const admitted = admission.then(async () => {
-          if (descendants(root()) >= (ctx.config.maxRlmChildren ?? 16)) throw new Error('RLM total child budget exhausted');
+          if (ctx.config.unrestrictedTools !== true && descendants(root()) >= (ctx.config.maxRlmChildren ?? 16)) throw new Error('RLM total child budget exhausted');
           const parent = store.get('sessions', sessionId);
           const reply = await ctx.rlmInvoke(cell.execution, 'opulent_session_create', { sessions: [{ prompt: args.prompt,
             title: args.name, repos: parent.repos, tags: [`rlm-v1:${sessionId}`] }] });
@@ -83,8 +83,8 @@ export function createRlmTools(ctx) {
         result = { rlm_child_id: row.id, message_id: reply.message_id };
       } else if (operation === 'cancel') {
         const row = child(args.child_id);
-        const reply = await ctx.rlmInvoke(cell.execution, 'opulent_session_interact', { session_id: row.id, action: 'terminate' });
-        result = { rlm_child_id: row.id, status: reply.status };
+        await ctx.rlmInvoke(cell.execution, 'opulent_session_interact', { session_id: row.id, action: 'terminate' });
+        result = { rlm_child_id: row.id, status: 'cancelled' };
       } else throw new Error('Unknown RLM host operation');
       ctx.emit('rlm_host_call_finished', { cell_id: cell.id, operation, name: operation === 'tool' ? args.name : undefined, ok: true });
       if (cell.open) await send({ type: 'host_reply', id: packet.id, result });

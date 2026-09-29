@@ -54,6 +54,9 @@ function modelVisibleToolResult(result, overflow) {
 
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
+  if (config.unrestrictedTools !== undefined && typeof config.unrestrictedTools !== 'boolean') throw new TypeError('unrestrictedTools must be a boolean');
+  const unrestricted = config.unrestrictedTools === true;
+  const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
   if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1', 'rlm-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
   const browserEnabled = capabilities.includes('browser-v1'), waitsEnabled = capabilities.includes('operation-waits-v1'), rlmEnabled = capabilities.includes('rlm-v1');
@@ -81,8 +84,10 @@ export function createRuntime(options = {}) {
     definitionsSha256: createHash('sha256').update(JSON.stringify(effectiveExtensions)).digest('hex'),
     effectiveTools: effectiveExtensions.map(tool => tool.name),
     settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [],
+      unrestrictedTools: unrestricted,
       ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
-        maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions } : {}) },
+        maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions,
+        ...(unrestricted ? { effectiveRlmChildLimit: null, effectiveRlmHostCallLimit: null, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null } : {}) } : {}) },
   };
   const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
   const invocationPolicy = new AsyncLocalStorage();
@@ -175,7 +180,7 @@ export function createRuntime(options = {}) {
     };
     ctx.tools = tools;
     ctx.availableToolDefinitions = () => Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)));
-    ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !scriptBlocked.has(tool.name));
+    ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !nestedBlocked.has(tool.name));
     ctx.invoke = async (requestedName, args = {}) => {
       const name = catalog.aliases[requestedName] ?? requestedName;
       if (requestedName !== name && catalog.tools[name]) {
@@ -208,7 +213,7 @@ export function createRuntime(options = {}) {
         throw new Error(scrub(id, safeError(error)));
       }
     };
-    ctx.rlmInvoke = (execution, name, args, blocked = scriptBlocked) => scriptExecutions.call(id, execution.token, name, args,
+    ctx.rlmInvoke = (execution, name, args, blocked = nestedBlocked) => scriptExecutions.call(id, execution.token, name, args,
       () => invocationPolicy.run({ blocked }, () => ctx.invoke(name, args)));
     contexts.set(id, ctx);
     return ctx;
@@ -284,14 +289,14 @@ export function createRuntime(options = {}) {
     const parent = args.parent_session_id ? store.get('sessions', args.parent_session_id) : null;
     if (args.parent_session_id && !parent) throw new Error('Parent session not found');
     const depth = parent ? (parent.depth ?? 0) + 1 : 0;
-    if (depth > config.maxSessionDepth) throw new Error('Session depth limit reached');
+    if (!unrestricted && depth > config.maxSessionDepth) throw new Error('Session depth limit reached');
     const id = randomUUID();
     return store.put('sessions', id, { title: args.title ?? 'Agent session', prompt: redact(args.prompt ?? ''), parent_session_id: parent?.id ?? null, depth, role: args.role, repos: args.repos ?? [], status: 'idle', tags: args.tags ?? [], schema: args.schema, created_at: new Date().toISOString() });
   }
 
   async function startSession(args) {
     if (!args || typeof args.prompt !== 'string' || !args.prompt.trim()) throw new Error('Session prompt is required');
-    if (workers.size >= config.maxConcurrentSessions) throw new Error('Concurrent session limit reached');
+    if (!unrestricted && workers.size >= config.maxConcurrentSessions) throw new Error('Concurrent session limit reached');
     const row = allocate(args);
     store.put('orchestration_messages', randomUUID(), { session_id: row.id, source: 'user', body: redact(args.prompt), created_at: new Date().toISOString() });
     launch(row.id);
@@ -488,7 +493,7 @@ export function createRuntime(options = {}) {
       if (store.get('sessions', id).status === 'sleeping') sleepWakeRequested.add(id);
     }
     else {
-      if (workers.size >= config.maxConcurrentSessions) throw new Error('Concurrent session limit reached');
+      if (!unrestricted && workers.size >= config.maxConcurrentSessions) throw new Error('Concurrent session limit reached');
       const ctx = contexts.get(id);
       if (ctx?.signal.aborted) contexts.delete(id);
       update(id, { steps: 0, error: null });
@@ -515,7 +520,7 @@ export function createRuntime(options = {}) {
       sleepWakeRequested.add(id);
       return;
     }
-    if (workers.size >= config.maxConcurrentSessions) return;
+    if (!unrestricted && workers.size >= config.maxConcurrentSessions) return;
     const ctx = contexts.get(id);
     if (ctx?.signal.aborted) contexts.delete(id);
     update(id, { error: null });
@@ -610,8 +615,8 @@ export function createRuntime(options = {}) {
     async scriptCall(id, token, name, args) {
       const ctx = context(id);
       const invoke = () => {
-        if (scriptBlocked.has(name)) throw new Error('Script broker authorization failed');
-        return invocationPolicy.run({ blocked: scriptBlocked }, () => ctx.invoke(name, args));
+        if (nestedBlocked.has(name)) throw new Error('Script broker authorization failed');
+        return invocationPolicy.run({ blocked: nestedBlocked }, () => ctx.invoke(name, args));
       };
       try {
         if (!scriptExecutions.enabled && sameToken(token, ctx.config.scriptToken)) return await invoke();
