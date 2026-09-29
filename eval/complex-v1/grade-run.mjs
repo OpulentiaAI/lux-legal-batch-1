@@ -139,10 +139,29 @@ export function extractVisibleSources(row) {
     const payload = verifyArtifact(receipt)
     const pythonJson = value => Array.isArray(value) ? `[${value.map(pythonJson).join(', ')}]` : plain(value) ?
       `{${Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${pythonJson(item)}`).join(', ')}}` : JSON.stringify(value)
-    if (payload.taskSha256 !== sha256(pythonJson(row.bundle.task)) ||
-        JSON.stringify(payload.materialHashes) !== JSON.stringify(materials) ||
-        JSON.stringify(payload.deliverables) !== JSON.stringify(row.deliverables.filter(item => item.content !== null)) ||
-        payload.answer !== row.answer) throw new Error('Original Harvey receipt task/material/output mismatch')
+    if (payload.receiptVersion === undefined) {
+      if (payload.taskSha256 !== sha256(pythonJson(row.bundle.task)) ||
+          JSON.stringify(payload.materialHashes) !== JSON.stringify(materials) ||
+          JSON.stringify(payload.deliverables) !== JSON.stringify(row.deliverables.filter(item => item.content !== null)) ||
+          payload.answer !== row.answer) throw new Error('Original Harvey receipt task/material/output mismatch')
+    } else {
+      if (payload.receiptVersion !== 2) throw new Error('Unknown Harvey receipt version')
+      const delivered = row.deliverables.filter(item => item.content !== null)
+      const missing = row.deliverables.filter(item => item.content === null).map(item => item.file)
+      if (!hex(payload.taskSha256) || payload.taskSha256 !== sha256(pythonJson(row.bundle.task)) ||
+          !plain(payload.materialHashes) || Object.keys(payload.materialHashes).some(key => !hex(payload.materialHashes[key])) ||
+          JSON.stringify(payload.materialHashes) !== JSON.stringify(materials) ||
+          typeof row.answer !== 'string' || !hex(payload.answerSha256) || payload.answerSha256 !== sha256(row.answer) ||
+          Object.hasOwn(payload, 'answer') || !Array.isArray(payload.deliverables) ||
+          payload.deliverables.some(item => !plain(item) || Object.keys(item).sort().join() !== 'file,sha256' || !hex(item.sha256)) ||
+          row.deliverables.length !== row.bundle.task.deliverables.length ||
+          JSON.stringify(row.deliverables.map(item => item.file)) !== JSON.stringify(row.bundle.task.deliverables) ||
+          delivered.some(item => typeof item.content !== 'string' || !hex(item.sha256) || sha256(item.content) !== item.sha256) ||
+          JSON.stringify(payload.deliverables) !== JSON.stringify(delivered.map(({ file, sha256 }) => ({ file, sha256 }))) ||
+          JSON.stringify(payload.missingDeliverables) !== JSON.stringify(missing)) {
+        throw new Error('Original Harvey receipt task/material/output mismatch')
+      }
+    }
   }
   const inventory = row.sources.map(source => {
     if (typeof source.text !== 'string' || typeof source.id !== 'string' || typeof source.doc !== 'string') throw new Error('Invalid recorded source inventory')

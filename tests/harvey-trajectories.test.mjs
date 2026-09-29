@@ -43,6 +43,99 @@ trace.close()
 
 function records(path) { return readFileSync(path, 'utf8').trim().split('\n').map(JSON.parse) }
 
+test('v2 receipt preserves public secretary hashes and exact bearer-shares answer digest without duplicating bodies', () => {
+  const script = String.raw`
+import hashlib, importlib.util, json, os, sys
+spec = importlib.util.spec_from_file_location('bridge', sys.argv[1])
+bridge = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge)
+body = 'Legal analysis of bearer shares and secretary appointments.'
+digest = hashlib.sha256(body.encode()).hexdigest()
+public_path = 'materials/secretary.md'
+payload = {'answer': body, 'deliverables': [{'file':'secretary.md', 'content':body, 'sha256':digest}],
+    'missingDeliverables':[], 'materialHashes':{public_path:'b'*64}, 'taskSha256':'a'*64,
+    'finished_cleanly':True, 'turn_count':2,
+    'tool_metrics':{'authorization':'Bearer do-not-write', 'summary':'Bearer shares remain lawful'}}
+print(json.dumps({'receipt':bridge.evidence_receipt(payload),
+    'trajectory':bridge.scrub_trajectory({'path':public_path,'title':'Secretariat changes',
+        'text':'Bearer shares; Authorization: Bearer shares; Bearer alphabeticcredential; Bearer do-not-write; ' + os.environ['TEST_TRAJECTORY_SECRET'],
+        'apiKey':'actual-key-value','headers':{'Authorization':'Bearer do-not-write'}})}))
+`
+  const { receipt, trajectory } = JSON.parse(execFileSync('python3', ['-c', script, bridge], {
+    encoding: 'utf8', env: { ...process.env, TEST_TRAJECTORY_SECRET: 'environment-secret-123' } }))
+  assert.equal(receipt.receiptVersion, 2)
+  assert.equal(receipt.taskSha256, 'a'.repeat(64))
+  assert.deepEqual(receipt.materialHashes, { 'materials/secretary.md': 'b'.repeat(64) })
+  assert.deepEqual(receipt.deliverables, [{ file: 'secretary.md', sha256: createHash('sha256').update('Legal analysis of bearer shares and secretary appointments.').digest('hex') }])
+  assert.deepEqual(receipt.missingDeliverables, [])
+  assert.equal(receipt.answerSha256, receipt.deliverables[0].sha256)
+  assert.ok(!('answer' in receipt) && !('content' in receipt.deliverables[0]))
+  assert.equal(receipt.tool_metrics.authorization, '[redacted]')
+  assert.equal(receipt.tool_metrics.summary, 'Bearer shares remain lawful')
+  assert.equal(trajectory.path, 'materials/secretary.md')
+  assert.equal(trajectory.title, 'Secretariat changes')
+  assert.match(trajectory.text, /^Bearer shares;/)
+  assert.ok(!trajectory.text.includes('Authorization: Bearer shares'))
+  assert.ok(!trajectory.text.includes('Bearer alphabeticcredential'))
+  assert.ok(!JSON.stringify(trajectory).includes('do-not-write'))
+  assert.ok(!JSON.stringify(trajectory).includes('environment-secret-123'))
+  assert.equal(trajectory.apiKey, '[redacted]')
+  assert.equal(trajectory.headers, '[redacted]')
+})
+
+test('known environment secret overrides the narrow free-text bearer-shares exception', () => {
+  const script = String.raw`
+import importlib.util, json, sys
+spec = importlib.util.spec_from_file_location('bridge', sys.argv[1])
+bridge = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge)
+print(json.dumps(bridge.scrub_trajectory('The bearer shares restriction differs from Bearer shares.')))
+`
+  const redacted = JSON.parse(execFileSync('python3', ['-c', script, bridge], {
+    encoding: 'utf8', env: { ...process.env, TEST_BEARER_SECRET: 'Bearer shares' } }))
+  assert.ok(!redacted.includes('Bearer shares'))
+  assert.match(redacted, /\[redacted\]/)
+})
+
+test('tool argument JSON keeps nested shell quoting and public hashes while scrubbing embedded credentials', () => {
+  const script = String.raw`
+import importlib.util, json, sys
+spec = importlib.util.spec_from_file_location('bridge', sys.argv[1])
+bridge = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge)
+public = json.dumps({'command':'cd /workspace/task/materials && cat secretary.md; echo "=public"; cat vote-tallies.csv'})
+escaped = json.dumps({'command':'cd /workspace/task/materials &amp;&amp; cat secretary.md; echo "=public"; cat vote-tallies.csv'})
+private = json.dumps({'command':'echo "Authorization: Bearer alphabeticcredential"; cat secretary.md',
+                      'apiKey':'actual-key-value'})
+output = {'originalPublic':public,
+    'trajectoryPublic':bridge.scrub_trajectory({'toolCalls':[{'arguments':public}]})['toolCalls'][0]['arguments'],
+    'legacyPublic':bridge.scrub_trajectory({'tool':'bash','arguments':public,'result':'ok'})['arguments'],
+    'originalEscaped':escaped,
+    'legacyEscaped':bridge.scrub_trajectory({'tool':'bash','arguments':escaped,'result':'ok'})['arguments'],
+    'trajectoryPrivate':bridge.scrub_trajectory({'toolCalls':[{'arguments':private}]})['toolCalls'][0]['arguments'],
+    'legacyPrivate':bridge.scrub_trajectory({'tool':'bash','arguments':private,'result':'ok'})['arguments'],
+    'url':bridge.scrub_trajectory('https://u:p@example.test/?secretary=public&api_key=actual-key-value&refreshToken=refresh-value')}
+print(json.dumps(output))
+`
+  const result = JSON.parse(execFileSync('python3', ['-c', script, bridge], { encoding: 'utf8' }))
+  const digest = value => createHash('sha256').update(value).digest('hex')
+  assert.equal(digest(result.trajectoryPublic), digest(result.originalPublic))
+  assert.equal(digest(result.legacyPublic), digest(result.originalPublic))
+  assert.equal(digest(result.legacyEscaped), digest(result.originalEscaped))
+  assert.match(JSON.parse(result.legacyEscaped).command, /&amp;&amp; cat secretary\.md; echo "=public"/)
+  for (const argument of [result.trajectoryPublic, result.legacyPublic]) {
+    assert.equal(JSON.parse(argument).command, 'cd /workspace/task/materials && cat secretary.md; echo "=public"; cat vote-tallies.csv')
+  }
+  for (const argument of [result.trajectoryPrivate, result.legacyPrivate]) {
+    const parsed = JSON.parse(argument)
+    assert.match(parsed.command, /cat secretary\.md$/)
+    assert.ok(!argument.includes('alphabeticcredential') && !argument.includes('actual-key-value'))
+    assert.equal(parsed.apiKey, '[redacted]')
+  }
+  assert.match(result.url, /\/\?secretary=\[redacted\]&api_key=\[redacted\]&refreshToken=\[redacted\]/)
+  assert.ok(!result.url.includes('u:p@') && !result.url.includes('actual-key-value') && !result.url.includes('refresh-value'))
+})
+
 test('local traced adapter logs ordered UTC turns and model-visible results without credentials or provider state', t => {
   const dir = mkdtempSync(join(tmpdir(), 'harvey-trajectory-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))

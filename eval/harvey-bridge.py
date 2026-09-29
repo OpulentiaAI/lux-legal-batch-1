@@ -98,16 +98,19 @@ def redact_local(value):
     return value
 
 
-SENSITIVE_FIELD = re.compile(r"authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|access[_-]?key|signature", re.I)
+SENSITIVE_FIELD = re.compile(r"(?:^|[_-])(?:authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|access[_-]?key|signature)(?:$|[_-])", re.I)
 IMAGE_DATA = re.compile(r"data:image/[^\s;,]+;base64,[A-Za-z0-9+/=]+", re.I)
-AUTH_VALUE = re.compile(r"\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*", re.I)
+AUTH_VALUE = re.compile(r"\b(?:Bearer\s+(?!shares(?=$|[\s,;.!?)]))[A-Za-z0-9._~+/-]+=*|Basic\s+[A-Za-z0-9._~+/-]+=*)", re.I)
+AUTH_HEADER = re.compile(r"\bAuthorization\s*[:=]\s*(?:Bearer|Basic)\s+[^\s,;]+", re.I)
 SECRET_ASSIGNMENT = re.compile(r"(?i)(\b(?:authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|client[_-]?secret|access[_-]?key)\b\s*[:=]\s*)(?:[\"']?)[^\s,;&}\"']+", re.I)
 QUOTED_SECRET = re.compile(r'(?i)(["\'](?:authorization|password|passwd|secret|token|api[_-]?key|private[_-]?key|credential|access[_-]?key)["\']\s*:\s*)(?:"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[^\s,;}]+)')
+URL_WITH_QUERY = re.compile(r"https?://[^\s\"'<>]+", re.I)
 URL_QUERY_SECRET = re.compile(r"([?&](?:[^=&]*(?:token|key|secret|password|signature|auth|credential)[^=&]*)=)[^\s&#\"',}]+", re.I)
 
 
 def scrub_trajectory(value, field=""):
-    if SENSITIVE_FIELD.search(field) or field.lower() in {"headers", "reasoning", "reasoning_content", "provider_metadata", "image", "image_url", "base64", "image_data"}:
+    normalized_field = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", field).lower()
+    if SENSITIVE_FIELD.search(normalized_field) or normalized_field in {"headers", "reasoning", "reasoning_content", "provider_metadata", "image", "image_url", "base64", "image_data"}:
         return "[redacted]"
     if isinstance(value, dict):
         return {key: scrub_trajectory(item, key) for key, item in value.items()}
@@ -115,9 +118,18 @@ def scrub_trajectory(value, field=""):
         return [scrub_trajectory(item, field) for item in value]
     if not isinstance(value, str):
         return value
+    if normalized_field == "arguments":
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            pass
+        else:
+            cleaned = scrub_trajectory(parsed)
+            return value if cleaned == parsed else json.dumps(cleaned, ensure_ascii=False, separators=(",", ":"))
     value = IMAGE_DATA.sub("[redacted image]", value)
     value = re.sub(r"(https?://)[^\s/@]+@", r"\1[redacted]@", value)
-    value = URL_QUERY_SECRET.sub(r"\1[redacted]", value)
+    value = URL_WITH_QUERY.sub(lambda match: URL_QUERY_SECRET.sub(r"\1[redacted]", match.group()), value)
+    value = AUTH_HEADER.sub("[redacted authorization]", value)
     value = AUTH_VALUE.sub("[redacted authorization]", value)
     value = QUOTED_SECRET.sub(r"\1\"[redacted]\"", value)
     value = SECRET_ASSIGNMENT.sub(r"\1[redacted]", value)
@@ -125,6 +137,20 @@ def scrub_trajectory(value, field=""):
         if len(secret) >= 8 and name not in {"PATH", "PYTHONPATH", "PWD", "HOME", "SHELL", "LANG", "TERM"}:
             value = value.replace(secret, "[redacted]")
     return redact_local(value)
+
+
+def evidence_receipt(payload):
+    excluded = {"answer", "deliverables", "missingDeliverables", "materialHashes", "taskSha256"}
+    receipt = scrub_trajectory({key: value for key, value in payload.items() if key not in excluded})
+    receipt["receiptVersion"] = 2
+    receipt["answerSha256"] = hashlib.sha256(payload["answer"].encode("utf-8")).hexdigest()
+    if "taskSha256" in payload:
+        receipt["taskSha256"] = payload["taskSha256"]
+        receipt["materialHashes"] = payload["materialHashes"]
+        receipt["deliverables"] = [{"file": row["file"], "sha256": row["sha256"]}
+                                   for row in payload["deliverables"]]
+        receipt["missingDeliverables"] = payload["missingDeliverables"]
+    return receipt
 
 
 class Trajectory:
@@ -569,7 +595,7 @@ def main():
             "materialHashes": {row["path"]: hashlib.sha256(row["content"].encode("utf-8")).hexdigest() for row in work_product["materials"]},
             "taskSha256": hashlib.sha256(json.dumps(task, ensure_ascii=False).encode("utf-8")).hexdigest()} if work_product else {}),
     }
-    (artifacts / "bridge-result.json").write_text(json.dumps(scrub_trajectory(payload), ensure_ascii=False), encoding="utf-8")
+    (artifacts / "bridge-result.json").write_text(json.dumps(evidence_receipt(payload), ensure_ascii=False), encoding="utf-8")
     trajectory.append("run_complete", finishedCleanly=result["finished_cleanly"], turnCount=result["turn_count"])
     trajectory.close()
     active_trajectory = None
