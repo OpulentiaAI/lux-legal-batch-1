@@ -38,9 +38,15 @@ const outside = (path, root) => {
 const modes = ['harvey', 'broad']
 const ids = Array.from({ length: 15 }, (_, i) => `task-${String(i + 1).padStart(2, '0')}`)
 const defaultMaxSteps = 80
+const defaultConcurrency = 2
 
 function validMaxSteps(value) {
   if (!Number.isSafeInteger(value) || value < 1) throw new Error('Invalid max steps: expected a positive safe integer')
+  return value
+}
+
+function validConcurrency(value) {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error('Invalid concurrency: expected a positive safe integer')
   return value
 }
 
@@ -48,18 +54,20 @@ export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
     '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps',
-    '--instruction-profile': 'instructionProfile' }
+    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
   options.instructionProfile ??= 'opulent-prepared-v2'
   if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
+  options.concurrency = options.concurrency === undefined ? defaultConcurrency :
+    validConcurrency(/^[1-9]\d*$/.test(options.concurrency) ? Number(options.concurrency) : NaN)
   if (options.instructionProfile === 'opulent-knowledge-v3' && options.maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
@@ -148,7 +156,9 @@ export function promptFor(task) {
   return `${task.title}\n\n${task.instructions}\n\nJurisdiction: ${task.scope.jurisdiction}; company form: ${task.scope.companyForm}; as of: ${task.scope.asOf}.\nProduce these exact files: ${task.deliverables.join(', ')}. The supplied materials are hypothetical client facts, not legal authority. Cite consulted corpus sources where applicable.\nExecution discipline: read the supplied materials, do focused initial research, then save a working draft early and refine it. Do not spend the entire budget researching without writing. Mark unresolved issues instead of inventing certainty. Before your final message, verify every requested file exists and contains the completed work. A promise to write later is not completion.`
 }
 
-export async function executeArms({ checkpoint, packets, harnesses, save, output }) {
+export async function executeArms({ checkpoint, packets, harnesses, save, output, concurrency = 1 }) {
+  validConcurrency(concurrency)
+  const queue = []
   for (const row of checkpoint.rows) {
     if (!row.selected) continue
     const packet = packets.get(row.taskId)
@@ -158,42 +168,60 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
     for (const mode of modes) {
       const arm = row[mode]
       if (arm.status === 'completed') continue
-      const startedAt = new Date().toISOString()
-      const start = performance.now()
-      arm.attempts.push({ status: 'running', startedAt, grading: { status: 'ungraded' } })
-      arm.status = 'running'
-      save(checkpoint)
-      let attempt
-      try {
-        const result = await harnesses[mode].run({ question: promptFor(task), mode, workProduct })
-        if (!Array.isArray(result.deliverables) || !Array.isArray(result.sources) || !result.metrics || !result.audit || !result.artifactPaths) throw new Error('Invalid work-product harness result')
-        const declared = new Set(task.deliverables)
-        if (result.deliverables.some(item => !declared.has(item?.file) || typeof item.content !== 'string' || hash(item.content) !== item.sha256) ||
-          new Set(result.deliverables.map(item => item.file)).size !== result.deliverables.length) throw new Error('Invalid deliverable hashes or names')
-        if (result.deliverables.length !== declared.size || result.missingDeliverables?.length) {
-          const error = new Error('Missing required work-product files')
-          Object.assign(error, result, { missingDeliverables: task.deliverables.filter(file => !result.deliverables.some(item => item.file === file)) })
-          throw error
-        }
-        const evidence = output ? evidenceArtifacts(result, mode, output) : null
-        attempt = { status: 'completed', answer: result.answer ?? '', deliverables: task.deliverables.map(file => result.deliverables.find(item => item.file === file) ?? { file, content: null, sha256: null }),
-          artifactPaths: evidence?.grader ?? result.artifactPaths,
-          sources: result.sources, metrics: { ...result.metrics, elapsedMs: Math.round(performance.now() - start), cost: result.metrics.cost ?? null },
-          audit: { ...result.audit, ...(result.audit.trajectoryArtifact ? { trajectory: trajectoryArtifact(result.audit) } : {}),
-            originalArtifacts: evidence?.originals ?? [] }, missingDeliverables: result.missingDeliverables ?? [], grading: { status: 'ungraded' } }
-      } catch (error) {
-        attempt = { ...failure(error, 'answerer'), elapsedMs: Math.round(performance.now() - start), grading: { status: 'ungraded' } }
-      }
-      Object.assign(arm.attempts.at(-1), attempt, { endedAt: new Date().toISOString() })
-      arm.status = attempt.status
-      save(checkpoint)
+      queue.push({ task, workProduct, mode, arm })
     }
   }
+  let next = 0
+  let abortDispatch = false
+  async function worker() {
+    try {
+      while (!abortDispatch && next < queue.length) {
+        const { task, workProduct, mode, arm } = queue[next++]
+        const startedAt = new Date().toISOString()
+        const start = performance.now()
+        const record = { status: 'running', startedAt, grading: { status: 'ungraded' } }
+        arm.attempts.push(record)
+        arm.status = 'running'
+        save(checkpoint)
+        let attempt
+        try {
+          const result = await harnesses[mode].run({ question: promptFor(task), mode, workProduct })
+          if (!Array.isArray(result.deliverables) || !Array.isArray(result.sources) || !result.metrics || !result.audit || !result.artifactPaths) throw new Error('Invalid work-product harness result')
+          const declared = new Set(task.deliverables)
+          if (result.deliverables.some(item => !declared.has(item?.file) || typeof item.content !== 'string' || hash(item.content) !== item.sha256) ||
+            new Set(result.deliverables.map(item => item.file)).size !== result.deliverables.length) throw new Error('Invalid deliverable hashes or names')
+          if (result.deliverables.length !== declared.size || result.missingDeliverables?.length) {
+            const error = new Error('Missing required work-product files')
+            Object.assign(error, result, { missingDeliverables: task.deliverables.filter(file => !result.deliverables.some(item => item.file === file)) })
+            throw error
+          }
+          const evidence = output ? evidenceArtifacts(result, mode, output) : null
+          attempt = { status: 'completed', answer: result.answer ?? '', deliverables: task.deliverables.map(file => result.deliverables.find(item => item.file === file) ?? { file, content: null, sha256: null }),
+            artifactPaths: evidence?.grader ?? result.artifactPaths,
+            sources: result.sources, metrics: { ...result.metrics, elapsedMs: Math.round(performance.now() - start), cost: result.metrics.cost ?? null },
+            audit: { ...result.audit, ...(result.audit.trajectoryArtifact ? { trajectory: trajectoryArtifact(result.audit) } : {}),
+              originalArtifacts: evidence?.originals ?? [] }, missingDeliverables: result.missingDeliverables ?? [], grading: { status: 'ungraded' } }
+        } catch (error) {
+          attempt = { ...failure(error, 'answerer'), elapsedMs: Math.round(performance.now() - start), grading: { status: 'ungraded' } }
+        }
+        Object.assign(record, attempt, { endedAt: new Date().toISOString() })
+        arm.status = attempt.status
+        save(checkpoint)
+      }
+    } catch (error) {
+      abortDispatch = true
+      throw error
+    }
+  }
+  const outcomes = await Promise.allSettled(Array.from({ length: Math.min(concurrency, queue.length) }, () => worker()))
+  const rejected = outcomes.find(outcome => outcome.status === 'rejected')
+  if (rejected) throw rejected.reason
   return checkpoint
 }
 
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
+  const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
   if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   const source = dependencies.workspace ?? workspace
@@ -229,7 +257,7 @@ export async function run(options, dependencies = {}) {
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps, maxCompletionTokens: 32768,
+      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps, maxCompletionTokens: 32768, concurrency,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
@@ -268,7 +296,7 @@ export async function run(options, dependencies = {}) {
       checkpoint.preflight = failure(error, 'live-preflight'); save(checkpoint)
       return checkpoint
     }
-    return await executeArms({ checkpoint, packets, harnesses, save, output })
+    return await executeArms({ checkpoint, packets, harnesses, save, output, concurrency })
   } finally { await broker.close() }
 }
 
