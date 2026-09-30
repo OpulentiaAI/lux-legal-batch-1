@@ -1,14 +1,16 @@
-"""Chat Completions adapter for the Modal-pinned DeepSeek comparison profile."""
+"""Chat Completions adapter for explicit AI Gateway reasoning profiles."""
 
 import openai
 
 from harness.adapters.base import ModelAdapter, ModelResponse, ToolCall
 
 
-class ModalDeepSeekAdapter(ModelAdapter):
-    def __init__(self, model, max_tokens=4000, capture_usage=False):
+class GatewayReasoningAdapter(ModelAdapter):
+    def __init__(self, model, max_tokens=4000, reasoning_effort=None, provider_only=None, capture_usage=False):
         super().__init__(model)
         self.max_tokens = max_tokens
+        self.reasoning_effort = reasoning_effort
+        self.provider_only = provider_only
         self.client = openai.OpenAI()
         self.usage_records = [] if capture_usage else None
 
@@ -21,7 +23,8 @@ class ModalDeepSeekAdapter(ModelAdapter):
                 "parameters": tool["parameters"],
             }} for tool in tools],
             max_completion_tokens=self.max_tokens,
-            extra_body={"providerOptions": {"gateway": {"only": ["modal"]}}},
+            **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
+            extra_body={"providerOptions": {"gateway": {"only": self.provider_only}}} if self.provider_only else {},
         )
         if self.usage_records is not None:
             usage = response.usage.model_dump() if response.usage else {}
@@ -52,3 +55,8 @@ class ModalDeepSeekAdapter(ModelAdapter):
 
     def make_user_message(self, content):
         return {"role": "user", "content": content}
+
+
+class ModalDeepSeekAdapter(GatewayReasoningAdapter):
+    def __init__(self, model, max_tokens=4000, capture_usage=False):
+        super().__init__(model, max_tokens=max_tokens, provider_only=["modal"], capture_usage=capture_usage)

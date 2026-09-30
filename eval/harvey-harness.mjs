@@ -150,7 +150,7 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       ...trajectoryAudit(artifacts) } }
 }
 
-export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, workProduct } = {}) {
+export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, workProduct } = {}) {
   validateEvalModel(model, providerOnly)
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
@@ -173,8 +173,8 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   const skills = existsSync(skillsDir) ? readdirSync(skillsDir).filter(name => existsSync(join(skillsDir, name, 'SKILL.md'))).sort() : []
   prompt += skills.map(name => `\n\n## Skill: ${name}\n\n${readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8')}`).join('\n')
   const provenance = Object.freeze({
-    harvey_commit: HARVEY_COMMIT, model, providerOnly, endpoint: GATEWAY,
-    adapter: providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
+    harvey_commit: HARVEY_COMMIT, model, providerOnly, reasoningEffort, endpoint: GATEWAY,
+    adapter: reasoningEffort ? 'eval.harvey-modal-adapter.GatewayReasoningAdapter' : providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
     agent_loop: 'harness.agent_loop.run_agent', executor: 'harness.tools.ToolExecutor', sandbox: 'E2B pinned Harvey image (remote upstream ToolExecutor)',
     harvey_base_image: HARVEY_IMAGE, e2b_template_id: E2B_TEMPLATE,
     e2b_sdk: '2.34.0', e2b_internet_access: false,
@@ -195,7 +195,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       const artifacts = resolve(artifactsDir, randomUUID())
       mkdirSync(dirname(artifacts), { recursive: true })
       const request = { harvey_root: harveyRoot, documents: corpus.directory, corpus_hash: corpus.hash,
-        artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly,
+        artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly, reasoning_effort: reasoningEffort,
         ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}) }
       const start = performance.now()
       const env = { ...process.env, OPENAI_BASE_URL: GATEWAY, OPENAI_API_KEY: process.env.AI_GATEWAY_API_KEY }

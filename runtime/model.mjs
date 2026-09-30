@@ -7,6 +7,7 @@ export function createModel(config, fetchImpl = fetch) {
       signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(120000)]) : AbortSignal.timeout(120000),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}), max_completion_tokens: options.max_tokens ?? 4000,
+        ...(options.reasoning_effort || config.reasoningEffort ? { reasoning_effort: options.reasoning_effort ?? config.reasoningEffort } : {}),
         ...(config.providerOnly ? { providerOptions: { gateway: { only: config.providerOnly } } } : {}) }),
     });
     if (!response.ok) throw new Error(`Model provider failed (${response.status})`);
