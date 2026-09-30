@@ -271,6 +271,7 @@ function auditMessages(messages, evidence, corpusSources) {
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
+  reasoningEffort = null,
   toolSurface = 'full-catalog-v1', instructionProfile,
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
@@ -320,7 +321,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
     toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
@@ -421,7 +422,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
-        const request = model(messages, { ...options, model: provenance.model, ...(workProduct ? { max_tokens: workProduct.maxCompletionTokens } : {}) })
+        const request = model(messages, { ...options, model: provenance.model, ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}), ...(workProduct ? { max_tokens: workProduct.maxCompletionTokens } : {}) })
         if (!workProduct || !providerRecords) return request
         return Promise.resolve(request).then(response => {
           const raw = response.raw_response ?? response.rawResponse ?? response

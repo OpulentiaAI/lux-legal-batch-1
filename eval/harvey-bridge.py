@@ -18,6 +18,7 @@ from pathlib import Path
 HARVEY_COMMIT = "845a08840869b21a5c11958aae58bf5f00a7b775"
 LUNA_MODEL = "openai/gpt-6-luna"
 MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
+GLM_MODEL = "zai/glm-5.3"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
 E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
 HARVEY_IMAGE = "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2"
@@ -373,7 +374,8 @@ def main():
     model = request.get("model", LUNA_MODEL)
     provider_only = request.get("provider_only")
     if not ((model == LUNA_MODEL and provider_only is None) or
-            (model == MODAL_MODEL and provider_only == ["modal"])):
+            (model == MODAL_MODEL and provider_only == ["modal"]) or
+            (model == GLM_MODEL and provider_only is None)):
         raise RuntimeError("Invalid Harvey model/provider pairing")
     if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != GATEWAY or not os.environ.get("OPENAI_API_KEY")):
         raise RuntimeError("Exact AI Gateway endpoint and credentials required")
@@ -535,12 +537,13 @@ def main():
             def rpc(self, payload):
                 return rpc(payload)
 
-        if provider_only:
+        reasoning_effort = request.get("reasoning_effort")
+        if provider_only or reasoning_effort:
             from importlib.util import module_from_spec, spec_from_file_location
             spec = spec_from_file_location("harvey_modal_adapter", Path(__file__).with_name("harvey-modal-adapter.py"))
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-            adapter = module.ModalDeepSeekAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), capture_usage=bool(work_product))
+            adapter = module.GatewayReasoningAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), reasoning_effort=reasoning_effort, provider_only=provider_only, capture_usage=bool(work_product))
         else:
             adapter = OpenAIAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000))
         result = run_agent(

@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
-import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY } from '../../runtime/eval-model-profile.mjs'
+import { COMPARISON_PROFILES } from '../../runtime/eval-model-profile.mjs'
 import { brokerNetwork, createEvaluationBroker, verifyEvaluationBroker } from '../../runtime/eval-broker.mjs'
 import { createHarveyHarness } from '../harvey-harness.mjs'
 import { createBroadHarness, provisionCorpus } from '../../runtime/broad-legal-eval.mjs'
@@ -54,14 +54,16 @@ export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
     '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps',
-    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency' }
+    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency', '--model-profile': 'modelProfile' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  options.modelProfile ??= 'modal-deepseek-v4.1-flash'
+  if (!COMPARISON_PROFILES[options.modelProfile]) throw new Error('Invalid model profile')
   options.instructionProfile ??= 'opulent-prepared-v2'
   if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
@@ -253,7 +255,9 @@ export async function run(options, dependencies = {}) {
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
   broker.origin = options.brokerOrigin
   try {
-    const common = { workspace: source, corpus, maxSteps, model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, workProduct: { maxCompletionTokens: 32768 } }
+    const profile = COMPARISON_PROFILES[options.modelProfile ?? 'modal-deepseek-v4.1-flash']
+    if (!profile) throw new Error('Invalid model profile')
+    const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
@@ -261,7 +265,7 @@ export async function run(options, dependencies = {}) {
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-      model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, maxSteps, maxCompletionTokens: 32768, concurrency,
+        model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, maxSteps, maxCompletionTokens: 32768, concurrency,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
