@@ -1,0 +1,11 @@
+{
+  "name": "francois-research-update",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "takumi-pdf": "0.15.0"
+  }
+}

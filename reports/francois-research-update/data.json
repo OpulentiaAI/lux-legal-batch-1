@@ -1,0 +1,339 @@
+{
+  "_note": "Every figure in the report is drawn from this file. Each block names its source. The glm53 block is the team-reported GLM-5.3 run, which is not yet committed to the repository.",
+  "glm53": {
+    "source": "Team-reported GLM-5.3 run, 2026-09-30 (artifacts pending commit)",
+    "opulentCompletion": 98.0,
+    "minMargin": 9.9
+  },
+  "deepseek250": {
+    "source": "eval/RLM-V5-COMPARISON-REPORT.md (run rlm-v5-twelve-250-20260929-01)",
+    "semantic": {
+      "harvey": 0.892,
+      "opulent": 0.907
+    },
+    "accuracy": {
+      "harvey": 0.681,
+      "opulent": 0.7
+    },
+    "judgeOutputTokens": 1224,
+    "judgeInputTokens": 327483,
+    "attempts": 24,
+    "tokens": {
+      "harvey": 92093328,
+      "opulent": 102668321
+    },
+    "toolCalls": {
+      "harvey": 1000,
+      "opulent": 968
+    },
+    "medianLatencyS": {
+      "harvey": 178.8,
+      "opulent": 276.0
+    }
+  },
+  "corpus": {
+    "source": "corpus/index/documents.csv (chunk_count), corpus/index/chunks.jsonl (article tags), README.md",
+    "totalChunks": 8809,
+    "structureNodes": 4781,
+    "articles": 2018,
+    "chars": "15.5M",
+    "works": [
+      {
+        "id": "doc-07",
+        "chunks": 2096,
+        "articleTagged": 1161,
+        "label": "Code des sociétés cotées",
+        "sub": "Payen and Mbayi · 2021"
+      },
+      {
+        "id": "doc-09",
+        "chunks": 1387,
+        "articleTagged": 176,
+        "label": "Manuel de droit des sociétés",
+        "sub": "Winandy"
+      },
+      {
+        "id": "doc-08",
+        "chunks": 1249,
+        "articleTagged": 59,
+        "label": "Précis de droit des sociétés",
+        "sub": "Steichen · 2018"
+      },
+      {
+        "id": "doc-02",
+        "chunks": 1057,
+        "articleTagged": 0,
+        "own": true,
+        "label": "Les scissions transfrontalières",
+        "sub": "Bernard · your monograph"
+      },
+      {
+        "id": "doc-01",
+        "chunks": 984,
+        "articleTagged": 6,
+        "label": "Contrats et obligations",
+        "sub": "Ancel · 2025"
+      },
+      {
+        "id": "doc-06",
+        "chunks": 871,
+        "articleTagged": 411,
+        "label": "Loi du 10 août 1915",
+        "sub": "Statute · consolidated 29 May 2026"
+      },
+      {
+        "id": "doc-04",
+        "chunks": 677,
+        "articleTagged": 0,
+        "label": "Précis de droit comptable",
+        "sub": "Collin · 2020"
+      },
+      {
+        "id": "doc-05",
+        "chunks": 307,
+        "articleTagged": 1,
+        "label": "La réforme belge du droit des sociétés",
+        "sub": "Corbisier and Prüm · 2021"
+      },
+      {
+        "id": "doc-03",
+        "chunks": 181,
+        "articleTagged": 0,
+        "label": "Les commandites en droit luxembourgeois",
+        "sub": "Treatise · 2013"
+      }
+    ]
+  },
+  "devSet": {
+    "source": "eval/gold.json",
+    "questions": 50,
+    "criteria": 178,
+    "kinds": [
+      {
+        "kind": "Fact",
+        "n": 16
+      },
+      {
+        "kind": "Doctrine",
+        "n": 10
+      },
+      {
+        "kind": "Definition",
+        "n": 7
+      },
+      {
+        "kind": "Statute lookup",
+        "n": 4
+      },
+      {
+        "kind": "Procedure",
+        "n": 4
+      },
+      {
+        "kind": "Comparative",
+        "n": 3
+      },
+      {
+        "kind": "Multilingual",
+        "n": 3
+      },
+      {
+        "kind": "Provenance",
+        "n": 2
+      },
+      {
+        "kind": "Survey",
+        "n": 1
+      }
+    ]
+  },
+  "workProduct": {
+    "source": "eval/complex-v1/manifest.json, eval/complex-v1/VERIFICATION.md, eval/complex-v1/RUN-PLAN.md",
+    "tasks": [
+      {
+        "n": "01",
+        "criteria": 7,
+        "dev": true,
+        "title": "Founder term-sheet redline and closing conditions"
+      },
+      {
+        "n": "02",
+        "criteria": 7,
+        "title": "Multi-entity closing exception and dependency checklist"
+      },
+      {
+        "n": "03",
+        "criteria": 6,
+        "title": "Year-end dividend income cut-off and assertion workpaper"
+      },
+      {
+        "n": "04",
+        "criteria": 8,
+        "title": "Listed remuneration report evidence and publication audit"
+      },
+      {
+        "n": "05",
+        "criteria": 6,
+        "title": "Research memo authority audit and citation repair"
+      },
+      {
+        "n": "06",
+        "criteria": 4,
+        "title": "Parallel capital actions: vote tabulation and board certification pack"
+      },
+      {
+        "n": "07",
+        "criteria": 8,
+        "title": "Listed-SA remuneration vote and payment remediation"
+      },
+      {
+        "n": "08",
+        "criteria": 7,
+        "dev": true,
+        "title": "SA in-year reserve distribution and interim-dividend close"
+      },
+      {
+        "n": "09",
+        "criteria": 7,
+        "title": "SA capital-increase resolution and board execution"
+      },
+      {
+        "n": "10",
+        "criteria": 8,
+        "title": "Luxembourg–France complete split: executable closing sequence"
+      },
+      {
+        "n": "11",
+        "criteria": 8,
+        "title": "Partial European split: allocation, universal transfer and creditor fallback"
+      },
+      {
+        "n": "12",
+        "criteria": 7,
+        "title": "Commandite selection and limited-partner governance diligence"
+      },
+      {
+        "n": "13",
+        "criteria": 7,
+        "title": "Financing choice: Belgian SRL versus Luxembourg SARL and SARL-S"
+      },
+      {
+        "n": "14",
+        "criteria": 7,
+        "title": "Industry contributions and capital and rights structuring"
+      },
+      {
+        "n": "15",
+        "criteria": 4,
+        "dev": true,
+        "title": "Contractual-obligation triage and draft correction"
+      }
+    ]
+  },
+  "retrieval": {
+    "source": "README.md (retrieval table), eval/results.json",
+    "modes": [
+      {
+        "mode": "Keyword (BM25)",
+        "ev1": 20,
+        "ev5": 29,
+        "doc5": 42,
+        "mrr": 0.471,
+        "p50": "0.24 s"
+      },
+      {
+        "mode": "Vector",
+        "ev1": 25,
+        "ev5": 39,
+        "doc5": 47,
+        "mrr": 0.604,
+        "p50": "0.50 s"
+      },
+      {
+        "mode": "Hybrid (RRF)",
+        "ev1": 24,
+        "ev5": 36,
+        "doc5": 47,
+        "mrr": 0.597,
+        "p50": "0.71 s"
+      },
+      {
+        "mode": "Hybrid + rerank",
+        "ev1": 29,
+        "ev5": 40,
+        "doc5": 50,
+        "mrr": 0.678,
+        "p50": "1.02 s"
+      }
+    ]
+  },
+  "judge": {
+    "source": "eval/README.md (q06-broad smoke), eval/RLM-V5-COMPARISON-REPORT.md (Jev usage)",
+    "reasoningSmokeTokens": 15852,
+    "reasoningBudget": 16000,
+    "jevPerAttempt": 51
+  },
+  "devModes": {
+    "source": "README.md (composition table)",
+    "modes": [
+      {
+        "mode": "Flat pipeline",
+        "pass": 87.1
+      },
+      {
+        "mode": "Recursive (RLM)",
+        "pass": 86.0
+      },
+      {
+        "mode": "Agent, first run",
+        "pass": 73.0,
+        "degraded": 18
+      },
+      {
+        "mode": "Agent, one harness rule later",
+        "pass": 93.8,
+        "degraded": 0
+      }
+    ]
+  },
+  "runs": {
+    "source": "eval/RLM-V5-COMPARISON-REPORT.md, eval/PREPARED-MODAL-FIFTEEN-REPORT.md, eval/INSTRUCTION-ALIGNED-COMPARISON.md, eval/MODAL-DEEPSEEK-TEN-REPORT.md",
+    "rows": [
+      {
+        "run": "This note",
+        "set": "12 held-out work products",
+        "model": "GLM-5.3",
+        "opulent": "98% completion",
+        "harvey": "At least 9.9 points lower on every metric"
+      },
+      {
+        "run": "250 steps, Jev judge",
+        "set": "12 held-out work products",
+        "model": "DeepSeek V4.1 Flash",
+        "opulent": "0.907 semantic, 0.700 accuracy",
+        "harvey": "0.892 semantic, 0.681 accuracy"
+      },
+      {
+        "run": "Audited criteria",
+        "set": "15 development questions",
+        "model": "DeepSeek V4.1 Flash",
+        "opulent": "48 of 50 criteria, 12 strict all-pass",
+        "harvey": "48 of 50 criteria, 9 strict all-pass"
+      },
+      {
+        "run": "Instruction-aligned",
+        "set": "10 development questions",
+        "model": "GPT-6 Luna",
+        "opulent": "32 of 36 criteria",
+        "harvey": "28 of 36 criteria"
+      },
+      {
+        "run": "Legacy judge",
+        "set": "10 development questions",
+        "model": "DeepSeek V4.1 Flash",
+        "opulent": "27 of 36 criteria",
+        "harvey": "31 of 36 criteria"
+      }
+    ]
+  }
+}
