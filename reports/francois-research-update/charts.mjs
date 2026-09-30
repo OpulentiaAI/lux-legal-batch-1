@@ -133,13 +133,15 @@ export function corpus(d) {
 }
 
 // Figure 3: the two evaluations as bars of parts (landing "funnel of parts" layout).
+// [row, anchored at the part's right edge] for each small part's label, in order, so no two labels collide.
+const SMALL_LABELS = [[0, false], [1, false], [2, false], [0, true], [1, true], [2, true]];
 export function evals(d) {
-  const W = 560, H = 214, G = 3;
+  const W = 560, H = 226, G = 3;
   let b = "";
   // Development set, 50 questions by kind
   const kinds = d.devSet.kinds, total = d.devSet.questions;
   const shades = [null, 0.9, 0.76, 0.64, 0.54, 0.44, 0.35, 0.27, 0.2];
-  let cx = 0;
+  let cx = 0, smallIdx = 0;
   const unit = (W - G * (kinds.length - 1)) / total;
   b += text(0, 10, `DEVELOPMENT SET  ·  ${total} QUESTIONS  ·  ${d.devSet.criteria} CRITERIA`, { mono: true, size: 8, fill: ink(0.45), ls: 0.6 });
   kinds.forEach((k, i) => {
@@ -148,41 +150,40 @@ export function evals(d) {
     else b += rect(cx, 30, w, 26, ink(shades[i]), 'rx="2"');
     b += text(cx + 1, 25, k.n, { mono: true, size: 8, fill: ink(0.55) });
     if (w > 44) b += text(cx + 1, 69, k.kind, { size: 9 });
+    else {
+      // small parts: labels on three staggered rows with short leaders; the right-hand ones end at their part
+      const [row, end] = SMALL_LABELS[smallIdx++] ?? [2, true];
+      const ly = 70 + row * 12;
+      b += line(cx + w / 2, 58, cx + w / 2, ly - 8, ink(0.25), 0.8);
+      b += text(end ? cx + w : cx, ly, k.kind, { size: 8.5, fill: ink(0.6), anchor: end ? "end" : "start" });
+    }
     cx += w + G;
   });
-  // swatch legend for the small parts
-  let lx = 0;
-  const small = kinds.filter((k) => k.n * unit <= 44);
-  b += text(0, 86, "", { size: 8 });
-  small.forEach((k) => {
-    const i = kinds.indexOf(k);
-    b += rect(lx, 78, 8, 8, ink(shades[i]), 'rx="1.5"') + text(lx + 12, 85.5, k.kind, { size: 8.5, fill: ink(0.56) });
-    lx += 16 + k.kind.length * 4.6 + 10;
-  });
+
   // Work-product suite, 15 tasks sized by criteria; development tasks first, then the held-out twelve
   const tasks = [...d.workProduct.tasks.filter((t) => t.dev), ...d.workProduct.tasks.filter((t) => !t.dev)];
   const crit = tasks.reduce((s, t) => s + t.criteria, 0);
   const u2 = (W - G * (tasks.length - 1)) / crit;
-  b += line(0, 100, W, 100, LINE);
-  b += text(0, 117, `WORK-PRODUCT SUITE  ·  ${tasks.length} TASKS  ·  ${crit} CRITERIA`, { mono: true, size: 8, fill: ink(0.45), ls: 0.6 });
+  b += line(0, 112, W, 112, LINE);
+  b += text(0, 129, `WORK-PRODUCT SUITE  ·  ${tasks.length} TASKS  ·  ${crit} CRITERIA`, { mono: true, size: 8, fill: ink(0.45), ls: 0.6 });
   cx = 0;
   let hoStart = null, hoEnd = 0, hoCrit = 0;
   tasks.forEach((t) => {
     const w = t.criteria * u2;
-    if (t.dev) b += hatch(cx, 150, w, 30, { step: 4, width: 0.8, opacity: 0.45 });
+    if (t.dev) b += hatch(cx, 162, w, 30, { step: 4, width: 0.8, opacity: 0.45 });
     else {
       if (hoStart === null) hoStart = cx;
       hoEnd = cx + w; hoCrit += t.criteria;
-      b += rect(cx, 150, w, 30, "url(#fTask)", 'rx="2"');
+      b += rect(cx, 162, w, 30, "url(#fTask)", 'rx="2"');
     }
-    b += text(cx + w / 2, 169, t.criteria, { mono: true, size: 8.5, fill: t.dev ? ink(0.7) : "#fff", anchor: "middle" });
-    b += text(cx + w / 2, 194, t.n, { mono: true, size: 8, fill: ink(0.45), anchor: "middle" });
+    b += text(cx + w / 2, 181, t.criteria, { mono: true, size: 8.5, fill: t.dev ? ink(0.7) : "#fff", anchor: "middle" });
+    b += text(cx + w / 2, 206, t.n, { mono: true, size: 8, fill: ink(0.45), anchor: "middle" });
     cx += w + G;
   });
-  b += bracket(hoStart, hoEnd, 142, BLUE, 5, true);
-  b += text(hoEnd, 136, `HELD OUT  ·  12 TASKS  ·  ${hoCrit} CRITERIA`, { mono: true, size: 8, fill: BLUE, anchor: "end", ls: 0.6 });
-  b += text(0, 136, "DEVELOPMENT", { mono: true, size: 8, fill: ink(0.45), ls: 0.6 });
-  b += text(0, 209, "Task number under each block; criteria inside it.", { size: 8.5, fill: ink(0.5) });
+  b += bracket(hoStart, hoEnd, 154, BLUE, 5, true);
+  b += text(hoEnd, 148, `HELD OUT  ·  12 TASKS  ·  ${hoCrit} CRITERIA`, { mono: true, size: 8, fill: BLUE, anchor: "end", ls: 0.6 });
+  b += text(0, 148, "DEVELOPMENT", { mono: true, size: 8, fill: ink(0.45), ls: 0.6 });
+  b += text(0, 221, "Task number under each block; criteria inside it.", { size: 8.5, fill: ink(0.5) });
   const defs = dotsDef("dE", 4, 0.7, "rgba(0,0,0,0.42)") + fadeDef("fTask", INK, 1, 0.72, true);
   return svg(W, H, b, defs);
 }
@@ -246,24 +247,24 @@ export function jevShape() {
   return svg(W, H, b);
 }
 
-// Figure 6: development-set criteria pass by answering mode.
+// Figure 6: the same model and judge before and after one harness rule, as dumbbells.
 export function harness(d) {
-  const W = 560, rowH = 34, top = 6, modes = d.devModes.modes, H = top + modes.length * rowH + 22;
-  const L = 172, R = 470, x = (v) => L + ((R - L) * v) / 100;
-  let b = rect(L, 0, R - L, top + modes.length * rowH, "url(#dH)");
-  for (const t of [0, 25, 50, 75, 100]) b += line(x(t), 0, x(t), top + modes.length * rowH, LINE) + text(x(t), H - 6, t, { mono: true, size: 8, fill: ink(0.4), anchor: "middle" });
-  modes.forEach((m, i) => {
-    const y = top + i * rowH;
-    const first = i === 2, last = i === 3;
-    b += text(0, y + 19, m.mode, { size: 10, fill: last || first ? INK : ink(0.56) });
-    if (first) b += hatch(L, y + 8, x(m.pass) - L, 16, { step: 4.5, width: 0.9, opacity: 0.55 });
-    else b += rect(L, y + 8, x(m.pass) - L, 16, last ? "url(#fH)" : ink(0.16), 'rx="2"');
-    b += text(x(m.pass) + 6, y + 20, `${m.pass.toFixed(1)}%`, { mono: true, size: 9, fill: last || first ? INK : ink(0.56) });
+  const ms = d.devModes.measures;
+  const W = 560, rowH = 38, top = 8, H = top + ms.length * rowH + 20;
+  const L = 176, R = 540, x = (v, max) => L + ((R - L) * v) / max;
+  let b = rect(L, 0, R - L, top + ms.length * rowH, "url(#dH)");
+  for (const t of [0, 25, 50, 75, 100]) b += line(x(t, 100), 0, x(t, 100), top + ms.length * rowH, LINE) + text(x(t, 100), H - 4, `${t}%`, { mono: true, size: 8, fill: ink(0.4), anchor: "middle" });
+  ms.forEach((m, i) => {
+    const y = top + i * rowH + 18;
+    const xb = x(m.before, m.max), xa = x(m.after, m.max);
+    const fmt = (v) => (m.unit === "%" ? `${v.toFixed(1)}%` : String(v));
+    b += text(0, y + 3.5, m.label, { size: 10, fill: i === 0 ? INK : ink(0.75) });
+    b += line(xb, y, xa, y, i === 0 ? BLUE : ink(0.3), i === 0 ? 2 : 1.6);
+    b += `<circle cx="${r1(xb)}" cy="${y}" r="4.6" fill="${PAGE}" stroke="${ink(0.45)}" stroke-width="1.4"/>`;
+    b += `<circle cx="${r1(xa)}" cy="${y}" r="4.8" fill="${INK}"/>`;
+    const up = xa >= xb;
+    b += text(up ? xb - 9 : xb + 9, y + 3.5, fmt(m.before), { mono: true, size: 8.5, fill: ink(0.5), anchor: up ? "end" : "start" });
+    b += text(up ? xa + 9 : xa - 9, y + 3.5, fmt(m.after), { mono: true, size: 8.5, fill: i === 0 ? BLUE : INK, anchor: up ? "start" : "end" });
   });
-  const yF = top + 2 * rowH + 16, yL = top + 3 * rowH + 16, xa = x(93.8) + 46;
-  b += `<path d="M ${r1(x(73.0) + 40)} ${yF} L ${r1(xa)} ${yF} L ${r1(xa)} ${yL - 6}" fill="none" stroke="${BLUE}" stroke-width="1.3"/>`;
-  b += `<path d="M ${r1(xa - 3.5)} ${yL - 9} L ${r1(xa)} ${yL - 3} L ${r1(xa + 3.5)} ${yL - 9}" fill="none" stroke="${BLUE}" stroke-width="1.3"/>`;
-  b += text(xa + 6, (yF + yL) / 2 + 3, "+20.8 pts", { mono: true, size: 9, fill: BLUE });
-  const defs = dotsDef("dH", 10) + fadeDef("fH", INK, 0.62, 1, false);
-  return svg(W, H, b, defs);
+  return svg(W, H, b, dotsDef("dH", 10));
 }

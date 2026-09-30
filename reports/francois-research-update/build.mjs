@@ -15,6 +15,8 @@ const OUT = path.resolve(process.argv[2] ?? path.join(HERE, "opulent-research-up
 const data = JSON.parse(await readFile(path.join(HERE, "data.json"), "utf8"));
 const md = await readFile(path.join(HERE, "article.md"), "utf8");
 const MARK = await readFile(path.join(HERE, "opulent-mark.svg"), "utf8");
+// Headings verify.py found stranded at a page foot in an earlier render; each is forced onto a new page.
+const overrides = JSON.parse(await readFile(path.join(HERE, "pagination.json"), "utf8").catch(() => "{}"));
 
 // Page geometry (CSS px at 96 dpi). Takumi places header and footer bands 20px inside the page edge,
 // so the bands are sized to meet the content box exactly and the rails run unbroken from band to band.
@@ -23,10 +25,11 @@ const HEAD_H = MT - INSET, FOOT_H = MB - INSET, RAIL_R = 744;
 
 const { INK, ink, BLUE, LINE, PAGE } = C;
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\b(Figure|Table) (\d)/g, "$1\u00a0$2");
 
 const css = `
-.doc { display: flex; flex-direction: column; padding: 0 44px; font-family: NB; color: ${INK}; }
+.doc { display: flex; flex-direction: column; font-family: NB; color: ${INK}; }
+.u { display: flex; flex-direction: column; padding: 0 44px; }
 .row { display: flex; flex-direction: row; }
 .lab { width: 104px; flex-shrink: 0; margin-right: 24px; font-family: 'Geist Mono'; font-size: 8.5px; letter-spacing: 0.06em; color: ${ink(0.4)}; }
 .col { display: flex; flex-direction: column; width: 481px; }
@@ -42,6 +45,7 @@ h1 { margin: 0; font-weight: 300; }
 .li { display: flex; flex-direction: row; margin: 0 0 8px 0; }
 .num { width: 22px; flex-shrink: 0; font-family: 'Geist Mono'; font-size: 10px; line-height: 20.5px; color: ${ink(0.45)}; }
 .fig { display: flex; flex-direction: column; padding: 8px 0 20px 0; break-inside: avoid; }
+.tab { display: flex; flex-direction: column; padding: 8px 0 20px 0; }
 .card { position: relative; display: flex; flex-direction: column; background: #fff; border-radius: 10px; padding: 18px 24px 16px 24px; break-inside: avoid;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.045); }
 .handle { position: absolute; width: 6px; height: 6px; border: 1px solid ${ink(0.2)}; background: ${PAGE}; }
@@ -58,6 +62,8 @@ table { width: 100%; border-collapse: collapse; }
 th { font-family: 'Geist Mono'; font-size: 7.5px; letter-spacing: 0.07em; font-weight: 400; color: ${ink(0.45)}; text-align: left; padding: 0 8px 7px 0; border-bottom: 1px solid ${ink(0.2)}; }
 td { font-size: 10.5px; line-height: 15px; color: ${ink(0.9)}; padding: 7px 8px 7px 0; border-bottom: 1px solid ${LINE}; vertical-align: top; }
 td.m { font-family: 'Geist Mono'; font-size: 9.5px; }
+td.n { font-size: 9.5px; line-height: 13.5px; color: ${ink(0.6)}; }
+table.small td { font-size: 9.5px; line-height: 13.5px; padding: 6px 7px 6px 0; }
 tr.total td { border-bottom: none; border-top: 1px solid ${ink(0.2)}; font-weight: 500; }
 `;
 
@@ -104,12 +110,12 @@ function figure({ title, body, legendItems, caption, source, pill }) {
     <div class="cap"><b style="font-weight:500;color:${INK}">Figure ${figN}.</b> ${inline(caption)}</div>
     <div class="src">SOURCE  ·  ${esc(source.toUpperCase())}</div></div>`;
 }
-function table({ title, head, rows, total, source, widths }) {
+function table({ title, head, rows, total, source, widths, small }) {
   tabN += 1;
   const cols = widths ? `<colgroup>${widths.map((w) => `<col style="width:${w}">`).join("")}</colgroup>` : "";
   const tr = (r, cls = "") => `<tr class="${cls}">${r.map((c, i) => `<td class="${typeof c === "object" ? c.cls : ""}">${inline(typeof c === "object" ? c.v : c)}</td>`).join("")}</tr>`;
-  return `<div class="fig"><div class="row" style="margin-bottom:10px;align-items:baseline"><div class="lab">TABLE ${tabN}</div><div class="figtitle">${esc(title)}</div></div>
-    <table>${cols}<thead><tr>${head.map((h) => `<th>${esc(h.toUpperCase())}</th>`).join("")}</tr></thead>
+  return `<div class="tab"><div class="row" style="margin-bottom:10px;align-items:baseline"><div class="lab">TABLE ${tabN}</div><div class="figtitle">${esc(title)}</div></div>
+    <table${small ? ' class="small"' : ""}>${cols}<thead><tr>${head.map((h) => `<th>${esc(h.toUpperCase())}</th>`).join("")}</tr></thead>
     <tbody>${rows.map((r) => tr(r)).join("")}${total ? tr(total, "total") : ""}</tbody></table>
     <div class="src" style="margin-top:8px">SOURCE  ·  ${esc(source.toUpperCase())}</div></div>`;
 }
@@ -122,20 +128,20 @@ const FIGURES = {
       <div style="width:1px;background:${LINE};margin:0 12px"></div>
       <div style="display:flex;flex-direction:column;width:206px">${panelLabel("DEEPSEEK V4.1 FLASH  ·  250 STEPS")}${C.resultsEarlier(data)}</div></div>`,
     legendItems: [[C.INK, "Opulent, naive harness"], ["hatch", "Harvey LAB harness, at its upper bound"], ["dot", "Opulent"], ["hollow", "Harvey LAB"]],
-    caption: "Left: completion on the twelve held-out work products, with GLM-5.3 answering in both harnesses. Harvey's bar is drawn at its upper bound, 9.9 points below Opulent, and the lower scale zooms in on 80 to 100. Right: the earlier 250-step run on the same tasks with DeepSeek V4.1 Flash, as trimmed means of Jev scores normalized to 0 to 1.",
+    caption: "Left: completion on the twelve held-out work products, with GLM-5.3 answering in both harnesses. Harvey's exact figure is not shown: its bar is drawn hatched at the highest value the reported margin allows, 9.9 points below Opulent, and the lower scale zooms in on 80 to 100. Right: the earlier 250-step run on the same tasks with DeepSeek V4.1 Flash, as trimmed means of Jev's holistic scores normalized to 0 to 1; untrimmed means are in the appendix.",
     source: "GLM-5.3 run, team-reported, artifacts pending commit  ·  eval/RLM-V5-COMPARISON-REPORT.md",
   }),
   corpus: () => figure({
     title: "Your nine works, as the agent sees them",
     body: C.corpus(data),
     legendItems: [[C.ink(0.2), "Passages"], [C.INK, "Passages tied to a statutory article"], [BLUE, "Your monograph"]],
-    caption: "Passages per work, 8,809 in all. The darker segment marks the 1,814 passages tagged with a statutory article, concentrated in the 1915 law and the annotated code of listed companies. Works are credited by the names on their files.",
+    caption: "Passages per work, 8,809 in all. The darker segment marks the 1,814 passages tagged with a statutory article, concentrated in the annotated code of listed companies and the 1915 law, which also hold most of the 2,018 article nodes. Works are credited by the names on their files.",
     source: "corpus/index/documents.csv  ·  corpus/index/chunks.jsonl",
   }),
   evals: () => figure({
     title: "Two evaluations built from the corpus",
     body: C.evals(data),
-    legendItems: [["dots", "Largest kind"], ["hatch", "Development task"], [C.INK, "Held-out task"]],
+    legendItems: [["hatch", "Development task"], [C.INK, "Held-out task"]],
     caption: "Top: the fifty development questions by kind, graded against 178 criteria. Bottom: the fifteen work-product tasks, each block sized by its criteria. The three development tasks are used for smoke tests and judge calibration; the twelve held-out tasks carry 83 of the 101 criteria.",
     source: "eval/gold.json  ·  eval/complex-v1/manifest.json  ·  eval/complex-v1/RUN-PLAN.md",
   }),
@@ -143,7 +149,7 @@ const FIGURES = {
     title: "Retrieval on the development set",
     body: C.retrieval(data),
     legendItems: [[C.INK, "Right passage ranked first"], [C.ink(0.4), "Right passage in the top five"], [C.ink(0.14), "Right work in the top five"]],
-    caption: "Questions out of 50 for each retrieval mode, with mean reciprocal rank (MRR) and median latency (p50). Hybrid search with reranking leads on every quality measure, at the cost of about three quarters of a second of latency over keyword search.",
+    caption: "Questions out of 50 for each retrieval mode on the first index (OpenAI embeddings in turbopuffer), with mean reciprocal rank (MRR) and median latency (p50). Hybrid search with reranking leads on every quality measure, at the cost of about three quarters of a second of latency over keyword search.",
     source: "README.md  ·  eval/results.json",
   }),
   judge: () => figure({
@@ -153,14 +159,14 @@ const FIGURES = {
       <div style="width:1px;background:${LINE};margin:0 18px"></div>
       <div style="display:flex;flex-direction:column;width:160px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="mono">A JEV VERDICT</div><span class="pill">EXAMPLE</span></div>
         ${C.jevShape()}<div style="font-size:9.5px;line-height:14px;color:${ink(0.6)};margin-top:8px">A score, with a probability for each level, so every verdict says how sure it is.</div></div></div>`,
-    caption: "Left: output tokens per judgment, on a log scale. The reasoning judge's figure is one smoke test on a single answer, which exhausted its 16,000-token budget; Jev's is the mean over the 24 attempts of the 250-step run (1,224 tokens in all). Right: the shape of a Jev verdict, drawn for illustration without values.",
-    source: "eval/README.md  ·  eval/RLM-V5-COMPARISON-REPORT.md",
+    caption: "Left: output tokens per judgment, on a log scale. The reasoning judge's figure is one smoke test on a single question-answer, which exhausted its 16,000-token budget; Jev's is the mean over the 24 work-product attempts of the 250-step run (1,224 tokens in all). The two measure different jobs and are shown for scale only. Right: the shape of a Jev verdict, drawn for illustration without values.",
+    source: "eval/README.md  ·  eval/RLM-V5-COMPARISON-REPORT.md  ·  Jev response format, opulent-slide-materials jev-review.json",
   }),
   harness: () => figure({
-    title: "One harness rule, twenty points",
+    title: "One harness rule, same model and judge",
     body: C.harness(data),
-    legendItems: [["hatch", "Agent before the rule"], [C.INK, "Agent after the rule"], [C.ink(0.16), "Other answering modes"]],
-    caption: "Share of the 178 development criteria passed by each answering mode. In its first run the agent pinned filters that matched nothing and concluded the evidence was insufficient. After one rule was added to the harness, to retry such a search without its filter, it passed 93.8 percent of criteria, above the fixed pipelines, and degraded runs fell from 18 to zero.",
+    legendItems: [["hollow", "First run"], ["dot", "After the rule"]],
+    caption: "The agent on the fifty-question development set, with GPT-5 mini answering and judging under the three-tool closed-corpus policy, before and after one rule was added to its instructions: retry a filtered search that returns nothing without its filter before concluding the evidence is missing. Counts are out of 50 answers and are plotted as a share of 50.",
     source: "README.md  ·  eval/compose-agent-baseline.json  ·  eval/compose-agent.json",
   }),
   setup: () => {
@@ -170,6 +176,7 @@ const FIGURES = {
       ["Corpus access", "Exported passages, read as files", "Search, passage and inventory tools over MCP"],
       ["Sandboxes", "E2B, in place of its Podman backend", "E2B, one sandbox per agent"],
       ["Delegation", "A single agent", "Sub-agents from a persistent Python session"],
+      ["Network", "None, in the 250-step run", "General outbound, in the 250-step run"],
     ];
     const cell = (s, strong) => `<div style="flex:1;padding:7px 14px 7px 0;font-size:10.5px;line-height:15px;color:${strong ? INK : ink(0.75)}">${esc(s)}</div>`;
     const body = `<div style="display:flex;flex-direction:column">
@@ -178,12 +185,12 @@ const FIGURES = {
       ${rows.map(([k, a, b]) => `<div class="row" style="border-bottom:1px solid ${LINE}"><div style="width:110px;padding:7px 0;font-size:10.5px;line-height:15px;color:${ink(0.5)}">${esc(k)}</div>${cell(a)}${cell(b, true)}</div>`).join("")}
       <div class="row" style="margin-top:12px;align-items:center;background:${ink(0.035)};border-radius:6px;padding:9px 12px">
         <div class="mono" style="width:98px;color:${BLUE}">HELD EQUAL</div>
-        <div style="font-size:10.5px;line-height:15px;color:${INK}">The model, the task files, the 8,809 passages, the step and token budgets, and the evidence rules</div></div></div>`;
+        <div style="font-size:10.5px;line-height:15px;color:${INK}">The answering model, the task files, the 8,809 passages, and the step and token budgets</div></div></div>`;
     return figure({
       title: "The two harnesses, on the same terms",
       body,
-      caption: "What differs between the two arms, and what is held equal. We compare configured systems, so retrieval, prompts and tools differ along with the harness. The Harvey arm is Harvey's public LAB harness at a pinned commit.",
-      source: "eval/HARVEY-COMPARISON.md  ·  runtime/README.md  ·  eval/complex-v1/RUN-PLAN.md",
+      caption: "What differs between the two arms, and what is held equal. We compare configured systems, so retrieval, prompts, tools and access differ along with the harness. The Harvey arm is Harvey's public LAB harness at a pinned commit.",
+      source: "eval/HARVEY-COMPARISON.md  ·  runtime/README.md  ·  runtime/RLM.md  ·  eval/harvey-harness.mjs",
     });
   },
 };
@@ -209,9 +216,10 @@ const TABLES = {
   }),
   runs: () => table({
     title: "The principal paired runs, Opulent against Harvey's LAB harness",
-    head: ["Run", "Evaluation", "Answering model", "Opulent", "Harvey LAB"],
-    widths: ["17%", "20%", "17%", "23%", "23%"],
-    rows: data.runs.rows.map((r) => [r.run, r.set, r.model, r.opulent, r.harvey]),
+    head: ["Run", "Evaluation", "Model", "Opulent", "Harvey LAB", "Note"],
+    widths: ["12%", "14%", "12%", "22%", "20%", "20%"],
+    small: true,
+    rows: data.runs.rows.map((r) => [r.run, r.set, r.model, r.opulent, r.harvey, { v: r.note, cls: "n" }]),
     source: data.runs.source.replace(/, /g, "  ·  "),
   }),
 };
@@ -244,7 +252,7 @@ function cover(title, meta, lead) {
   const cells = [
     { label: "HELD-OUT COMPLETION", pre: "", num: `${data.glm53.opulentCompletion}%`, cap: "GLM-5.3, naive Opulent harness" },
     { label: "LEAD OVER HARVEY LAB", pre: "at least", num: `${data.glm53.minMargin}`, unit: "pts", cap: "On every metric we report" },
-    { label: "YOUR NINE WORKS", pre: "", num: data.corpus.totalChunks.toLocaleString("en-US"), cap: "Cited passages, each traceable", accent: true },
+    { label: "YOUR NINE WORKS", pre: "", num: data.corpus.totalChunks.toLocaleString("en-US"), cap: "Citable passages, each with its source", accent: true },
     { label: "HELD-OUT TASKS", pre: "", num: "12", cap: "Client work products, graded on source text" },
   ];
   const cw = 609.7 / 4;
@@ -283,15 +291,15 @@ function units(blocks) {
     if (b.t === "h2") {
       h2i += 1; h3i = 0;
       const n = h2i;
-      out.push({ kind: "heading", level: 2, html: () => h2(b.s, n) });
+      out.push({ kind: "heading", level: 2, title: b.s, html: () => h2(b.s, n) });
     } else if (b.t === "h3") {
       h3i += 1;
       const idx = `${String(h2i).padStart(2, "0")}.${h3i}`;
-      out.push({ kind: "heading", level: 3, html: () => h3(b.s, idx) });
+      out.push({ kind: "heading", level: 3, title: b.s, html: () => h3(b.s, idx) });
     } else if (b.t === "p") out.push({ kind: "text", html: () => para(b.s) });
     else if (b.t === "ol") out.push({ kind: "text", html: () => list(b.items) });
     else if (b.t === "figure") out.push({ kind: "float", html: () => FIGURES[b.k]() });
-    else if (b.t === "table") out.push({ kind: "float", html: () => TABLES[b.k]() });
+    else if (b.t === "table") out.push({ kind: "text", html: () => TABLES[b.k]() }); // tables split, repeating their header row
     else throw new Error(`unknown block ${b.t}`);
   }
   return out;
@@ -358,14 +366,16 @@ const fonts = [
 const renderer = new PdfRenderer();
 const us = units(blocks);
 for (const u of us) {
-  const size = await renderer.measure(`<div class="doc" style="width:${PAGE_W - 2 * RAIL}px">${u.html()}</div>`, { size: "a4", css, fonts });
+  const size = await renderer.measure(`<div class="doc" style="width:${PAGE_W - 2 * RAIL}px"><div class="u">${u.html()}</div></div>`, { size: "a4", css, fonts });
   u.h = size.height;
 }
 figN = 0; tabN = 0; // number figures in their final reading order
 const ordered = paginate(us);
+// Each unit carries its own inner padding: Takumi drops a padded ancestor's padding on the page after a forced break.
+const forced = new Set(overrides.breakBefore ?? []);
 const body = `${rails}<div class="doc">${ordered.map((u) => {
-  const html = u.html();
-  return u.breakBefore ? `<div style="display:flex;flex-direction:column;break-before:page">${html}</div>` : html;
+  const brk = u.breakBefore || (u.title && forced.has(u.title));
+  return `<div class="u"${brk ? ' style="break-before:page"' : ""}>${u.html()}</div>`;
 }).join("")}</div>`;
 if (process.env.DEBUG_PAGES) console.log(ordered.map((u) => `${u.kind}${u.breakBefore ? " [break]" : ""} ${Math.round(u.h)}`).join("\n"));
 

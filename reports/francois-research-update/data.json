@@ -274,65 +274,92 @@
     "jevPerAttempt": 51
   },
   "devModes": {
-    "source": "README.md (composition table)",
-    "modes": [
+    "source": "README.md (composition table); eval/compose-agent-baseline.json and eval/compose-agent.json provenance: openai/gpt-5-mini answerer and judge",
+    "measures": [
       {
-        "mode": "Flat pipeline",
-        "pass": 87.1
+        "label": "Criteria passed",
+        "unit": "%",
+        "before": 73.0,
+        "after": 93.8,
+        "max": 100
       },
       {
-        "mode": "Recursive (RLM)",
-        "pass": 86.0
+        "label": "Correct answers, of 50",
+        "before": 24,
+        "after": 42,
+        "max": 50
       },
       {
-        "mode": "Agent, first run",
-        "pass": 73.0,
-        "degraded": 18
+        "label": "Grounded answers, of 50",
+        "before": 41,
+        "after": 48,
+        "max": 50
       },
       {
-        "mode": "Agent, one harness rule later",
-        "pass": 93.8,
-        "degraded": 0
+        "label": "Valid citations, of 50",
+        "before": 21,
+        "after": 36,
+        "max": 50
+      },
+      {
+        "label": "Degraded runs, of 50",
+        "before": 18,
+        "after": 0,
+        "max": 50,
+        "lowerBetter": true
       }
     ]
   },
   "runs": {
-    "source": "eval/RLM-V5-COMPARISON-REPORT.md, eval/PREPARED-MODAL-FIFTEEN-REPORT.md, eval/INSTRUCTION-ALIGNED-COMPARISON.md, eval/MODAL-DEEPSEEK-TEN-REPORT.md",
+    "source": "eval/RLM-V5-COMPARISON-REPORT.md, eval/complex-v1/RUN-PLAN.md, eval/PREPARED-MODAL-FIFTEEN-REPORT.md, eval/INSTRUCTION-ALIGNED-COMPARISON.md, eval/MODAL-DEEPSEEK-TEN-REPORT.md",
     "rows": [
       {
-        "run": "This note",
-        "set": "12 held-out work products",
+        "run": "GLM-5.3, this note",
+        "set": "12 held-out tasks",
         "model": "GLM-5.3",
         "opulent": "98% completion",
-        "harvey": "At least 9.9 points lower on every metric"
+        "harvey": "At least 9.9 points lower on every metric",
+        "note": "Team-reported; artifacts and settings pending"
       },
       {
-        "run": "250 steps, Jev judge",
-        "set": "12 held-out work products",
+        "run": "250 steps",
+        "set": "12 held-out tasks",
         "model": "DeepSeek V4.1 Flash",
-        "opulent": "0.907 semantic, 0.700 accuracy",
-        "harvey": "0.892 semantic, 0.681 accuracy"
+        "opulent": "Semantic 0.907 (0.894 untrimmed), accuracy 0.700 (0.699)",
+        "harvey": "Semantic 0.892 (0.891), accuracy 0.681 (0.674)",
+        "note": "Jev scores; task wins 5 to 6 and 6 to 5; Opulent had internet access"
+      },
+      {
+        "run": "80 steps, first run",
+        "set": "12 held-out tasks",
+        "model": "DeepSeek V4.1 Flash",
+        "opulent": "6 of 12 hit the step limit before a final answer",
+        "harvey": "Not reported",
+        "note": "Not graded; kept as a failed run"
       },
       {
         "run": "Audited criteria",
         "set": "15 development questions",
         "model": "DeepSeek V4.1 Flash",
-        "opulent": "48 of 50 criteria, 12 strict all-pass",
-        "harvey": "48 of 50 criteria, 9 strict all-pass"
+        "opulent": "48 of 50; 44 of 46 shared; 12 fully passing",
+        "harvey": "48 of 50; 46 of 46 shared; 9 fully passing",
+        "note": "One answer per system not evaluated"
       },
       {
         "run": "Instruction-aligned",
         "set": "10 development questions",
         "model": "GPT-6 Luna",
-        "opulent": "32 of 36 criteria",
-        "harvey": "28 of 36 criteria"
+        "opulent": "32 of 36 legacy; 22 of 24 calibrated",
+        "harvey": "28 of 36 legacy; 22 of 24 calibrated",
+        "note": "No clean winner"
       },
       {
         "run": "Legacy judge",
         "set": "10 development questions",
         "model": "DeepSeek V4.1 Flash",
-        "opulent": "27 of 36 criteria",
-        "harvey": "31 of 36 criteria"
+        "opulent": "27 of 36",
+        "harvey": "31 of 36",
+        "note": "Judge lacked excerpts Opulent saw"
       }
     ]
   }
