@@ -273,6 +273,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null,
   toolSurface = 'full-catalog-v1', instructionProfile,
+  semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
   if (workProduct !== undefined) {
@@ -285,8 +286,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
   const unrestricted = instructionProfile === 'opulent-rlm-unrestricted-v5'
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
-  if (rlm && (toolSurface !== 'initial-scripted-v1' || !nativeMcp || !workProduct)) throw new Error('RLM comparison requires the prepared native work-product tool surface')
-  if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
+  if (rlm && (toolSurface !== 'initial-scripted-v1' || (!nativeMcp && semanticSurface !== 'toolbox') || !workProduct)) throw new Error('RLM comparison requires the prepared work-product tool surface')
+  if (toolSurface === 'initial-scripted-v1' && !nativeMcp && semanticSurface !== 'toolbox') throw new Error('Prepared initial/scripted comparison requires native MCP or toolbox')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
@@ -313,7 +314,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     ? permittedAppendix.replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
     : permittedAppendix
   const initialAppendix = unrestricted
-    ? `${appendix}\nLes outils mcp_list_tools, mcp_call_tool, lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement. Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels. Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
+    ? `${appendix}\nLes outils lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement.${nativeMcp ? ` Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels.` : ' La recherche sémantique native est fournie par la toolbox corpus configurée ; utilise directement lx_search, lx_chunk et lx_documents.'} Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
     : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
   const instructions = renderInstructions({ appendix: initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
@@ -324,7 +325,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
-    toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
+    toolSurface, semanticSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
       initialToolPolicySha256: sha256(JSON.stringify({ ...(unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY), initialTools })),
       definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
       sourcesSha256: Object.fromEntries(['rlm.mjs', 'rlm-kernel.py'].map(path =>
@@ -438,18 +439,29 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   return { provenance,
     async preflight() {
-      if (!nativeMcp) throw new Error('Native comparison preflight requires native MCP mode')
+      if (!nativeMcp && semanticSurface !== 'toolbox') throw new Error('Comparison preflight requires native MCP or toolbox mode')
       const stateDir = mkdtempSync(join(tmpdir(), 'broad-legal-preflight-'))
       const sandboxes = new Set()
       let runtime, detach
       let stage = 'native-provision'
       try {
-        await mcp.provision(stateDir)
+        if (nativeMcp) await mcp.provision(stateDir)
         runtime = runtimeFactory(runtimeOptions(stateDir, () => { throw new Error('Preflight must not call a model') }, sandboxes))
         detach = broker.attach(runtime)
         const session = runtime.allocate()
         stage = 'native-catalog'
-        const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
+        if (!nativeMcp) {
+          stage = 'toolbox-direct-corpus'
+          const source = corpus.sources[0]
+          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Native toolbox chunk response differs from prepared source')
+          const search = await runtime.invoke(session.id, 'lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
+          if (!Array.isArray(search?.results) || !search.results.length) throw new Error('Native toolbox semantic search returned no results')
+        }
+        const listed = nativeMcp ? await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server }) : null
+        if (!nativeMcp) {
+          return { mcp: { verified: true, mode: 'toolbox', tools: ['lx_search', 'lx_chunk', 'lx_documents'] }, runtimeBroker: { verified: true }, sandbox: { verified: true } }
+        }
         const names = listed.tools?.map(tool => tool.name)
         if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
           JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')

@@ -54,16 +54,18 @@ export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
     '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps',
-    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency', '--model-profile': 'modelProfile' }
+    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency', '--model-profile': 'modelProfile', '--semantic-surface': 'semanticSurface' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile', 'semanticSurface'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
   options.modelProfile ??= 'modal-deepseek-v4.1-flash'
   if (!COMPARISON_PROFILES[options.modelProfile]) throw new Error('Invalid model profile')
+  options.semanticSurface ??= 'mcp'
+  if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
   if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
@@ -249,8 +251,8 @@ export async function run(options, dependencies = {}) {
   const nativeModuleHash = fileHash(options.nativeModule)
   const native = await (dependencies.loadNative ?? (path => import(pathToFileURL(path).href)))(options.nativeModule)
   if (typeof native.createComparisonMcp !== 'function') throw new Error('Native module must export createComparisonMcp')
-  const mcp = await native.createComparisonMcp({ workspace: source, corpus })
-  if (!mcp || typeof mcp.provision !== 'function' || typeof mcp.verify !== 'function' || !mcp.server || !Array.isArray(mcp.servers) || !Array.isArray(mcp.probes)) throw new Error('Incomplete approved native MCP configuration')
+  const mcp = options.semanticSurface === 'mcp' ? await native.createComparisonMcp({ workspace: source, corpus }) : null
+  if (options.semanticSurface === 'mcp' && (!mcp || typeof mcp.provision !== 'function' || typeof mcp.verify !== 'function' || !mcp.server || !Array.isArray(mcp.servers) || !Array.isArray(mcp.probes))) throw new Error('Incomplete approved native MCP configuration')
   const broker = await (dependencies.createBroker ?? createEvaluationBroker)({ port: options.brokerPort, host: '0.0.0.0' })
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
   broker.origin = options.brokerOrigin
@@ -260,7 +262,7 @@ export async function run(options, dependencies = {}) {
     const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
-      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
+      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
@@ -274,10 +276,10 @@ export async function run(options, dependencies = {}) {
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
-      nativeModuleHash, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
+      nativeModuleHash, semanticSurface: options.semanticSurface, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
       harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
       integration: { sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
-        nativeMcp: mcp.server, servers: redact(mcp.servers), probesSha256: hash(JSON.stringify(mcp.probes)),
+        nativeMcp: mcp?.server ?? null, servers: redact(mcp?.servers ?? []), probesSha256: hash(JSON.stringify(mcp?.probes ?? [])),
         brokerPort: options.brokerPort, brokerOriginSha256: hash(options.brokerOrigin) },
       evidencePolicy: 'actual answerer-visible evidence only; hidden reference never promoted',
       gradingPolicy: 'ungraded; separate criterion adapter required', costPolicy: 'unknown unless metered',
@@ -297,7 +299,7 @@ export async function run(options, dependencies = {}) {
           computerPreparedImage: true, computerImageSha256: options.computerImageSha256 }, corpus, source, createSandbox) })
       const preflight = await harnesses.broad.preflight()
       if (brokerProof?.verified !== true || preflight?.sandbox?.verified !== true ||
-        ['mcp', 'runtimeBroker', 'desktop'].some(name => preflight[name]?.verified !== true)) throw new Error('Full comparison blocked: live provider or security preflight failed')
+        ['mcp', 'runtimeBroker'].some(name => preflight[name]?.verified !== true) || options.semanticSurface === 'mcp' && preflight.desktop?.verified !== true) throw new Error('Full comparison blocked: live provider or security preflight failed')
       checkpoint.preflight = { status: 'verified', broker: brokerProof, integrations: preflight, checkedAt: new Date().toISOString() }
       save(checkpoint)
     } catch (error) {
