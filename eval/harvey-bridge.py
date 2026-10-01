@@ -19,6 +19,7 @@ HARVEY_COMMIT = "845a08840869b21a5c11958aae58bf5f00a7b775"
 LUNA_MODEL = "openai/gpt-6-luna"
 MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
 GLM_MODEL = "zai/glm-5.3"
+MIMO_MODEL = "xiaomi/mimo-v2.6-pro"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
 E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
 HARVEY_IMAGE = "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2"
@@ -375,7 +376,7 @@ def main():
     provider_only = request.get("provider_only")
     if not ((model == LUNA_MODEL and provider_only is None) or
             (model == MODAL_MODEL and provider_only == ["modal"]) or
-            (model == GLM_MODEL and provider_only is None)):
+            (model in (GLM_MODEL, MIMO_MODEL) and provider_only is None)):
         raise RuntimeError("Invalid Harvey model/provider pairing")
     if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != GATEWAY or not os.environ.get("OPENAI_API_KEY")):
         raise RuntimeError("Exact AI Gateway endpoint and credentials required")
