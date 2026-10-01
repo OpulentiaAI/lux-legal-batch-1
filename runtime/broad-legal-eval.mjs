@@ -161,6 +161,23 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
       await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
       for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
     }
+    // Built-in skills are installed from the hash-verified control-plane source
+    // at provisioning time: template aliases can resolve to snapshots that predate
+    // the skill bundle, so image contents are never assumed. Root-owned read-only
+    // placement matches the prepared-image contract and the provision-time
+    // verification below.
+    const skillsManifest = JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8'))
+    const staged = '/tmp/opulent-skill-staging'
+    for (const { name, artifactSha256 } of skillsManifest.skills) {
+      const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
+      if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
+      await sandbox.files.write(`${staged}/${name}.md`, bytes)
+    }
+    const skillDirs = skillsManifest.skills.map(({ name }) => `${skillsManifest.destinationRoot}/${name}`).join(' ')
+    const skillFiles = skillsManifest.skills.map(({ name }) =>
+      `sudo -n install -o root -g root -m 0444 ${staged}/${name}.md ${skillsManifest.destinationRoot}/${name}/SKILL.md`).join('; ')
+    const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
+    if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
     const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
     if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
     const originalRun = sandbox.commands.run.bind(sandbox.commands)

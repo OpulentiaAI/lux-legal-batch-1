@@ -176,11 +176,15 @@ test('default broad provision opens both task directories for upload then root-l
     commands: { run: async command => { commands.push(command); return { exitCode: 0, stdout: 'a'.repeat(64) } } },
     pause: async () => {}, kill: async () => {} }
   await provisionCorpus({}, { directory, hash: 'corpus', count: 1, sources: [source] }, workspace, async () => sandbox, packet)
-  assert.match(commands[0], /install -d -m 0777 \/tmp\/broad-legal-workspace\/task \/tmp\/broad-legal-workspace\/task\/materials/)
+  const skillInstall = commands.find(command => command.includes('skill-staging'))
+  assert.match(skillInstall, /install -o root -g root -m 0444 .*SKILL\.md/)
+  const prepared = commands.find(command => command.includes('install -d -m 0777'))
+  assert.match(prepared, /install -d -m 0777 \/tmp\/broad-legal-workspace\/task \/tmp\/broad-legal-workspace\/task\/materials/)
   assert.ok(writes.some(([path, content]) => path.endsWith('/task/task.json') && JSON.parse(content).id === task.id))
   assert.ok(writes.some(([path, content]) => path.endsWith('/task/materials/facts.md') && content === 'Public facts'))
-  assert.match(commands[1], /chown -R root:root \/tmp\/broad-legal-workspace\/task/)
-  assert.match(commands[1], /find \/tmp\/broad-legal-workspace\/task -type d -exec chmod 0555/)
+  const lock = commands.find(command => command.includes('chown -R root:root /tmp/broad-legal-workspace/task'))
+  assert.match(lock, /chown -R root:root \/tmp\/broad-legal-workspace\/task/)
+  assert.match(lock, /find \/tmp\/broad-legal-workspace\/task -type d -exec chmod 0555/)
 })
 
 test('Harvey work-product passes public bytes and returns only collected deliverables', async t => {

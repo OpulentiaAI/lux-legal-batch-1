@@ -359,10 +359,13 @@ test('default provision uploads only validated corpus export and pins every mode
     assert.deepEqual(execFileSync('tar', ['-tzf', '-'], { input: archive, encoding: 'utf8' }).trim().split('\n').sort(),
       ['./', './README.txt', './chunks/', `./${source.path}`, './documents.json', './index.json'].sort())
     assert.equal(execFileSync('tar', ['-xOzf', '-', `./${source.path}`], { input: archive, encoding: 'utf8' }), `[${source.id}]\n${source.text}\n`)
-    assert.match(captured.commands[0].command, /sudo -n tar -xzf.*\/tmp\/broad-legal-workspace\/corpus/)
-    assert.match(captured.commands[0].command, /chown -R root:root/)
-    assert.match(captured.commands[0].command, /chmod 0555/)
-    assert.match(captured.commands[0].command, /-perm \/6000 -exec chmod a-s/)
+    const skillInstall = captured.commands.find(entry => entry.command.includes('skill-staging'))
+    assert.match(skillInstall.command, /install -o root -g root -m 0444 .*SKILL\.md/)
+    const extraction = captured.commands.find(entry => entry.command.includes('sudo -n tar -xzf'))
+    assert.match(extraction.command, /sudo -n tar -xzf.*\/tmp\/broad-legal-workspace\/corpus/)
+    assert.match(extraction.command, /chown -R root:root/)
+    assert.match(extraction.command, /chmod 0555/)
+    assert.match(extraction.command, /-perm \/6000 -exec chmod a-s/)
     await sandbox.commands.run('sudo -n id -u', { user: 'root' })
     assert.match(captured.commands.at(-1).command, /setpriv --no-new-privs/)
     assert.equal(captured.commands.at(-1).options.user, 'user')
@@ -376,8 +379,9 @@ test('default provision uploads only validated corpus export and pins every mode
     captured.digest = 'b'.repeat(64)
     await assert.rejects(sandbox.pause(), /Corpus integrity changed/)
     writeFileSync(join(dir, 'gold.json'), 'private rubric')
+    const uploadsBeforeReject = captured.uploads.length
     await assert.rejects(fake.options.provision({}), /unexpected files/)
-    assert.equal(captured.uploads.length, 2)
+    assert.equal(captured.uploads.length, uploadsBeforeReject, 'rejected provision must not upload')
     rmSync(join(dir, 'gold.json'))
     const failed = { ...sandbox, files: { ...sandbox.files, write: async () => { throw new Error('E2B upload unavailable') } } }
     const failing = createBroadHarness({ workspace, corpus: prepared, artifactsDir: evidence,
