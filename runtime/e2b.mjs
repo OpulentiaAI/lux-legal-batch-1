@@ -2,18 +2,19 @@ import { Sandbox } from 'e2b';
 import { createComputer } from './computer/index.mjs';
 
 // Account-wide provisioning backpressure: E2B accounts cap concurrent live
-// sandboxes (20 by default). Unrestricted RLM runs keep session sandboxes
-// resident and can provision children faster than attempts finish, so an
-// uncapped burst hits the account limit mid-attempt and every later tool call
-// fails with a rate-limit error while the answerer burns its step budget on
-// retries. Gate live sandbox creation below that cap and queue instead.
+// sandboxes (100 on the credited Opulentia project). Unrestricted RLM runs keep
+// session sandboxes resident and can provision children faster than attempts
+// finish, so an uncapped burst hits the account limit mid-attempt and every
+// later tool call fails with a rate-limit error while the answerer burns its
+// step budget on retries. Gate live sandbox creation below that cap and queue
+// instead.
 //
 // The gate reconciles against E2B's actual live set instead of trusting local
 // release hooks alone: E2B reaps sandboxes on their own timeout without calling
 // pause/kill, so a pure counter wedges at the cap with zero sandboxes alive.
 const MAX_LIVE_SANDBOXES = (() => {
-  const value = Number(process.env.E2B_MAX_LIVE_SANDBOXES ?? 18);
-  return Number.isSafeInteger(value) && value > 0 ? value : 18;
+  const value = Number(process.env.E2B_MAX_LIVE_SANDBOXES ?? 80);
+  return Number.isSafeInteger(value) && value > 0 ? value : 80;
 })();
 let maxLiveSandboxes = MAX_LIVE_SANDBOXES;
 const held = new Set();
