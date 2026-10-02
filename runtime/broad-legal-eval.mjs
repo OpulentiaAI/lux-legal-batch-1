@@ -572,7 +572,23 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           prompt: workProduct
             ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée. Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}\n\n${packet.task.instructions}`
             : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
+        // A session that calls `wait_for_operations` parks itself as `sleeping`
+        // and its worker exits; only the runtime's tick delivers the child/workflow
+        // completion notification and relaunches it. Drive that scheduler here so a
+        // delegated session is scored on its final state rather than on its parked
+        // state. A session that sleeps with no resumable wait is terminal.
         completed = await runtime.waitSession(session.id)
+        for (;;) {
+          if (completed.status !== 'sleeping') break
+          const pending = runtime.store.list('operation_waits').some(wait => wait.session_id === session.id &&
+            ['waiting', 'notified'].includes(wait.status))
+          if (!pending) break
+          await runtime.tick(session.id)
+          const afterTick = runtime.store.get('sessions', session.id)
+          if (afterTick?.status !== 'sleeping') { completed = await runtime.waitSession(session.id); continue }
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          completed = runtime.store.get('sessions', session.id)
+        }
         let deliverables, missingDeliverables
         if (workProduct) {
           const sandboxId = runtime.store.get('sessions', session.id)?.sandbox_id
