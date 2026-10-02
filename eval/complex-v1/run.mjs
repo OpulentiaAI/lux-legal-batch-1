@@ -67,14 +67,14 @@ export function parseOptions(args) {
   options.semanticSurface ??= 'mcp'
   if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
     validConcurrency(/^[1-9]\d*$/.test(options.concurrency) ? Number(options.concurrency) : NaN)
   if (options.instructionProfile === 'opulent-knowledge-v3' && options.maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && options.maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
-  if (options.instructionProfile === 'opulent-rlm-unrestricted-v5' && options.maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
+  if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && options.maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
@@ -228,10 +228,10 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
-  if (options.instructionProfile === 'opulent-rlm-unrestricted-v5' && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
+  if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
   const source = dependencies.workspace ?? workspace
   const suiteRoot = dependencies.suite ?? suite
   const manifestPath = join(suiteRoot, 'manifest.json')

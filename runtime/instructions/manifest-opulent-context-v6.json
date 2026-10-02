@@ -1,0 +1,13 @@
+{
+  "version": "opulent-context-v6",
+  "profile": "opulent-context-v6",
+  "inheritedVersion": "opulent-rlm-unrestricted-v5",
+  "inheritedManifestSha256": "dcb086c0b29bd6def28c691946cd8d0aa02d2048d1b0c8d5f4af921a8f294dc2",
+  "inheritedAddendumSha256": "e6349096d903fe1d44d9aaddfe00aae35f78a968e178a09945db0ca718315519",
+  "addendumSha256": "b29386a4d3e6693cf44086f4a7e5a0ec3879b31f747d644ef2cf0210d63dae89",
+  "provenance": {
+    "source": "devin-complete-excavation archive (devin-context-blocks, devin-initial-instructions, managing-child-sessions-verbatim)",
+    "behavioralSupplement": true,
+    "note": "Skill-invocation, agent-fan-out, and context-block obligations layered on v5. No tool policy, provider, repository scope, approval, or delivery-contract change. Motivated by a measured five-arm run with zero agent spawns despite wired spawn tools."
+  }
+}

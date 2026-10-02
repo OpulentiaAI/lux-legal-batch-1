@@ -300,8 +300,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const unrestricted = instructionProfile === 'opulent-rlm-unrestricted-v5'
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(instructionProfile)
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
   if (rlm && (toolSurface !== 'initial-scripted-v1' || (!nativeMcp && semanticSurface !== 'toolbox') || !workProduct)) throw new Error('RLM comparison requires the prepared work-product tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp && semanticSurface !== 'toolbox') throw new Error('Prepared initial/scripted comparison requires native MCP or toolbox')
