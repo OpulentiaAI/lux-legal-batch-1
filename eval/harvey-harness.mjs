@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url'
 import { captureVisibleSources } from './comparison-corpus.mjs'
 import { redact } from '../runtime/security.mjs'
 import { LUNA_MODEL, validateEvalModel } from '../runtime/eval-model-profile.mjs'
+import { modelTransport } from '../runtime/model-provider.mjs'
 
 const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
 const MODEL = LUNA_MODEL
-const GATEWAY = 'https://ai-gateway.vercel.sh/v1'
 const HARVEY_IMAGE = 'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2'
 // Templates are per-E2B-account: rebuilding the pinned base image in another
 // project yields a new template ID. Override without editing provenance when
@@ -153,8 +153,9 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       ...trajectoryAudit(artifacts) } }
 }
 
-export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, workProduct } = {}) {
-  validateEvalModel(model, providerOnly)
+export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, inferenceProvider = 'gateway', providerModel, workProduct } = {}) {
+  validateEvalModel(model, providerOnly, inferenceProvider)
+  const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
         !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
@@ -176,8 +177,8 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   const skills = existsSync(skillsDir) ? readdirSync(skillsDir).filter(name => existsSync(join(skillsDir, name, 'SKILL.md'))).sort() : []
   prompt += skills.map(name => `\n\n## Skill: ${name}\n\n${readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8')}`).join('\n')
   const provenance = Object.freeze({
-    harvey_commit: HARVEY_COMMIT, model, providerOnly, reasoningEffort, endpoint: GATEWAY,
-    adapter: reasoningEffort ? 'eval.harvey-modal-adapter.GatewayReasoningAdapter' : providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
+    harvey_commit: HARVEY_COMMIT, model, providerOnly, reasoningEffort, endpoint: transport.endpoint, inference: transport,
+    adapter: inferenceProvider === 'runanywhere' ? 'eval.harvey-modal-adapter.RunAnywhereAdapter' : reasoningEffort ? 'eval.harvey-modal-adapter.GatewayReasoningAdapter' : providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
     agent_loop: 'harness.agent_loop.run_agent', executor: 'harness.tools.ToolExecutor', sandbox: 'E2B pinned Harvey image (remote upstream ToolExecutor)',
     harvey_base_image: HARVEY_IMAGE, e2b_template_id: E2B_TEMPLATE,
     e2b_sdk: '2.34.0', e2b_internet_access: false,
@@ -194,15 +195,16 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       if (mode !== 'harvey' || typeof question !== 'string' || !question.trim()) throw new Error('Harvey mode and question required')
       if (workProduct ? !packet : packet !== undefined) throw new Error('Work-product run mode mismatch')
       if (workProduct) validateWorkProduct(packet)
-      if (!process.env.AI_GATEWAY_API_KEY || !process.env.E2B_API_KEY) throw new Error('AI_GATEWAY_API_KEY and E2B_API_KEY required; no model substitution')
+      if (!process.env[transport.credentialEnvironment] || !process.env.E2B_API_KEY) throw new Error(`${transport.credentialEnvironment} and E2B_API_KEY required; no model substitution`)
       const artifacts = resolve(artifactsDir, randomUUID())
       mkdirSync(dirname(artifacts), { recursive: true })
       const request = { harvey_root: harveyRoot, documents: corpus.directory, corpus_hash: corpus.hash,
         artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly, reasoning_effort: reasoningEffort,
+        inference_provider: inferenceProvider, ...(providerModel ? { provider_model: providerModel } : {}),
         e2b_template: E2B_TEMPLATE,
         ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}) }
       const start = performance.now()
-      const env = { ...process.env, OPENAI_BASE_URL: GATEWAY, OPENAI_API_KEY: process.env.AI_GATEWAY_API_KEY }
+      const env = { ...process.env, OPENAI_BASE_URL: transport.endpoint, OPENAI_API_KEY: process.env[transport.credentialEnvironment] }
       let response
       try {
         response = await invoke(python, script, request, env, harveyRoot)
@@ -212,7 +214,8 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
         throw error
       }
       if (response.prompt_sha256 !== provenance.system_prompt_sha256 || JSON.stringify(response.tool_names) !== JSON.stringify(TOOLS) ||
-          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE) {
+          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE ||
+          inferenceProvider === 'runanywhere' && (response.inference_provider !== inferenceProvider || response.provider_model !== providerModel)) {
         const error = new Error('Harvey upstream policy changed')
         error.audit = trajectoryAudit(artifacts)
         throw error

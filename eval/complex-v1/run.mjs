@@ -6,6 +6,7 @@ import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
 import { COMPARISON_PROFILES } from '../../runtime/eval-model-profile.mjs'
+import { resolveRunAnywhereMiMo } from '../../runtime/model-provider.mjs'
 import { brokerNetwork, createEvaluationBroker, verifyEvaluationBroker } from '../../runtime/eval-broker.mjs'
 import { createHarveyHarness } from '../harvey-harness.mjs'
 import { createBroadHarness, provisionCorpus } from '../../runtime/broad-legal-eval.mjs'
@@ -259,7 +260,10 @@ export async function run(options, dependencies = {}) {
   try {
     const profile = COMPARISON_PROFILES[options.modelProfile ?? 'modal-deepseek-v4.1-flash']
     if (!profile) throw new Error('Invalid model profile')
-    const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, workProduct: { maxCompletionTokens: 32768 } }
+    const inferenceProvider = profile.inferenceProvider ?? 'gateway'
+    const nativeModel = inferenceProvider === 'runanywhere' ? await (dependencies.resolveRunAnywhereMiMo ?? resolveRunAnywhereMiMo)() : null
+    const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null,
+      inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
@@ -267,12 +271,13 @@ export async function run(options, dependencies = {}) {
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-        model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, maxSteps, maxCompletionTokens: 32768, concurrency,
+        model: profile.model, modelProfile: options.modelProfile ?? 'modal-deepseek-v4.1-flash', inferenceProvider, nativeModel,
+        providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, maxSteps, maxCompletionTokens: 32768, concurrency,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
         'eval/harvey-modal-adapter.py', 'runtime/broad-legal-eval.mjs', 'runtime/eval-broker.mjs',
-        'runtime/eval-model-profile.mjs', 'runtime/script-execution.mjs'].map(path => [path, fileHash(join(source, path))])),
+        'runtime/eval-model-profile.mjs', 'runtime/model.mjs', 'runtime/model-provider.mjs', 'runtime/script-execution.mjs'].map(path => [path, fileHash(join(source, path))])),
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
@@ -287,7 +292,7 @@ export async function run(options, dependencies = {}) {
     const checkpoint = checkpointFor(provenance, existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, 'utf8')) : null)
     const save = value => atomic(checkpointPath, value)
     if (!existsSync(checkpointPath)) save(checkpoint)
-    for (const name of ['AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
+    for (const name of [inferenceProvider === 'runanywhere' ? 'RUNA_CLOUD_KEY' : 'AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
       if (!process.env[name] && !dependencies.skipCredentials) {
         checkpoint.preflight = failure(new Error(`Missing ${name}`), 'credentials'); save(checkpoint)
         return checkpoint

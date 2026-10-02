@@ -21,6 +21,7 @@ MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
 GLM_MODEL = "zai/glm-5.3"
 MIMO_MODEL = "xiaomi/mimo-v2.6-pro"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
+RUNANYWHERE = "https://inference.runanywhere.ai/v1"
 # Templates are per-E2B-account; the harness passes the account's template ID in
 # the request so an account move does not require editing this pinned base image.
 DEFAULT_E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
@@ -377,12 +378,22 @@ def main():
     model = request.get("model", LUNA_MODEL)
     e2b_template = request.get("e2b_template") or os.environ.get("HARVEY_E2B_TEMPLATE") or DEFAULT_E2B_TEMPLATE
     provider_only = request.get("provider_only")
-    if not ((model == LUNA_MODEL and provider_only is None) or
+    inference_provider = request.get("inference_provider", "gateway")
+    native = inference_provider == "runanywhere"
+    if inference_provider not in ("gateway", "runanywhere"):
+        raise RuntimeError("Unknown inference provider; no fallback permitted")
+    if native and (model != MIMO_MODEL or provider_only is not None or request.get("reasoning_effort") is not None or
+                   not isinstance(request.get("provider_model"), str) or not re.fullmatch(r"(?:xiaomi/)?mimo-v2\.6-pro", request["provider_model"], re.I)):
+        raise RuntimeError("Invalid native RunAnywhere model/provider pairing")
+    if not native and not ((model == LUNA_MODEL and provider_only is None) or
             (model == MODAL_MODEL and provider_only == ["modal"]) or
             (model in (GLM_MODEL, MIMO_MODEL) and provider_only is None)):
         raise RuntimeError("Invalid Harvey model/provider pairing")
-    if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != GATEWAY or not os.environ.get("OPENAI_API_KEY")):
-        raise RuntimeError("Exact AI Gateway endpoint and credentials required")
+    endpoint = RUNANYWHERE if native else GATEWAY
+    credential_name = "RUNA_CLOUD_KEY" if native else "AI_GATEWAY_API_KEY"
+    if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != endpoint or not os.environ.get("OPENAI_API_KEY") or
+                      native and os.environ.get("OPENAI_API_KEY") != os.environ.get(credential_name)):
+        raise RuntimeError("Exact inference endpoint and credentials required")
     if not os.environ.get("E2B_API_KEY"):
         raise RuntimeError("E2B_API_KEY required")
     if not documents.is_dir() or not (documents / "index.json").is_file():
@@ -481,7 +492,7 @@ def main():
                 "test \"$(stat -c %a /workspace)\" = 1777 && test \"$(stat -c %u /workspace/documents)\" = 0 && test \"$(stat -c %u /workspace/harvey-rpc.py)\" = 0",
                 "if mv /workspace/documents /workspace/documents-renamed 2>/dev/null; then exit 1; fi",
                 "if sudo -n sh -c 'touch /workspace/documents/injected' 2>/dev/null; then exit 1; fi",
-                "test -z \"${AI_GATEWAY_API_KEY:-}\" && test -z \"${E2B_API_KEY:-}\"",
+                "test -z \"${AI_GATEWAY_API_KEY:-}\" && test -z \"${RUNA_CLOUD_KEY:-}\" && test -z \"${E2B_API_KEY:-}\"",
                 "python3 -c 'import urllib.request; urllib.request.urlopen(\"https://example.com\", timeout=3)' >/dev/null 2>&1 && exit 1 || exit 0",
             ]
             security = [{"command": cmd, "result": rpc({"action": "execute", "tool": "bash", "arguments": {"command": cmd}})} for cmd in checks]
@@ -542,12 +553,15 @@ def main():
                 return rpc(payload)
 
         reasoning_effort = request.get("reasoning_effort")
-        if provider_only or reasoning_effort:
+        if native or provider_only or reasoning_effort:
             from importlib.util import module_from_spec, spec_from_file_location
             spec = spec_from_file_location("harvey_modal_adapter", Path(__file__).with_name("harvey-modal-adapter.py"))
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-            adapter = module.GatewayReasoningAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), reasoning_effort=reasoning_effort, provider_only=provider_only, capture_usage=bool(work_product))
+            if native:
+                adapter = module.RunAnywhereAdapter(model=model, provider_model=request["provider_model"], max_tokens=request.get("max_completion_tokens", 4000), capture_usage=bool(work_product))
+            else:
+                adapter = module.GatewayReasoningAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), reasoning_effort=reasoning_effort, provider_only=provider_only, capture_usage=bool(work_product))
         else:
             adapter = OpenAIAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000))
         result = run_agent(
@@ -589,6 +603,8 @@ def main():
         "answer": answer,
         "template_id": e2b_template,
         "harvey_base_image": HARVEY_IMAGE,
+        "inference_provider": inference_provider,
+        "provider_model": request.get("provider_model"),
         "finished_cleanly": result["finished_cleanly"],
         "turn_count": result["turn_count"],
         "input_tokens": result["input_tokens"],

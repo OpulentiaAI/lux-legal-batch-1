@@ -12,9 +12,12 @@ export const COMPARISON_PROFILES = Object.freeze({
   'modal-deepseek-v4.1-flash': Object.freeze({ model: MODAL_DEEPSEEK_MODEL, providerOnly: MODAL_ONLY, judgeMaxTokens: 16000 }),
   'glm-5.3-max': Object.freeze({ model: GLM_MODEL, providerOnly: null, reasoningEffort: GLM_REASONING, judgeMaxTokens: 16000 }),
   'mimo-v2.6-pro': Object.freeze({ model: MIMO_MODEL, providerOnly: null, reasoningEffort: MIMO_REASONING, judgeMaxTokens: 16000 }),
+  'runanywhere-mimo-v2.6-pro': Object.freeze({ model: MIMO_MODEL, inferenceProvider: 'runanywhere', providerOnly: null, reasoningEffort: null, judgeMaxTokens: 16000 }),
 })
 
-export function validateEvalModel(model, providerOnly = null) {
+export function validateEvalModel(model, providerOnly = null, inferenceProvider = 'gateway') {
+  if (inferenceProvider === 'runanywhere' && model === MIMO_MODEL && providerOnly == null) return
+  if (inferenceProvider !== 'gateway') throw new Error('Invalid evaluation model/provider pairing')
   if (model === LUNA_MODEL && providerOnly == null) return
   if (model === MODAL_DEEPSEEK_MODEL && JSON.stringify(providerOnly) === JSON.stringify(MODAL_ONLY)) return
   if ((model === GLM_MODEL || model === MIMO_MODEL) && providerOnly == null) return

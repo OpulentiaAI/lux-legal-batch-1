@@ -66,6 +66,7 @@ export function assertFullRuntimeReady(provenance) {
 export async function main(args = process.argv.slice(2)) {
   const options = parseComparisonOptions(args)
   const { model, providerOnly, judgeMaxTokens } = COMPARISON_PROFILES[options.profile]
+  if (COMPARISON_PROFILES[options.profile].inferenceProvider === 'runanywhere') throw new Error('Native RunAnywhere answerers require eval/complex-v1/run.mjs with separate judging; this legacy runner uses a Gateway judge')
   if (!options.nativeModule) throw new Error('Full comparison blocked: --native-module, --broker-origin, --broker-port, --sandbox-template and --computer-image-sha256 are required')
   if (existsSync(options.output)) throw new Error('Comparison output already exists')
   for (const name of ['AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {

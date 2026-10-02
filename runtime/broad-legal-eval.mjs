@@ -7,6 +7,7 @@ import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { connectSandbox, createSandbox } from './e2b.mjs'
 import { createModel } from './model.mjs'
+import { modelTransport } from './model-provider.mjs'
 import { LUNA_MODEL, validateEvalModel } from './eval-model-profile.mjs'
 import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
@@ -297,11 +298,12 @@ function auditMessages(messages, evidence, corpusSources) {
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
-  reasoningEffort = null,
+  reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface = 'full-catalog-v1', instructionProfile,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
-  validateEvalModel(model, providerOnly)
+  validateEvalModel(model, providerOnly, inferenceProvider)
+  const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
         !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
@@ -348,7 +350,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 600_000 } : {}),
     toolSurface, semanticSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
@@ -435,6 +437,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     }
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
+        inferenceProvider, ...(providerModel ? { providerModel } : {}),
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(unrestricted ? { runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION], unrestrictedTools: true }
           : rlm ? { runtimeCapabilities: [RLM_CAPABILITY_VERSION], maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } : {}),
@@ -463,6 +466,12 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const record = Object.fromEntries(Object.entries(usage)
             .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number' && Number.isFinite(value)))
           record.finishReason = typeof raw.choices?.[0]?.finish_reason === 'string' ? raw.choices[0].finish_reason : null
+          if (transport.provider === 'runanywhere') {
+            record.inferenceProvider = transport.provider
+            record.requestedModel = transport.providerModel
+            record.responseModel = typeof raw.model === 'string' ? raw.model : null
+            record.requestId = typeof raw.id === 'string' ? raw.id : null
+          }
           providerRecords.push(record)
           return response
         })
@@ -588,7 +597,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}),
+        const model = modelFactory({ model: provenance.model, inferenceProvider, ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
           ...(reasoningEffort ? { reasoningEffort } : {}),
           ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors))

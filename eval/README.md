@@ -149,4 +149,14 @@ Every run/checkpoint must pin the effective tool policy, model and limits, corpu
 
 ## Current verification boundary
 
+### Native RunAnywhere MiMo answerers
+
+Use `eval/complex-v1/run.mjs --model-profile runanywhere-mimo-v2.6-pro` for native RunAnywhere answerers. Both Harvey and Opulent, including Opulent child loops, use the fixed `https://inference.runanywhere.ai/v1` endpoint and server-side `RUNA_CLOUD_KEY`. The runner authenticates `/models` and requires an unambiguous MiMo v2.6 Pro ID from that key's catalogue before constructing either arm. It records the returned model ID, catalogue IDs/hash, endpoint, adapter and provider in provenance. Native inference never falls back to Gateway or takes credentials from `OPENAI_API_KEY`. Create a Cloud key in the RunAnywhere console; device SDK keys and AI Gateway keys are not substitutes.
+
+The [native API contract](https://docs.runanywhere.ai/wally-cloud/api) documents `max_tokens`, tools and tool choice, but no `reasoning_effort` field. The native profile uses `max_tokens` and records provider-default reasoning, without claiming a verified high/max setting. Tool calls and returned assistant reasoning fields are retained for continuation; native requests and usage records preserve the wire model and response model/request ID. Missing provider prices stay unknown rather than being inferred from Gateway prices.
+
+Keep the historical `mimo-v2.6-pro` Gateway/high-effort profile available as a separate baseline. Use a fresh output/checkpoint for the native profile; resume rejects model, provider, catalogue or implementation changes. The legacy `eval/compare-harnesses.mjs` rejects the native profile because it couples answerers to a Gateway judge; the complex runner leaves grading separate, including the independently requested Jev integration. Gateway credentials may still be needed by other configured services such as retrieval or judging, but never route the native answerer's requests.
+
+Offline routing/continuation and child-inheritance tests are not authenticated provider verification. Before publishing a native comparison, verify the current key's model catalogue, real tool-result continuation and usage in both adapters, and real Opulent parent/child requests. Native live verification and the corrected comparison remain blocked when `RUNA_CLOUD_KEY` is absent.
+
 The runtime implementation and offline/native-desktop checks are committed. Live E2B/code.storage/GitHub/MCP checks and live legal evaluation still require provider credentials and, for sandbox callbacks, a reachable authenticated runtime origin. The historical result files are not results from the new full harness. Merging the implementation does not turn those unperformed checks into passes.
