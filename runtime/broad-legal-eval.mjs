@@ -341,7 +341,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const provenance = {
     policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
-    ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
+    ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 600_000 } : {}),
     toolSurface, semanticSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
       initialToolPolicySha256: sha256(JSON.stringify({ ...(unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY), initialTools })),
       definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
@@ -563,7 +563,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
+        const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}),
+          ...(reasoningEffort ? { reasoningEffort } : {}),
+          ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',

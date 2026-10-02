@@ -2,9 +2,14 @@ export function createModel(config, fetchImpl = fetch) {
   return async (messages, options = {}) => {
     const key = process.env.AI_GATEWAY_API_KEY;
     if (!key) throw new Error('AI_GATEWAY_API_KEY is required for agent sessions');
+    // Honour the harness request timeout instead of a hardcoded 120s: high and
+    // max reasoning models routinely exceed two minutes on long tool-heavy
+    // turns, and aborting them mid-turn failed every attempt in the GLM-5.3
+    // comparison while Harvey's 600s read timeout kept going.
+    const timeoutMs = config.modelRequestTimeoutMs ?? 120000;
     const response = await fetchImpl('https://ai-gateway.vercel.sh/v1/chat/completions', {
       method: 'POST',
-      signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(120000)]) : AbortSignal.timeout(120000),
+      signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}), max_completion_tokens: options.max_tokens ?? 4000,
         ...(options.reasoning_effort || config.reasoningEffort ? { reasoning_effort: options.reasoning_effort ?? config.reasoningEffort } : {}),
