@@ -13,10 +13,11 @@ import { redact } from '../../runtime/security.mjs'
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const hash = value => createHash('sha256').update(value).digest('hex')
 const endpoint = 'https://ai-gateway.vercel.sh/v1/evaluate'
-export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v1', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
+export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v3', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
   scores: 'interpolated Jev 0–3 scores divided by 3; equal criterion weights within each task and equal task weights in summaries',
   accuracy: 'asserted relevant claims only; absent claims are not perfect accuracy',
-  evidence: 'full public materials, scoped deliverables, full reference chunks and replay-verified parent-visible source bodies',
+  evidence: 'full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining identities are audit metadata, never absence proof',
+  maxVisibleBodies: 6,
   references: 'hidden references establish legal truth, never consultation or citation compliance',
   resources: 'no turn, latency or token penalty in semantic scores',
   alignment: 'typed decisions, not generated evidence anchors; independent Capy/human review required',
@@ -26,7 +27,25 @@ export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v1
 
 export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSources) {
   const { data } = prepareJudgeRequest(bundle, outputDir, criterionId, visibleSources)
-  const state = { ...data, publicMaterials: [...bundle.materials].map(([file, text]) => ({ file, text, sha256: hash(text), role: 'hypothetical scenario; not law' })),
+  const mentionedIds = new Set(data.outputs.flatMap(output => output.content?.match(/\b[A-Za-z0-9_-]+:[A-Za-z0-9_:-]+\b/g) ?? []).map(id => id.toLowerCase()))
+  const referenceIds = new Set(data.criterion.sourceRefs.map(ref => ref.id.toLowerCase()))
+  const terms = text => new Set((text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().match(/[a-z]{4,}/g) ?? [])
+    .filter(word => !['dans', 'avec', 'dont', 'pour', 'sont', 'doit', 'doivent', 'etre', 'tout', 'tous', 'cette', 'leur', 'leurs', 'comme', 'plus', 'sans', 'selon', 'ainsi', 'entre', 'elles', 'apres', 'avant'].includes(word)).map(word => word.slice(0, 6)))
+  const query = terms([data.criterion.requirement, data.criterion.pass, ...data.criterion.sourceRefs.map(ref => ref.quote)].filter(Boolean).join(' '))
+  const candidates = visibleSources.filter(source => mentionedIds.has(source.id.toLowerCase()) || referenceIds.has(source.id.toLowerCase()))
+    .map(source => ({ source, terms: terms(source.text) }))
+  const pinned = candidates.filter(item => referenceIds.has(item.source.id.toLowerCase()))
+  const alternatives = candidates.filter(item => !referenceIds.has(item.source.id.toLowerCase())).map(item => ({ ...item,
+    score: [...query].filter(term => item.terms.has(term)).reduce((sum, term) => {
+      const frequency = candidates.filter(candidate => candidate.terms.has(term)).length
+      return sum + Math.log(1 + (candidates.length - frequency + 0.5) / (frequency + 0.5))
+    }, 0) })).sort((a, b) => b.score - a.score || a.source.id.localeCompare(b.source.id) || a.source.sha256.localeCompare(b.source.sha256))
+  const selectedSources = new Set([...pinned, ...alternatives.slice(0, Math.max(0, JEV_POLICY.maxVisibleBodies - pinned.length))].map(item => item.source))
+  const selected = source => selectedSources.has(source)
+  const state = { ...data, visibleSources: visibleSources.filter(selected),
+    otherVisibleSourceIdentities: visibleSources.filter(source => !selected(source)).map(({ id, sha256, text }) => ({ id, sha256, chars: text.length, role: 'audit identity only; no supplied body' })),
+    visibleEvidencePolicy: JEV_POLICY.evidence,
+    publicMaterials: [...bundle.materials].map(([file, text]) => ({ file, text, sha256: hash(text), role: 'hypothetical scenario; not law' })),
     evidenceRoles: JEV_POLICY.references }
   const instructions = `${JUDGE_POLICY.replace('Return one strict JSON object; unresolved when sources conflict or do not decide the criterion.', 'Use the unresolved question when sources conflict or do not decide the criterion.')} Evaluate only the single criterion in state. Ignore unrelated obligations. Do not use turn count, token use, latency, answerer identity or execution status as a quality penalty. Accept minimally sufficient semantic equivalents, not only the example wording.`
   return { model: JEV_POLICY.model, providerOptions: { gateway: { only: JEV_POLICY.providerOnly } }, state: JSON.stringify(state), questions: {
@@ -39,7 +58,7 @@ export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSourc
       criteria: ['The asserted relevant rules or facts are materially false.', 'The asserted relevant claims contain important inaccuracies or unjustified certainty.',
         'The asserted relevant claims are mostly accurate and qualified with a limited defect.', 'The asserted relevant claims are accurate and appropriately qualified against the supplied authority and facts.'] },
     claimsPresent: { type: 'boolean', instructions: `${instructions} Is there any substantive assertion relevant to this criterion in the scoped outputs? An absent or wholly unrelated answer is false.` },
-    sourceCompliance: { type: 'boolean', instructions: `${instructions} Are this criterion's explicit source or consultation requirements met by actual replay-verified visible bodies and the scoped output's citations? A hidden reference never proves consultation. An equivalent supporting source is acceptable. If this criterion does not require legal consultation or citation, answer true.` },
+    sourceCompliance: { type: 'boolean', instructions: `${instructions} Are this criterion's explicit source or consultation requirements met by actual replay-verified visible bodies and the scoped output's citations? A hidden reference never proves consultation. An equivalent supporting source is acceptable. Other source identities without bodies are audit metadata, not legal evidence or proof of absence from the entire corpus. If this criterion does not require legal consultation or citation, answer true.` },
     unresolved: { type: 'boolean', instructions: `${instructions} Is the supplied evidence insufficient or contradictory enough that you cannot assess this criterion? Correctly flagging legal uncertainty when the criterion asks for it is assessable, not automatically unresolved.` },
   } }
 }
@@ -109,7 +128,8 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     provenance.maxCompletionTokens !== 32768 || provenance.instructionProfile !== 'opulent-context-v6' || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
-  const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy: JEV_POLICY, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))) }
+  const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy: JEV_POLICY, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
+    evidenceImplementations: Object.fromEntries(['eval/complex-v1/grade-run.mjs', 'eval/grading-evidence.mjs', 'runtime/security.mjs'].map(file => [file, hash(readFileSync(join(workspace, file)))])) }
   let result
   if (existsSync(output)) {
     result = JSON.parse(readFileSync(join(output, 'grades.json')))
@@ -140,19 +160,34 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
         request: redact(prepareJevCriterion(packet.bundle, directory, criterion.id, visibleSources)) })
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }
+  if (new Set(result.rows.map(row => row.identity)).size !== result.rows.length || result.rows.some(row => !jobs.some(job => job.identity === row.identity &&
+    job.taskId === row.taskId && job.mode === row.mode && job.criterionId === row.criterionId))) throw new Error('Invalid cached Jev identity')
   let next = 0
   await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, async () => {
     while (next < jobs.length) {
       const { request, ...job } = jobs[next++]
-      if (result.rows.some(row => row.identity === job.identity)) continue
       const file = job.identity.replaceAll(':', '-')
+      const cached = result.rows.find(row => row.identity === job.identity)
+      if (cached) {
+        if (cached.status === 'graded') {
+          if (!request || cached.requestSha256 !== hash(JSON.stringify(request)) || !Number.isSafeInteger(cached.responseAttempt) ||
+            cached.responseAttempt < 1 || cached.responseAttempt > JEV_POLICY.maxAttempts) throw new Error('Invalid cached Jev response binding')
+          const bytes = readFileSync(join(output, `${file}-attempt-${cached.responseAttempt}.json`))
+          const capture = JSON.parse(bytes)
+          if (hash(bytes) !== cached.responseSha256 || capture.requestSha256 !== cached.requestSha256 || capture.httpStatus !== 200 ||
+            JSON.stringify(normalizeJev(capture.response)) !== JSON.stringify(cached.scores) ||
+            JSON.stringify(capture.response.usage) !== JSON.stringify(cached.judgeUsage) ||
+            JSON.stringify(capture.response.providerMetadata) !== JSON.stringify(cached.judgeProviderMetadata)) throw new Error('Cached Jev response integrity mismatch')
+        }
+        continue
+      }
       if (!request) result.rows.push(job)
       else {
         const requestPath = join(output, `${file}-request.json`)
         const requestSha256 = hash(JSON.stringify(request))
         if (!existsSync(requestPath)) save(requestPath, request)
         else if (hash(JSON.stringify(JSON.parse(readFileSync(requestPath)))) !== requestSha256) throw new Error('Saved Jev request differs')
-        let scores, response, failure
+        let scores, response, failure, responseAttempt, responseSha256
         for (let attempt = 0; attempt < JEV_POLICY.maxAttempts; attempt++) {
           const responsePath = join(output, `${file}-attempt-${attempt + 1}.json`)
           let capture
@@ -163,9 +198,10 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
               if (!process.env.AI_GATEWAY_API_KEY) throw new Error('AI_GATEWAY_API_KEY is required for Jev')
               const http = await fetchImpl(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(request), signal: AbortSignal.timeout(JEV_POLICY.timeoutMs), redirect: 'error' })
-              capture = { requestSha256, httpStatus: http.status, elapsedMs: Math.round(performance.now() - start), response: http.ok ? await http.json() : null }
+              capture = { requestSha256, httpStatus: http.status, elapsedMs: Math.round(performance.now() - start) }
+              capture.response = await http.json()
               if (!http.ok) capture.error = `Jev HTTP ${http.status}`
-            } catch (error) { capture = { requestSha256, elapsedMs: Math.round(performance.now() - start), error: redact(error.message) } }
+            } catch (error) { capture = { ...capture, requestSha256, elapsedMs: Math.round(performance.now() - start), error: redact(error.message) } }
             save(responsePath, capture)
           }
           try {
@@ -173,11 +209,13 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
             if (capture.error) throw new Error(capture.error)
             scores = normalizeJev(capture.response)
             response = capture.response
+            responseAttempt = attempt + 1
+            responseSha256 = hash(readFileSync(responsePath))
             break
           } catch (error) { failure = error.message; if (attempt + 1 < JEV_POLICY.maxAttempts) await delay(1000) }
         }
         result.rows.push({ ...job, status: scores ? 'graded' : 'judgeFailure', requestSha256, requestPath,
-          ...(scores ? { scores, judgeUsage: response.usage, judgeProviderMetadata: response.providerMetadata } : { reason: failure }) })
+          ...(scores ? { scores, responseAttempt, responseSha256, judgeUsage: response.usage, judgeProviderMetadata: response.providerMetadata } : { reason: failure }) })
       }
       result.rows.sort((a, b) => a.identity.localeCompare(b.identity))
       result.summary = aggregateJev(result.rows)
