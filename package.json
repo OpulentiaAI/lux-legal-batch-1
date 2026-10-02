@@ -20,7 +20,8 @@
     "cron-parser": "5.10.1",
     "e2b": "2.51.0",
     "playwright-core": "1.55.1",
-    "rrule": "2.8.1"
+    "rrule": "2.8.1",
+    "undici": "7.30.0"
   },
   "devDependencies": {
     "@types/node": "26.6.3",

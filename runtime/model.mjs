@@ -1,5 +1,8 @@
 import { modelTransport } from './model-provider.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
+import { Agent } from 'undici';
+
+const nativeDispatcher = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
 
 export function createModel(config, fetchImpl = fetch) {
   const transport = modelTransport(config);
@@ -18,6 +21,7 @@ export function createModel(config, fetchImpl = fetch) {
       method: 'POST',
       redirect: 'error',
       signal,
+      ...(native ? { dispatcher: nativeDispatcher } : {}),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: native ? transport.providerModel : options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}),
         ...(native ? { max_tokens: options.max_tokens ?? 4000 } : { max_completion_tokens: options.max_tokens ?? 4000 }),
@@ -32,7 +36,8 @@ export function createModel(config, fetchImpl = fetch) {
         response = await fetchImpl(`${transport.endpoint}/chat/completions`, request);
       } catch (error) {
         if (native) {
-          attempts.push({ status: null, elapsedMs: Math.round(performance.now() - start), usageUnknown: true, failure: error.name });
+          attempts.push({ status: null, elapsedMs: Math.round(performance.now() - start), usageUnknown: true, failure: error.name,
+            ...(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_CONNECT_TIMEOUT', 'ECONNRESET', 'ECONNREFUSED'].includes(error.cause?.code) ? { transportCode: error.cause.code } : {}) });
           error.inferenceAttempts = attempts;
         }
         throw error;
@@ -57,7 +62,16 @@ export function createModel(config, fetchImpl = fetch) {
       if (native) error.inferenceAttempts = attempts;
       throw error;
     }
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      if (native) {
+        Object.assign(attempts.at(-1), { usageUnknown: true, failure: error.name, failureStage: 'response_body' });
+        error.inferenceAttempts = attempts;
+      }
+      throw error;
+    }
     if (!result.choices?.[0]?.message) throw new Error('Model provider returned no message');
     return native ? { ...result, inferenceAttempts: attempts } : result;
   };

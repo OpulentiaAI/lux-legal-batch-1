@@ -405,6 +405,7 @@ def main():
 
     sys.path.insert(0, str(root))
     from e2b import Sandbox as E2BSandbox
+    from e2b.exceptions import TimeoutException as E2BTimeoutException
     from harness.adapters.openai import OpenAIAdapter
     from harness.agent_loop import run_agent
     from harness.run import DEFAULT_SKILLS, SYSTEM_PROMPT_PREAMBLE, load_skills
@@ -539,7 +540,9 @@ def main():
                 except BaseException as error:
                     trajectory.append("tool_failure", turn=trajectory.turn, toolCallId=call_id, tool=tool,
                                       arguments=arguments, errorType=type(error).__name__)
-                    raise
+                    if not isinstance(error, E2BTimeoutException):
+                        raise
+                    result = "Error: remote tool transport timed out; execution state is unknown. Inspect state before retrying writes."
                 if trajectory.pending:
                     trajectory.pending.pop(0)
                 trajectory.append("tool_output", turn=trajectory.turn, toolCallId=call_id,

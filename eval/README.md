@@ -157,6 +157,8 @@ The [native API contract](https://docs.runanywhere.ai/wally-cloud/api) documents
 
 Keep the historical `mimo-v2.6-pro` Gateway/high-effort profile available as a separate baseline. Use a fresh output/checkpoint for the native profile; resume rejects model, provider, catalogue or implementation changes. The legacy `eval/compare-harnesses.mjs` rejects the native profile because it couples answerers to a Gateway judge; the complex runner leaves grading separate, including the independently requested Jev integration. Gateway credentials may still be needed by other configured services such as retrieval or judging, but never route the native answerer's requests.
 
+The Node native transport disables its implicit 300-second headers/body timers so the configured overall `AbortSignal` deadline controls the request, including body reads. Safe transport cause codes and body-read failures remain visible with unknown usage; neither is automatically retried. Harvey's E2B tool timeout is returned as a recorded tool error, matching the upstream tool boundary rather than crashing the model loop. A timed-out write is never automatically replayed, and permission/security failures remain fatal.
+
 For the native five-task v6/toolbox comparison at 250 steps and 32,768 completion tokens, run the separate typed Jev grader after all selected arms are terminal:
 
 ```sh
