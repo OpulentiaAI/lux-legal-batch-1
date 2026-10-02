@@ -157,6 +157,18 @@ The [native API contract](https://docs.runanywhere.ai/wally-cloud/api) documents
 
 Keep the historical `mimo-v2.6-pro` Gateway/high-effort profile available as a separate baseline. Use a fresh output/checkpoint for the native profile; resume rejects model, provider, catalogue or implementation changes. The legacy `eval/compare-harnesses.mjs` rejects the native profile because it couples answerers to a Gateway judge; the complex runner leaves grading separate, including the independently requested Jev integration. Gateway credentials may still be needed by other configured services such as retrieval or judging, but never route the native answerer's requests.
 
+For the native five-task v6/toolbox comparison at 250 steps and 32,768 completion tokens, run the separate typed Jev grader after all selected arms are terminal:
+
+```sh
+node eval/complex-v1/jev-grade-run.mjs \
+  /absolute/scratch/native-run/checkpoint.json \
+  /absolute/scratch/native-run-jev
+```
+
+The grader uses `AI_GATEWAY_API_KEY` only for `typesafe-ai/jev` at `/v1/evaluate`, restricted to the TypeSafe provider. It does not run the older DeepSeek judge. Each criterion receives its named deliverables, all public client materials, complete authoritative reference chunks and replay-verified parent-visible evidence. Hidden references never establish source consultation. Requests, raw typed responses, usage, costs and failures are captured outside the repository; resume is bound to the input checkpoint, frozen suite, grading policy and adapter hash. An answerer failure remains separate from an observed quality score.
+
+Jev's interpolated 0–3 quality and claim-accuracy scores are divided by three. Missing claims have no accuracy score rather than perfect accuracy. Task scores average resolved criteria; summaries give each covered task equal weight and disclose unresolved criteria, failures and accuracy coverage. Keep full paired task results. Trim one highest and one lowest task independently for each system and metric, preserving the dropped and retained IDs. Do not publish these typed decisions as validated legal conclusions until independent Capy/human alignment review; turn, token and latency use belongs in separate resource accounting.
+
 Offline routing/continuation and child-inheritance tests are not authenticated provider verification. Before publishing a native comparison, verify the current key's model catalogue, real tool-result continuation and usage in both adapters, and real Opulent parent/child requests. Native live verification and the corrected comparison remain blocked when `RUNA_CLOUD_KEY` is absent.
 
 The runtime implementation and offline/native-desktop checks are committed. Live E2B/code.storage/GitHub/MCP checks and live legal evaluation still require provider credentials and, for sandbox callbacks, a reachable authenticated runtime origin. The historical result files are not results from the new full harness. Merging the implementation does not turn those unperformed checks into passes.
