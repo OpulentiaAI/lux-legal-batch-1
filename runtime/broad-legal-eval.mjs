@@ -41,6 +41,8 @@ const quote = value => `'${value.replaceAll("'", "'\\''")}'`
 const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
 const TASK_PATH = `${BROAD_SANDBOX_WORKSPACE}/task`
 const OUTPUT_PATH = `${BROAD_SANDBOX_WORKSPACE}/output`
+// Bound the sleep-resume loop so an orphaned operation wait can never spin forever.
+const OPERATION_WAIT_RESUME_MS = 6 * 60 * 60 * 1000
 
 function validateWorkProduct(packet) {
   const { task, materials } = packet ?? {}
@@ -576,18 +578,19 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         // and its worker exits; only the runtime's tick delivers the child/workflow
         // completion notification and relaunches it. Drive that scheduler here so a
         // delegated session is scored on its final state rather than on its parked
-        // state. A session that sleeps with no resumable wait is terminal.
+        // state. Only a genuinely terminal state breaks the loop: a wake can land
+        // between ticks and a bare status poll must never be mistaken for the final
+        // result. A session that sleeps with no resumable wait is terminal, and a
+        // bounded deadline prevents an orphaned wait from spinning forever.
         completed = await runtime.waitSession(session.id)
-        for (;;) {
-          if (completed.status !== 'sleeping') break
+        const resumeDeadline = Date.now() + OPERATION_WAIT_RESUME_MS
+        while (completed.status === 'sleeping') {
           const pending = runtime.store.list('operation_waits').some(wait => wait.session_id === session.id &&
             ['waiting', 'notified'].includes(wait.status))
-          if (!pending) break
+          if (!pending || Date.now() > resumeDeadline) break
           await runtime.tick(session.id)
-          const afterTick = runtime.store.get('sessions', session.id)
-          if (afterTick?.status !== 'sleeping') { completed = await runtime.waitSession(session.id); continue }
           await new Promise(resolve => setTimeout(resolve, 1000))
-          completed = runtime.store.get('sessions', session.id)
+          completed = await runtime.waitSession(session.id)
         }
         let deliverables, missingDeliverables
         if (workProduct) {

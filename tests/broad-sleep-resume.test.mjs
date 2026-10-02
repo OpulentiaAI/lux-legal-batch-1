@@ -96,6 +96,40 @@ test('harness resumes a sleeping session by ticking its operation waits to compl
 
 // A session sleeping with no resumable wait is terminal; the harness must fail
 // fast rather than spin the tick loop forever.
+// A wake can land between the tick and the poll: a bare status row showing
+// 'running' is not a terminal result. The loop must keep waiting for the real
+// terminal state rather than scoring the transient row as the outcome.
+test('harness ignores a transient running status while a wait is resumable', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'broad-race-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const sandbox = sandboxFor('raced memo')
+  let ticks = 0
+  const harness = createBroadHarness({ workspace, corpus: corpusFor(t), artifactsDir: dir,
+    maxSteps: 250, workProduct: { maxCompletionTokens: 32768 },
+    model: 'zai/glm-5.3', nativeMcp: false, semanticSurface: 'toolbox', toolSurface: 'initial-scripted-v1',
+    instructionProfile: 'opulent-context-v6', provision: async () => sandbox,
+    runtimeFactory: options => ({
+      startSession: async () => { await options.provision({}); return { id: 'parent' } },
+      // waitSession is authoritative and still reports 'running' while the woken
+      // worker is mid-flight; the harness must keep waiting on it.
+      async waitSession() {
+        if (ticks < 2) return { id: 'parent', status: 'sleeping', output: undefined }
+        return { id: 'parent', status: 'completed', output: 'raced done' }
+      },
+      async tick() { ticks++ },
+      store: {
+        get: kind => kind === 'sessions' ? { sandbox_id: sandbox.sandboxId, status: 'running' } : { messages: [] },
+        list: kind => kind === 'operation_waits' ? [{ id: 'w', session_id: 'parent', status: 'waiting' }] : [],
+      },
+      context: () => ({ evidence: new Map() }),
+      close: async () => {},
+    }) })
+
+  const result = await harness.run({ mode: 'broad', question: 'Analyse', workProduct: packet })
+  assert.equal(result.answer, 'raced done', 'transient running status does not end the loop')
+  assert.equal(result.missingDeliverables.length, 0)
+})
+
 test('harness does not spin on a sleeping session with no resumable wait', async t => {
   const dir = mkdtempSync(join(tmpdir(), 'broad-nosleep-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
