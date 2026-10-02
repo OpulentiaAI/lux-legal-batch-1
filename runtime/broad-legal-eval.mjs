@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
-import { createSandbox } from './e2b.mjs'
+import { connectSandbox, createSandbox } from './e2b.mjs'
 import { createModel } from './model.mjs'
 import { LUNA_MODEL, validateEvalModel } from './eval-model-profile.mjs'
 import { brokerNetwork } from './eval-broker.mjs'
@@ -43,6 +43,7 @@ const TASK_PATH = `${BROAD_SANDBOX_WORKSPACE}/task`
 const OUTPUT_PATH = `${BROAD_SANDBOX_WORKSPACE}/output`
 // Bound the sleep-resume loop so an orphaned operation wait can never spin forever.
 const OPERATION_WAIT_RESUME_MS = 6 * 60 * 60 * 1000
+const CORPUS_DIGEST = Symbol('corpusDigest')
 
 function validateWorkProduct(packet) {
   const { task, materials } = packet ?? {}
@@ -182,42 +183,48 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
     const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
     if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
-    const originalRun = sandbox.commands.run.bind(sandbox.commands)
-    const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
-    const baseline = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
-    if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
-    sandbox.commands.run = (command, options = {}) => {
-      if (typeof command !== 'string') throw new Error('Sandbox command must be text')
-      return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
-    }
-    if (sandbox.pty?.create) {
-      const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
-      sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
-    }
-    for (const method of ['makeDir', 'remove', 'rename', 'writeFiles']) {
-      if (!sandbox.files?.[method]) continue
-      const original = sandbox.files[method].bind(sandbox.files)
-      sandbox.files[method] = (...args) => {
-        const index = method === 'rename' ? 2 : 1
-        args[index] = { ...(args[index] ?? {}), user: 'user' }
-        return original(...args)
-      }
-    }
-    const originalWrite = sandbox.files.write.bind(sandbox.files)
-    sandbox.files.write = (pathOrFiles, dataOrOptions, options) => typeof pathOrFiles === 'string'
-      ? originalWrite(pathOrFiles, dataOrOptions, { ...options, user: 'user' })
-      : originalWrite(pathOrFiles, { ...dataOrOptions, user: 'user' })
-    const originalPause = sandbox.pause.bind(sandbox)
-    sandbox.pause = async (...args) => {
-      const current = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
-      if (current !== baseline) throw new Error('Corpus integrity changed during evaluation')
-      return originalPause(...args)
-    }
-    return sandbox
+    return await protectCorpusSandbox(sandbox)
   } catch (error) {
     await sandbox.kill().catch(() => {})
     throw error
   }
+}
+
+async function protectCorpusSandbox(sandbox, expectedDigest) {
+  const originalRun = sandbox.commands.run.bind(sandbox.commands)
+  const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
+  const baseline = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
+  if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
+  if (expectedDigest && baseline !== expectedDigest) throw new Error('Corpus integrity changed while sandbox was paused')
+  sandbox[CORPUS_DIGEST] = baseline
+  sandbox.commands.run = (command, options = {}) => {
+    if (typeof command !== 'string') throw new Error('Sandbox command must be text')
+    return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
+  }
+  if (sandbox.pty?.create) {
+    const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
+    sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
+  }
+  for (const method of ['makeDir', 'remove', 'rename', 'writeFiles']) {
+    if (!sandbox.files?.[method]) continue
+    const original = sandbox.files[method].bind(sandbox.files)
+    sandbox.files[method] = (...args) => {
+      const index = method === 'rename' ? 2 : 1
+      args[index] = { ...(args[index] ?? {}), user: 'user' }
+      return original(...args)
+    }
+  }
+  const originalWrite = sandbox.files.write.bind(sandbox.files)
+  sandbox.files.write = (pathOrFiles, dataOrOptions, options) => typeof pathOrFiles === 'string'
+    ? originalWrite(pathOrFiles, dataOrOptions, { ...options, user: 'user' })
+    : originalWrite(pathOrFiles, { ...dataOrOptions, user: 'user' })
+  const originalPause = sandbox.pause.bind(sandbox)
+  sandbox.pause = async (...args) => {
+    const current = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
+    if (current !== baseline) throw new Error('Corpus integrity changed during evaluation')
+    return originalPause(...args)
+  }
+  return sandbox
 }
 
 function visibleSources(value, corpusSources) {
@@ -293,7 +300,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   reasoningEffort = null,
   toolSurface = 'full-catalog-v1', instructionProfile,
   semanticSurface = 'mcp',
-  runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
+  runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly)
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
@@ -370,7 +377,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: unrestricted ? [] : BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
-    sandbox: { provider: 'E2B', ...(nativeMcp ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
+    sandbox: { provider: 'E2B', ...(sandboxTemplate ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
       integrity: unrestricted ? 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed'
         : 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; tree hash checked before pause' },
     integrations: { webSearch: process.env.BRAVE_SEARCH_API_KEY ? 'configured, not probed' : 'available tool; BRAVE_SEARCH_API_KEY unavailable',
@@ -387,6 +394,45 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
   function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors) {
+    async function trackSandbox(sandbox) {
+      if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
+      provisionedSandboxes.add(sandbox)
+      if (packet) {
+        const collectWorkProduct = async () => {
+          const deliverables = [], missingDeliverables = []
+          const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
+          if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
+          for (const file of packet.task.deliverables) {
+            const path = `${OUTPUT_PATH}/${file}`
+            const check = await sandbox.commands.run(`if test ! -e ${quote(path)} && test ! -L ${quote(path)}; then printf missing; elif test -f ${quote(path)} && test ! -L ${quote(path)} && test "$(stat -c %s ${quote(path)})" -le 1048576; then printf ok; else printf unsafe; fi`)
+            const status = check.stdout.trim()
+            if (status === 'missing') { missingDeliverables.push(file); continue }
+            if (status !== 'ok') throw new Error(`Unsafe or oversized work-product deliverable: ${file}`)
+            const bytes = await sandbox.files.read(path, { format: 'bytes' })
+            if (!(bytes instanceof Uint8Array)) throw new Error(`Unreadable work-product deliverable: ${file}`)
+            if (bytes.byteLength > 1_048_576) throw new Error(`Oversized work-product deliverable: ${file}`)
+            const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+            deliverables.push({ file, content, sha256: sha256(bytes) })
+          }
+          collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
+        }
+        collectors?.set(sandbox.sandboxId, collectWorkProduct)
+        const originalPause = sandbox.pause.bind(sandbox)
+        sandbox.pause = async (...args) => {
+          await collectWorkProduct()
+          return originalPause(...args)
+        }
+      }
+      if (skills) {
+        for (const { name, artifactSha256 } of skills.skills) {
+          const path = `${skills.destinationRoot}/${name}/SKILL.md`
+          if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
+          const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
+          if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
+        }
+      }
+      return sandbox
+    }
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
@@ -395,50 +441,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
-        ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
+        ...(sandboxTemplate ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
       },
       storage: {},
-      provision: async config => {
-        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
-        if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
+      provision: async config => trackSandbox(await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))),
+      connect: async (id, config) => {
+        const previous = [...provisionedSandboxes].find(sandbox => sandbox.sandboxId === id)
+        const sandbox = await sandboxConnect(id, config)
         provisionedSandboxes.add(sandbox)
-        if (packet) {
-          const collectWorkProduct = async () => {
-            const deliverables = [], missingDeliverables = []
-            const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
-            if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
-            for (const file of packet.task.deliverables) {
-              const path = `${OUTPUT_PATH}/${file}`
-              const check = await sandbox.commands.run(`if test ! -e ${quote(path)} && test ! -L ${quote(path)}; then printf missing; elif test -f ${quote(path)} && test ! -L ${quote(path)} && test "$(stat -c %s ${quote(path)})" -le 1048576; then printf ok; else printf unsafe; fi`)
-              const status = check.stdout.trim()
-              if (status === 'missing') { missingDeliverables.push(file); continue }
-              if (status !== 'ok') throw new Error(`Unsafe or oversized work-product deliverable: ${file}`)
-              const bytes = await sandbox.files.read(path, { format: 'bytes' })
-              if (!(bytes instanceof Uint8Array)) throw new Error(`Unreadable work-product deliverable: ${file}`)
-              if (bytes.byteLength > 1_048_576) throw new Error(`Oversized work-product deliverable: ${file}`)
-              const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-              deliverables.push({ file, content, sha256: sha256(bytes) })
-            }
-            collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
-          }
-          collectors?.set(sandbox.sandboxId, collectWorkProduct)
-          const originalPause = sandbox.pause.bind(sandbox)
-          sandbox.pause = async (...args) => {
-            await collectWorkProduct()
-            return originalPause(...args)
-          }
-        }
-        if (skills) {
-          for (const { name, artifactSha256 } of skills.skills) {
-            const path = `${skills.destinationRoot}/${name}/SKILL.md`
-            if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
-            const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
-            if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
-          }
-        }
-        return sandbox
+        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST]))
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
@@ -477,27 +490,26 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const search = await runtime.invoke(session.id, 'lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
           if (!Array.isArray(search?.results) || !search.results.length) throw new Error('Native toolbox semantic search returned no results')
         }
-        const listed = nativeMcp ? await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server }) : null
-        if (!nativeMcp) {
-          return { mcp: { verified: true, mode: 'toolbox', tools: ['lx_search', 'lx_chunk', 'lx_documents'] }, runtimeBroker: { verified: true }, sandbox: { verified: true } }
+        if (nativeMcp) {
+          const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
+          const names = listed.tools?.map(tool => tool.name)
+          if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
+            JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
+          for (const name of NATIVE_LX_TOOLS) {
+            stage = `native-${name}`
+            const probe = mcp.probes.find(item => item.name === name)
+            const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
+            if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
+            if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
+          }
         }
-        const names = listed.tools?.map(tool => tool.name)
-        if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
-          JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
-        for (const name of NATIVE_LX_TOOLS) {
-          stage = `native-${name}`
-          const probe = mcp.probes.find(item => item.name === name)
-          const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
-          if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
-          if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
-        }
-        if (unrestricted) {
+        if (nativeMcp && unrestricted) {
           stage = 'direct-corpus-access'
           const source = corpus.sources[0]
           if (!source) throw new Error('Prepared corpus source required for direct-corpus verification')
           const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Direct corpus chunk response differs from prepared source')
-        } else {
+        } else if (nativeMcp) {
           stage = 'direct-corpus-denial'
           let directDenied = false
           try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
@@ -508,19 +520,28 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           script: 'import asyncio\nfrom opulent_tools import tools\nasync def main():\n    print(await tools.noop())\nasyncio.run(main())', timeout_secs: 30,
         })
         if (brokerCall.exit_code !== 0 || brokerCall.stdout.trim() !== '{}') throw new Error('Scored runtime broker callback failed')
-        stage = 'desktop-screenshot'
-        const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
-        if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
         const sandbox = runtime.context(session.id).sandbox
-        stage = 'local-browser-open'
-        await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, '<!doctype html><title>Legal comparison preflight</title><body>legal-comparison-preflight</body>')
-        const localServer = await sandbox.commands.run(`python3 -m http.server 8765 --bind 127.0.0.1 --directory ${BROAD_SANDBOX_WORKSPACE}`, { background: true })
-        await localServer.disconnect()
-        const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
-        if (local?.ok === false) throw new Error('Local browser failed to open')
-        stage = 'local-browser-console'
-        const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
-        if (location?.result !== true) throw new Error('Local browser verification failed')
+        if (skills) {
+          stage = 'builtin-skills'
+          for (const { name, artifactSha256 } of skills.skills) {
+            const result = await runtime.invoke(session.id, 'skill', { command: 'invoke', skill: name })
+            if (result.path !== `${skills.destinationRoot}/${name}/SKILL.md` || sha256(result.content) !== artifactSha256) throw new Error(`Built-in skill invocation mismatch: ${name}`)
+          }
+        }
+        if (nativeMcp) {
+          stage = 'desktop-screenshot'
+          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
+          stage = 'local-browser-open'
+          await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, '<!doctype html><title>Legal comparison preflight</title><body>legal-comparison-preflight</body>')
+          const localServer = await sandbox.commands.run(`python3 -m http.server 8765 --bind 127.0.0.1 --directory ${BROAD_SANDBOX_WORKSPACE}`, { background: true })
+          await localServer.disconnect()
+          const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
+          if (local?.ok === false) throw new Error('Local browser failed to open')
+          stage = 'local-browser-console'
+          const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
+          if (location?.result !== true) throw new Error('Local browser verification failed')
+        }
         stage = 'no-new-privileges'
         const privilege = await sandbox.commands.run('test "$(id -u)" != 0 && grep -q "NoNewPrivs:[[:space:]]*1" /proc/self/status')
         if (privilege.exitCode !== 0) throw new Error('Sandbox no-new-privs protection failed')
@@ -533,7 +554,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const outbound = await sandbox.commands.run("python3 - <<'PY'\nimport socket\ns=socket.socket(); s.settimeout(4)\ntry:\n s.connect(('1.1.1.1',80))\n s.sendall(b'GET / HTTP/1.1\\r\\nHost: 1.1.1.1\\r\\nConnection: close\\r\\n\\r\\n')\n print('reachable' if s.recv(4096) else 'blocked')\nexcept OSError:\n print('blocked')\nfinally:\n s.close()\nPY")
           if (outbound.exitCode !== 0 || outbound.stdout.trim() !== 'blocked') throw new Error('Sandbox outbound deny failed')
         }
-        return { mcp: { verified: true, tools: NATIVE_LX_TOOLS }, runtimeBroker: { verified: true }, desktop: { verified: true }, sandbox: { verified: true },
+        return { mcp: nativeMcp ? { verified: true, tools: NATIVE_LX_TOOLS } : { verified: true, mode: 'toolbox', tools: ['lx_search', 'lx_chunk', 'lx_documents'] },
+          runtimeBroker: { verified: true }, ...(nativeMcp ? { desktop: { verified: true } } : {}), sandbox: { verified: true },
+          ...(skills ? { builtinSkills: { verified: true, invoked: skills.skills.map(({ name }) => name) } } : {}),
           ...(unrestricted ? { egress: { network, configured: 'general outbound without public inbound', verified: true, probe: 'https://example.com/' } } : {}) }
       } catch (error) {
         if (error && typeof error === 'object') error.preflightStage = stage

@@ -6,11 +6,11 @@
 **Judge:** Jev (`typesafe-ai/jev`) through Vercel AI Gateway
 **Protocol:** 250 steps, 32,768 completion tokens per call, concurrency 2, `opulent-rlm-unrestricted-v5` instruction profile, native `lx_search`/`lx_chunk`/`lx_documents` toolbox surface (no MCP), tuned retrieval (200-candidate pool, full-pool rerank)
 
-All 10 arms completed their declared deliverables. This is the first fully clean paired run under the rebuilt E2B templates and the credited Opulentia project.
+All 10 arms completed their declared deliverables. Completion does not establish full capability coverage or successful recovery of each failed tool operation. The later toolbox-template recheck also found that Opulent answerer sessions did not receive the selected prepared template in this historical run (see Caveats).
 
-## Semantic comparison
+## Provisional work-product comparison
 
-Scores are normalized to 0–1 from Jev's four-level score by dividing by 3.
+Scores are normalized to 0–1 from Jev's four-level score by dividing by 3. The quick judge received criterion descriptions and work products, but not complete scenario facts or authoritative source text; accuracy/grounding scores are provisional, not source-verified legal judgments.
 
 | Task | Harvey semantic | Opulent semantic | Δ | Harvey accuracy | Opulent accuracy | Δ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -26,18 +26,18 @@ Scores are normalized to 0–1 from Jev's four-level score by dividing by 3.
 
 Semantic wins: Opulent 3, Harvey 2. Accuracy wins: Opulent 2, Harvey 3. Completion: **5/5 vs 5/5**.
 
-The trimmed view removes the outlier loss on task-02 (Opulent 0.717) and shows a near-tie: a small Opulent edge on semantic quality and a dead tie on accuracy. The untrimmed means favor Harvey slightly, entirely because of task-02.
+The trimmed view removes each system's extremes independently, so the retained tasks can differ between systems and metrics. It shows a small Opulent semantic edge and a 0.002 Harvey accuracy edge. The untrimmed semantic difference is driven by Opulent's task-02 loss; accuracy also has losses on tasks 03 and 04. Keep the full paired table rather than treating trimming as a replacement for it.
 
 ## Performance and token use
 
 Answerer tokens recorded in the checkpoint; no turn-count penalty applied.
 
-| System | Input / prompt | Output / completion | Total tokens | Tool calls | Errors | Total latency |
+| System | Input / prompt | Output / completion | Total tokens | Tool calls | Errors | Sum of arm latencies |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Harvey | 10,516,270 | 208,283 | **10,724,553** | 307 | 0 | 5,353.0 s |
 | Opulent | 14,736,971 | 194,088 | **14,931,059** | 186 | 8 | 5,470.3 s |
 
-Opulent used 39% more input tokens (wider tool surfaces and corpus retrieval readback are included in its context) while making 39% fewer tool calls, at near-equal wall time. Harvey's arms had zero recorded tool errors; Opulent's 8 errors were recoverable tool failures preserved in the evidence.
+Opulent used 39% more input tokens while making 39% fewer tool calls. Wider tool schemas and retrieval readback contribute context, but these aggregates do not isolate the cause of the token difference. The summed arm latencies were similar; those sums are not the parallel run's wall time. Harvey had zero recorded tool errors and Opulent had eight. All arms completed despite those errors; this alone does not prove every failed tool operation recovered successfully.
 
 Jev judge overhead for the 10 judgments: 115,259 input tokens and 510 output tokens (115,769 total), excluded from the answerer totals above.
 
@@ -47,6 +47,6 @@ Both harnesses executed the tuned retrieval (200-candidate pool, full-pool reran
 
 ## Caveats
 
-- Five tasks is descriptive, not proof of universal superiority; the trimmed deltas are within noise for this sample size.
-- The run used a fresh checkpoint and rebuilt E2B templates (`aacky3169dfjvjyw7bsu` Opulent prepared image with image digest `e85fdd87…` verified, `vj9cdw6z2kti276qs60r` Harvey lab-sandbox from the pinned base image). Earlier partial attempts under the old blocked E2B team are preserved separately and are not comparable.
-- Jev scores semantic quality and accuracy/grounding at the work-product level against frozen criteria and actual recorded evidence; it is not a per-criterion legal-entailment adjudicator. Per-criterion scoring with the full evidence contract remains available as a follow-up.
+- Five tasks is descriptive, not proof of universal superiority. No statistical uncertainty estimate was computed.
+- The run used a fresh checkpoint and selected rebuilt templates. The later 2026-10-02 recheck found that the Opulent toolbox answerer fell back to E2B `base`; only the separately provisioned broker proof used `aacky3169dfjvjyw7bsu`. Harvey selected `vj9cdw6z2kti276qs60r`. Preserve this as a historical configuration rather than describing it as a prepared-image comparison. Earlier partial attempts under the old blocked E2B team remain separate.
+- The quick grader supplied task title, criterion requirement/pass/fail text, answer, deliverables, completion status and source count. It did not supply complete client materials, authoritative corpus text or tool evidence bodies. A source count is not grounding evidence. The next comparison needs evidence-grounded, frozen per-criterion judgments and independent alignment review; do not report these historical aggregate judgments as legal-entailment proof.
