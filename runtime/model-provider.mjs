@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto'
 
 export const GATEWAY_ENDPOINT = 'https://ai-gateway.vercel.sh/v1'
 export const RUNANYWHERE_ENDPOINT = 'https://inference.runanywhere.ai/v1'
+export const NATIVE_REQUEST_POLICY = Object.freeze({ maxAttempts: 3, retryStatuses: Object.freeze([429, 502, 503, 504]),
+  backoffMs: Object.freeze([1000, 2000]), maxRetryAfterMs: 30000, transportErrors: 'not retried; usage unknown' })
 
 export function isRunAnywhereMiMo(model) {
   return typeof model === 'string' && /^(?:xiaomi\/)?mimo-v2\.6-pro$/i.test(model)
@@ -16,7 +18,7 @@ export function modelTransport({ inferenceProvider = 'gateway', providerModel, p
   if (!isRunAnywhereMiMo(providerModel)) throw new Error('An authenticated RunAnywhere MiMo model ID is required')
   if (providerOnly != null || reasoningEffort != null) throw new Error('RunAnywhere does not declare Gateway routing or reasoning-effort parameters')
   return { provider: 'runanywhere', endpoint: RUNANYWHERE_ENDPOINT, credentialEnvironment: 'RUNA_CLOUD_KEY', providerModel,
-    reasoningPolicy: 'provider-default; no documented reasoning-effort control' }
+    reasoningPolicy: 'provider-default; no documented reasoning-effort control', requestPolicy: NATIVE_REQUEST_POLICY }
 }
 
 export async function resolveRunAnywhereMiMo(fetchImpl = fetch) {

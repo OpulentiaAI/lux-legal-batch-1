@@ -2,6 +2,7 @@
 
 import os
 import re
+import time
 
 import openai
 
@@ -37,17 +38,47 @@ class GatewayReasoningAdapter(ModelAdapter):
         self.usage_records = [] if capture_usage else None
 
     def chat(self, messages, tools):
-        response = self.client.chat.completions.create(
-            model=self.request_model,
-            messages=messages,
-            tools=[{"type": "function", "function": {
-                "name": tool["name"], "description": tool["description"],
-                "parameters": tool["parameters"],
-            }} for tool in tools],
-            **({"max_tokens": self.max_tokens} if self.native else {"max_completion_tokens": self.max_tokens}),
-            **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
-            extra_body={"providerOptions": {"gateway": {"only": self.provider_only}}} if self.provider_only else {},
-        )
+        attempts = []
+        deadline = time.monotonic() + 600
+        for attempt in range(3 if self.native else 1):
+            start = time.monotonic()
+            try:
+                if self.native and start >= deadline:
+                    raise TimeoutError("Native model request deadline exceeded")
+                client = self.client.with_options(timeout=deadline - start) if self.native else self.client
+                response = client.chat.completions.create(
+                    model=self.request_model,
+                    messages=messages,
+                    tools=[{"type": "function", "function": {
+                        "name": tool["name"], "description": tool["description"],
+                        "parameters": tool["parameters"],
+                    }} for tool in tools],
+                    **({"max_tokens": self.max_tokens} if self.native else {"max_completion_tokens": self.max_tokens}),
+                    **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
+                    extra_body={"providerOptions": {"gateway": {"only": self.provider_only}}} if self.provider_only else {},
+                )
+            except Exception as error:
+                if not self.native:
+                    raise
+                status = getattr(error, "status_code", None)
+                attempts.append({"status": status, "elapsedMs": round((time.monotonic() - start) * 1000), "usageUnknown": True})
+                header = getattr(getattr(error, "response", None), "headers", {}).get("retry-after")
+                try:
+                    wait = float(header) if header is not None else 2 ** attempt
+                except (ValueError, TypeError):
+                    wait = -1
+                if attempt == 2 or status not in (429, 502, 503, 504) or not 0 <= wait <= 30:
+                    error.inference_attempts = attempts
+                    if self.usage_records is not None:
+                        self.usage_records.append({"inferenceProvider": "runanywhere", "requestedModel": self.request_model,
+                                                   "failed": True, "usageUnknown": True, "requestAttempts": attempts})
+                    raise
+                attempts[-1]["retryWaitMs"] = round(wait * 1000)
+                time.sleep(wait)
+                continue
+            if self.native:
+                attempts.append({"status": 200, "elapsedMs": round((time.monotonic() - start) * 1000)})
+            break
         if self.usage_records is not None:
             usage = response.usage.model_dump() if response.usage else {}
             record = {key: value for key, value in usage.items()
@@ -60,6 +91,11 @@ class GatewayReasoningAdapter(ModelAdapter):
                 record["requestedModel"] = self.request_model
                 record["responseModel"] = getattr(response, "model", None)
                 record["requestId"] = getattr(response, "id", None)
+                record["requestAttempts"] = attempts
+                for name, value in {"reasoning_tokens": (usage.get("completion_tokens_details") or {}).get("reasoning_tokens"),
+                                    "cached_prompt_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens")}.items():
+                    if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                        record[name] = value
             self.usage_records.append(record)
         message = response.choices[0].message.model_dump(exclude_none=True)
         calls = [ToolCall(id=call["id"], name=call["function"]["name"],

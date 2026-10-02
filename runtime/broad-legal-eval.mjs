@@ -471,9 +471,18 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
             record.requestedModel = transport.providerModel
             record.responseModel = typeof raw.model === 'string' ? raw.model : null
             record.requestId = typeof raw.id === 'string' ? raw.id : null
+            record.requestAttempts = raw.inferenceAttempts ?? []
+            for (const [name, value] of Object.entries({ reasoning_tokens: usage.completion_tokens_details?.reasoning_tokens,
+              cached_prompt_tokens: usage.prompt_tokens_details?.cached_tokens })) {
+              if (Number.isSafeInteger(value) && value >= 0) record[name] = value
+            }
           }
           providerRecords.push(record)
           return response
+        }, error => {
+          if (transport.provider === 'runanywhere' && error.inferenceAttempts) providerRecords.push({ inferenceProvider: transport.provider,
+            requestedModel: transport.providerModel, failed: true, usageUnknown: true, requestAttempts: error.inferenceAttempts })
+          throw error
         })
       },
     }

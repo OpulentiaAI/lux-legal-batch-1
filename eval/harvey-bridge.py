@@ -189,13 +189,15 @@ class TracedAdapter:
         try:
             response = self.adapter.chat(messages, tools)
         except BaseException as error:
-            trace.append("model_failure", turn=trace.turn, errorType=type(error).__name__)
+            trace.append("model_failure", turn=trace.turn, errorType=type(error).__name__,
+                         **({"providerAttempts": error.inference_attempts} if hasattr(error, "inference_attempts") else {}))
             raise
         trace.pending = [(call.id, call.name, call.arguments) for call in response.tool_calls]
         trace.append("assistant", turn=trace.turn, text=response.text,
                      toolCalls=[{"id": call.id, "name": call.name, "arguments": call.arguments}
                                 for call in response.tool_calls], inputTokens=response.input_tokens,
-                     outputTokens=response.output_tokens)
+                     outputTokens=response.output_tokens,
+                     **({"providerUsage": self.adapter.usage_records[-1]} if getattr(self.adapter, "native", False) and getattr(self.adapter, "usage_records", None) else {}))
         return response
 
     def make_tool_result_messages(self, results):

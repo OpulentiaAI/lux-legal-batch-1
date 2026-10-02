@@ -139,7 +139,8 @@ test('Broad wrapper carries native configuration and actual reported usage witho
       return createModel(config, async (_url, request) => {
         assert.equal(JSON.parse(request.body).max_tokens, 32768)
         return { ok: true, json: async () => ({ model: 'mimo-v2.6-pro', id: 'native-request',
-          choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } }], usage: { prompt_tokens: 12, completion_tokens: 7 } }) }
+          choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } }], usage: { prompt_tokens: 12, completion_tokens: 7,
+            completion_tokens_details: { reasoning_tokens: 3 }, prompt_tokens_details: { cached_tokens: 4 } } }) }
       })
     }, runtimeFactory: options => {
       runtimeConfig = options.config
@@ -154,8 +155,9 @@ test('Broad wrapper carries native configuration and actual reported usage witho
   assert.equal(configured.modelRequestTimeoutMs, 600000)
   assert.equal(runtimeConfig.providerModel, 'mimo-v2.6-pro')
   assert.equal(harness.provenance.inference.endpoint, RUNANYWHERE_ENDPOINT)
-  assert.deepEqual(result.metrics.providerUsageRecords, [{ prompt_tokens: 12, completion_tokens: 7, finishReason: 'stop',
-    inferenceProvider: 'runanywhere', requestedModel: 'mimo-v2.6-pro', responseModel: 'mimo-v2.6-pro', requestId: 'native-request' }])
+  assert.deepEqual(result.metrics.providerUsageRecords.map(({ requestAttempts, ...record }) => record), [{ prompt_tokens: 12, completion_tokens: 7, finishReason: 'stop',
+    inferenceProvider: 'runanywhere', requestedModel: 'mimo-v2.6-pro', responseModel: 'mimo-v2.6-pro', requestId: 'native-request', reasoning_tokens: 3, cached_prompt_tokens: 4 }])
+  assert.deepEqual(result.metrics.providerUsageRecords[0].requestAttempts.map(attempt => attempt.status), [200])
 })
 
 test('Harvey native adapter pins native credentials, request fields, usage and tool continuation', () => {
@@ -178,7 +180,7 @@ class Message:
             {'id':'call-1','type':'function','function':{'name':'read','arguments':'{"path":"source"}'}}]}
 class Usage:
     prompt_tokens, completion_tokens = 12, 7
-    def model_dump(self): return {'prompt_tokens':12,'completion_tokens':7}
+    def model_dump(self): return {'prompt_tokens':12,'completion_tokens':7,'completion_tokens_details':{'reasoning_tokens':3},'prompt_tokens_details':{'cached_tokens':4}}
 class OpenAI:
     def __init__(self, **kwargs):
         assert kwargs['base_url'] == 'https://inference.runanywhere.ai/v1'
@@ -186,6 +188,9 @@ class OpenAI:
         assert kwargs['max_retries'] == 0 and kwargs['timeout'] == 600
         assert kwargs['http_client']['follow_redirects'] is False
         self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=self.create))
+    def with_options(self, **kwargs):
+        assert 0 < kwargs['timeout'] <= 600
+        return self
     def create(self, **kwargs):
         calls.append(kwargs)
         return types.SimpleNamespace(choices=[types.SimpleNamespace(message=Message(),finish_reason='tool_calls')],
@@ -216,8 +221,90 @@ print(json.dumps({'calls':calls,'usage':adapter.usage_records}))
   }
   assert.equal(result.calls[1].messages[0].reasoning_content, 'fixture reasoning')
   assert.deepEqual(result.calls[1].messages[1], { role: 'tool', tool_call_id: 'call-1', content: 'source text' })
-  assert.deepEqual(result.usage[0], { prompt_tokens: 12, completion_tokens: 7, finishReason: 'tool_calls',
-    inferenceProvider: 'runanywhere', requestedModel: 'mimo-v2.6-pro', responseModel: 'mimo-v2.6-pro', requestId: 'native-request' })
+  const { requestAttempts, ...usage } = result.usage[0]
+  assert.deepEqual(usage, { prompt_tokens: 12, completion_tokens: 7, finishReason: 'tool_calls',
+    inferenceProvider: 'runanywhere', requestedModel: 'mimo-v2.6-pro', responseModel: 'mimo-v2.6-pro', requestId: 'native-request', reasoning_tokens: 3, cached_prompt_tokens: 4 })
+  assert.deepEqual(requestAttempts.map(attempt => attempt.status), [200])
+})
+
+test('native HTTP retries are bounded, preserve failed-attempt accounting, and never retry authentication failures', async t => {
+  credentials(t)
+  for (const statuses of [[503, 200], [503, 503, 503], [401], [429]]) {
+    let calls = 0
+    const model = createModel(native, async () => {
+      const status = statuses[calls++]
+      return { status, ok: status === 200, headers: { get: () => status === 429 ? '60' : '0' },
+        json: async () => ({ choices: [{ message: { content: 'Done' } }] }) }
+    })
+    if (statuses.at(-1) === 200) {
+      const result = await model([])
+      assert.deepEqual(result.inferenceAttempts.map(attempt => attempt.status), statuses)
+      assert.equal(result.inferenceAttempts[0].usageUnknown, true)
+      assert.equal(result.inferenceAttempts[0].retryWaitMs, 0)
+    } else {
+      await assert.rejects(model([]), error => {
+        assert.deepEqual(error.inferenceAttempts.map(attempt => attempt.status), statuses)
+        assert.ok(error.inferenceAttempts.every(attempt => attempt.usageUnknown))
+        return true
+      })
+    }
+    assert.equal(calls, statuses.length)
+  }
+  let calls = 0
+  await assert.rejects(createModel(native, async () => { calls++; throw new TypeError('fixture transport failure') })([]), error => {
+    assert.equal(error.inferenceAttempts.length, 1)
+    assert.equal(error.inferenceAttempts[0].usageUnknown, true)
+    return true
+  })
+  assert.equal(calls, 1)
+})
+
+test('Harvey native retry policy records capacity failures and stops at the same three-attempt cap', () => {
+  const script = `
+import importlib.util, json, os, sys, types
+base = types.ModuleType('harness.adapters.base')
+class ModelAdapter:
+    def __init__(self, model): self.model = model
+base.ModelAdapter, base.ModelResponse, base.ToolCall = ModelAdapter, object, object
+sys.modules['harness'] = types.ModuleType('harness')
+sys.modules['harness.adapters'] = types.ModuleType('harness.adapters')
+sys.modules['harness.adapters.base'] = base
+sys.modules['httpx'] = types.SimpleNamespace(Client=lambda **kwargs: kwargs)
+calls = 0
+status = 503
+class ProviderFailure(Exception):
+    def __init__(self):
+        self.status_code = status
+        self.response = types.SimpleNamespace(headers={'retry-after':'0'})
+class OpenAI:
+    def __init__(self, **kwargs): self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=self.create))
+    def with_options(self, **kwargs): return self
+    def create(self, **kwargs):
+        global calls
+        calls += 1
+        raise ProviderFailure()
+sys.modules['openai'] = types.SimpleNamespace(OpenAI=OpenAI)
+os.environ['RUNA_CLOUD_KEY'] = 'native-fixture-key'
+spec = importlib.util.spec_from_file_location('adapter', sys.argv[1])
+module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+outputs = []
+for status in [503, 401]:
+    calls = 0
+    adapter = module.RunAnywhereAdapter('xiaomi/mimo-v2.6-pro','mimo-v2.6-pro',capture_usage=True)
+    try:
+        adapter.chat([], [])
+        raise AssertionError('Must fail')
+    except ProviderFailure as error:
+        outputs.append({'status':status,'calls':calls,'attempts':error.inference_attempts,'usage':adapter.usage_records})
+print(json.dumps(outputs))
+`
+  const rows = JSON.parse(execFileSync('python3', ['-c', script, resolve('eval/harvey-modal-adapter.py')], { encoding: 'utf8' }))
+  assert.deepEqual(rows.map(row => row.calls), [3, 1])
+  for (const row of rows) {
+    assert.ok(row.attempts.every(attempt => attempt.status === row.status && attempt.usageUnknown))
+    assert.equal(row.usage[0].failed, true)
+    assert.equal(row.usage[0].requestAttempts.length, row.calls)
+  }
 })
 
 test('Harvey JS bridge passes native routing unchanged and refuses missing native credentials', async t => {
