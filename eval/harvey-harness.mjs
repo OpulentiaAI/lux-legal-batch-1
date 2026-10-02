@@ -11,7 +11,10 @@ const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
 const MODEL = LUNA_MODEL
 const GATEWAY = 'https://ai-gateway.vercel.sh/v1'
 const HARVEY_IMAGE = 'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2'
-const E2B_TEMPLATE = 'gfkhlvaqlbbjrjm04d6d'
+// Templates are per-E2B-account: rebuilding the pinned base image in another
+// project yields a new template ID. Override without editing provenance when
+// the account moves; the base image digest is unchanged and stays pinned.
+const E2B_TEMPLATE = process.env.HARVEY_E2B_TEMPLATE ?? 'gfkhlvaqlbbjrjm04d6d'
 const TOOLS = Object.freeze(['bash', 'read', 'write', 'edit', 'glob', 'grep'])
 const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
 
@@ -196,6 +199,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       mkdirSync(dirname(artifacts), { recursive: true })
       const request = { harvey_root: harveyRoot, documents: corpus.directory, corpus_hash: corpus.hash,
         artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly, reasoning_effort: reasoningEffort,
+        e2b_template: E2B_TEMPLATE,
         ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}) }
       const start = performance.now()
       const env = { ...process.env, OPENAI_BASE_URL: GATEWAY, OPENAI_API_KEY: process.env.AI_GATEWAY_API_KEY }

@@ -21,7 +21,9 @@ MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
 GLM_MODEL = "zai/glm-5.3"
 MIMO_MODEL = "xiaomi/mimo-v2.6-pro"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
-E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
+# Templates are per-E2B-account; the harness passes the account's template ID in
+# the request so an account move does not require editing this pinned base image.
+DEFAULT_E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
 HARVEY_IMAGE = "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2"
 CORPUS_README = ("This directory contains the full evaluation source corpus, not reference answers or grading rubrics. "
                  "Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID "
@@ -373,6 +375,7 @@ def main():
         raise RuntimeError("Harvey upstream checkout is dirty")
     smoke = "--smoke" in sys.argv[1:]
     model = request.get("model", LUNA_MODEL)
+    e2b_template = request.get("e2b_template") or os.environ.get("HARVEY_E2B_TEMPLATE") or DEFAULT_E2B_TEMPLATE
     provider_only = request.get("provider_only")
     if not ((model == LUNA_MODEL and provider_only is None) or
             (model == MODAL_MODEL and provider_only == ["modal"]) or
@@ -424,7 +427,7 @@ def main():
                 {row["path"] for row in work_product["materials"]} != set(paths)):
             raise ValueError("Invalid public work-product packet")
     archive = create_archive(root, documents, source_files, smoke=smoke, work_product=work_product)
-    sandbox = E2BSandbox.create(template=E2B_TEMPLATE, secure=True, allow_internet_access=False,
+    sandbox = E2BSandbox.create(template=e2b_template, secure=True, allow_internet_access=False,
                                 timeout=3600, api_key=os.environ["E2B_API_KEY"])
     try:
         setup = sandbox.commands.run("mkdir -p /workspace && chown root:root /workspace && chmod 1777 /workspace", user="root")
@@ -493,7 +496,7 @@ def main():
                 "command": "python3 /workspace/skills/xlsx/scripts/scan_errors.py /workspace/fixtures/smoke.xlsx"}})
             final_hash = sandbox.commands.run(checksum, cwd="/workspace", user="user", timeout=120)
             report = {"tools": results, "security": security,
-                "template_id": E2B_TEMPLATE, "harvey_base_image": HARVEY_IMAGE,
+                "template_id": e2b_template, "harvey_base_image": HARVEY_IMAGE,
                 "binary_parser_available": "(exit code" not in parser and not parser.startswith("Error:"),
                 "binary_parser_check": parser[:1000],
                 "binary_reads": {extension: text[:1000] for extension, text in binary.items()},
@@ -584,7 +587,7 @@ def main():
 
     payload = {
         "answer": answer,
-        "template_id": E2B_TEMPLATE,
+        "template_id": e2b_template,
         "harvey_base_image": HARVEY_IMAGE,
         "finished_cleanly": result["finished_cleanly"],
         "turn_count": result["turn_count"],
