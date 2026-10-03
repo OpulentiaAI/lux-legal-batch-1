@@ -142,7 +142,7 @@ def check(name,args):
 def invoke(name,args):
     request=urllib.request.Request(os.environ['RUNTIME_BROKER_URL'],data=json.dumps({'name':name,'args':args}).encode(),headers={'Authorization':'Bearer '+os.environ['RUNTIME_SCRIPT_TOKEN'],'Content-Type':'application/json'},method='POST')
     try:
-        with urllib.request.urlopen(request,timeout=120) as response: data=json.load(response)
+        with urllib.request.urlopen(request,timeout=float(os.environ['RUNTIME_SCRIPT_TIMEOUT_SECS'])) as response: data=json.load(response)
     except urllib.error.HTTPError as e:
         body=e.read().decode()[:4096]
         try: body=json.loads(body).get('error',body)
@@ -205,12 +205,12 @@ export function createTools(ctx) {
     let abort;
     try {
       await ctx.sandbox.files.write([{ path: script, data: args.script }, { path: launcher, data: shim }, { path: catalogPath, data: JSON.stringify(ctx.scriptCatalog ?? []) }]);
-      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_BLOCKED_TOOLS: JSON.stringify(ctx.config.unrestrictedTools === true ? ['scripted_tools', 'ipython'] : [...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
-      const run = handle.wait().then(result => result, error => error);
+      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, timeoutMs: seconds * 1000, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_SCRIPT_TIMEOUT_SECS: String(seconds), RUNTIME_BLOCKED_TOOLS: JSON.stringify(ctx.config.unrestrictedTools === true ? ['scripted_tools', 'ipython'] : [...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
+      const run = handle.wait().catch(error => { if (typeof error.exitCode !== 'number') throw error; return error; });
       const result = await Promise.race([run, new Promise((_, reject) => {
         const timer = setTimeout(() => reject(new Error('Script timed out')), seconds * 1000);
         abort = () => { clearTimeout(timer); reject(ctx.signal.reason || new Error('Aborted')); };
-        run.finally(() => clearTimeout(timer));
+        run.then(() => clearTimeout(timer), () => clearTimeout(timer));
         if (ctx.signal?.aborted) abort(); else ctx.signal?.addEventListener('abort', abort, { once: true });
       })]);
       const secrets = [scriptToken, execution?.token, ...(ctx.secrets?.values() ?? [])].filter(Boolean);

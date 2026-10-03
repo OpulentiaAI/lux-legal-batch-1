@@ -1,0 +1,13 @@
+{
+  "version": "opulent-capability-v7",
+  "profile": "opulent-capability-v7",
+  "inheritedVersion": "opulent-context-v6",
+  "inheritedManifestSha256": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+  "inheritedAddendumSha256": "b29386a4d3e6693cf44086f4a7e5a0ec3879b31f747d644ef2cf0210d63dae89",
+  "addendumSha256": "785a03f5c744ac60ce23c3fb5cfc32f2215beb24cdc061cb65b7e228cdada91b",
+  "provenance": {
+    "source": "Verified native RLM, scripted-tools and VM-child API contracts; generic task-method guidance only",
+    "behavioralSupplement": true,
+    "note": "Separate scored capability profile. No rubric/reference hints or changes to historical profiles, tool allowlists, provider authorization, repository scope, approvals or secret protections."
+  }
+}

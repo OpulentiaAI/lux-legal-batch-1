@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { connectSandbox, createSandbox } from './e2b.mjs'
@@ -111,7 +112,8 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
       const toolEvents = events.filter(event => ['tool_finished', 'tool_rejected'].includes(event.type))
       const toolEventsById = new Map(toolEvents.filter(event => event.data?.tool_call_id).map(event => [event.data.tool_call_id, event]))
       let turn = 0, tool = 0
-      return { sessionId: row.id, parentSessionId: row.parent_session_id, sandboxId: row.sandbox_id ?? null, visibility: row.id === rootId ? 'answerer' : 'child-only',
+      return { sessionId: row.id, parentSessionId: row.parent_session_id, sandboxId: row.sandbox_id ?? null,
+        sandboxIds: [...new Set([...(row.sandbox_ids ?? []), row.sandbox_id].filter(Boolean))], visibility: row.id === rootId ? 'answerer' : 'child-only',
         createdAt: row.created_at ?? null, updatedAt: row.updated_at ?? null, status: row.status, error: row.error ?? null,
         output: row.id === rootId ? null : row.output ?? null, deliveredMessageIds: conversation?.delivered ?? [],
         pendingToolCallId: conversation?.pending_tool_call_id ?? null,
@@ -262,7 +264,7 @@ function visibleSources(value, corpusSources) {
   return [...found.values()]
 }
 
-function auditMessages(messages, evidence, corpusSources) {
+function auditMessages(messages, evidence, corpusSources, parentVisibleV2 = false) {
   const calls = []
   const byId = new Map()
   const observed = new Map()
@@ -272,7 +274,7 @@ function auditMessages(messages, evidence, corpusSources) {
         let args = null
         try { args = JSON.parse(call.function.arguments) } catch {}
         const rawArguments = redactAudit(call.function?.arguments ?? '')
-        const entry = { tool: call.function?.name ?? 'unknown', argsHash: sha256(rawArguments), args: redactAudit(args), rawArguments,
+        const entry = { toolCallId: call.id ?? null, tool: call.function?.name ?? 'unknown', argsHash: sha256(rawArguments), args: redactAudit(args), rawArguments,
           result: { error: true, sha256: null } }
         calls.push(entry)
         if (typeof call.id === 'string') byId.set(call.id, entry)
@@ -286,7 +288,7 @@ function auditMessages(messages, evidence, corpusSources) {
     entry.result = { error: true, sha256: sha256(output) }
     let result
     try { result = JSON.parse(message.content) } catch { continue }
-    if (result?.error !== undefined) continue
+    if (result?.error !== undefined || parentVisibleV2 && result?.ok === false) continue
     entry.result.error = false
     if (entry.tool === 'lx_search' || entry.tool === 'lx_chunk') {
       const items = entry.tool === 'lx_search' ? result.results : [result]
@@ -317,8 +319,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(instructionProfile)
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(instructionProfile)
+  const capabilityV7 = instructionProfile === 'opulent-capability-v7'
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
   if (rlm && (toolSurface !== 'initial-scripted-v1' || (!nativeMcp && semanticSurface !== 'toolbox') || !workProduct)) throw new Error('RLM comparison requires the prepared work-product tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp && semanticSurface !== 'toolbox') throw new Error('Prepared initial/scripted comparison requires native MCP or toolbox')
@@ -352,11 +355,12 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
   const instructions = renderInstructions({ appendix: initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
-    variant: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+    variant: capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    ...(capabilityV7 ? { evidenceReplayVersion: 'parent-visible-outputs-v2', schedulerPolicy: 'owned-operation-waits-ticked-during-parent-and-child-work-v1', accountingPolicy: 'quiesced-descendants-before-final-snapshot-v1' } : {}),
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 600_000 } : {}),
     toolSurface, semanticSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
@@ -450,6 +454,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
+        ...(capabilityV7 ? { instructionProfile } : {}),
         ...(sandboxTemplate ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
@@ -588,7 +593,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       } finally {
         let failed = false
         try { detach?.() } catch { failed = true }
-        try { await runtime?.close() } catch { failed = true }
+        try { if ((await runtime?.close())?.cleanup_succeeded === false) failed = true } catch { failed = true }
         const outcomes = await Promise.allSettled([...sandboxes].map(sandbox => sandbox.kill()))
         if (outcomes.some(outcome => outcome.status === 'rejected') || failed) throw new Error('Preflight cleanup failed')
         rmSync(stateDir, { recursive: true, force: true })
@@ -608,7 +613,12 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const collected = new Map()
       const collectors = new Map()
       const providerRecords = []
-      let runtime, session, completed, runError, runDetails, detachBroker
+      let runtime, session, completed, runError, runDetails, detachBroker, scheduler, schedulerError, quiesceError
+      const schedulerController = new AbortController()
+      const stopScheduler = async () => {
+        schedulerController.abort()
+        await scheduler
+      }
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
@@ -619,8 +629,20 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: workProduct
-            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée. Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}\n\n${packet.task.instructions}`
+            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. ${capabilityV7 ? 'Applique le protocole capability-v7 au travail réel : invoque les procédures adaptées, utilise ipython comme espace persistant de recherche et de raisonnement, scripted_tools pour les appels programmatiques indépendants et rlm.spawn pour les questions de recherche séparables. Découvre les schémas, lis les réponses réellement terminées des enfants et vérifie toi-même leurs sources déterminantes avant la synthèse. Les autres outils autorisés restent disponibles ; aucun quota artificiel de profondeur, de fan-out ou d’appels Python n’est ajouté.' : 'Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée.'} Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}${capabilityV7 ? '' : `\n\n${packet.task.instructions}`}`
             : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
+        if (capabilityV7 && typeof runtime.tick === 'function') {
+          scheduler = (async () => {
+            while (!schedulerController.signal.aborted) {
+              await runtime.tick(session.id)
+              await sleep(1000, undefined, { signal: schedulerController.signal })
+            }
+          })().catch(async error => {
+            if (schedulerController.signal.aborted) return
+            schedulerError = error
+            await runtime.cancelSession(session.id)
+          })
+        }
         // A session that calls `wait_for_operations` parks itself as `sleeping`
         // and its worker exits; only the runtime's tick delivers the child/workflow
         // completion notification and relaunches it. Drive that scheduler here so a
@@ -635,10 +657,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const pending = runtime.store.list('operation_waits').some(wait => wait.session_id === session.id &&
             ['waiting', 'notified'].includes(wait.status))
           if (!pending || Date.now() > resumeDeadline) break
-          await runtime.tick(session.id)
+          if (!capabilityV7) await runtime.tick(session.id)
           await new Promise(resolve => setTimeout(resolve, 1000))
           completed = await runtime.waitSession(session.id)
         }
+        await stopScheduler()
+        if (schedulerError) throw schedulerError
+        if (capabilityV7) await runtime.quiesce?.()
         let deliverables, missingDeliverables
         if (workProduct) {
           const sandboxId = runtime.store.get('sessions', session.id)?.sandbox_id
@@ -675,6 +700,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         return { answer: completed.output, ...details, ...(workProduct ? { deliverables, missingDeliverables,
           artifactPaths: [details.audit.evidenceArtifact] } : {}) }
       } catch (cause) {
+        await stopScheduler()
+        if (capabilityV7) {
+          try { await runtime?.quiesce?.() }
+          catch (error) { quiesceError = error }
+        }
         if (cause?.audit && (cause.message === 'Broad legal session failed' || cause.message.startsWith('Broad missing deliverables:'))) runError = cause
         else {
           runError = new Error(cause?.preflightStage === 'resident-work-product-collection' ? cause.message : 'Broad legal session failed')
@@ -691,12 +721,23 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         }
         throw runError
       } finally {
+        await stopScheduler()
         let closeFailed = false
         try { detachBroker?.() } catch { closeFailed = true }
-        try { await runtime?.close() } catch { closeFailed = true }
+        try { if ((await runtime?.close())?.cleanup_succeeded === false) closeFailed = true } catch { closeFailed = true }
         const sandboxes = [...provisionedSandboxes]
         const outcomes = await Promise.allSettled(sandboxes.map(sandbox => Promise.resolve().then(() => sandbox.kill())))
         const failedIds = sandboxes.filter((_, index) => outcomes[index].status === 'rejected').map(sandbox => sandbox.sandboxId)
+        if (capabilityV7) {
+          const cleanup = { version: 'owned-sandbox-cleanup-v1', checkedAt: new Date().toISOString(), runtimeCloseSucceeded: !closeFailed,
+            sandboxes: sandboxes.map((sandbox, index) => ({ sandboxId: sandbox.sandboxId, termination: outcomes[index].status,
+              ...(outcomes[index].status === 'rejected' ? { error: redactAudit(String(outcomes[index].reason)) } : {}) })),
+            evidenceBoundary: 'API termination outcomes; a separate provider listing must verify absence' }
+          const cleanupPath = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}-cleanup.json`)
+          writeFileSync(cleanupPath, JSON.stringify(cleanup, null, 2) + '\n', { mode: 0o600 })
+          const details = runError ?? runDetails
+          if (details?.audit) Object.assign(details.audit, { cleanupArtifact: cleanupPath, cleanupSha256: sha256(readFileSync(cleanupPath)) })
+        }
         if (closeFailed || failedIds.length) {
           const cleanupError = new Error('Broad legal sandbox cleanup failed')
           cleanupError.cleanup = { sandboxIds: failedIds, runtimeCloseFailed: closeFailed, stateDir }
@@ -719,7 +760,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
             evidence = runtime.context(session.id).evidence
           } catch {}
         }
-        const observed = auditMessages(messages, evidence, corpus?.sources)
+        const observed = auditMessages(messages, evidence, corpus?.sources, capabilityV7)
         const trace = events.map(event => ({ stage: event.type, ...(event.data?.name ? { tool: event.data.name } : {}),
           ...(event.data?.ok !== undefined ? { ok: event.data.ok } : {}) }))
         const terminal = completed ? { status: completed.status,
@@ -728,9 +769,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (terminal) trace.push({ stage: 'session_terminal', ...terminal })
         const audit = { provenance: runProvenance, terminalStatus: terminal?.status ?? null, terminal, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
+        if (capabilityV7) audit.accounting = { status: quiesceError ? 'failed' : typeof runtime?.quiesce === 'function' ? 'settled' : 'unavailable',
+          ...(quiesceError ? { error: redactAudit(String(quiesceError)) } : {}) }
         const artifact = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}.json`)
-        writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
-          ({ tool, args, rawArguments, output, result })) }), { mode: 0o600 })
+        writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ toolCallId, tool, args, rawArguments, output, result }) =>
+          ({ toolCallId, tool, args, rawArguments, output, result })) }), { mode: 0o600 })
         audit.evidenceArtifact = artifact
         if (workProduct && session && runtime?.store?.list && runtime?.store?.get) {
           const trajectoryPath = join(evidenceDir, `${session.id}-${sha256(question).slice(0, 12)}-trajectory.json`)

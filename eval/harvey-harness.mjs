@@ -17,6 +17,14 @@ const HARVEY_IMAGE = 'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24
 const E2B_TEMPLATE = process.env.HARVEY_E2B_TEMPLATE ?? 'gfkhlvaqlbbjrjm04d6d'
 const TOOLS = Object.freeze(['bash', 'read', 'write', 'edit', 'glob', 'grep'])
 const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
+const TASK_CONFIGURATION_STANZA = '- **Task configuration** (`task.json`) — contains the task definition and the\n' +
+  '  grading rubric. Do not read, search, or reference it. Doing so will be\n' +
+  '  flagged as a rule violation and automatically fail the task.\n'
+const PUBLIC_TASK_CONFIGURATION_STANZA = '- **Public task configuration** (`/workspace/task/task.json`) — contains only\n' +
+  '  the supplied public task definition, not a grading rubric. You may read,\n' +
+  '  search, and reference this file to complete the assignment. Do not read,\n' +
+  '  search for, or reference grading rubrics, reference answers, or hidden\n' +
+  '  evaluation materials.\n'
 
 function validateWorkProduct(input) {
   const { task, materials } = input ?? {}
@@ -168,7 +176,7 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       ...trajectoryProof } }
 }
 
-export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, inferenceProvider = 'gateway', providerModel, workProduct } = {}) {
+export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, inferenceProvider = 'gateway', providerModel, workProduct, workProductPromptPolicy } = {}) {
   validateEvalModel(model, providerOnly, inferenceProvider)
   const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
@@ -176,6 +184,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
         !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
     workProduct = { maxCompletionTokens: workProduct.maxCompletionTokens ?? 8000 }
   }
+  if (workProductPromptPolicy !== undefined && (workProductPromptPolicy !== 'public-task-v2' || !workProduct)) throw new Error('Invalid Harvey work-product prompt policy')
   maxSteps ??= workProduct ? 80 : 40
   if (!corpus?.sources?.length || !corpus.directory || !corpus.hash) throw new Error('Prepared comparison corpus required')
   if (workProduct ? !Number.isSafeInteger(maxSteps) || maxSteps < 1 : maxSteps !== 40) throw new Error('Harvey comparison requires exactly 40 steps in QA mode')
@@ -188,6 +197,10 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   validateCorpus(corpus)
   const script = resolve(workspace, 'eval/harvey-bridge.py')
   let prompt = readFileSync(join(harveyRoot, 'harness/system_prompt.md'), 'utf8')
+  if (workProductPromptPolicy) {
+    if (prompt.split(TASK_CONFIGURATION_STANZA).length !== 2) throw new Error('Harvey task-configuration prompt stanza changed')
+    prompt = prompt.replace(TASK_CONFIGURATION_STANZA, PUBLIC_TASK_CONFIGURATION_STANZA)
+  }
   const skillsDir = join(harveyRoot, 'harness/skills')
   const skills = existsSync(skillsDir) ? readdirSync(skillsDir).filter(name => existsSync(join(skillsDir, name, 'SKILL.md'))).sort() : []
   prompt += skills.map(name => `\n\n## Skill: ${name}\n\n${readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8')}`).join('\n')
@@ -202,6 +215,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
     system_prompt_sha256: hash(prompt), evidence_policy: 'full-model-visible-tool-result-v1',
     ...(workProduct ? { work_product: { version: 'complex-v1', materialPath: '/workspace/task/materials', outputPath: '/workspace/output', evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandbox_timeout_seconds: 3600 } : {}),
+    ...(workProductPromptPolicy ? { work_product_prompt_policy: workProductPromptPolicy } : {}),
   })
 
   return {
@@ -217,7 +231,8 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
         artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly, reasoning_effort: reasoningEffort,
         inference_provider: inferenceProvider, ...(providerModel ? { provider_model: providerModel } : {}),
         e2b_template: E2B_TEMPLATE,
-        ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}) }
+        ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}),
+        ...(workProductPromptPolicy ? { work_product_prompt_policy: workProductPromptPolicy } : {}) }
       const start = performance.now()
       const env = { ...process.env, OPENAI_BASE_URL: transport.endpoint, OPENAI_API_KEY: process.env[transport.credentialEnvironment] }
       let response
@@ -230,6 +245,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       }
       if (response.prompt_sha256 !== provenance.system_prompt_sha256 || JSON.stringify(response.tool_names) !== JSON.stringify(TOOLS) ||
           response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE ||
+          workProductPromptPolicy && response.work_product_prompt_policy !== workProductPromptPolicy ||
           inferenceProvider === 'runanywhere' && (response.inference_provider !== inferenceProvider || response.provider_model !== providerModel)) {
         const error = new Error('Harvey upstream policy changed')
         error.audit = trajectoryAudit(artifacts)

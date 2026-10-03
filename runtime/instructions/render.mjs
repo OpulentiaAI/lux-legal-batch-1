@@ -35,11 +35,32 @@ if (sha256(contextV6) !== contextV6Manifest.addendumSha256 ||
     contextV6Manifest.inheritedManifestSha256 !== sha256(unrestrictedManifestText) ||
     contextV6Manifest.inheritedAddendumSha256 !== sha256(unrestricted)) throw new Error('Context v6 Opulent instructions differ from the audited manifest')
 
+const capabilityV7 = readFileSync(new URL('./opulent-capability-v7.md', import.meta.url), 'utf8').trimEnd()
+const capabilityV7ManifestText = readFileSync(new URL('./manifest-opulent-capability-v7.json', import.meta.url), 'utf8')
+const capabilityV7Manifest = JSON.parse(capabilityV7ManifestText)
+if (sha256(capabilityV7) !== capabilityV7Manifest.addendumSha256 ||
+    capabilityV7Manifest.inheritedManifestSha256 !== sha256(contextV6ManifestText) ||
+    capabilityV7Manifest.inheritedAddendumSha256 !== sha256(contextV6)) throw new Error('Capability v7 Opulent instructions differ from the audited manifest')
+
 export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
-  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6' && profile !== 'opulent-capability-v7') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile === 'opulent-capability-v7') {
+    variant ??= profile
+    const inherited = renderInstructions({ profile: 'opulent-context-v6' })
+    const prompt = `${inherited.systemPrompt}\n\n${capabilityV7}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      ...inherited.provenance, variant, version: capabilityV7Manifest.version, profile,
+      inheritedVersion: capabilityV7Manifest.inheritedVersion,
+      inheritedV6ManifestSha256: capabilityV7Manifest.inheritedManifestSha256,
+      inheritedV6AddendumSha256: capabilityV7Manifest.inheritedAddendumSha256,
+      addendumSha256: capabilityV7Manifest.addendumSha256,
+      manifestSha256: sha256(capabilityV7ManifestText), effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
   if (profile === 'opulent-context-v6') {
     variant ??= profile
     const prompt = `${knowledge}\n\n${rlm}\n\n${unrestricted}\n\n${contextV6}`

@@ -30,6 +30,45 @@ CORPUS_README = ("This directory contains the full evaluation source corpus, not
                  "Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID "
                  "shown in the first line in square brackets. index.json lists all chunk paths; documents.json lists "
                  "document metadata.\n")
+TASK_CONFIGURATION_STANZA = ("- **Task configuration** (`task.json`) — contains the task definition and the\n"
+                             "  grading rubric. Do not read, search, or reference it. Doing so will be\n"
+                             "  flagged as a rule violation and automatically fail the task.\n")
+PUBLIC_TASK_CONFIGURATION_STANZA = ("- **Public task configuration** (`/workspace/task/task.json`) — contains only\n"
+                                    "  the supplied public task definition, not a grading rubric. You may read,\n"
+                                    "  search, and reference this file to complete the assignment. Do not read,\n"
+                                    "  search for, or reference grading rubrics, reference answers, or hidden\n"
+                                    "  evaluation materials.\n")
+
+
+def build_prompts(preamble, skills, request):
+    policy = request.get("work_product_prompt_policy")
+    work_product = request.get("work_product")
+    if "work_product_prompt_policy" in request and (policy != "public-task-v2" or not work_product):
+        raise ValueError("Invalid Harvey work-product prompt policy")
+    if policy:
+        if preamble.count(TASK_CONFIGURATION_STANZA) != 1:
+            raise RuntimeError("Harvey task-configuration prompt stanza changed")
+        preamble = preamble.replace(TASK_CONFIGURATION_STANZA, PUBLIC_TASK_CONFIGURATION_STANZA, 1)
+    if work_product:
+        user_prompt = (
+            "Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
+            "Lis les matériaux sous /workspace/task/materials et recherche les sources juridiques dans /workspace/documents. "
+            "Écris chaque livrable déclaré dans /workspace/output/ sous son nom exact. "
+            "Cite les identifiants de chunks [id] pour les affirmations juridiques importantes, "
+            "signale les limites et ne cherche aucun barème ni corrigé. La réponse finale ne remplace pas les fichiers.\n\n"
+            "Demande : " + request["question"] +
+            ("" if policy else "\n\n" + work_product["task"]["instructions"])
+        )
+    else:
+        user_prompt = (
+            "Réponds à la question de droit luxembourgeois uniquement avec les fichiers du corpus "
+            "dans /workspace/documents. Cherche les passages pertinents avec les outils du workspace. "
+            "Réponds en français en 120 mots maximum dans output/response.md. Cite pour chaque affirmation "
+            "importante les identifiants exacts [doc-XX:...:cN] visibles avec les passages lus. "
+            "Si les documents ne suffisent pas, signale les limites. N'utilise aucune source externe.\n\n"
+            "Question : " + request["question"]
+        )
+    return preamble + skills, user_prompt
 
 
 def validate_corpus(documents, expected_hash):
@@ -414,7 +453,8 @@ def main():
     tools = get_all_tool_definitions()
     if sorted(tool["name"] for tool in tools) != ["bash", "edit", "glob", "grep", "read", "write"]:
         raise RuntimeError("Harvey tool policy changed")
-    prompt = SYSTEM_PROMPT_PREAMBLE + load_skills(DEFAULT_SKILLS)
+    if not smoke:
+        prompt, user_prompt = build_prompts(SYSTEM_PROMPT_PREAMBLE, load_skills(DEFAULT_SKILLS), request)
     artifacts.mkdir(parents=True, exist_ok=False, mode=0o700)
     trajectory = Trajectory(artifacts / "trajectory.jsonl") if not smoke else None
     active_trajectory = trajectory
@@ -441,9 +481,12 @@ def main():
                 {row["path"] for row in work_product["materials"]} != set(paths)):
             raise ValueError("Invalid public work-product packet")
     archive = create_archive(root, documents, source_files, smoke=smoke, work_product=work_product)
+    record_sandbox = trajectory is not None and request.get("work_product_prompt_policy") == "public-task-v2"
     sandbox = E2BSandbox.create(template=e2b_template, secure=True, allow_internet_access=False,
                                 timeout=3600, api_key=os.environ["E2B_API_KEY"])
     try:
+        if record_sandbox:
+            trajectory.append("sandbox_created", sandboxId=sandbox.sandbox_id)
         setup = sandbox.commands.run("mkdir -p /workspace && chown root:root /workspace && chmod 1777 /workspace", user="root")
         if setup.exit_code != 0:
             raise RuntimeError("E2B workspace preparation failed")
@@ -572,21 +615,7 @@ def main():
         result = run_agent(
             adapter=TracedAdapter(adapter, trajectory),
             system_prompt=prompt,
-            user_prompt=(
-                ("Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
-                 "Lis les matériaux sous /workspace/task/materials et recherche les sources juridiques dans /workspace/documents. "
-                 "Écris chaque livrable déclaré dans /workspace/output/ sous son nom exact. "
-                 "Cite les identifiants de chunks [id] pour les affirmations juridiques importantes, "
-                 "signale les limites et ne cherche aucun barème ni corrigé. La réponse finale ne remplace pas les fichiers.\n\n"
-                 "Demande : " + request["question"] + "\n\n" + task["instructions"])
-                if work_product else
-                "Réponds à la question de droit luxembourgeois uniquement avec les fichiers du corpus "
-                "dans /workspace/documents. Cherche les passages pertinents avec les outils du workspace. "
-                "Réponds en français en 120 mots maximum dans output/response.md. Cite pour chaque affirmation "
-                "importante les identifiants exacts [doc-XX:...:cN] visibles avec les passages lus. "
-                "Si les documents ne suffisent pas, signale les limites. N'utilise aucune source externe.\n\n"
-                "Question : " + request["question"]
-            ),
+            user_prompt=user_prompt,
             tool_executor=RemoteExecutor(),
             tools=tools,
             max_turns=request["max_steps"],
@@ -602,7 +631,22 @@ def main():
         if final_hash.exit_code != 0 or final_hash.stdout != initial_hash.stdout:
             raise RuntimeError("E2B source corpus changed during Harvey run")
     finally:
-        sandbox.kill()
+        try:
+            kill_result = sandbox.kill()
+        except BaseException as error:
+            if record_sandbox:
+                try:
+                    trajectory.append("sandbox_termination_failed", sandboxId=sandbox.sandbox_id,
+                                      terminationOutcome="api_kill_failed", errorType=type(error).__name__,
+                                      absenceVerified=False)
+                except BaseException:
+                    pass
+            raise
+        else:
+            if record_sandbox:
+                trajectory.append("sandbox_terminated", sandboxId=sandbox.sandbox_id,
+                                  terminationOutcome="api_kill_succeeded" if kill_result else "api_kill_not_found",
+                                  apiKillResult=kill_result, absenceVerified=False)
 
     payload = {
         "answer": answer,
@@ -617,6 +661,8 @@ def main():
         "wall_clock_seconds": result["wall_clock_seconds"],
         "tool_metrics": result["tool_metrics"],
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+        **({"work_product_prompt_policy": request["work_product_prompt_policy"]} if request.get("work_product_prompt_policy") else {}),
+        **({"sandbox_id": sandbox.sandbox_id} if record_sandbox else {}),
         "tool_names": [tool["name"] for tool in tools],
         **({"deliverables": deliverables, "missingDeliverables": missing,
             "provider_usage_records": getattr(adapter, "usage_records", None),

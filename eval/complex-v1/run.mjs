@@ -68,7 +68,7 @@ export function parseOptions(args) {
   options.semanticSurface ??= 'mcp'
   if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
@@ -229,7 +229,7 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
   if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
@@ -265,7 +265,9 @@ export async function run(options, dependencies = {}) {
     const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null,
       inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
-      harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
+      harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common,
+        ...(options.instructionProfile === 'opulent-capability-v7' ? { workProductPromptPolicy: 'public-task-v2' } : {}),
+        harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),

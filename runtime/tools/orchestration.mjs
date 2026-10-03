@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { posix as path } from 'node:path';
 import { withLegacyNames } from './names.mjs';
+import { isSessionTerminal } from '../operation-waits.mjs';
 
 const running = new Map();
 const terminal = new Set(['completed', 'failed', 'cancelled', 'terminated', 'stopped', 'sleeping', 'blocked']);
@@ -49,7 +50,7 @@ export function createTools(ctx) {
   const waitChild = async (id, seconds) => {
     const deadline = Date.now() + seconds * 1000;
     let row = child(id);
-    while (!terminal.has(row.status) && Date.now() < deadline) {
+    while (!isSessionTerminal(store, row) && Date.now() < deadline) {
       await delay(Math.min(250, deadline - Date.now()));
       row = child(id);
     }
@@ -387,9 +388,10 @@ export function createTools(ctx) {
   tools.kill_workflow = async ({ run_id }) => {
     const row = runRow(run_id);
     if (row.status !== 'running') return snapshot(row);
+    const live = running.get(run_id);
     updateRun(run_id, { status: 'cancelled' });
-    running.get(run_id)?.controller.abort();
-    await running.get(run_id)?.handle?.kill();
+    live?.controller.abort();
+    await live?.handle?.kill();
     for (const agent of store.list('workflow_agents').filter(x => x.run_id === run_id && x.status === 'running')) {
       const session = store.get('sessions', agent.session_id);
       if (session?.status === 'completed') {
@@ -399,6 +401,7 @@ export function createTools(ctx) {
       await ctx.cancelSession(agent.session_id);
       store.put('workflow_agents', agent.id, { ...agent, status: 'cancelled' });
     }
+    await live?.execution;
     ctx.emit('workflow_cancelled', { run_id });
     return snapshot(runRow(run_id));
   };

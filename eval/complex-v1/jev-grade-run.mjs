@@ -127,8 +127,10 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
   const frozen = readFileSync(join(workspace, 'eval/complex-v1/manifest.json'))
   if (JSON.stringify(JSON.parse(frozen)) !== JSON.stringify(buildManifest()) || provenance.suiteManifestSha256 !== hash(frozen)) throw new Error('Frozen suite differs')
   if (provenance.protocol !== 'complex-v1-paired-work-product' || provenance.modelProfile !== 'runanywhere-mimo-v2.6-pro' ||
-    provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' || provenance.maxSteps !== 250 ||
-    provenance.maxCompletionTokens !== 32768 || provenance.instructionProfile !== 'opulent-context-v6' || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+    provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' ||
+    !Number.isSafeInteger(provenance.maxSteps) || provenance.maxSteps < 1 ||
+    provenance.instructionProfile === 'opulent-context-v6' && provenance.maxSteps !== 250 ||
+    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
   const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy: JEV_POLICY, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),

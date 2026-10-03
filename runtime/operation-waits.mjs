@@ -7,6 +7,11 @@ const TERMINAL_WORKFLOW = new Set(['completed', 'failed', 'cancelled']);
 const ACTIVE_SESSION = new Set(['idle', 'queued', 'starting', 'running']);
 const ACTIVE_WAIT = new Set(['waiting', 'notified']);
 
+export function isSessionTerminal(store, row) {
+  return TERMINAL_SESSION.has(row.status) && !(row.status === 'sleeping' && store.list('operation_waits').some(wait =>
+    wait.session_id === row.id && ACTIVE_WAIT.has(wait.status) && (wait.status === 'waiting' || !notificationResponded(store, wait))));
+}
+
 export const definitions = {
   wait_for_operations: {
     name: 'wait_for_operations',
@@ -51,8 +56,8 @@ function snapshot(ctx, operation) {
   return result;
 }
 
-function isTerminal(operation) {
-  return operation.status === 'missing' || (operation.kind === 'session' ? TERMINAL_SESSION : TERMINAL_WORKFLOW).has(operation.status);
+function isTerminal(ctx, operation) {
+  return operation.status === 'missing' || (operation.kind === 'session' ? isSessionTerminal(ctx.store, operation) : TERMINAL_WORKFLOW.has(operation.status));
 }
 
 export function createTools(ctx) {
@@ -135,7 +140,7 @@ export async function tickOperationWaits(ctx, now = Date.now()) {
         continue;
       }
       const operations = current.operations.map(op => snapshot({ ...ctx, sessionId: current.session_id }, op));
-      const ready = operations.length && (current.return_when === 'all' ? operations.every(isTerminal) : operations.some(isTerminal));
+      const ready = operations.length && (current.return_when === 'all' ? operations.every(op => isTerminal(ctx, op)) : operations.some(op => isTerminal(ctx, op)));
       const timedOut = current.deadline_at != null && instant >= Date.parse(current.deadline_at);
       if (!ready && !timedOut) continue;
       const notificationId = `operation-wait:${current.id}`;
