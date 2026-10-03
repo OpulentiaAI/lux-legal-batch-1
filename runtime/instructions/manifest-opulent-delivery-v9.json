@@ -1,0 +1,18 @@
+{
+  "version": "opulent-delivery-v9",
+  "profile": "opulent-delivery-v9",
+  "inheritedVersion": "opulent-capability-v8",
+  "inheritedManifestSha256": "f59c6cf962be23378b481532985fd416ea94103fa43149d35a7e9d1f92bcf7f3",
+  "inheritedEffectivePromptSha256": "36f7a589c7201c0d2233ccc367d8fcc78ce7a4d7b558a5ed2df8650eadb8ba45",
+  "composition": "opulent-context-v6-foundation-with-replacement-delivery-layer",
+  "foundationProfile": "opulent-context-v6",
+  "foundationManifestSha256": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+  "addendumSha256": "e045b26dca63ed3706047c81d385aa78cff8514d9215bf6cdf21b814347cad54",
+  "handoffPolicy": "rlm-handoff-v1",
+  "scriptPolicy": "python-top-level-await-v1",
+  "provenance": {
+    "source": "Live Jev analysis of complete scored parent histories and independently checked tool receipts, source coordinates and prepared-desktop probes",
+    "behavioralSupplement": true,
+    "note": "Separate opt-in experiment; historical prompts, completed outputs and grading responses remain unchanged. Generic source, scope, exception and temporal reconciliation obligations; no task-specific legal answer or rubric hint. Delivery receipts do not prove comprehension or legal correctness. Desktop dependencies are preinstalled; services remain nonroot with no-new-privs. Native vision and external providers require separate live verification."
+  }
+}

@@ -7,7 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareJudgeRequest, JUDGE_POLICY } from './judge.mjs'
-import { extractVisibleSources } from './grade-run.mjs'
+import { extractVisibleSourceEvidence } from './grade-run.mjs'
 import { redact } from '../../runtime/security.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
@@ -135,8 +135,9 @@ function save(path, value) {
   renameSync(temporary, path)
 }
 
-export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurrency = 4, metricsProfile = 'semantic-core-v5' }) {
+export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurrency = 4, metricsProfile = 'semantic-core-v5', replayVersionOverride }) {
   const policy = gradingPolicy(metricsProfile)
+  if (replayVersionOverride !== undefined && replayVersionOverride !== 'parent-visible-findings-v3') throw new Error('Unknown evidence replay override')
   if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new Error('Invalid grading concurrency')
   input = realpathSync(input)
   output = resolve(output)
@@ -152,8 +153,8 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' ||
     !Number.isSafeInteger(provenance.maxSteps) || provenance.maxSteps < 1 ||
     provenance.instructionProfile === 'opulent-context-v6' && provenance.maxSteps !== 250 ||
-    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
-  if (provenance.instructionProfile === 'opulent-capability-v8') {
+    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+  if (['opulent-capability-v8', 'opulent-delivery-v9'].includes(provenance.instructionProfile)) {
     const retrieval = provenance.broadPolicy?.retrieval
     if (retrieval?.profile !== 'voyage' || retrieval.embeddingModel !== 'voyage/voyage-4-large' ||
       retrieval.rerankModel !== 'voyage/rerank-2.5' || retrieval.dimensions !== 1024 || retrieval.searchBackend !== 'turbopuffer' ||
@@ -162,6 +163,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
   const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
+    ...(replayVersionOverride ? { replayVersionOverride } : {}),
     evidenceImplementations: Object.fromEntries(['eval/complex-v1/grade-run.mjs', 'eval/grading-evidence.mjs', 'runtime/security.mjs'].map(file => [file, hash(readFileSync(join(workspace, file)))])) }
   let result
   if (existsSync(output)) {
@@ -188,7 +190,20 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
         if (!packet.bundle.task.deliverables.includes(item.file) || typeof item.content !== 'string' || hash(item.content) !== item.sha256) throw new Error('Deliverable integrity mismatch')
         writeFileSync(join(directory, item.file), item.content)
       }
-      const visibleSources = extractVisibleSources({ ...attempt, taskId: row.taskId, mode, bundle: packet.bundle })
+      const replay = extractVisibleSourceEvidence({ ...attempt, taskId: row.taskId, mode, bundle: packet.bundle }, { replayVersionOverride })
+      const visibleSources = replay.sources
+      let replayProofSha256
+      if (replayVersionOverride) {
+        const proof = { version: replayVersionOverride, ...replay, visibleInventorySha256: hash(JSON.stringify(sourceInventory(visibleSources))) }
+        const proofPath = join(output, `${row.taskId}-${mode}-evidence-replay-proof.json`)
+        replayProofSha256 = hash(JSON.stringify(proof))
+        if (existsSync(proofPath)) {
+          if (hash(JSON.stringify(JSON.parse(readFileSync(proofPath)))) !== replayProofSha256) throw new Error('Evidence replay proof differs')
+        } else {
+          if (result.rows.some(item => item.taskId === row.taskId && item.mode === mode)) throw new Error('Cached evidence replay proof is missing')
+          save(proofPath, proof)
+        }
+      }
       const inventory = sourceInventory(visibleSources)
       const inventoryPath = join(output, `${row.taskId}-${mode}-visible-source-inventory.json`)
       if (existsSync(inventoryPath)) {
@@ -198,6 +213,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
         save(inventoryPath, inventory)
       }
       for (const criterion of packet.bundle.rubric.criteria) jobs.push({ identity: `${row.taskId}:${mode}:${criterion.id}`, taskId: row.taskId, mode, criterionId: criterion.id,
+          ...(replayProofSha256 ? { replayProofSha256 } : {}),
           request: redact(prepareJevCriterion(packet.bundle, directory, criterion.id, visibleSources, { metricsProfile })) })
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }
@@ -210,6 +226,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
       const file = job.identity.replaceAll(':', '-')
       const cached = result.rows.find(row => row.identity === job.identity)
       if (cached) {
+        if (cached.replayProofSha256 !== job.replayProofSha256) throw new Error('Cached evidence replay binding differs')
         if (cached.status === 'graded') {
           if (!request || cached.requestSha256 !== hash(JSON.stringify(request)) || !Number.isSafeInteger(cached.responseAttempt) ||
             cached.responseAttempt < 1 || cached.responseAttempt > JEV_POLICY.maxAttempts) throw new Error('Invalid cached Jev response binding')

@@ -11,7 +11,7 @@ import { createComputer } from './computer/index.mjs';
 import { createTools as computerTools } from './computer/tools.mjs';
 import { createTools as fileTools } from './tools/files.mjs';
 import { createTools as processTools } from './tools/processes.mjs';
-import { createTools as scriptTools } from './tools/scripts.mjs';
+import { createTools as scriptTools, SCRIPT_TOP_LEVEL_AWAIT_DESCRIPTION } from './tools/scripts.mjs';
 import { createTools as connectorTools, probeMcp } from './tools/connectors.mjs';
 import { createTools as resourceTools, approveResource } from './tools/resources.mjs';
 import { createTools as orchestrationTools } from './tools/orchestration.mjs';
@@ -27,7 +27,7 @@ import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-
 import { createScriptExecutions } from './script-execution.mjs';
 import { browserDefinitions, createBrowserTools, validateBrowserOrigins } from './browser-tools.mjs';
 import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits, isSessionTerminal } from './operation-waits.mjs';
-import { rlmDefinitions, createRlmTools } from './rlm.mjs';
+import { rlmDefinitionsFor, createRlmTools } from './rlm.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -57,12 +57,16 @@ export function createRuntime(options = {}) {
   if (config.unrestrictedTools !== undefined && typeof config.unrestrictedTools !== 'boolean') throw new TypeError('unrestrictedTools must be a boolean');
   if (config.eagerChildSandbox !== undefined && typeof config.eagerChildSandbox !== 'boolean') throw new TypeError('eagerChildSandbox must be a boolean');
   if (config.reportRlmState !== undefined && typeof config.reportRlmState !== 'boolean') throw new TypeError('reportRlmState must be a boolean');
+  if (config.scriptTopLevelAwait !== undefined && typeof config.scriptTopLevelAwait !== 'boolean') throw new TypeError('scriptTopLevelAwait must be a boolean');
+  if (config.rlmHandoffPolicy !== undefined && config.rlmHandoffPolicy !== 'rlm-handoff-v1') throw new TypeError('Unknown RLM handoff policy');
   const unrestricted = config.unrestrictedTools === true;
   const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
   if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1', 'rlm-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
   const browserEnabled = capabilities.includes('browser-v1'), waitsEnabled = capabilities.includes('operation-waits-v1'), rlmEnabled = capabilities.includes('rlm-v1');
+  if (config.rlmHandoffPolicy && !rlmEnabled) throw new Error('RLM handoff policy requires the resident RLM capability');
   if (rlmEnabled && (![config.maxRlmChildren ?? 16, config.maxRlmHostCallsPerCell ?? 64].every(value => Number.isSafeInteger(value) && value > 0))) throw new Error('RLM budgets must be positive integers');
+  const rlmDefinitions = rlmDefinitionsFor(config);
   const extensions = { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}), ...(rlmEnabled ? rlmDefinitions : {}) };
   if (Object.keys(extensions).some(name => catalog.tools[name] || EFFECTIVE_TOOL_OVERLAY[name])) throw new Error('Runtime capability collides with baseline tool catalog');
   const store = options.store ?? createStore(join(config.stateDir, 'runtime.sqlite'));
@@ -70,6 +74,8 @@ export function createRuntime(options = {}) {
   const storage = options.storage ?? createStorage(config);
   const model = options.model ?? createModel(config);
   const definitions = { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}), ...extensions };
+  if (config.scriptTopLevelAwait === true) definitions.scripted_tools = { ...definitions.scripted_tools,
+    description: `${definitions.scripted_tools.description}${SCRIPT_TOP_LEVEL_AWAIT_DESCRIPTION}` };
   if (config.allowedTools !== undefined && !Array.isArray(config.allowedTools)) throw new TypeError('allowedTools must be an array');
   const allowed = config.allowedTools ? new Set(config.allowedTools) : null;
   if (Object.keys({ ...browserDefinitions, ...waitDefinitions, ...rlmDefinitions }).some(name => allowed?.has(name) && !extensions[name])) throw new Error('Unknown or noncanonical allowed tool');
@@ -88,6 +94,8 @@ export function createRuntime(options = {}) {
     settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [],
       unrestrictedTools: unrestricted, eagerChildSandbox: config.eagerChildSandbox === true,
       ...(config.reportRlmState === true ? { reportRlmState: true } : {}),
+      ...(config.scriptTopLevelAwait === true ? { scriptTopLevelAwait: true } : {}),
+      ...(config.rlmHandoffPolicy ? { rlmHandoffPolicy: config.rlmHandoffPolicy } : {}),
       ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
         maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions,
         ...(unrestricted ? { effectiveRlmChildLimit: null, effectiveRlmHostCallLimit: null, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null } : {}) } : {}) },
@@ -428,6 +436,18 @@ export function createRuntime(options = {}) {
         messages.push(message);
         checkpoint();
         if (!message.tool_calls?.length) {
+          if (response.choices[0].finish_reason === 'length') throw new Error('Model response exhausted its completion token budget before finishing');
+          if (typeof message.content !== 'string' || !message.content.trim()) throw new Error('Model provider returned an empty final response');
+          if (config.rlmHandoffPolicy) {
+            const handoff = ctx.rlm.completionCheck();
+            if (!handoff.ready) {
+              event(id, 'rlm_handoff_completion_deferred', handoff);
+              messages.push({ role: 'system', content: `The contributing RLM handoff is not complete. Read the remaining protected pages, record dispositions/limitations, or explicitly exclude genuinely unused children before completing. Delivery receipts do not prove legal correctness. ${JSON.stringify(handoff)}` });
+              checkpoint();
+              continue;
+            }
+            event(id, 'rlm_handoff_completion_checked', handoff);
+          }
           let output = message.content ?? '';
           if (row.schema) {
             output = JSON.parse(output);
@@ -470,7 +490,9 @@ export function createRuntime(options = {}) {
           const scrubbed = scrub(id, extracted.result);
           const overflow = await persistToolResultOverflow({ ctx, store, ensureSandbox,
             scrubbedSerialized: JSON.stringify(scrubbed) ?? 'null', canRead: (!allowed || allowed.has('read')) && !!ctx.tools.read });
-          messages.push({ role: 'tool', tool_call_id: call.id, content: modelVisibleToolResult(scrubbed, overflow) });
+          const toolContent = modelVisibleToolResult(scrubbed, overflow);
+          messages.push({ role: 'tool', tool_call_id: call.id, content: toolContent });
+          if (config.rlmHandoffPolicy && requestedName === 'ipython') ctx.rlm.confirmModelVisibleOutput({ toolCallId: call.id, content: toolContent });
           imageObservations.push(...extracted.observations);
           imageUsage.images += extracted.usage.images;
           imageUsage.bytes += extracted.usage.bytes;
