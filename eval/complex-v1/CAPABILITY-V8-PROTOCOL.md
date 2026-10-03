@@ -29,6 +29,15 @@ v6's historical 250-step rule or v7's budget behavior. These are resource
 safeguards, not a claim of unlimited compute. Record descendant calls and
 physical attempts separately, then roll up known Opulent usage exactly once.
 
+The current fresh run explicitly selects `LX_RETRIEVAL_PROFILE=voyage` before
+loading the runtime: `voyage/voyage-4-large` embeddings at 1,024 dimensions and
+`voyage/rerank-2.5`, with the separate Voyage turbopuffer namespaces. Polygres
+is the repository's provenance mirror; chunk hydration uses the approved local
+corpus, and no live database connection is inferred. V8 provenance records the
+effective retrieval profile, models, dimensions, namespaces and credential
+names so resume rejects a retrieval-policy change. Keep the old legacy-Jina
+preflight failure separate; neither answerer ran in that failed preflight.
+
 Harvey remains the pinned public LAB harness, with its six filesystem tools and
 existing network policy. As in capability-v7, select `public-task-v2` to permit
 the supplied public task file without duplicate task prose or access to hidden

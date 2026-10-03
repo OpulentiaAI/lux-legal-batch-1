@@ -21,6 +21,7 @@ import { RLM_CAPABILITY_VERSION, rlmDefinitions } from './rlm.mjs'
 import { browserDefinitions } from './browser-tools.mjs'
 import { definitions as waitDefinitions } from './operation-waits.mjs'
 import { definitions as legalDefinitions } from './tools/legal.mjs'
+import { RETRIEVAL_PROFILE, EMBED_MODEL, RERANK_MODEL, DIMENSIONS, CHUNK_NS, DOC_NS, REQUIRED_ENV } from '../src/tp/client.ts'
 
 export const BROAD_MODEL = LUNA_MODEL
 export const BROAD_MAX_STEPS = 40
@@ -393,6 +394,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       scriptLedger: 'runtime script_runs/script_calls with bounded redacted arguments/results and terminal statuses' } : {}),
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: unrestricted ? [] : BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
+    ...(capabilityV8 ? { retrieval: { profile: RETRIEVAL_PROFILE, embeddingModel: EMBED_MODEL,
+      rerankModel: RERANK_MODEL, dimensions: DIMENSIONS, searchBackend: 'turbopuffer',
+      chunkNamespace: CHUNK_NS, documentNamespace: DOC_NS, credentialNames: REQUIRED_ENV,
+      hydration: 'fixed approved local corpus', provenanceMirror: { backend: 'Polygres',
+        role: 'repository provenance mirror; no live database connection claimed' } } } : {}),
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
     sandbox: { provider: 'E2B', ...(sandboxTemplate ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: capabilityV8 ? 'full approved export in every provisioned VM; child provisioning before first model turn; live verification required' : 'configured; lazy on first sandbox tool, not a live availability claim',
       ...(capabilityV8 ? { eagerChildSandbox: true, secureSandboxFileAccess: true, corpusRoot: SANDBOX_CORPUS, corpusIndex: `${SANDBOX_CORPUS}/index.json`, workingCopies: 'permitted in writable analysis directories; canonical corpus remains read-only', sdkFilePolicy: 'actual unprivileged POSIX reads, scans and mutations with no privileged SDK filesystem fallback; reapplied on reconnect' } : {}),
