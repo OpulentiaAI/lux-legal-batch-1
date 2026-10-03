@@ -13,14 +13,14 @@ import { redact } from '../../runtime/security.mjs'
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const hash = value => createHash('sha256').update(value).digest('hex')
 const endpoint = 'https://ai-gateway.vercel.sh/v1/evaluate'
-export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v3', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
+export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v4', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
   scores: 'interpolated Jev 0–3 scores divided by 3; equal criterion weights within each task and equal task weights in summaries',
   accuracy: 'asserted relevant claims only; absent claims are not perfect accuracy',
   evidence: 'full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining identities are audit metadata, never absence proof',
   maxVisibleBodies: 6,
   references: 'hidden references establish legal truth, never consultation or citation compliance',
   resources: 'no turn, latency or token penalty in semantic scores',
-  alignment: 'typed decisions, not generated evidence anchors; independent Capy/human review required',
+  alignment: 'satisfaction binds the complete requirement and pass condition; typed decisions require independent Capy/human review',
   unknowns: 'unresolved judgments and judge failures remain visible; no fabricated grades',
   trimming: 'independently remove one highest and one lowest task score per system and metric',
   providerVersion: 'not returned by provider', timeoutMs: 120000, maxAttempts: 2 })
@@ -49,8 +49,8 @@ export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSourc
     evidenceRoles: JEV_POLICY.references }
   const instructions = `${JUDGE_POLICY.replace('Return one strict JSON object; unresolved when sources conflict or do not decide the criterion.', 'Use the unresolved question when sources conflict or do not decide the criterion.')} Evaluate only the single criterion in state. Ignore unrelated obligations. Do not use turn count, token use, latency, answerer identity or execution status as a quality penalty. Accept minimally sufficient semantic equivalents, not only the example wording.`
   return { model: JEV_POLICY.model, providerOptions: { gateway: { only: JEV_POLICY.providerOnly } }, state: JSON.stringify(state), questions: {
-    satisfied: { type: 'boolean', instructions: `${instructions} Does the scoped work product satisfy this criterion's requirement and pass condition?`,
-      criteria: { true: data.criterion.pass, false: data.criterion.fail } },
+    satisfied: { type: 'boolean', instructions: `${instructions} Does the scoped work product satisfy every mandatory part of this criterion's requirement and pass condition? The short pass sentence does not replace the complete requirement.`,
+      criteria: { true: `${data.criterion.requirement}\nPass condition: ${data.criterion.pass}`, false: `A mandatory part of the requirement or pass condition is not met. Example failure: ${data.criterion.fail}` } },
     quality: { type: 'score', instructions: `${instructions} Rate correctness, completeness and usefulness for this criterion only. Missing coverage belongs here.`,
       criteria: ['The required work is absent or materially wrong.', 'The work addresses the issue but has substantial defects or omissions.',
         'The work substantially meets the criterion with a limited gap or ambiguity.', 'The work fully meets the minimum semantic pass and is useful; extra verbosity is unnecessary.'] },

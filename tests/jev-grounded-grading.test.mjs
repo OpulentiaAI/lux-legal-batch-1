@@ -39,6 +39,21 @@ test('criterion state includes every public material and complete reference bodi
   assert.throws(() => prepareJevCriterion(bundle, output, 'c1', [source]), /visible source role/)
 })
 
+test('typed satisfaction binds every mandatory requirement clause rather than only a shorter pass sentence', t => {
+  const output = mkdtempSync(join(tmpdir(), 'jev-mandatory-'))
+  t.after(() => rmSync(output, { recursive: true, force: true }))
+  writeFileSync(join(output, 'memo.md'), 'The rule is applied without identifying its jurisdiction.')
+  const criterion = { id: 'c1', requirement: 'Apply the rule and identify the authority jurisdiction.', pass: 'Correct application.',
+    fail: 'Misapplies the rule.', deliverables: ['memo.md'], sourceRefs: [], factRefs: [] }
+  const bundle = { task: { id: 't', title: 'Advice', instructions: 'Qualified advice', scope: {} }, sources: [], materials: new Map(), rubric: { criteria: [criterion] } }
+  const request = prepareJevCriterion(bundle, output, 'c1', [])
+  assert.ok(request.questions.satisfied.criteria.true.includes(criterion.requirement))
+  assert.ok(request.questions.satisfied.criteria.true.includes(criterion.pass))
+  assert.match(request.questions.satisfied.instructions, /every mandatory part/)
+  assert.match(request.questions.satisfied.criteria.false, /mandatory part.*not met/)
+  assert.ok(request.questions.satisfied.criteria.false.includes(criterion.fail))
+})
+
 test('typed interpolated scores normalize to 0–1 and absent claims never receive perfect accuracy', () => {
   const graded = normalizeJev(response())
   assert.equal(graded.quality, 2.4 / 3)
