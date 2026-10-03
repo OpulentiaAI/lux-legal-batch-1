@@ -13,10 +13,10 @@ import { redact } from '../../runtime/security.mjs'
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const hash = value => createHash('sha256').update(value).digest('hex')
 const endpoint = 'https://ai-gateway.vercel.sh/v1/evaluate'
-export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v4', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
+export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v5', model: 'typesafe-ai/jev', endpoint, providerOnly: ['typesafe-ai'],
   scores: 'interpolated Jev 0–3 scores divided by 3; equal criterion weights within each task and equal task weights in summaries',
   accuracy: 'asserted relevant claims only; absent claims are not perfect accuracy',
-  evidence: 'full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining identities are audit metadata, never absence proof',
+  evidence: 'full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining IDs and a bound full-inventory digest are audit metadata, never absence proof',
   maxVisibleBodies: 6,
   references: 'hidden references establish legal truth, never consultation or citation compliance',
   resources: 'no turn, latency or token penalty in semantic scores',
@@ -24,6 +24,8 @@ export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v4
   unknowns: 'unresolved judgments and judge failures remain visible; no fabricated grades',
   trimming: 'independently remove one highest and one lowest task score per system and metric',
   providerVersion: 'not returned by provider', timeoutMs: 120000, maxAttempts: 2 })
+
+const sourceInventory = sources => sources.map(({ id, sha256, text }) => ({ id, sha256, chars: text.length }))
 
 export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSources) {
   const { data } = prepareJudgeRequest(bundle, outputDir, criterionId, visibleSources)
@@ -43,7 +45,8 @@ export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSourc
   const selectedSources = new Set([...pinned, ...alternatives.slice(0, Math.max(0, JEV_POLICY.maxVisibleBodies - pinned.length))].map(item => item.source))
   const selected = source => selectedSources.has(source)
   const state = { ...data, visibleSources: visibleSources.filter(selected),
-    otherVisibleSourceIdentities: visibleSources.filter(source => !selected(source)).map(({ id, sha256, text }) => ({ id, sha256, chars: text.length, role: 'audit identity only; no supplied body' })),
+    otherVisibleSourceIdentities: visibleSources.filter(source => !selected(source)).map(({ id, text }) => ({ id, chars: text.length, role: 'audit identity only; no supplied body' })),
+    visibleSourceInventory: { sha256: hash(JSON.stringify(sourceInventory(visibleSources))), captures: visibleSources.length, role: 'complete per-capture digest manifest archived separately; audit only, not legal evidence' },
     visibleEvidencePolicy: JEV_POLICY.evidence,
     publicMaterials: [...bundle.materials].map(([file, text]) => ({ file, text, sha256: hash(text), role: 'hypothetical scenario; not law' })),
     evidenceRoles: JEV_POLICY.references }
@@ -156,6 +159,14 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
         writeFileSync(join(directory, item.file), item.content)
       }
       const visibleSources = extractVisibleSources({ ...attempt, taskId: row.taskId, mode, bundle: packet.bundle })
+      const inventory = sourceInventory(visibleSources)
+      const inventoryPath = join(output, `${row.taskId}-${mode}-visible-source-inventory.json`)
+      if (existsSync(inventoryPath)) {
+        if (JSON.stringify(JSON.parse(readFileSync(inventoryPath))) !== JSON.stringify(inventory)) throw new Error('Visible source inventory differs')
+      } else {
+        if (result.rows.some(item => item.taskId === row.taskId && item.mode === mode)) throw new Error('Cached visible source inventory is missing')
+        save(inventoryPath, inventory)
+      }
       for (const criterion of packet.bundle.rubric.criteria) jobs.push({ identity: `${row.taskId}:${mode}:${criterion.id}`, taskId: row.taskId, mode, criterionId: criterion.id,
         request: redact(prepareJevCriterion(packet.bundle, directory, criterion.id, visibleSources)) })
     } finally { rmSync(directory, { recursive: true, force: true }) }

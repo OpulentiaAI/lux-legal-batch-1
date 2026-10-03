@@ -106,6 +106,22 @@ test('full results remain paired while trimming independently by system and metr
   assert.match(result.alignment, /pending independent/)
 })
 
+test('opaque source digests are bound outside judge context while audit IDs and full selected bodies remain available', t => {
+  const output = mkdtempSync(join(tmpdir(), 'jev-audit-manifest-'))
+  t.after(() => rmSync(output, { recursive: true, force: true }))
+  writeFileSync(join(output, 'memo.md'), 'Advice [law:selected].')
+  const visible = ['law:selected', 'law:other'].map(id => ({ id, text: `${id} full body`, role: 'visible', sha256: hash(`${id} full body`) }))
+  const criterion = { id: 'c1', requirement: 'Apply law', pass: 'Correct', fail: 'Wrong', deliverables: ['memo.md'], sourceRefs: [], factRefs: [] }
+  const bundle = { task: { id: 't', title: 'Advice', instructions: 'Apply law', scope: {} }, materials: new Map(), sources: [], rubric: { criteria: [criterion] } }
+  const state = JSON.parse(prepareJevCriterion(bundle, output, 'c1', visible).state)
+  assert.equal(state.visibleSources[0].text, visible[0].text)
+  assert.equal(state.visibleSources[0].sha256, visible[0].sha256)
+  assert.equal(state.otherVisibleSourceIdentities[0].id, visible[1].id)
+  assert.ok(!Object.hasOwn(state.otherVisibleSourceIdentities[0], 'sha256'))
+  assert.equal(state.visibleSourceInventory.captures, 2)
+  assert.equal(state.visibleSourceInventory.sha256, hash(JSON.stringify(visible.map(({ id, sha256, text }) => ({ id, sha256, chars: text.length })))))
+})
+
 test('bounded selection retains every recorded reference body and ranks complete cited alternatives by criterion relevance', t => {
   const output = mkdtempSync(join(tmpdir(), 'jev-ranked-'))
   t.after(() => rmSync(output, { recursive: true, force: true }))
@@ -190,9 +206,21 @@ test('native grading runs with mocked Jev, resumes from bound raw responses and 
   await assert.rejects(gradeNativeRun({ input, output: directory, fetchImpl }), /Cached Jev response integrity mismatch/)
   writeFileSync(checkpointPath, original)
   const capturePath = join(directory, `${row.identity.replaceAll(':', '-')}-attempt-${row.responseAttempt}.json`)
-  const capture = JSON.parse(readFileSync(capturePath))
+  const originalCapture = readFileSync(capturePath)
+  const capture = JSON.parse(originalCapture)
   capture.response.answers.quality.score = 0
   writeFileSync(capturePath, JSON.stringify(capture))
   await assert.rejects(gradeNativeRun({ input, output: directory, fetchImpl }), /Cached Jev response integrity mismatch/)
+  writeFileSync(capturePath, originalCapture)
+  const inventoryPath = join(directory, `${bundle.task.id}-broad-visible-source-inventory.json`)
+  const originalInventory = readFileSync(inventoryPath)
+  const inventory = JSON.parse(originalInventory)
+  inventory[0].sha256 = 'f'.repeat(64)
+  writeFileSync(inventoryPath, JSON.stringify(inventory))
+  await assert.rejects(gradeNativeRun({ input, output: directory, fetchImpl }), /Visible source inventory differs/)
+  writeFileSync(inventoryPath, originalInventory)
+  await gradeNativeRun({ input, output: directory, fetchImpl })
+  rmSync(inventoryPath)
+  await assert.rejects(gradeNativeRun({ input, output: directory, fetchImpl }), /Cached visible source inventory is missing/)
   assert.equal(calls, count)
 })
