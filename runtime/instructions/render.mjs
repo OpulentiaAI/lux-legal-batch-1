@@ -42,11 +42,41 @@ if (sha256(capabilityV7) !== capabilityV7Manifest.addendumSha256 ||
     capabilityV7Manifest.inheritedManifestSha256 !== sha256(contextV6ManifestText) ||
     capabilityV7Manifest.inheritedAddendumSha256 !== sha256(contextV6)) throw new Error('Capability v7 Opulent instructions differ from the audited manifest')
 
+const capabilityV8 = readFileSync(new URL('./opulent-capability-v8.md', import.meta.url), 'utf8').trimEnd()
+const capabilityV8ManifestText = readFileSync(new URL('./manifest-opulent-capability-v8.json', import.meta.url), 'utf8')
+const capabilityV8Manifest = JSON.parse(capabilityV8ManifestText)
+if (sha256(capabilityV8) !== capabilityV8Manifest.addendumSha256 ||
+    capabilityV8Manifest.inheritedVersion !== capabilityV7Manifest.version ||
+    capabilityV8Manifest.inheritedManifestSha256 !== sha256(capabilityV7ManifestText) ||
+    capabilityV8Manifest.inheritedAddendumSha256 !== sha256(capabilityV7) ||
+    capabilityV8Manifest.foundationProfile !== 'opulent-context-v6' ||
+    capabilityV8Manifest.foundationManifestSha256 !== sha256(contextV6ManifestText) ||
+    capabilityV8Manifest.inheritedEffectivePromptSha256 !== sha256(`${knowledge}\n\n${rlm}\n\n${unrestricted}\n\n${contextV6}\n\n${capabilityV7}`)) throw new Error('Capability v8 Opulent instructions differ from the audited manifest')
+
 export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
-  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6' && profile !== 'opulent-capability-v7') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6' && profile !== 'opulent-capability-v7' && profile !== 'opulent-capability-v8') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile === 'opulent-capability-v8') {
+    variant ??= profile
+    const inherited = renderInstructions({ profile: 'opulent-capability-v7' })
+    const foundation = renderInstructions({ profile: capabilityV8Manifest.foundationProfile })
+    const prompt = `${foundation.systemPrompt}\n\n${capabilityV8}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      ...inherited.provenance, variant, version: capabilityV8Manifest.version, profile,
+      inheritedVersion: capabilityV8Manifest.inheritedVersion,
+      inheritedV7ManifestSha256: capabilityV8Manifest.inheritedManifestSha256,
+      inheritedV7AddendumSha256: capabilityV8Manifest.inheritedAddendumSha256,
+      inheritedV7EffectivePromptSha256: capabilityV8Manifest.inheritedEffectivePromptSha256,
+      composition: capabilityV8Manifest.composition,
+      foundationProfile: capabilityV8Manifest.foundationProfile,
+      foundationManifestSha256: capabilityV8Manifest.foundationManifestSha256,
+      addendumSha256: capabilityV8Manifest.addendumSha256,
+      manifestSha256: sha256(capabilityV8ManifestText), effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
   if (profile === 'opulent-capability-v7') {
     variant ??= profile
     const inherited = renderInstructions({ profile: 'opulent-context-v6' })

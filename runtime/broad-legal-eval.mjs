@@ -7,6 +7,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { connectSandbox, createSandbox } from './e2b.mjs'
+import { protectSandboxFileAccess } from './sandbox-file-access.mjs'
 import { createModel } from './model.mjs'
 import { modelTransport } from './model-provider.mjs'
 import { LUNA_MODEL, validateEvalModel } from './eval-model-profile.mjs'
@@ -192,14 +193,14 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
     const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
     if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
-    return await protectCorpusSandbox(sandbox)
+    return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
   } catch (error) {
     await sandbox.kill().catch(() => {})
     throw error
   }
 }
 
-async function protectCorpusSandbox(sandbox, expectedDigest) {
+async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = false) {
   const originalRun = sandbox.commands.run.bind(sandbox.commands)
   const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
   const baseline = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
@@ -214,19 +215,22 @@ async function protectCorpusSandbox(sandbox, expectedDigest) {
     const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
     sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
   }
-  for (const method of ['makeDir', 'remove', 'rename', 'writeFiles']) {
-    if (!sandbox.files?.[method]) continue
-    const original = sandbox.files[method].bind(sandbox.files)
-    sandbox.files[method] = (...args) => {
-      const index = method === 'rename' ? 2 : 1
-      args[index] = { ...(args[index] ?? {}), user: 'user' }
-      return original(...args)
+  if (secureFileAccess) protectSandboxFileAccess(sandbox)
+  else {
+    for (const method of ['read', 'list', 'exists', 'getInfo', 'makeDir', 'remove', 'rename', 'writeFiles']) {
+      if (!sandbox.files?.[method]) continue
+      const original = sandbox.files[method].bind(sandbox.files)
+      sandbox.files[method] = (...args) => {
+        const index = method === 'rename' ? 2 : 1
+        args[index] = { ...(args[index] ?? {}), user: 'user' }
+        return original(...args)
+      }
     }
+    const originalWrite = sandbox.files.write.bind(sandbox.files)
+    sandbox.files.write = (pathOrFiles, dataOrOptions, options) => typeof pathOrFiles === 'string'
+      ? originalWrite(pathOrFiles, dataOrOptions, { ...options, user: 'user' })
+      : originalWrite(pathOrFiles, { ...dataOrOptions, user: 'user' })
   }
-  const originalWrite = sandbox.files.write.bind(sandbox.files)
-  sandbox.files.write = (pathOrFiles, dataOrOptions, options) => typeof pathOrFiles === 'string'
-    ? originalWrite(pathOrFiles, dataOrOptions, { ...options, user: 'user' })
-    : originalWrite(pathOrFiles, { ...dataOrOptions, user: 'user' })
   const originalPause = sandbox.pause.bind(sandbox)
   sandbox.pause = async (...args) => {
     const current = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
@@ -319,9 +323,10 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(instructionProfile)
-  const capabilityV7 = instructionProfile === 'opulent-capability-v7'
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)
+  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)
+  const capabilityV8 = instructionProfile === 'opulent-capability-v8'
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
   if (rlm && (toolSurface !== 'initial-scripted-v1' || (!nativeMcp && semanticSurface !== 'toolbox') || !workProduct)) throw new Error('RLM comparison requires the prepared work-product tool surface')
   if (toolSurface === 'initial-scripted-v1' && !nativeMcp && semanticSurface !== 'toolbox') throw new Error('Prepared initial/scripted comparison requires native MCP or toolbox')
@@ -355,11 +360,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
   const instructions = renderInstructions({ appendix: initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
-    variant: capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+    variant: capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(capabilityV7 ? { evidenceReplayVersion: 'parent-visible-outputs-v2', schedulerPolicy: 'owned-operation-waits-ticked-during-parent-and-child-work-v1', accountingPolicy: 'quiesced-descendants-before-final-snapshot-v1' } : {}),
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 600_000 } : {}),
@@ -368,7 +373,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
       sourcesSha256: Object.fromEntries(['rlm.mjs', 'rlm-kernel.py'].map(path =>
         [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])),
-      settings: unrestricted ? { unrestrictedTools: true, maxRlmHostCallsPerCell: null, maxRlmChildren: null,
+      settings: unrestricted ? { unrestrictedTools: true, ...(capabilityV8 ? { reportRlmState: true } : {}), maxRlmHostCallsPerCell: null, maxRlmChildren: null,
         maxSessionDepth: null, maxConcurrentSessions: null, maxScriptToolCalls: null, maxConcurrentScriptToolCalls: null }
         : { maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } } } : {}),
     ...(unrestricted ? { unrestrictedTools: true, runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION],
@@ -389,7 +394,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: unrestricted ? [] : BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
-    sandbox: { provider: 'E2B', ...(sandboxTemplate ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
+    sandbox: { provider: 'E2B', ...(sandboxTemplate ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: capabilityV8 ? 'full approved export in every provisioned VM; child provisioning before first model turn; live verification required' : 'configured; lazy on first sandbox tool, not a live availability claim',
+      ...(capabilityV8 ? { eagerChildSandbox: true, secureSandboxFileAccess: true, corpusRoot: SANDBOX_CORPUS, corpusIndex: `${SANDBOX_CORPUS}/index.json`, workingCopies: 'permitted in writable analysis directories; canonical corpus remains read-only', sdkFilePolicy: 'actual unprivileged POSIX reads, scans and mutations with no privileged SDK filesystem fallback; reapplied on reconnect' } : {}),
       integrity: unrestricted ? 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed'
         : 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; tree hash checked before pause' },
     integrations: { webSearch: process.env.BRAVE_SEARCH_API_KEY ? 'configured, not probed' : 'available tool; BRAVE_SEARCH_API_KEY unavailable',
@@ -409,6 +415,12 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     async function trackSandbox(sandbox) {
       if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
       provisionedSandboxes.add(sandbox)
+      const originalKill = sandbox.kill.bind(sandbox)
+      let termination
+      sandbox.kill = (...args) => termination ??= Promise.resolve().then(() => originalKill(...args)).catch(error => {
+        termination = undefined
+        throw error
+      })
       if (packet) {
         const collectWorkProduct = async () => {
           const deliverables = [], missingDeliverables = []
@@ -455,17 +467,23 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(capabilityV7 ? { instructionProfile } : {}),
+        ...(capabilityV8 ? { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true } : {}),
         ...(sandboxTemplate ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
       },
       storage: {},
-      provision: async config => trackSandbox(await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))),
+      provision: async config => {
+        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
+        provisionedSandboxes.add(sandbox)
+        if (provision && capabilityV8) await protectCorpusSandbox(sandbox, undefined, true)
+        return await trackSandbox(sandbox)
+      },
       connect: async (id, config) => {
         const previous = [...provisionedSandboxes].find(sandbox => sandbox.sandboxId === id)
         const sandbox = await sandboxConnect(id, config)
         provisionedSandboxes.add(sandbox)
-        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST]))
+        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], capabilityV8))
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
@@ -622,14 +640,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: provenance.model, inferenceProvider, ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
+        const model = modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
           ...(reasoningEffort ? { reasoningEffort } : {}),
           ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: workProduct
-            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. ${capabilityV7 ? 'Applique le protocole capability-v7 au travail réel : invoque les procédures adaptées, utilise ipython comme espace persistant de recherche et de raisonnement, scripted_tools pour les appels programmatiques indépendants et rlm.spawn pour les questions de recherche séparables. Découvre les schémas, lis les réponses réellement terminées des enfants et vérifie toi-même leurs sources déterminantes avant la synthèse. Les autres outils autorisés restent disponibles ; aucun quota artificiel de profondeur, de fan-out ou d’appels Python n’est ajouté.' : 'Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée.'} Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}${capabilityV7 ? '' : `\n\n${packet.task.instructions}`}`
+            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. ${capabilityV7 ? `Applique le protocole ${capabilityV8 ? 'capability-v8' : 'capability-v7'} au travail réel : invoque les procédures adaptées, utilise ipython comme espace persistant de recherche et de raisonnement, scripted_tools pour les appels programmatiques indépendants et rlm.spawn pour les questions de recherche séparables. Découvre les schémas, lis les réponses réellement terminées des enfants et vérifie toi-même leurs sources déterminantes avant la synthèse. Les autres outils autorisés restent disponibles ; aucun quota artificiel de profondeur, de fan-out ou d’appels Python n’est ajouté.` : 'Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée.'} Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}${capabilityV7 ? '' : `\n\n${packet.task.instructions}`}`
             : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
         if (capabilityV7 && typeof runtime.tick === 'function') {
           scheduler = (async () => {

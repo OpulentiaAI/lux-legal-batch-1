@@ -1,0 +1,17 @@
+{
+  "version": "opulent-capability-v8",
+  "profile": "opulent-capability-v8",
+  "inheritedVersion": "opulent-capability-v7.1",
+  "inheritedManifestSha256": "307143b9e30b1eebaa688d0df9e4d24fde5de179d8ff053d273342f24942f2f4",
+  "inheritedAddendumSha256": "99924d28fadec98b6b9416ed6897e7c832b9d2a544ece68c9b759f13943d9329",
+  "inheritedEffectivePromptSha256": "3def455e898444fcbb5d72b061d636a6d59db9a64990c694403b38d3fdcec444",
+  "composition": "opulent-context-v6-foundation-with-replacement-capability-layer",
+  "foundationProfile": "opulent-context-v6",
+  "foundationManifestSha256": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+  "addendumSha256": "0994cdcf0e32ee11633e6c57214d2e1539d4347be73e10263bc8ccde5255963a",
+  "provenance": {
+    "source": "Inspected standalone Python codemode, resident RLM, public packet installation and approved corpus export contracts",
+    "behavioralSupplement": true,
+    "note": "Separate opt-in experiment preserving all historical instruction bytes and results. Replaces the v7.1 capability layer without repeating its faulty examples. Generic task-method guidance only; no task-specific legal answers, hidden references, rubric hints, storage prerequisite or authorization bypass. Live capability adoption requires separate trajectory evidence."
+  }
+}

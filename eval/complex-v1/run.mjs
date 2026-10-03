@@ -12,6 +12,7 @@ import { createHarveyHarness } from '../harvey-harness.mjs'
 import { createBroadHarness, provisionCorpus } from '../../runtime/broad-legal-eval.mjs'
 import { createSandbox } from '../../runtime/e2b.mjs'
 import { redact } from '../../runtime/security.mjs'
+import { renderInstructions } from '../../runtime/instructions/render.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const suite = fileURLToPath(new URL('.', import.meta.url))
@@ -68,7 +69,8 @@ export function parseOptions(args) {
   options.semanticSurface ??= 'mcp'
   if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile === 'opulent-capability-v8' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
@@ -229,7 +231,9 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  const capabilityV8 = options.instructionProfile === 'opulent-capability-v8'
+  if (capabilityV8 && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
   if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
@@ -266,7 +270,7 @@ export async function run(options, dependencies = {}) {
       inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common,
-        ...(options.instructionProfile === 'opulent-capability-v7' ? { workProductPromptPolicy: 'public-task-v2' } : {}),
+        ...(['opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
         harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
@@ -279,10 +283,18 @@ export async function run(options, dependencies = {}) {
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
         'eval/harvey-modal-adapter.py', 'runtime/broad-legal-eval.mjs', 'runtime/eval-broker.mjs',
-        'runtime/eval-model-profile.mjs', 'runtime/model.mjs', 'runtime/model-provider.mjs', 'runtime/script-execution.mjs'].map(path => [path, fileHash(join(source, path))])),
+        'runtime/eval-model-profile.mjs', 'runtime/model.mjs', 'runtime/model-provider.mjs', 'runtime/script-execution.mjs',
+        ...(capabilityV8 ? ['runtime/sandbox-file-access.mjs', 'runtime/tools/scripts.mjs', 'runtime/core.mjs', 'runtime/rlm.mjs', 'runtime/rlm-kernel.py'] : [])].map(path => [path, fileHash(join(source, path))])),
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
+      ...(capabilityV8 ? { capabilityProtocol: {
+        version: 'opulent-capability-v8', protocolSha256: fileHash(join(suiteRoot, 'CAPABILITY-V8-PROTOCOL.md')),
+        profileInstructions: renderInstructions({ profile: options.instructionProfile }).provenance,
+        requiredRuntime: { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true, descendantModelPolicy: 'inherit-native-runanywhere-mimo-v2.6-pro',
+          evidenceReplayVersion: 'parent-visible-outputs-v2', canonicalCorpusPath: '/tmp/broad-legal-workspace/corpus',
+          canonicalCorpusAccess: 'read-only', analysisCorpusPath: '/tmp/broad-legal-workspace/analysis/corpus' },
+      } } : {}),
       nativeModuleHash, semanticSurface: options.semanticSurface, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
       harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
       integration: { sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,

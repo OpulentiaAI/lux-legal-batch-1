@@ -158,6 +158,7 @@ export function createRlmTools(ctx) {
     const response = new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
     const execution = ctx.beginScriptExecution();
     active = { id, calls: 0, open: true, execution };
+    const reportState = ctx.config.reportRlmState === true;
     let timer, onAbort;
     try {
       const expired = new Promise((_, reject) => {
@@ -165,7 +166,8 @@ export function createRlmTools(ctx) {
         onAbort = () => reject(new Error('Session cancelled; Python state lost'));
         if (ctx.signal.aborted) onAbort(); else ctx.signal.addEventListener('abort', onAbort, { once: true });
       });
-      await send({ type: 'execute', id, code, prompt: store.get('sessions', sessionId).prompt, overflow_dir: `${ctx.workspace}/.rlm-overflows` });
+      await send({ type: 'execute', id, code, prompt: store.get('sessions', sessionId).prompt, overflow_dir: `${ctx.workspace}/.rlm-overflows`,
+        ...(reportState ? { report_state: true } : {}) });
       const packet = await Promise.race([response, expired]);
       const overflow = packet.stdout_chars > 12000 || packet.stderr_chars > 12000 || packet.result?.includes('[full repr in stdout overflow file]');
       execution.finish(packet.ok ? 'completed' : 'failed');
@@ -173,7 +175,8 @@ export function createRlmTools(ctx) {
         await Promise.allSettled([ctx.sandbox.files.remove(packet.stdout_path), ctx.sandbox.files.remove(packet.stderr_path), ctx.sandbox.files.remove(packet.overflow_path)]);
       }
       return { stdout: packet.stdout, stderr: packet.stderr, result: packet.result, ok: packet.ok,
-        ...(overflow ? { overflow_path: packet.overflow_path } : {}) };
+        ...(overflow ? { overflow_path: packet.overflow_path } : {}),
+        ...(reportState && !invalidated && kernel ? { state_manifest: packet.state_manifest, state_accesses: packet.state_accesses } : {}) };
     } catch (error) {
       execution.finish('uncertain');
       invalidate(safeError(error));

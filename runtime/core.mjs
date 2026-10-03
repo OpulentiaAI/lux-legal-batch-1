@@ -55,6 +55,8 @@ export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
   if (!Number.isFinite(config.sandboxTimeoutMs) || config.sandboxTimeoutMs <= 0) throw new TypeError('sandboxTimeoutMs must be positive finite milliseconds');
   if (config.unrestrictedTools !== undefined && typeof config.unrestrictedTools !== 'boolean') throw new TypeError('unrestrictedTools must be a boolean');
+  if (config.eagerChildSandbox !== undefined && typeof config.eagerChildSandbox !== 'boolean') throw new TypeError('eagerChildSandbox must be a boolean');
+  if (config.reportRlmState !== undefined && typeof config.reportRlmState !== 'boolean') throw new TypeError('reportRlmState must be a boolean');
   const unrestricted = config.unrestrictedTools === true;
   const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
@@ -84,12 +86,14 @@ export function createRuntime(options = {}) {
     definitionsSha256: createHash('sha256').update(JSON.stringify(effectiveExtensions)).digest('hex'),
     effectiveTools: effectiveExtensions.map(tool => tool.name),
     settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [],
-      unrestrictedTools: unrestricted,
+      unrestrictedTools: unrestricted, eagerChildSandbox: config.eagerChildSandbox === true,
+      ...(config.reportRlmState === true ? { reportRlmState: true } : {}),
       ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
         maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions,
         ...(unrestricted ? { effectiveRlmChildLimit: null, effectiveRlmHostCallLimit: null, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null } : {}) } : {}) },
   };
   const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
+  const sandboxHandles = new Map();
   const invocations = new Set();
   let quiescing = false, quiescence;
   const invocationPolicy = new AsyncLocalStorage();
@@ -239,6 +243,7 @@ export function createRuntime(options = {}) {
           sandbox = row.sandbox_id
             ? await (options.connect ?? connectSandbox)(row.sandbox_id, { ...config, desktop: false })
             : await (options.provision ?? createSandbox)({ ...config, desktop: false });
+          sandboxHandles.set(ctx.sessionId, sandbox);
           if (typeof sandbox.sandboxId === 'string' && sandbox.sandboxId) {
             update(ctx.sessionId, { sandbox_ids: [...new Set([...(store.get('sessions', ctx.sessionId).sandbox_ids ?? []), sandbox.sandboxId])] });
             event(ctx.sessionId, row.sandbox_id ? 'sandbox_attached' : 'sandbox_created', { sandbox_id: sandbox.sandboxId });
@@ -275,6 +280,7 @@ export function createRuntime(options = {}) {
             ctx.sandbox = undefined;
             let cleanupError;
             try { await sandbox.kill(); } catch (failure) { cleanupError = failure; }
+            if (!cleanupError) sandboxHandles.delete(ctx.sessionId);
             update(ctx.sessionId, { sandbox_id: cleanupError ? sandbox.sandboxId : null, desktop_ready: false });
             if (cleanupError) {
               event(ctx.sessionId, 'sandbox_kill_failed', { error: safeError(cleanupError), provisioning_error: safeError(error) });
@@ -345,7 +351,7 @@ export function createRuntime(options = {}) {
     ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    const childInstructions = config.instructionProfile === 'opulent-capability-v7' && row.parent_session_id
+    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8'].includes(config.instructionProfile) && row.parent_session_id
       ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
       : '';
     let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
@@ -368,7 +374,7 @@ export function createRuntime(options = {}) {
     };
     try {
       update(id, { status: 'running' });
-      if (row.repos?.length) await ensureSandbox(ctx);
+      if (row.repos?.length || config.eagerChildSandbox === true && row.parent_session_id) await ensureSandbox(ctx);
       const assistantIndex = messages.findLastIndex(entry => entry.role === 'assistant');
       const last = messages[assistantIndex];
       if (last?.tool_calls?.length) {
@@ -575,10 +581,11 @@ export function createRuntime(options = {}) {
     await ctx?.rlm?.close();
     if (ctx?.provisioning) await ctx.provisioning.catch(() => {});
     if (ctx?.desktopStarting) await ctx.desktopStarting.catch(() => {});
-    const sandboxId = ctx?.sandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
+    const ownedSandbox = ctx?.sandbox ?? sandboxHandles.get(id);
+    const sandboxId = ownedSandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
     let cleanupError;
     try {
-      if (ctx?.sandbox) { const sandbox = ctx.sandbox; ctx.sandbox = undefined; await sandbox.kill(); }
+      if (ownedSandbox) { if (ctx) ctx.sandbox = undefined; await ownedSandbox.kill(); }
       else if (sandboxId) {
         const sandbox = await (options.connect ?? connectSandbox)(sandboxId, { ...config, desktop: false });
         await sandbox.kill();
@@ -588,6 +595,7 @@ export function createRuntime(options = {}) {
       event(id, 'sandbox_kill_failed', { error: safeError(error) });
     }
     update(id, { sandbox_id: cleanupError ? sandboxId : null, desktop_ready: false });
+    if (!cleanupError) sandboxHandles.delete(id);
     if (ctx) ctx.computer = undefined;
     ctx?.secrets.clear();
     if (cleanupError) throw cleanupError;
@@ -692,7 +700,7 @@ export function createRuntime(options = {}) {
     async close() {
       const errors = [];
       await runtime.quiesce().catch(error => { errors.push(safeError(error)); });
-      for (const [id, ctx] of contexts) if (ctx.sandbox || store.get('sessions', id)?.sandbox_id) {
+      for (const [id, ctx] of contexts) if (ctx.sandbox || sandboxHandles.has(id) || store.get('sessions', id)?.sandbox_id) {
         try { await releaseSessionResources(id); }
         catch (error) {
           const text = scrub(id, safeError(error));

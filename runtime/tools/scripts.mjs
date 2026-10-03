@@ -100,7 +100,9 @@ class Analyze(ast.NodeVisitor):
         self.env=previous; self.env.pop(node.name,None)
     visit_AsyncFunctionDef=visit_FunctionDef
     def visit_Call(self,node):
-        if isinstance(node.func,ast.Attribute) and isinstance(node.func.value,ast.Name) and node.func.value.id=='tools': name=node.func.attr
+        if isinstance(node.func,ast.Attribute) and isinstance(node.func.value,ast.Name) and node.func.value.id=='tools':
+            name=node.func.attr
+            if name=='call': name=constant(node.args[0],self.env) if node.args else unknown
         elif isinstance(node.func,ast.Name) and node.func.id in ('call_tool','call_tool_sync'): name=constant(node.args[0],self.env) if node.args else unknown
         else: name=None
         if name is unknown or name is not None and (not isinstance(name,str) or len(name)>128): self.unresolved.add(node.lineno)
@@ -168,6 +170,7 @@ def call_tool_sync(name,args=None):
         result=pool.submit(invoke,name,args).result()
         return result if isinstance(result,str) else json.dumps(result,ensure_ascii=False)
 class Tools:
+    def call(self,name,args=None): return call_tool(name,args)
     def __getattr__(self,name):
         def caller(**kwargs): return call_tool(name,kwargs)
         return caller
