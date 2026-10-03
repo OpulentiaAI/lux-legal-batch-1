@@ -427,13 +427,15 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         return
       }
       const lines = value.split(/\r?\n/).filter(line => line.trim())
-      let records
+      const records = []
       if (lines.length >= 2 && lines.length <= 1000) {
-        try { records = lines.map(line => JSON.parse(line)) } catch {}
+        for (const [index, line] of lines.entries()) {
+          try { records.push({ value: JSON.parse(line), index }) } catch {}
+        }
       }
-      if (records) records.forEach((record, index) => parentVisible(found, metadata, record,
+      records.forEach(({ value: record, index }) => parentVisible(found, metadata, record,
         { ...origin, visibleRecord: index }, depth + 1))
-      else visibleFileText(found, value, origin)
+      visibleFileText(found, value, origin)
       return
     }
     if (Array.isArray(value)) {
@@ -450,7 +452,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       return
     }
     const id = value.chunk_id ?? value.id
-    if (typeof id === 'string' && typeof value.doc === 'string' && manifest.has(id)) {
+    if (typeof id === 'string' && (typeof value.doc === 'string' || !Object.hasOwn(value, 'doc')) && manifest.has(id)) {
       if (Object.hasOwn(value, 'start') || Object.hasOwn(value, 'end')) {
         if (!Number.isSafeInteger(value.start) || !Number.isSafeInteger(value.end) || value.start < 0 ||
             value.end <= value.start || typeof value.text !== 'string' ||
@@ -458,7 +460,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           throw new Error('Invalid evidence coordinates')
         }
       }
-      native(found, metadata, { ...value, chunk_id: id }, origin)
+      native(found, metadata, { ...value, chunk_id: id, doc: value.doc ?? sourceFor(id).doc }, origin)
       return
     }
     if (typeof value.chunk_id === 'string' && typeof value.doc === 'string') {
@@ -626,6 +628,10 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           }
           if (call.tool === 'ipython') {
             if (output?.ok === true) parentVisible(found, modelVisibleMetadata, output, origin)
+            return
+          }
+          if (call.tool === 'scripted_tools') {
+            parentVisible(found, modelVisibleMetadata, output, origin)
             return
           }
           if (call.tool === 'read_subagent' || call.tool === 'opulent_session_interact' && call.args?.action === 'get') {

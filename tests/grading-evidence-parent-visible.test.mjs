@@ -81,6 +81,36 @@ test('IPython result supports JSON, Python dict repr and quoted string repr with
   assert.deepEqual(save([{ tool: 'ipython', output: { ok: true, stdout, stderr: '', result: null } }]).replay().sources.map(source => source.text), ['Second rule.'])
 })
 
+test('real lx_chunk id/text records survive descriptive stdout lines without inventing document bodies', t => {
+  const { save } = fixture(t)
+  const stdout = `====================\nCHUNK: ${id}\n${JSON.stringify({ id, text })}\nNext query\n{"id":"${id}","text":"incomplete`
+  for (const tool of ['ipython', 'scripted_tools']) {
+    const output = { ok: true, exit_code: 0, stdout, stderr: '', result: null }
+    const specs = [{ tool, output }]
+    const replay = save(specs).replay()
+    assert.deepEqual(replay.sources.map(source => [source.id, source.doc, source.kind, source.text]), [[id, doc, 'full', text]])
+    assert.equal(replay.sources[0].origin.stdoutSha256, hash(stdout))
+    assert.deepEqual(save(specs, { version: null }).replay().sources, [])
+  }
+})
+
+test('docless printed chunks still reject forged text, ambiguous excerpts and incorrect document declarations', t => {
+  const { save } = fixture(t)
+  for (const record of [{ id, text: 'Forged source.' }, { id, text: 'rule.' }, { id, doc: 'doc-99', text }]) {
+    const stdout = `CHUNK: ${id}\n${JSON.stringify(record)}`
+    assert.throws(save([{ tool: 'ipython', output: { ok: true, stdout, stderr: '', result: null } }]).replay,
+      /Invalid evidence (coordinates|document association)/)
+  }
+  const partial = { id, text: 'Second rule.' }
+  const stdout = `Research output\n${JSON.stringify(partial)}`
+  const replay = save([{ tool: 'ipython', output: { ok: true, stdout, stderr: '', result: null } }]).replay()
+  assert.equal(replay.sources[0].origin.start, text.indexOf(partial.text))
+  assert.equal(replay.sources[0].origin.end, text.indexOf(partial.text) + partial.text.length)
+  for (const output of [{ ok: false, stdout }, { ok: true, truncated: true, stdout }, { exit_code: 1, stdout }]) {
+    assert.deepEqual(save([{ tool: 'scripted_tools', output }]).replay().sources, [])
+  }
+})
+
 test('completed direct-child response and output are root-visible evidence, not hidden child reads', t => {
   const { save } = fixture(t)
   const specs = [
