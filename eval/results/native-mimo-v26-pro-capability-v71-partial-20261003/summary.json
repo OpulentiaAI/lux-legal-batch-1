@@ -1,0 +1,960 @@
+{
+  "version": "native-capability-v71-partial-publication-v1",
+  "status": "blocked-native-provider-partial",
+  "checkpointSha256": "cf358af22546e0e9861fb29f3006b5ad1782c3f87018d2e03e7e9f1aa9610bf0",
+  "suiteSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+  "gradesSha256": "3a23b972a14ebca9d468284f6cb500dd429f61bbcb67604e1004702be8ea62fd",
+  "alignmentSha256": "c86b30e5d426f247d700dedd1bc2dccf350738511c7d9ba65b32ec3bfd822069",
+  "reviewHashes": {
+    "task-02": "05dd3152248ae837cff5edc3d2c6dec817d764d36ca7ee124f10d30b1297e458",
+    "task-03": "732f4ea4f3dc25543e6a7e88f0bd4c2284d8cd98125f702d76f6784e06982881",
+    "task-04": "3351ff8ce4c24937957488175884a15fb666cc610402bd451dca378f4077bf84",
+    "task-05": "dd0f4580a347fb8002c1282ddf3b17ecfb8d73f4afc85d3f8003c47e2afbcf5a",
+    "task-06": "ffc362bbfcccf37039705a79c05d62d4b67a3e5327a18674efc7e688f9631267"
+  },
+  "scoredCodeCommit": "7e1fd8eef8750799542df7536d43cd9082b50d06",
+  "answererModel": "native RunAnywhere mimo-v2.6-pro; no Gateway substitution",
+  "capabilitySupplementFileSha256": "0ce64ca581da61df07295f8a991451cb5da7cb36a3f58183ac1fc48f5e9bfd5c",
+  "capabilityAddendumNormalizedSha256": "99924d28fadec98b6b9416ed6897e7c832b9d2a544ece68c9b759f13943d9329",
+  "instructionManifestSha256": "307143b9e30b1eebaa688d0df9e4d24fde5de179d8ff053d273342f24942f2f4",
+  "effectivePromptSha256": "af21885c86afe0577a9417f47be9d8cb3378aad044aa06819350158751b6a7e7",
+  "evidenceReplayVersion": "parent-visible-outputs-v2",
+  "selectedTasks": [
+    "task-02",
+    "task-03",
+    "task-04",
+    "task-05",
+    "task-06"
+  ],
+  "completedOutputs": 8,
+  "plannedOutputs": 10,
+  "commonCompletedPairs": [
+    "task-02",
+    "task-05",
+    "task-06"
+  ],
+  "missingOutputs": [
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "retainedAttempts": 3,
+      "cause": "native model-provider 503"
+    },
+    {
+      "taskId": "task-04",
+      "mode": "broad",
+      "retainedAttempts": 3,
+      "cause": "native model-provider 503"
+    }
+  ],
+  "scorePolicy": "Independent Capy ordinal review, not Jev output or lawyer certification. Primary summaries use only common completed task pairs; availableOutputSummaries are secondary diagnostics on potentially different task sets. Normalize criterion ordinals by 3; equal criterion weights within a task, equal task weights across tasks. Exclude unresolved criteria from both metric denominators and show coverage. Absent claims have null accuracy, never perfect accuracy. Failed answerers are N/A, not zero. Trim one high and one low independently per system/metric; ties use task ID. Shared root defects remain identified in alignment.json rather than counted as distinct root causes.",
+  "jevPolicy": {
+    "version": "native-mimo-jev-criterion-v5",
+    "model": "typesafe-ai/jev",
+    "endpoint": "https://ai-gateway.vercel.sh/v1/evaluate",
+    "providerOnly": [
+      "typesafe-ai"
+    ],
+    "scores": "interpolated Jev 0\u20133 scores divided by 3; equal criterion weights within each task and equal task weights in summaries",
+    "accuracy": "asserted relevant claims only; absent claims are not perfect accuracy",
+    "evidence": "full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining IDs and a bound full-inventory digest are audit metadata, never absence proof",
+    "maxVisibleBodies": 6,
+    "references": "hidden references establish legal truth, never consultation or citation compliance",
+    "resources": "no turn, latency or token penalty in semantic scores",
+    "alignment": "satisfaction binds the complete requirement and pass condition; typed decisions require independent Capy/human review",
+    "unknowns": "unresolved judgments and judge failures remain visible; no fabricated grades",
+    "trimming": "independently remove one highest and one lowest task score per system and metric",
+    "providerVersion": "not returned by provider",
+    "timeoutMs": 120000,
+    "maxAttempts": 2
+  },
+  "jevCommonPairSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.963915343915344,
+        "trimmed": 0.9572222222222222,
+        "coverage": 3,
+        "retained": [
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8769312169312169,
+        "trimmed": 0.8688888888888888,
+        "coverage": 3,
+        "retained": [
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.9641666666666666,
+        "trimmed": 0.9641666666666666,
+        "coverage": 3,
+        "retained": [
+          "task-06"
+        ],
+        "dropped": [
+          "task-02",
+          "task-05"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8710978835978836,
+        "trimmed": 0.8785714285714287,
+        "coverage": 3,
+        "retained": [
+          "task-02"
+        ],
+        "dropped": [
+          "task-06",
+          "task-05"
+        ]
+      }
+    }
+  },
+  "jevAvailableOutputSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.955124007936508,
+        "coverage": 4,
+        "trimmed": 0.9567063492063492,
+        "retained": [
+          "task-02",
+          "task-05"
+        ],
+        "dropped": [
+          "task-04",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8787400793650794,
+        "coverage": 4,
+        "trimmed": 0.8765277777777778,
+        "retained": [
+          "task-05",
+          "task-04"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "criterionPass": {
+        "full": 0.96875,
+        "coverage": 4,
+        "trimmed": 1,
+        "retained": [
+          "task-02",
+          "task-05"
+        ],
+        "dropped": [
+          "task-04",
+          "task-06"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.9661805555555555,
+        "coverage": 4,
+        "trimmed": 0.9645833333333333,
+        "retained": [
+          "task-06",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-03"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8804067460317461,
+        "coverage": 4,
+        "trimmed": 0.8887301587301588,
+        "retained": [
+          "task-02",
+          "task-05"
+        ],
+        "dropped": [
+          "task-06",
+          "task-03"
+        ]
+      },
+      "criterionPass": {
+        "full": 1,
+        "coverage": 4,
+        "trimmed": 1,
+        "retained": [
+          "task-03",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    }
+  },
+  "independentPaired": [
+    {
+      "taskId": "task-02",
+      "harvey": {
+        "quality": 0.7619047619047619,
+        "accuracy": 0.9047619047619048,
+        "passes": 2,
+        "failures": 5,
+        "unresolved": 0,
+        "criteria": 7,
+        "qualityCoverage": 7,
+        "accuracyCoverage": 7,
+        "answererFailure": false
+      },
+      "broad": {
+        "quality": 0.7619047619047619,
+        "accuracy": 0.8095238095238095,
+        "passes": 4,
+        "failures": 3,
+        "unresolved": 0,
+        "criteria": 7,
+        "qualityCoverage": 7,
+        "accuracyCoverage": 7,
+        "answererFailure": false
+      }
+    },
+    {
+      "taskId": "task-03",
+      "harvey": {
+        "quality": null,
+        "accuracy": null,
+        "passes": 0,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 0,
+        "accuracyCoverage": 0,
+        "answererFailure": true
+      },
+      "broad": {
+        "quality": 0.9444444444444444,
+        "accuracy": 0.8888888888888888,
+        "passes": 6,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6,
+        "answererFailure": false
+      }
+    },
+    {
+      "taskId": "task-04",
+      "harvey": {
+        "quality": 0.9583333333333334,
+        "accuracy": 0.9583333333333334,
+        "passes": 7,
+        "failures": 1,
+        "unresolved": 0,
+        "criteria": 8,
+        "qualityCoverage": 8,
+        "accuracyCoverage": 8,
+        "answererFailure": false
+      },
+      "broad": {
+        "quality": null,
+        "accuracy": null,
+        "passes": 0,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 8,
+        "qualityCoverage": 0,
+        "accuracyCoverage": 0,
+        "answererFailure": true
+      }
+    },
+    {
+      "taskId": "task-05",
+      "harvey": {
+        "quality": 0.7222222222222222,
+        "accuracy": 0.8333333333333333,
+        "passes": 3,
+        "failures": 3,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6,
+        "answererFailure": false
+      },
+      "broad": {
+        "quality": 0.8888888888888888,
+        "accuracy": 0.9444444444444444,
+        "passes": 5,
+        "failures": 1,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6,
+        "answererFailure": false
+      }
+    },
+    {
+      "taskId": "task-06",
+      "harvey": {
+        "quality": 0.9166666666666666,
+        "accuracy": 0.9166666666666666,
+        "passes": 3,
+        "failures": 1,
+        "unresolved": 0,
+        "criteria": 4,
+        "qualityCoverage": 4,
+        "accuracyCoverage": 4,
+        "answererFailure": false
+      },
+      "broad": {
+        "quality": 1.0,
+        "accuracy": 1.0,
+        "passes": 4,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 4,
+        "qualityCoverage": 4,
+        "accuracyCoverage": 4,
+        "answererFailure": false
+      }
+    }
+  ],
+  "independentCommonPairSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.8002645502645502,
+        "trimmed": 0.7619047619047619,
+        "coverage": 3,
+        "retained": [
+          "task-02"
+        ],
+        "dropped": [
+          "task-05",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8849206349206349,
+        "trimmed": 0.9047619047619048,
+        "coverage": 3,
+        "retained": [
+          "task-02"
+        ],
+        "dropped": [
+          "task-05",
+          "task-06"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.8835978835978836,
+        "trimmed": 0.8888888888888888,
+        "coverage": 3,
+        "retained": [
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.917989417989418,
+        "trimmed": 0.9444444444444444,
+        "coverage": 3,
+        "retained": [
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    }
+  },
+  "independentAvailableOutputSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.839781746031746,
+        "trimmed": 0.8392857142857142,
+        "coverage": 4,
+        "retained": [
+          "task-02",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-04"
+        ]
+      },
+      "accuracy": {
+        "full": 0.9032738095238095,
+        "trimmed": 0.9107142857142857,
+        "coverage": 4,
+        "retained": [
+          "task-02",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-04"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.8988095238095237,
+        "trimmed": 0.9166666666666666,
+        "coverage": 4,
+        "retained": [
+          "task-05",
+          "task-03"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.9107142857142857,
+        "trimmed": 0.9166666666666666,
+        "coverage": 4,
+        "retained": [
+          "task-03",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    }
+  },
+  "independentCounts": {
+    "pass": 34,
+    "fail": 14,
+    "unresolved": 0
+  },
+  "reviewedCriteria": 48,
+  "plannedCriteria": 62,
+  "satisfactionDisagreements": 15,
+  "unresolvedDisagreements": 0,
+  "answererResourcesAllAttempts": {
+    "harvey": {
+      "retainedAttempts": 7,
+      "completedOutputs": 4,
+      "observedInputTokens": 8605251,
+      "observedOutputTokens": 278346,
+      "observedCachedInputSubset": 8073216,
+      "reportedReasoningTokens": 202717,
+      "physicalAttemptsRecorded": 250,
+      "unknownPhysicalAttemptUsage": 46,
+      "unknownLogicalRequestUsage": 3,
+      "matchedSettledResponseCount": 204,
+      "matchedSettledSubtotalUSD": 0.6252,
+      "completeAttemptBillingCount": 0,
+      "attemptWallMinutesSum": 99.544,
+      "completedOutputInputTokens": 7382905,
+      "completedOutputOutputTokens": 237262
+    },
+    "broad": {
+      "retainedAttempts": 7,
+      "completedOutputs": 4,
+      "observedInputTokens": 35053639,
+      "observedOutputTokens": 438866,
+      "observedCachedInputSubset": 33145216,
+      "reportedReasoningTokens": 259199,
+      "physicalAttemptsRecorded": 400,
+      "unknownPhysicalAttemptUsage": 48,
+      "unknownLogicalRequestUsage": 10,
+      "matchedSettledResponseCount": 352,
+      "matchedSettledSubtotalUSD": 1.72471,
+      "completeAttemptBillingCount": 0,
+      "attemptWallMinutesSum": 99.73608333333333,
+      "completedOutputInputTokens": 30835122,
+      "completedOutputOutputTokens": 376462
+    }
+  },
+  "judgeResources": {
+    "model": "typesafe-ai/jev",
+    "successfulRequests": 48,
+    "reportedInputTokens": 998475,
+    "reportedOutputTokens": 5184,
+    "providerReportedSubtotalUSD": "0.041935950",
+    "independentSettlementObtained": false
+  },
+  "nativeSettlement": {
+    "capturedResponses": 556,
+    "matchedResponses": 556,
+    "unmatchedAccountRowsExcluded": 96,
+    "reasoningCounterDisagreements": 554,
+    "totalCostKnown": false
+  },
+  "vmVerification": {
+    "allRetainedAttempts": 14,
+    "ownedSandboxes": 19,
+    "allRecordedOwnedSandboxesAbsent": true,
+    "evidenceSha256": "293eeb25dca03ebafdf091beaf5e4324cd46c352fec05b3dbb6c8e176c736267"
+  },
+  "configuredTools": [
+    "MultiEdit",
+    "annotate_recording",
+    "apply_patch",
+    "browser_console",
+    "browser_preview",
+    "computer",
+    "deploy",
+    "describe_image",
+    "opulent_automation_manage",
+    "opulent_billing_tag_manage",
+    "opulent_code_scan_manage",
+    "opulent_knowledge_manage",
+    "opulent_mcp",
+    "opulent_mcp_server_manage",
+    "opulent_oncall_manage",
+    "opulent_playbook_manage",
+    "opulent_review_manage",
+    "opulent_schedule_manage",
+    "opulent_session_create",
+    "opulent_session_events",
+    "opulent_session_interact",
+    "opulent_session_search",
+    "download_attachment",
+    "edit",
+    "exec",
+    "fetch_pr_template",
+    "find_file_by_name",
+    "generate_image",
+    "get_knowledge_note",
+    "get_output",
+    "get_workflow_output",
+    "git_add_labels",
+    "git_ci_job_logs",
+    "git_close_pr",
+    "git_comment_on_pr",
+    "git_create_pr",
+    "git_delete_comment",
+    "git_edit_comment",
+    "git_list_repos",
+    "git_pr_checks",
+    "git_remove_labels",
+    "git_stack",
+    "git_take_over_pr",
+    "git_update_pr",
+    "git_update_pr_base",
+    "git_view_pr",
+    "grep",
+    "install_personal_plugin",
+    "kill_shell",
+    "kill_workflow",
+    "linear",
+    "list_integrations",
+    "list_knowledge_notes",
+    "list_secrets",
+    "manage_personal_plugin",
+    "mcp_call_tool",
+    "mcp_list_servers",
+    "mcp_list_tools",
+    "mcp_read_resource",
+    "mcp_tool",
+    "message_user",
+    "message_workflow_agent",
+    "noop",
+    "notebook_edit",
+    "notebook_read",
+    "read",
+    "read_build_logs",
+    "read_subagent",
+    "recording_start",
+    "recording_stop",
+    "rename_title",
+    "report_blocker",
+    "request_secret",
+    "run_workflow",
+    "save_browser_profile",
+    "scripted_tools",
+    "set_workflow_agent_soft_time_limit",
+    "sidekick",
+    "skill",
+    "stop",
+    "suggest_knowledge",
+    "suggest_save_secret",
+    "suggest_skill_pr",
+    "task_create",
+    "task_get",
+    "task_list",
+    "task_update",
+    "testing_agent",
+    "todo_write",
+    "tool_search_tool_bm25",
+    "upload_attachment",
+    "view_image",
+    "wait",
+    "web_get_contents",
+    "web_search",
+    "write",
+    "write_to_process",
+    "lx_search",
+    "lx_chunk",
+    "lx_documents",
+    "browser",
+    "wait_for_operations",
+    "ipython"
+  ],
+  "permittedTools": [
+    "MultiEdit",
+    "annotate_recording",
+    "apply_patch",
+    "browser_console",
+    "browser_preview",
+    "computer",
+    "deploy",
+    "describe_image",
+    "opulent_automation_manage",
+    "opulent_billing_tag_manage",
+    "opulent_code_scan_manage",
+    "opulent_knowledge_manage",
+    "opulent_mcp",
+    "opulent_mcp_server_manage",
+    "opulent_oncall_manage",
+    "opulent_playbook_manage",
+    "opulent_review_manage",
+    "opulent_schedule_manage",
+    "opulent_session_create",
+    "opulent_session_events",
+    "opulent_session_interact",
+    "opulent_session_search",
+    "download_attachment",
+    "edit",
+    "exec",
+    "fetch_pr_template",
+    "find_file_by_name",
+    "generate_image",
+    "get_knowledge_note",
+    "get_output",
+    "get_workflow_output",
+    "git_add_labels",
+    "git_ci_job_logs",
+    "git_close_pr",
+    "git_comment_on_pr",
+    "git_create_pr",
+    "git_delete_comment",
+    "git_edit_comment",
+    "git_list_repos",
+    "git_pr_checks",
+    "git_remove_labels",
+    "git_stack",
+    "git_take_over_pr",
+    "git_update_pr",
+    "git_update_pr_base",
+    "git_view_pr",
+    "grep",
+    "install_personal_plugin",
+    "kill_shell",
+    "kill_workflow",
+    "linear",
+    "list_integrations",
+    "list_knowledge_notes",
+    "list_secrets",
+    "manage_personal_plugin",
+    "mcp_call_tool",
+    "mcp_list_servers",
+    "mcp_list_tools",
+    "mcp_read_resource",
+    "mcp_tool",
+    "message_user",
+    "message_workflow_agent",
+    "noop",
+    "notebook_edit",
+    "notebook_read",
+    "read",
+    "read_build_logs",
+    "read_subagent",
+    "recording_start",
+    "recording_stop",
+    "rename_title",
+    "report_blocker",
+    "request_secret",
+    "run_workflow",
+    "save_browser_profile",
+    "scripted_tools",
+    "set_workflow_agent_soft_time_limit",
+    "sidekick",
+    "skill",
+    "stop",
+    "suggest_knowledge",
+    "suggest_save_secret",
+    "suggest_skill_pr",
+    "task_create",
+    "task_get",
+    "task_list",
+    "task_update",
+    "testing_agent",
+    "todo_write",
+    "tool_search_tool_bm25",
+    "upload_attachment",
+    "view_image",
+    "wait",
+    "web_get_contents",
+    "web_search",
+    "write",
+    "write_to_process",
+    "lx_search",
+    "lx_chunk",
+    "lx_documents",
+    "browser",
+    "wait_for_operations",
+    "ipython"
+  ],
+  "effectiveDefinitionsSha256": "776230de10cdf9e7249fe643419c5e1e3c6fe5cd143afa6bba3d98efbf818ce5",
+  "scoredCompletedOpulentCapabilityCounts": [
+    {
+      "taskId": "task-02",
+      "successfulKernelCells": 14,
+      "requestedKernelCells": 16,
+      "successfulCodemodeScripts": 2,
+      "requestedCodemodeScripts": 2,
+      "exactPrintedMaterialBatch": true,
+      "overlappingMaterialReadIntervals": true,
+      "completedChildren": 3,
+      "childrenWithRecordedVM": 2,
+      "skillProcedureRequests": [
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "data-analysis"
+        },
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "analyzing-sessions"
+        }
+      ]
+    },
+    {
+      "taskId": "task-03",
+      "successfulKernelCells": 7,
+      "requestedKernelCells": 7,
+      "successfulCodemodeScripts": 0,
+      "requestedCodemodeScripts": 2,
+      "exactPrintedMaterialBatch": false,
+      "overlappingMaterialReadIntervals": false,
+      "completedChildren": 3,
+      "childrenWithRecordedVM": 0,
+      "skillProcedureRequests": [
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "analyzing-sessions"
+        }
+      ]
+    },
+    {
+      "taskId": "task-05",
+      "successfulKernelCells": 8,
+      "requestedKernelCells": 9,
+      "successfulCodemodeScripts": 2,
+      "requestedCodemodeScripts": 2,
+      "exactPrintedMaterialBatch": true,
+      "overlappingMaterialReadIntervals": false,
+      "completedChildren": 3,
+      "childrenWithRecordedVM": 2,
+      "skillProcedureRequests": [
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "analyzing-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "data-analysis"
+        }
+      ]
+    },
+    {
+      "taskId": "task-06",
+      "successfulKernelCells": 9,
+      "requestedKernelCells": 10,
+      "successfulCodemodeScripts": 3,
+      "requestedCodemodeScripts": 3,
+      "exactPrintedMaterialBatch": true,
+      "overlappingMaterialReadIntervals": true,
+      "completedChildren": 3,
+      "childrenWithRecordedVM": 1,
+      "skillProcedureRequests": [
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "analyzing-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "managing-child-sessions"
+        },
+        {
+          "command": "invoke",
+          "skill": "data-analysis"
+        }
+      ]
+    }
+  ],
+  "toolAuditAllAttempts": {
+    "edit": {
+      "requested": 29,
+      "dispatchStarts": 29,
+      "finishedOK": 29,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "exec": {
+      "requested": 54,
+      "dispatchStarts": 55,
+      "finishedOK": 55,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "grep": {
+      "requested": 3,
+      "dispatchStarts": 3,
+      "finishedOK": 3,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "ipython": {
+      "requested": 48,
+      "dispatchStarts": 48,
+      "finishedOK": 48,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "lx_chunk": {
+      "requested": 200,
+      "dispatchStarts": 243,
+      "finishedOK": 239,
+      "finishedFailed": 4,
+      "returnedError": 4
+    },
+    "lx_documents": {
+      "requested": 12,
+      "dispatchStarts": 12,
+      "finishedOK": 11,
+      "finishedFailed": 1,
+      "returnedError": 1
+    },
+    "lx_search": {
+      "requested": 264,
+      "dispatchStarts": 268,
+      "finishedOK": 268,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "opulent_session_create": {
+      "requested": 0,
+      "dispatchStarts": 19,
+      "finishedOK": 19,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "opulent_session_search": {
+      "requested": 0,
+      "dispatchStarts": 12,
+      "finishedOK": 12,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "read": {
+      "requested": 5,
+      "dispatchStarts": 28,
+      "finishedOK": 26,
+      "finishedFailed": 2,
+      "returnedError": 0
+    },
+    "read_subagent": {
+      "requested": 0,
+      "dispatchStarts": 34,
+      "finishedOK": 34,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "scripted_tools": {
+      "requested": 13,
+      "dispatchStarts": 13,
+      "finishedOK": 9,
+      "finishedFailed": 4,
+      "returnedError": 4
+    },
+    "skill": {
+      "requested": 22,
+      "dispatchStarts": 19,
+      "finishedOK": 19,
+      "finishedFailed": 0,
+      "returnedError": 3
+    },
+    "task_create": {
+      "requested": 3,
+      "dispatchStarts": 3,
+      "finishedOK": 3,
+      "finishedFailed": 0,
+      "returnedError": 0
+    },
+    "task_update": {
+      "requested": 9,
+      "dispatchStarts": 4,
+      "finishedOK": 4,
+      "finishedFailed": 0,
+      "returnedError": 5
+    },
+    "write": {
+      "requested": 10,
+      "dispatchStarts": 10,
+      "finishedOK": 10,
+      "finishedFailed": 0,
+      "returnedError": 0
+    }
+  },
+  "limitations": [
+    "Two outputs still require native-provider recovery; this is not a five-pair completion.",
+    "Primary comparisons use the three common completed pairs; independent trimming leaves one task per system/metric.",
+    "Secondary four-output summaries use different task sets and cannot support a paired winner.",
+    "Kernel use and completed research delegation are proved, but initialized source registries and notes were not reused across later cells.",
+    "Task-03 codemode failed twice; task-05 material reads were sequential; task-03 omitted data-analysis despite quantitative materials.",
+    "Five of twelve completed research children provisioned VMs; seven remained host-tool-only.",
+    "Applicable procedure text was read; full procedure adherence and unconfigured provider connectivity are not proved.",
+    "Native joined charges and reported tokens are partial subtotals; failed usage, E2B, retrieval, operator/preflight and host engineering/review costs remain incomplete.",
+    "Independent ordinal grades are not Jev replacements or lawyer certification; hidden references establish truth, never consultation."
+  ]
+}
