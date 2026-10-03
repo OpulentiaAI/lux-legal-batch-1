@@ -315,7 +315,8 @@ export async function run(options, dependencies = {}) {
     try {
       const brokerProof = await (dependencies.verifyBroker ?? verifyEvaluationBroker)({ broker, origin: options.brokerOrigin,
         sandboxFactory: sandboxConfig => provisionCorpus({ ...sandboxConfig, sandboxTemplate: options.sandboxTemplate,
-          computerPreparedImage: true, computerImageSha256: options.computerImageSha256 }, corpus, source, createSandbox) })
+          computerPreparedImage: true, computerImageSha256: options.computerImageSha256,
+          ...(capabilityV8 ? { secureSandboxFileAccess: true } : {}) }, corpus, source, createSandbox) })
       const preflight = await harnesses.broad.preflight()
       if (brokerProof?.verified !== true || preflight?.sandbox?.verified !== true ||
         ['mcp', 'runtimeBroker'].some(name => preflight[name]?.verified !== true) || options.semanticSurface === 'mcp' && preflight.desktop?.verified !== true) throw new Error('Full comparison blocked: live provider or security preflight failed')
