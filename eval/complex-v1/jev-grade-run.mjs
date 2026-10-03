@@ -130,7 +130,13 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' ||
     !Number.isSafeInteger(provenance.maxSteps) || provenance.maxSteps < 1 ||
     provenance.instructionProfile === 'opulent-context-v6' && provenance.maxSteps !== 250 ||
-    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+  if (provenance.instructionProfile === 'opulent-capability-v8') {
+    const retrieval = provenance.broadPolicy?.retrieval
+    if (retrieval?.profile !== 'voyage' || retrieval.embeddingModel !== 'voyage/voyage-4-large' ||
+      retrieval.rerankModel !== 'voyage/rerank-2.5' || retrieval.dimensions !== 1024 || retrieval.searchBackend !== 'turbopuffer' ||
+      retrieval.chunkNamespace !== 'lx-corpus-voyage4-1024' || retrieval.documentNamespace !== 'lx-documents-voyage4-1024') throw new Error('Unexpected capability-v8 retrieval policy')
+  }
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
   const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy: JEV_POLICY, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
