@@ -131,7 +131,7 @@ function invoke(python, script, request, env, cwd, args = []) {
   })
 }
 
-function collectEvidence(artifacts, corpus, answer, start, response, workProduct = false) {
+function collectEvidence(artifacts, corpus, answer, start, response, workProduct = false, transport) {
   const calls = existsSync(join(artifacts, 'tool-results.jsonl'))
     ? readFileSync(join(artifacts, 'tool-results.jsonl'), 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
   const visible = new Map()
@@ -142,15 +142,30 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       result: { ids: sources.map(source => source.id), count: sources.length,
         error: /^(?:Error:|SecurityError:)/.test(result) || /\(exit code \d+\)$/.test(result) } }
   })
+  const trajectoryProof = trajectoryAudit(artifacts)
+  const partialNative = !response && workProduct && transport?.provider === 'runanywhere'
+  const trajectory = partialNative && trajectoryProof.trajectoryArtifact ? readFileSync(trajectoryProof.trajectoryArtifact, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
+  const observedUsage = trajectory.filter(event => event.event === 'assistant' && event.providerUsage?.inferenceProvider === 'runanywhere')
+    .map(event => event.providerUsage)
+  const failedUsage = trajectory.filter(event => event.event === 'model_failure' && Array.isArray(event.providerAttempts))
+    .map(event => ({ inferenceProvider: 'runanywhere', requestedModel: transport.providerModel, failed: true, usageUnknown: true, requestAttempts: event.providerAttempts }))
+  const partialRecords = [...observedUsage, ...failedUsage]
+  const observedTokens = name => {
+    const values = observedUsage.map(record => record[name]).filter(value => Number.isFinite(value) && value >= 0)
+    return values.length ? values.reduce((sum, value) => sum + value, 0) : null
+  }
   return { ...(typeof answer === 'string' ? { answer } : {}), sources: [...visible.values()],
     trace: auditCalls.map(call => ({ stage: 'tool', tool: call.tool, ok: !call.result.error })),
     metrics: { errors: auditCalls.filter(call => call.result.error).length + Number(!response?.finished_cleanly || (!workProduct && !answer?.trim())),
-      toolCalls: calls.length, sourceCount: visible.size, turns: response?.turn_count ?? 0,
-      usage: { input_tokens: response?.input_tokens ?? 0, output_tokens: response?.output_tokens ?? 0 },
-      ...(workProduct ? { providerUsageRecords: response?.provider_usage_records ?? null } : {}),
+      toolCalls: calls.length, sourceCount: visible.size, turns: response?.turn_count ?? trajectory.filter(event => event.event === 'model_call').length,
+      usage: response ? { input_tokens: response.input_tokens ?? 0, output_tokens: response.output_tokens ?? 0 } : partialNative ? {
+        input_tokens: observedTokens('prompt_tokens'), output_tokens: observedTokens('completion_tokens'),
+      } : { input_tokens: 0, output_tokens: 0 },
+      ...(workProduct ? { providerUsageRecords: response?.provider_usage_records ?? (partialRecords.length ? partialRecords : null) } : {}),
+      ...(partialNative ? { usageState: 'observed partial subtotal only; failed-attempt usage remains unknown' } : {}),
       latencyMs: Math.round(performance.now() - start) },
     audit: { calls: auditCalls, finalAnswer: typeof answer === 'string' ? redact(answer) : null,
-      ...trajectoryAudit(artifacts) } }
+      ...trajectoryProof } }
 }
 
 export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, inferenceProvider = 'gateway', providerModel, workProduct } = {}) {
@@ -209,7 +224,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       try {
         response = await invoke(python, script, request, env, harveyRoot)
       } catch (error) {
-        Object.assign(error, collectEvidence(artifacts, corpus, null, start, null, !!workProduct))
+        Object.assign(error, collectEvidence(artifacts, corpus, null, start, null, !!workProduct, transport))
         if (workProduct) error.artifactPaths = ['tool-results.jsonl', 'bridge-failure.json'].map(file => join(artifacts, file)).filter(existsSync)
         throw error
       }
@@ -220,7 +235,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
         error.audit = trajectoryAudit(artifacts)
         throw error
       }
-      const output = collectEvidence(artifacts, corpus, response.answer, start, response, !!workProduct)
+      const output = collectEvidence(artifacts, corpus, response.answer, start, response, !!workProduct, transport)
       if (workProduct) {
         if (!Array.isArray(response.deliverables) || !Array.isArray(response.missingDeliverables) ||
             response.deliverables.some(row => !packet.task.deliverables.includes(row.file) || typeof row.content !== 'string' || row.sha256 !== hash(row.content)) ||

@@ -159,6 +159,8 @@ Keep the historical `mimo-v2.6-pro` Gateway/high-effort profile available as a s
 
 The Node native transport disables its implicit 300-second headers/body timers so the configured overall `AbortSignal` deadline controls the request, including body reads. Safe transport cause codes and body-read failures remain visible with unknown usage; neither is automatically retried. Harvey's E2B tool timeout is returned as a recorded tool error, matching the upstream tool boundary rather than crashing the model loop. A timed-out write is never automatically replayed, and permission/security failures remain fatal.
 
+If a native Harvey work-product bridge fails, the harness retains usage from its safely verified trajectory and any recorded failed request attempts. These token counts are observed partial subtotals, not billed totals; absent usage remains `null`, and unknown failed-attempt usage is not converted to zero. Reasoning/cache details and native request records remain available for separate resource reconciliation.
+
 For the native five-task v6/toolbox comparison at 250 steps and 32,768 completion tokens, run the separate typed Jev grader after all selected arms are terminal:
 
 ```sh
