@@ -55,6 +55,32 @@ function fixture(config = {}, model = async () => ({ choices: [{ message: { role
   return { runtime, sandbox, directory, async close() { await runtime.close(); rmSync(directory, { recursive: true, force: true }); } };
 }
 
+test('shutdown may observe kernel exit before teardown kills its captured handle', async () => {
+  const { runtime, sandbox, directory, close } = fixture();
+  const run = sandbox.commands.run;
+  sandbox.commands.run = async (...args) => {
+    const handle = await run(...args);
+    const sendStdin = handle.sendStdin;
+    handle.sendStdin = async text => {
+      const exited = JSON.parse(text).type === 'shutdown' ? handle.wait() : null;
+      await sendStdin(text);
+      if (exited) await exited;
+    };
+    return handle;
+  };
+  let closed = false;
+  try {
+    const session = runtime.allocate({ prompt: 'Kernel teardown' });
+    assert.equal((await runtime.invoke(session.id, 'ipython', { code: 'state = 42\nstate' })).result, '42');
+    const result = await runtime.close();
+    closed = true;
+    assert.deepEqual(result, { cleanup_succeeded: true, errors: [] });
+  } finally {
+    if (!closed) await close();
+    else rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('opt-in definition, persistent namespace, prompt, top-level await and Python errors', async () => {
   const { runtime, close } = fixture();
   try {

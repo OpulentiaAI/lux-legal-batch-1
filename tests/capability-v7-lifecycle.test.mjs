@@ -108,3 +108,23 @@ test('v7 retains failure evidence when quiescence itself fails', async t => {
     return /Broad legal session failed/.test(error.message)
   })
 })
+
+test('cleanup failure retains the completed answer and concrete sanitized diagnostics', async t => {
+  const directory = mkdtempSync(join(tmpdir(), 'v7-cleanup-answer-'))
+  t.after(() => rmSync(directory, { recursive: true, force: true }))
+  const root = { id: 'root', status: 'completed', output: 'Actual completed answer' }
+  const harness = harnessFor(directory, () => ({
+    startSession: async () => root, waitSession: async () => root, quiesce: async () => {},
+    store: { get: () => ({ messages: [] }), list: collection => collection === 'sessions' ? [root] : [] },
+    context: () => ({ evidence: new Map() }),
+    close: async () => ({ cleanup_succeeded: false, errors: ['Kernel teardown failed'] }),
+  }))
+  await assert.rejects(harness.run({ mode: 'broad', question: promptFor(task),
+    workProduct: { task, materials: [] } }), error => {
+    assert.equal(error.answer, root.output)
+    const cleanup = JSON.parse(readFileSync(error.audit.cleanupArtifact))
+    assert.equal(cleanup.runtimeCloseSucceeded, false)
+    assert.deepEqual(cleanup.runtimeCloseErrors, ['Kernel teardown failed'])
+    return /Broad legal sandbox cleanup failed/.test(error.message)
+  })
+})

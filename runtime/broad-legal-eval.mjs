@@ -723,13 +723,21 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       } finally {
         await stopScheduler()
         let closeFailed = false
+        let closeErrors = []
         try { detachBroker?.() } catch { closeFailed = true }
-        try { if ((await runtime?.close())?.cleanup_succeeded === false) closeFailed = true } catch { closeFailed = true }
+        try {
+          const result = await runtime?.close()
+          if (result?.cleanup_succeeded === false) {
+            closeFailed = true
+            closeErrors = (result.errors ?? []).map(error => redactAudit(String(error)))
+          }
+        } catch (error) { closeFailed = true; closeErrors = [redactAudit(String(error))] }
         const sandboxes = [...provisionedSandboxes]
         const outcomes = await Promise.allSettled(sandboxes.map(sandbox => Promise.resolve().then(() => sandbox.kill())))
         const failedIds = sandboxes.filter((_, index) => outcomes[index].status === 'rejected').map(sandbox => sandbox.sandboxId)
         if (capabilityV7) {
           const cleanup = { version: 'owned-sandbox-cleanup-v1', checkedAt: new Date().toISOString(), runtimeCloseSucceeded: !closeFailed,
+            runtimeCloseErrors: closeErrors,
             sandboxes: sandboxes.map((sandbox, index) => ({ sandboxId: sandbox.sandboxId, termination: outcomes[index].status,
               ...(outcomes[index].status === 'rejected' ? { error: redactAudit(String(outcomes[index].reason)) } : {}) })),
             evidenceBoundary: 'API termination outcomes; a separate provider listing must verify absence' }
@@ -743,6 +751,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           cleanupError.cleanup = { sandboxIds: failedIds, runtimeCloseFailed: closeFailed, stateDir }
           const details = runError ?? runDetails
           if (details) Object.assign(cleanupError, { audit: details.audit, trace: details.trace,
+            ...(typeof (details.answer ?? completed?.output) === 'string' ? { answer: details.answer ?? completed.output } : {}),
             sources: details.sources, metrics: { ...details.metrics, errors: Math.max(details.metrics?.errors ?? 0, 1) },
             ...(workProduct ? { deliverables: details.deliverables ?? [], missingDeliverables: details.missingDeliverables ?? [],
               artifactPaths: details.artifactPaths ?? (details.audit?.evidenceArtifact ? [details.audit.evidenceArtifact] : []) } : {}) })

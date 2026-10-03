@@ -489,7 +489,8 @@ export function createRuntime(options = {}) {
         update(id, { usage });
         event(id, 'context_compaction_failed', { usage: error.compactionUsage, error: safeError(error) });
       }
-      update(id, { status: ctx.signal.aborted ? 'cancelled' : 'failed', error: safeError(error) });
+      const currentStatus = store.get('sessions', id)?.status;
+      update(id, { status: ctx.signal.aborted ? (['sleeping', 'terminated'].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(error) });
       event(id, 'session_failed', { error: safeError(error) });
     } finally {
       checkpoint();

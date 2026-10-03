@@ -193,8 +193,9 @@ export function createRlmTools(ctx) {
     return running;
   }, close: async () => {
     if (kernel) {
+      const residentKernel = kernel;
       await send({ type: 'shutdown' }).catch(() => {});
-      await kernel.kill().catch(() => {});
+      await residentKernel.kill().catch(() => {});
     }
     invalidate('RLM kernel shut down; Python state lost');
     await ctx.sandbox?.files?.remove(`/tmp/opulent-rlm-${sessionId}.py`).catch(() => {});
