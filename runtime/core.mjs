@@ -359,7 +359,7 @@ export function createRuntime(options = {}) {
     ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8'].includes(config.instructionProfile) && row.parent_session_id
+    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9'].includes(config.instructionProfile) && row.parent_session_id
       ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
       : '';
     let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];

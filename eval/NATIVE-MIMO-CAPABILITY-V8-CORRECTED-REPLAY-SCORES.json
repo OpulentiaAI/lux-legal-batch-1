@@ -1,0 +1,2654 @@
+{
+  "version": "native-mimo-capability-v8-voyage-corrected-visible-findings-v3-20261003",
+  "publicationStatus": "Root-reconciled descriptive historical completed-work regrade; separate delivery-v9 live experiment is not scored here.",
+  "metricPolicy": "Resource-free direct 0–1 semantic metrics; equal criterion means within tasks and equal task means across five tasks. Independently drop one low and one high per system/metric/judge, using task ID as deterministic tie-break. Performance uses final successful attempt, including recorded descendants; failed earlier attempts remain separate audit history.",
+  "adjudicationPolicy": "Full frozen mandatory requirement plus pass condition, read semantically in the complete work product. Source compliance is distinct from legal truth; no hidden-reference consultation credit, new requirement, resource penalty or judge averaging.",
+  "bindings": {
+    "checkpointSha256": "e6e68fde2f7b1c66cfd121d80290172f620a54164e679ea72b6cebd667377f56",
+    "suiteSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+    "implementations": {
+      "eval/grading-evidence.mjs": "81ce9252712af7846f65fe7d995cc88480d27d39f2d26b5b6f8ce07ecf032c84",
+      "eval/complex-v1/grade-run.mjs": "81c0b5aa50a7b16fd885b0eb4ba10f24966a06c0194a7d933c9bb72e47e7bed0",
+      "eval/complex-v1/jev-grade-run.mjs": "0c34bd4c43e1392aef0755adfe6cfddadc726896401eb72109ea75c0fcc42785",
+      "runtime/security.mjs": "eeffa3adb58ce5d520f3f1409f79a772c87283edb71f1a920d55a1f81882fa13"
+    },
+    "packetBindingsSha256": "a6742f17eb869a6248e8d7c4a5f25279a505be458ac09712602c86afd778025c",
+    "independentAuditSha256": "ecc797cf334df9e1334c22d3a1aa88ceb2cbbb520e2ec1b5afb55ab3ce36ede0",
+    "cacheAuditSha256": "0be02ed91072fff466d7cfb1b3161a5995ad2c5f70326624b3d928bfbb7dee4a",
+    "jevGradesSha256": "1130b1278d4152754a51f1ef09239ee91016c4cb8a6278640cdb517be27b0e60",
+    "previousPublicationSha256": "26466130fe8069f3346864c90124975914794bbd83f2670e407a88bd00180b4c",
+    "supplementalTruthSha256": "685285f510ddc2ce913511bc5f168eaf2cb8993d3ee6bf9210f76c7afabf61a8",
+    "reviews": [
+      {
+        "taskId": "task-02",
+        "sha256": "61eb936c80bc73514a576b61d6cc1224d84063fa99f24d84035ef65f7f3d8752",
+        "packetHashes": {
+          "amber": "3f084008af79963c5992ce08263597fb36514bb6d7f63538e67394afa9ac0188",
+          "slate": "0a8af59f40c185d617720b47a932a80fdc6b27f3996cb5ebd5e2981f2a05c71f"
+        },
+        "configuredReviewerModel": "openai/gpt-6.1-sol",
+        "reasoning": "max",
+        "fast": true
+      },
+      {
+        "taskId": "task-03",
+        "sha256": "60a99084c3f42718018945811043eb8ac7deb450983484e3b64f5e6894632a74",
+        "packetHashes": {
+          "amber": "191bcac992ecedf2df0cf4b9e2946d0b808da181dad6d14d9702cbd3ddc08c6d",
+          "slate": "735c7aed821dcbfcb6c061b22a86671e3dd50e42eb3b3884b3a574c30a0ba215"
+        },
+        "configuredReviewerModel": "openai/gpt-6.1-sol",
+        "reasoning": "max",
+        "fast": true
+      },
+      {
+        "taskId": "task-04",
+        "sha256": "1b8468dabc2a46b784dceb9206199fa9de2eac7ee9b79d595b9a5529f80bc517",
+        "packetHashes": {
+          "amber": "e303dc00edb97aaa018e9d316a81d2cb814753ca5cb78d44f1dfe71826d58c83",
+          "slate": "8a8a8d30729055ec0c740cafbc4e3f458d76f39fc280e4edeb33cafb840e2c4f"
+        },
+        "configuredReviewerModel": "openai/gpt-6.1-sol",
+        "reasoning": "max",
+        "fast": true
+      },
+      {
+        "taskId": "task-05",
+        "sha256": "b8f50e3c8cc44543d3b54ea70c94dc4b90e6aa2a6dfc971707c0633a277b3fd5",
+        "packetHashes": {
+          "amber": "dbe1d18e5ef39da10ea7d0df107e5e9a2f645be3a4e78d0dd2502b721fc1a3bd",
+          "slate": "0f672749021293281fd774334436a1b0721046710e3c2923fa923b9ee33f40b9"
+        },
+        "configuredReviewerModel": "openai/gpt-6.1-sol",
+        "reasoning": "max",
+        "fast": true
+      },
+      {
+        "taskId": "task-06",
+        "sha256": "18a3343bb92a4e3a90cf980a4773a20b5965671d05c521d34a9043e67efd0f1f",
+        "packetHashes": {
+          "amber": "15ac5a80e004d41118e0c5f4d14550c9e9aa3e4ed11425e8661156d84ca2ac9a",
+          "slate": "0ae15337609bb27815f281a1507ea1c311d2e1136de606b241db44f9e2195d50"
+        },
+        "configuredReviewerModel": "openai/gpt-6.1-sol",
+        "reasoning": "max",
+        "fast": true
+      }
+    ]
+  },
+  "provenance": {
+    "modelProfile": "runanywhere-mimo-v2.6-pro",
+    "inferenceProvider": "runanywhere",
+    "providerModel": "mimo-v2.6-pro",
+    "corpusHash": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+    "corpusCount": 8809,
+    "suiteManifestSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+    "maxSteps": 1000,
+    "maxCompletionTokens": 32768,
+    "requestedConcurrency": 10,
+    "retrieval": {
+      "profile": "voyage",
+      "embeddingModel": "voyage/voyage-4-large",
+      "rerankModel": "voyage/rerank-2.5",
+      "dimensions": 1024,
+      "searchBackend": "turbopuffer",
+      "chunkNamespace": "lx-corpus-voyage4-1024",
+      "documentNamespace": "lx-documents-voyage4-1024",
+      "credentialNames": [
+        "TURBOPUFFER_API_KEY",
+        "TURBOPUFFER_REGION",
+        "AI_GATEWAY_API_KEY"
+      ],
+      "hydration": "fixed approved local corpus",
+      "provenanceMirror": {
+        "backend": "Polygres",
+        "role": "repository provenance mirror; no live database connection claimed"
+      }
+    },
+    "initialTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "allowedTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "effectiveDefinitionsSha256": "776230de10cdf9e7249fe643419c5e1e3c6fe5cd143afa6bba3d98efbf818ce5",
+    "implementations": {
+      "eval/complex-v1/run.mjs": "d97934c78e3c173326523c15939ce2b94c424866fc810d304d84311bcc9b9dcd",
+      "eval/harvey-harness.mjs": "f86b4272d6aec7a2a47ccd86bce54bc2b9ec8f234bf5026c609b2831bda66168",
+      "eval/harvey-bridge.py": "5c60c8f2aa697d294d4d9e6c610f0148dde0574ad4c1922360af7163fe56b6f9",
+      "eval/harvey-modal-adapter.py": "c29fc2317d467de0e9a6a1d4d37b3de0a8c10228cb3278a313149a5eadb5b729",
+      "runtime/broad-legal-eval.mjs": "433ecc7c70b5254213406a9218b396d368dba2876ab75d989dae0c1e3b3d5375",
+      "runtime/eval-broker.mjs": "fdc31e19613fe899dbefb8568cdd570e8413948e743ef6a352d792addbdc2d09",
+      "runtime/eval-model-profile.mjs": "1588d0e33c48671f107eb0f63286e6970efd4cf3012629870cc6a523bd295282",
+      "runtime/model.mjs": "409cc6563839cf7208b27ef26ab4bec57da48343cdf594a6ebd703c145eb5a00",
+      "runtime/model-provider.mjs": "e1d7eba1cb2bcae2eea4a0050a4e3b1b8c3b78ed0856329d00a31649a8ff4ce2",
+      "runtime/script-execution.mjs": "58889e658b8bddff82bb3fc220a120974aa9b3081cb01ddcf9eaba7d1dce3f50",
+      "runtime/sandbox-file-access.mjs": "af1bf948ae95190963d205fa355fe908a88fb6546c250334c4a124ebb97cd07a",
+      "runtime/tools/scripts.mjs": "0fb50f05da941cf92dabf11de4a902c605cf179ef319a295e9d40070e1376cd2",
+      "runtime/core.mjs": "25a37955632bb84ac546928c250bc02f5eb48fbd15ec1709f5f6d81e6c922110",
+      "runtime/rlm.mjs": "797dd61b31da048add62d5cb92edf9b69d6ae48f57487aec11416fd3bbc40500",
+      "runtime/rlm-kernel.py": "6032209dd5dbd65002ecf6450d14d9096312cf94a71c06474cf36803c8ea8729"
+    },
+    "harveyPolicy": {
+      "harvey_commit": "845a08840869b21a5c11958aae58bf5f00a7b775",
+      "model": "xiaomi/mimo-v2.6-pro",
+      "providerOnly": null,
+      "reasoningEffort": null,
+      "endpoint": "https://inference.runanywhere.ai/v1",
+      "inference": {
+        "provider": "runanywhere",
+        "endpoint": "https://inference.runanywhere.ai/v1",
+        "credentialEnvironment": "RUNA_CLOUD_KEY",
+        "providerModel": "mimo-v2.6-pro",
+        "reasoningPolicy": "provider-default; no documented reasoning-effort control",
+        "requestPolicy": {
+          "maxAttempts": 3,
+          "retryStatuses": [
+            429,
+            502,
+            503,
+            504
+          ],
+          "backoffMs": [
+            1000,
+            2000
+          ],
+          "maxRetryAfterMs": 30000,
+          "transportErrors": "not retried; usage unknown"
+        }
+      },
+      "adapter": "eval.harvey-modal-adapter.RunAnywhereAdapter",
+      "agent_loop": "harness.agent_loop.run_agent",
+      "executor": "harness.tools.ToolExecutor",
+      "sandbox": "E2B pinned Harvey image (remote upstream ToolExecutor)",
+      "harvey_base_image": "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2",
+      "e2b_template_id": "vj9cdw6z2kti276qs60r",
+      "e2b_sdk": "2.34.0",
+      "e2b_internet_access": false,
+      "skills": [
+        "docx",
+        "pptx",
+        "xlsx"
+      ],
+      "tools": [
+        "bash",
+        "read",
+        "write",
+        "edit",
+        "glob",
+        "grep"
+      ],
+      "corpus_sha256": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+      "max_steps": 1000,
+      "max_completion_tokens": 32768,
+      "system_prompt_sha256": "67ea4b0bb0e0db7dc67dd1071e7f824f123ebb5f8688584ee0a75c0285be23f4",
+      "evidence_policy": "full-model-visible-tool-result-v1",
+      "work_product": {
+        "version": "complex-v1",
+        "materialPath": "/workspace/task/materials",
+        "outputPath": "/workspace/output",
+        "evidencePolicy": "full-model-visible-tool-results-and-collected-deliverables-v1"
+      },
+      "sandbox_timeout_seconds": 3600,
+      "work_product_prompt_policy": "public-task-v2"
+    },
+    "unavailableIntegrations": {
+      "webSearch": "available tool; BRAVE_SEARCH_API_KEY unavailable",
+      "imageGeneration": "available tool; OPENAI_API_KEY unavailable",
+      "github": "available tools; GITHUB_TOKEN unavailable and repository allowlist empty",
+      "desktop": "available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot",
+      "storage": "unconfigured; storage tools visible but provider calls unavailable",
+      "mcp": "available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified"
+    }
+  },
+  "verification": {
+    "completedArms": 10,
+    "independentCriteria": 62,
+    "jevCriteria": 62,
+    "outputQuotes": 236,
+    "authorityQuotes": 286,
+    "exactQuotes": 522,
+    "crossAliasTruthOnlyQuotes": 1,
+    "cacheNetworkCalls": 0,
+    "originalOutputsAndHistoricalFilesUnchanged": true,
+    "successfulAttemptKnownUsageReconciled": true,
+    "sourceQuoteOffsets": "UTF-16 half-open JavaScript string offsets; exact body hashes and explicit reference/visible/material/supplementary roles"
+  },
+  "rows": [
+    {
+      "taskId": "task-02",
+      "mode": "harvey",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "0bcdc082fe72e6ede178f3b693109fcd2782c44c56e26c1919084f08a7f0b2c2"
+      },
+      "packetSha256": "3f084008af79963c5992ce08263597fb36514bb6d7f63538e67394afa9ac0188",
+      "performance": {
+        "elapsedMinutes": 22.3905,
+        "promptTokens": 2805889,
+        "cachedPromptTokens": 2718976,
+        "completionTokens": 83542,
+        "logicalModelRequests": 54,
+        "physicalModelAttempts": 57,
+        "physicalAttemptsWithUnknownUsage": 3,
+        "parentTurns": 54,
+        "recordedToolCalls": 100
+      }
+    },
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "349054dabecdfcc0c8044e0f28fb255e0952b775a09baa5b90c636b601b1d0c5"
+      },
+      "packetSha256": "0a8af59f40c185d617720b47a932a80fdc6b27f3996cb5ebd5e2981f2a05c71f",
+      "performance": {
+        "elapsedMinutes": 20.22665,
+        "promptTokens": 13188039,
+        "cachedPromptTokens": 12701952,
+        "completionTokens": 139576,
+        "logicalModelRequests": 115,
+        "physicalModelAttempts": 127,
+        "physicalAttemptsWithUnknownUsage": 12,
+        "parentTurns": 54,
+        "recordedToolCalls": 134
+      }
+    },
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "44cc5e6659111ce0c3bc4ccb9a3f2f2987dfac5d84a3b86a3da5a6e87f39536a"
+      },
+      "packetSha256": "735c7aed821dcbfcb6c061b22a86671e3dd50e42eb3b3884b3a574c30a0ba215",
+      "performance": {
+        "elapsedMinutes": 9.4835,
+        "promptTokens": 1204936,
+        "cachedPromptTokens": 1091200,
+        "completionTokens": 28639,
+        "logicalModelRequests": 28,
+        "physicalModelAttempts": 30,
+        "physicalAttemptsWithUnknownUsage": 2,
+        "parentTurns": 28,
+        "recordedToolCalls": 48
+      }
+    },
+    {
+      "taskId": "task-03",
+      "mode": "broad",
+      "completion": 1,
+      "successfulAttempt": 2,
+      "outputHashes": {
+        "memo.md": "ac5d132ae619049480c38df218bf22d1f6c0fbf25e512733495cd02ce284926b"
+      },
+      "packetSha256": "191bcac992ecedf2df0cf4b9e2946d0b808da181dad6d14d9702cbd3ddc08c6d",
+      "performance": {
+        "elapsedMinutes": 10.27075,
+        "promptTokens": 10695145,
+        "cachedPromptTokens": 10340608,
+        "completionTokens": 129885,
+        "logicalModelRequests": 106,
+        "physicalModelAttempts": 106,
+        "physicalAttemptsWithUnknownUsage": 0,
+        "parentTurns": 52,
+        "recordedToolCalls": 129
+      }
+    },
+    {
+      "taskId": "task-04",
+      "mode": "harvey",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "0c2c091b9ac5187656b7152435bb13d1b57f57bc343b471e9ff271f7dfee820f"
+      },
+      "packetSha256": "8a8a8d30729055ec0c740cafbc4e3f458d76f39fc280e4edeb33cafb840e2c4f",
+      "performance": {
+        "elapsedMinutes": 16.618816666666667,
+        "promptTokens": 10874785,
+        "cachedPromptTokens": 9920512,
+        "completionTokens": 47739,
+        "logicalModelRequests": 33,
+        "physicalModelAttempts": 37,
+        "physicalAttemptsWithUnknownUsage": 4,
+        "parentTurns": 33,
+        "recordedToolCalls": 57
+      }
+    },
+    {
+      "taskId": "task-04",
+      "mode": "broad",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "3d7bdd182951c5bdb41f369b944d70e35ca9c8268daccbb6644959378b071d1b"
+      },
+      "packetSha256": "e303dc00edb97aaa018e9d316a81d2cb814753ca5cb78d44f1dfe71826d58c83",
+      "performance": {
+        "elapsedMinutes": 22.58195,
+        "promptTokens": 7930078,
+        "cachedPromptTokens": 7635456,
+        "completionTokens": 105647,
+        "logicalModelRequests": 75,
+        "physicalModelAttempts": 83,
+        "physicalAttemptsWithUnknownUsage": 8,
+        "parentTurns": 45,
+        "recordedToolCalls": 101
+      }
+    },
+    {
+      "taskId": "task-05",
+      "mode": "harvey",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "32e7dc425dea9f24f2c151de402c692021cc55a82b72574e1fa139235efb1f8c"
+      },
+      "packetSha256": "0f672749021293281fd774334436a1b0721046710e3c2923fa923b9ee33f40b9",
+      "performance": {
+        "elapsedMinutes": 18.8847,
+        "promptTokens": 2758390,
+        "cachedPromptTokens": 2619776,
+        "completionTokens": 66439,
+        "logicalModelRequests": 36,
+        "physicalModelAttempts": 39,
+        "physicalAttemptsWithUnknownUsage": 3,
+        "parentTurns": 36,
+        "recordedToolCalls": 64
+      }
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "7348317af200d9e52e39bac7cc823f415cbf3e943fb455ed4fa97b06aa4fd94b"
+      },
+      "packetSha256": "dbe1d18e5ef39da10ea7d0df107e5e9a2f645be3a4e78d0dd2502b721fc1a3bd",
+      "performance": {
+        "elapsedMinutes": 16.0845,
+        "promptTokens": 5781874,
+        "cachedPromptTokens": 5577088,
+        "completionTokens": 69418,
+        "logicalModelRequests": 64,
+        "physicalModelAttempts": 76,
+        "physicalAttemptsWithUnknownUsage": 14,
+        "parentTurns": 39,
+        "recordedToolCalls": 69
+      }
+    },
+    {
+      "taskId": "task-06",
+      "mode": "harvey",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "eff47f22662a7f7d786521422eb019313697f2ae0eff32cdd514df496071891f"
+      },
+      "packetSha256": "0ae15337609bb27815f281a1507ea1c311d2e1136de606b241db44f9e2195d50",
+      "performance": {
+        "elapsedMinutes": 28.07905,
+        "promptTokens": 3323956,
+        "cachedPromptTokens": 3208192,
+        "completionTokens": 119919,
+        "logicalModelRequests": 56,
+        "physicalModelAttempts": 57,
+        "physicalAttemptsWithUnknownUsage": 1,
+        "parentTurns": 56,
+        "recordedToolCalls": 92
+      }
+    },
+    {
+      "taskId": "task-06",
+      "mode": "broad",
+      "completion": 1,
+      "successfulAttempt": 1,
+      "outputHashes": {
+        "memo.md": "752f4a62e00a6ef1fbf8bae549ec0bb7898856660be002564bb5ca71b041f996"
+      },
+      "packetSha256": "15ac5a80e004d41118e0c5f4d14550c9e9aa3e4ed11425e8661156d84ca2ac9a",
+      "performance": {
+        "elapsedMinutes": 22.526233333333334,
+        "promptTokens": 12047887,
+        "cachedPromptTokens": 11675520,
+        "completionTokens": 131143,
+        "logicalModelRequests": 114,
+        "physicalModelAttempts": 120,
+        "physicalAttemptsWithUnknownUsage": 6,
+        "parentTurns": 67,
+        "recordedToolCalls": 111
+      }
+    }
+  ],
+  "performance": {
+    "harvey": {
+      "completion": {
+        "full": 1,
+        "trimmed": 1,
+        "total": 5,
+        "coverage": 5,
+        "retained": [
+          "task-03",
+          "task-04",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "elapsedMinutes": {
+        "full": 19.091313333333332,
+        "trimmed": 19.29800555555556,
+        "total": 95.45656666666666,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "promptTokens": {
+        "full": 4193591.2,
+        "trimmed": 2962745,
+        "total": 20967956,
+        "coverage": 5,
+        "retained": [
+          "task-05",
+          "task-02",
+          "task-06"
+        ],
+        "dropped": [
+          "task-03",
+          "task-04"
+        ]
+      },
+      "cachedPromptTokens": {
+        "full": 3911731.2,
+        "trimmed": 2848981.3333333335,
+        "total": 19558656,
+        "coverage": 5,
+        "retained": [
+          "task-05",
+          "task-02",
+          "task-06"
+        ],
+        "dropped": [
+          "task-03",
+          "task-04"
+        ]
+      },
+      "completionTokens": {
+        "full": 69255.6,
+        "trimmed": 65906.66666666667,
+        "total": 346278,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "logicalModelRequests": {
+        "full": 41.4,
+        "trimmed": 41,
+        "total": 207,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "physicalModelAttempts": {
+        "full": 44,
+        "trimmed": 44.333333333333336,
+        "total": 220,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "physicalAttemptsWithUnknownUsage": {
+        "full": 2.6,
+        "trimmed": 2.6666666666666665,
+        "total": 13,
+        "coverage": 5,
+        "retained": [
+          "task-03",
+          "task-02",
+          "task-05"
+        ],
+        "dropped": [
+          "task-06",
+          "task-04"
+        ]
+      },
+      "parentTurns": {
+        "full": 41.4,
+        "trimmed": 41,
+        "total": 207,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "recordedToolCalls": {
+        "full": 72.2,
+        "trimmed": 71,
+        "total": 361,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-05",
+          "task-06"
+        ],
+        "dropped": [
+          "task-03",
+          "task-02"
+        ]
+      }
+    },
+    "broad": {
+      "completion": {
+        "full": 1,
+        "trimmed": 1,
+        "total": 5,
+        "coverage": 5,
+        "retained": [
+          "task-03",
+          "task-04",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      },
+      "elapsedMinutes": {
+        "full": 18.338016666666665,
+        "trimmed": 19.612461111111113,
+        "total": 91.69008333333332,
+        "coverage": 5,
+        "retained": [
+          "task-05",
+          "task-02",
+          "task-06"
+        ],
+        "dropped": [
+          "task-03",
+          "task-04"
+        ]
+      },
+      "promptTokens": {
+        "full": 9928604.6,
+        "trimmed": 10224370,
+        "total": 49643023,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      },
+      "cachedPromptTokens": {
+        "full": 9586124.8,
+        "trimmed": 9883861.333333334,
+        "total": 47930624,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      },
+      "completionTokens": {
+        "full": 115133.8,
+        "trimmed": 122225,
+        "total": 575669,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      },
+      "logicalModelRequests": {
+        "full": 94.8,
+        "trimmed": 98.33333333333333,
+        "total": 474,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      },
+      "physicalModelAttempts": {
+        "full": 102.4,
+        "trimmed": 103,
+        "total": 512,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-06"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      },
+      "physicalAttemptsWithUnknownUsage": {
+        "full": 8,
+        "trimmed": 8.666666666666666,
+        "total": 40,
+        "coverage": 5,
+        "retained": [
+          "task-06",
+          "task-04",
+          "task-02"
+        ],
+        "dropped": [
+          "task-03",
+          "task-05"
+        ]
+      },
+      "parentTurns": {
+        "full": 51.4,
+        "trimmed": 50.333333333333336,
+        "total": 257,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-03",
+          "task-02"
+        ],
+        "dropped": [
+          "task-05",
+          "task-06"
+        ]
+      },
+      "recordedToolCalls": {
+        "full": 108.8,
+        "trimmed": 113.66666666666667,
+        "total": 544,
+        "coverage": 5,
+        "retained": [
+          "task-04",
+          "task-06",
+          "task-03"
+        ],
+        "dropped": [
+          "task-05",
+          "task-02"
+        ]
+      }
+    }
+  },
+  "independent": {
+    "paired": [
+      {
+        "taskId": "task-02",
+        "harvey": {
+          "quality": 0.9142857142857144,
+          "accuracy": 0.8899999999999999,
+          "completeness": 0.9799999999999999,
+          "overallPerformance": 0.9185714285714287,
+          "criterionPass": 1,
+          "criteria": 7,
+          "passed": 7,
+          "sourceComplianceFailures": [
+            "02-1",
+            "02-2",
+            "02-3"
+          ]
+        },
+        "broad": {
+          "quality": 0.8014285714285715,
+          "accuracy": 0.7885714285714286,
+          "completeness": 0.9,
+          "overallPerformance": 0.8057142857142857,
+          "criterionPass": 0.5714285714285714,
+          "criteria": 7,
+          "passed": 4,
+          "sourceComplianceFailures": [
+            "02-1"
+          ]
+        }
+      },
+      {
+        "taskId": "task-03",
+        "harvey": {
+          "quality": 0.89,
+          "accuracy": 0.9500000000000001,
+          "completeness": 0.8916666666666666,
+          "overallPerformance": 0.8850000000000001,
+          "criterionPass": 0.6666666666666666,
+          "criteria": 6,
+          "passed": 4,
+          "sourceComplianceFailures": [
+            "03-4"
+          ]
+        },
+        "broad": {
+          "quality": 0.9566666666666667,
+          "accuracy": 0.9866666666666667,
+          "completeness": 0.9533333333333333,
+          "overallPerformance": 0.9616666666666666,
+          "criterionPass": 0.8333333333333334,
+          "criteria": 6,
+          "passed": 5,
+          "sourceComplianceFailures": []
+        }
+      },
+      {
+        "taskId": "task-04",
+        "harvey": {
+          "quality": 0.97,
+          "accuracy": 0.975,
+          "completeness": 1,
+          "overallPerformance": 0.97625,
+          "criterionPass": 1,
+          "criteria": 8,
+          "passed": 8,
+          "sourceComplianceFailures": []
+        },
+        "broad": {
+          "quality": 0.9525000000000001,
+          "accuracy": 0.955,
+          "completeness": 0.99375,
+          "overallPerformance": 0.95625,
+          "criterionPass": 0.875,
+          "criteria": 8,
+          "passed": 7,
+          "sourceComplianceFailures": []
+        }
+      },
+      {
+        "taskId": "task-05",
+        "harvey": {
+          "quality": 0.9333333333333335,
+          "accuracy": 0.9266666666666667,
+          "completeness": 0.9683333333333334,
+          "overallPerformance": 0.9366666666666666,
+          "criterionPass": 0.8333333333333334,
+          "criteria": 6,
+          "passed": 5,
+          "sourceComplianceFailures": []
+        },
+        "broad": {
+          "quality": 0.8583333333333334,
+          "accuracy": 0.8883333333333333,
+          "completeness": 0.8616666666666667,
+          "overallPerformance": 0.86,
+          "criterionPass": 0.6666666666666666,
+          "criteria": 6,
+          "passed": 4,
+          "sourceComplianceFailures": [
+            "05-5"
+          ]
+        }
+      },
+      {
+        "taskId": "task-06",
+        "harvey": {
+          "quality": 0.9075,
+          "accuracy": 0.8875,
+          "completeness": 1,
+          "overallPerformance": 0.9225000000000001,
+          "criterionPass": 1,
+          "criteria": 4,
+          "passed": 4,
+          "sourceComplianceFailures": []
+        },
+        "broad": {
+          "quality": 0.9425,
+          "accuracy": 0.9424999999999999,
+          "completeness": 1,
+          "overallPerformance": 0.9550000000000001,
+          "criterionPass": 1,
+          "criteria": 4,
+          "passed": 4,
+          "sourceComplianceFailures": []
+        }
+      }
+    ],
+    "summaries": {
+      "harvey": {
+        "quality": {
+          "full": 0.9230238095238095,
+          "trimmed": 0.918373015873016,
+          "retained": [
+            "task-06",
+            "task-02",
+            "task-05"
+          ],
+          "dropped": [
+            "task-03",
+            "task-04"
+          ]
+        },
+        "accuracy": {
+          "full": 0.9258333333333333,
+          "trimmed": 0.9222222222222222,
+          "retained": [
+            "task-02",
+            "task-05",
+            "task-03"
+          ],
+          "dropped": [
+            "task-06",
+            "task-04"
+          ]
+        },
+        "completeness": {
+          "full": 0.968,
+          "trimmed": 0.9827777777777778,
+          "retained": [
+            "task-05",
+            "task-02",
+            "task-04"
+          ],
+          "dropped": [
+            "task-03",
+            "task-06"
+          ]
+        },
+        "overallPerformance": {
+          "full": 0.9277976190476191,
+          "trimmed": 0.9259126984126985,
+          "retained": [
+            "task-02",
+            "task-06",
+            "task-05"
+          ],
+          "dropped": [
+            "task-03",
+            "task-04"
+          ]
+        },
+        "criterionPass": {
+          "full": 0.9,
+          "trimmed": 0.9444444444444445,
+          "retained": [
+            "task-05",
+            "task-02",
+            "task-04"
+          ],
+          "dropped": [
+            "task-03",
+            "task-06"
+          ]
+        }
+      },
+      "broad": {
+        "quality": {
+          "full": 0.9022857142857144,
+          "trimmed": 0.9177777777777778,
+          "retained": [
+            "task-05",
+            "task-06",
+            "task-04"
+          ],
+          "dropped": [
+            "task-02",
+            "task-03"
+          ]
+        },
+        "accuracy": {
+          "full": 0.9122142857142856,
+          "trimmed": 0.928611111111111,
+          "retained": [
+            "task-05",
+            "task-06",
+            "task-04"
+          ],
+          "dropped": [
+            "task-02",
+            "task-03"
+          ]
+        },
+        "completeness": {
+          "full": 0.9417500000000001,
+          "trimmed": 0.9490277777777778,
+          "retained": [
+            "task-02",
+            "task-03",
+            "task-04"
+          ],
+          "dropped": [
+            "task-05",
+            "task-06"
+          ]
+        },
+        "overallPerformance": {
+          "full": 0.9077261904761904,
+          "trimmed": 0.9237500000000001,
+          "retained": [
+            "task-05",
+            "task-06",
+            "task-04"
+          ],
+          "dropped": [
+            "task-02",
+            "task-03"
+          ]
+        },
+        "criterionPass": {
+          "full": 0.7892857142857144,
+          "trimmed": 0.7916666666666666,
+          "retained": [
+            "task-05",
+            "task-03",
+            "task-04"
+          ],
+          "dropped": [
+            "task-02",
+            "task-06"
+          ]
+        }
+      }
+    },
+    "criterionScores": [
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-1",
+        "quality": 0.85,
+        "accuracy": 0.9,
+        "completeness": 0.95,
+        "overallPerformance": 0.88,
+        "criterionPass": 1,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-2",
+        "quality": 0.92,
+        "accuracy": 0.9,
+        "completeness": 0.98,
+        "overallPerformance": 0.92,
+        "criterionPass": 1,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-3",
+        "quality": 0.88,
+        "accuracy": 0.87,
+        "completeness": 0.95,
+        "overallPerformance": 0.88,
+        "criterionPass": 1,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-4",
+        "quality": 0.94,
+        "accuracy": 0.9,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-5",
+        "quality": 0.91,
+        "accuracy": 0.82,
+        "completeness": 0.98,
+        "overallPerformance": 0.9,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-6",
+        "quality": 0.95,
+        "accuracy": 0.93,
+        "completeness": 1,
+        "overallPerformance": 0.96,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "criterionId": "02-7",
+        "quality": 0.95,
+        "accuracy": 0.91,
+        "completeness": 1,
+        "overallPerformance": 0.95,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-1",
+        "quality": 0.9,
+        "accuracy": 0.92,
+        "completeness": 0.96,
+        "overallPerformance": 0.91,
+        "criterionPass": 1,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-2",
+        "quality": 0.76,
+        "accuracy": 0.73,
+        "completeness": 0.87,
+        "overallPerformance": 0.76,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-3",
+        "quality": 0.6,
+        "accuracy": 0.55,
+        "completeness": 0.77,
+        "overallPerformance": 0.59,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-4",
+        "quality": 0.94,
+        "accuracy": 0.92,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-5",
+        "quality": 0.86,
+        "accuracy": 0.9,
+        "completeness": 0.94,
+        "overallPerformance": 0.88,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-6",
+        "quality": 0.59,
+        "accuracy": 0.54,
+        "completeness": 0.76,
+        "overallPerformance": 0.59,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "criterionId": "02-7",
+        "quality": 0.96,
+        "accuracy": 0.96,
+        "completeness": 1,
+        "overallPerformance": 0.97,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-1",
+        "quality": 0.96,
+        "accuracy": 0.98,
+        "completeness": 1,
+        "overallPerformance": 0.98,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-2",
+        "quality": 0.98,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-3",
+        "quality": 0.98,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-4",
+        "quality": 0.87,
+        "accuracy": 0.94,
+        "completeness": 0.75,
+        "overallPerformance": 0.84,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-5",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "not_required"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "03-6",
+        "quality": 0.95,
+        "accuracy": 1,
+        "completeness": 0.97,
+        "overallPerformance": 0.97,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-1",
+        "quality": 0.9,
+        "accuracy": 0.9,
+        "completeness": 1,
+        "overallPerformance": 0.93,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-2",
+        "quality": 0.95,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.97,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-3",
+        "quality": 0.95,
+        "accuracy": 0.9,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-4",
+        "quality": 0.7,
+        "accuracy": 1,
+        "completeness": 0.5,
+        "overallPerformance": 0.62,
+        "criterionPass": 0,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-5",
+        "quality": 0.92,
+        "accuracy": 1,
+        "completeness": 0.85,
+        "overallPerformance": 0.91,
+        "criterionPass": 0,
+        "sourceCompliance": "not_required"
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "03-6",
+        "quality": 0.92,
+        "accuracy": 0.9,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-1",
+        "quality": 0.93,
+        "accuracy": 0.88,
+        "completeness": 0.95,
+        "overallPerformance": 0.9,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-2",
+        "quality": 0.98,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-3",
+        "quality": 0.98,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-4",
+        "quality": 0.96,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.98,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-8",
+        "quality": 0.97,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-5",
+        "quality": 0.99,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-6",
+        "quality": 0.82,
+        "accuracy": 0.76,
+        "completeness": 1,
+        "overallPerformance": 0.82,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "04-7",
+        "quality": 0.99,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-1",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-2",
+        "quality": 0.99,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-3",
+        "quality": 0.92,
+        "accuracy": 0.91,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-4",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-8",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-5",
+        "quality": 0.99,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-6",
+        "quality": 0.92,
+        "accuracy": 0.96,
+        "completeness": 1,
+        "overallPerformance": 0.94,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "04-7",
+        "quality": 0.94,
+        "accuracy": 0.93,
+        "completeness": 1,
+        "overallPerformance": 0.95,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-1",
+        "quality": 0.99,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 0.99,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-2",
+        "quality": 0.97,
+        "accuracy": 1,
+        "completeness": 0.98,
+        "overallPerformance": 0.98,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-3",
+        "quality": 0.77,
+        "accuracy": 0.79,
+        "completeness": 0.77,
+        "overallPerformance": 0.78,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-4",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-5",
+        "quality": 0.5,
+        "accuracy": 0.63,
+        "completeness": 0.46,
+        "overallPerformance": 0.49,
+        "criterionPass": 0,
+        "sourceCompliance": "not_satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "05-6",
+        "quality": 0.92,
+        "accuracy": 0.91,
+        "completeness": 0.96,
+        "overallPerformance": 0.92,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-1",
+        "quality": 0.92,
+        "accuracy": 0.91,
+        "completeness": 1,
+        "overallPerformance": 0.93,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-2",
+        "quality": 0.96,
+        "accuracy": 0.96,
+        "completeness": 1,
+        "overallPerformance": 0.97,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-3",
+        "quality": 0.95,
+        "accuracy": 0.94,
+        "completeness": 1,
+        "overallPerformance": 0.95,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-4",
+        "quality": 1,
+        "accuracy": 1,
+        "completeness": 1,
+        "overallPerformance": 1,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-5",
+        "quality": 0.81,
+        "accuracy": 0.8,
+        "completeness": 0.83,
+        "overallPerformance": 0.81,
+        "criterionPass": 0,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "05-6",
+        "quality": 0.96,
+        "accuracy": 0.95,
+        "completeness": 0.98,
+        "overallPerformance": 0.96,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "06-1",
+        "quality": 0.97,
+        "accuracy": 0.98,
+        "completeness": 1,
+        "overallPerformance": 0.98,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "06-2",
+        "quality": 0.96,
+        "accuracy": 0.97,
+        "completeness": 1,
+        "overallPerformance": 0.97,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "06-4",
+        "quality": 0.94,
+        "accuracy": 0.94,
+        "completeness": 1,
+        "overallPerformance": 0.96,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "amber",
+        "mode": "broad",
+        "criterionId": "06-5",
+        "quality": 0.9,
+        "accuracy": 0.88,
+        "completeness": 1,
+        "overallPerformance": 0.91,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "06-1",
+        "quality": 0.97,
+        "accuracy": 0.98,
+        "completeness": 1,
+        "overallPerformance": 0.98,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "06-2",
+        "quality": 0.89,
+        "accuracy": 0.86,
+        "completeness": 1,
+        "overallPerformance": 0.91,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "06-4",
+        "quality": 0.91,
+        "accuracy": 0.9,
+        "completeness": 1,
+        "overallPerformance": 0.93,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      },
+      {
+        "taskId": "task-06",
+        "alias": "slate",
+        "mode": "harvey",
+        "criterionId": "06-5",
+        "quality": 0.86,
+        "accuracy": 0.81,
+        "completeness": 1,
+        "overallPerformance": 0.87,
+        "criterionPass": 1,
+        "sourceCompliance": "satisfied"
+      }
+    ],
+    "pooledCriteria": {
+      "harvey": {
+        "passed": 28,
+        "total": 31
+      },
+      "broad": {
+        "passed": 24,
+        "total": 31
+      }
+    }
+  },
+  "jev": {
+    "paired": [
+      {
+        "taskId": "task-02",
+        "harvey": {
+          "quality": 0.9614285714285715,
+          "accuracy": 0.8938095238095238,
+          "completeness": 0.9738095238095238,
+          "criterionPass": 1,
+          "criteria": 7,
+          "resolved": 7,
+          "accuracyCoverage": 7,
+          "unresolved": 0,
+          "failures": 0
+        },
+        "broad": {
+          "quality": 0.9495238095238095,
+          "accuracy": 0.8566666666666666,
+          "completeness": 0.9614285714285715,
+          "criterionPass": 1,
+          "criteria": 7,
+          "resolved": 7,
+          "accuracyCoverage": 7,
+          "unresolved": 0,
+          "failures": 0
+        }
+      },
+      {
+        "taskId": "task-03",
+        "harvey": {
+          "quality": 0.9538888888888889,
+          "accuracy": 0.9116666666666666,
+          "completeness": 0.9688888888888889,
+          "criterionPass": 1,
+          "criteria": 6,
+          "resolved": 6,
+          "accuracyCoverage": 6,
+          "unresolved": 0,
+          "failures": 0
+        },
+        "broad": {
+          "quality": 0.9733333333333333,
+          "accuracy": 0.8605555555555555,
+          "completeness": 0.9805555555555556,
+          "criterionPass": 1,
+          "criteria": 6,
+          "resolved": 6,
+          "accuracyCoverage": 6,
+          "unresolved": 0,
+          "failures": 0
+        }
+      },
+      {
+        "taskId": "task-04",
+        "harvey": {
+          "quality": 0.9450000000000001,
+          "accuracy": 0.9329166666666667,
+          "completeness": 0.9562499999999999,
+          "criterionPass": 1,
+          "criteria": 8,
+          "resolved": 8,
+          "accuracyCoverage": 8,
+          "unresolved": 0,
+          "failures": 0
+        },
+        "broad": {
+          "quality": 0.9175,
+          "accuracy": 0.9154166666666665,
+          "completeness": 0.9458333333333333,
+          "criterionPass": 1,
+          "criteria": 8,
+          "resolved": 8,
+          "accuracyCoverage": 8,
+          "unresolved": 0,
+          "failures": 0
+        }
+      },
+      {
+        "taskId": "task-05",
+        "harvey": {
+          "quality": 0.9672222222222223,
+          "accuracy": 0.8966666666666666,
+          "completeness": 0.9666666666666668,
+          "criterionPass": 1,
+          "criteria": 6,
+          "resolved": 6,
+          "accuracyCoverage": 6,
+          "unresolved": 0,
+          "failures": 0
+        },
+        "broad": {
+          "quality": 0.9527777777777778,
+          "accuracy": 0.9144444444444444,
+          "completeness": 0.9633333333333334,
+          "criterionPass": 1,
+          "criteria": 6,
+          "resolved": 6,
+          "accuracyCoverage": 6,
+          "unresolved": 0,
+          "failures": 0
+        }
+      },
+      {
+        "taskId": "task-06",
+        "harvey": {
+          "quality": 0.9750000000000001,
+          "accuracy": 0.8841666666666668,
+          "completeness": 0.9816666666666667,
+          "criterionPass": 1,
+          "criteria": 4,
+          "resolved": 4,
+          "accuracyCoverage": 4,
+          "unresolved": 0,
+          "failures": 0
+        },
+        "broad": {
+          "quality": 0.9791666666666667,
+          "accuracy": 0.8833333333333333,
+          "completeness": 0.9841666666666667,
+          "criterionPass": 1,
+          "criteria": 4,
+          "resolved": 4,
+          "accuracyCoverage": 4,
+          "unresolved": 0,
+          "failures": 0
+        }
+      }
+    ],
+    "summaries": {
+      "harvey": {
+        "quality": {
+          "full": 0.9605079365079365,
+          "coverage": 5,
+          "trimmed": 0.960846560846561,
+          "retained": [
+            "task-03",
+            "task-02",
+            "task-05"
+          ],
+          "dropped": [
+            "task-04",
+            "task-06"
+          ]
+        },
+        "accuracy": {
+          "full": 0.903845238095238,
+          "coverage": 5,
+          "trimmed": 0.9007142857142857,
+          "retained": [
+            "task-02",
+            "task-05",
+            "task-03"
+          ],
+          "dropped": [
+            "task-06",
+            "task-04"
+          ]
+        },
+        "completeness": {
+          "full": 0.9694563492063493,
+          "coverage": 5,
+          "trimmed": 0.9697883597883599,
+          "retained": [
+            "task-05",
+            "task-03",
+            "task-02"
+          ],
+          "dropped": [
+            "task-04",
+            "task-06"
+          ]
+        },
+        "criterionPass": {
+          "full": 1,
+          "coverage": 5,
+          "trimmed": 1,
+          "retained": [
+            "task-03",
+            "task-04",
+            "task-05"
+          ],
+          "dropped": [
+            "task-02",
+            "task-06"
+          ]
+        }
+      },
+      "broad": {
+        "quality": {
+          "full": 0.9544603174603175,
+          "coverage": 5,
+          "trimmed": 0.9585449735449735,
+          "retained": [
+            "task-02",
+            "task-05",
+            "task-03"
+          ],
+          "dropped": [
+            "task-04",
+            "task-06"
+          ]
+        },
+        "accuracy": {
+          "full": 0.8860833333333332,
+          "coverage": 5,
+          "trimmed": 0.8861111111111111,
+          "retained": [
+            "task-03",
+            "task-06",
+            "task-05"
+          ],
+          "dropped": [
+            "task-02",
+            "task-04"
+          ]
+        },
+        "completeness": {
+          "full": 0.9670634920634921,
+          "coverage": 5,
+          "trimmed": 0.9684391534391535,
+          "retained": [
+            "task-02",
+            "task-05",
+            "task-03"
+          ],
+          "dropped": [
+            "task-04",
+            "task-06"
+          ]
+        },
+        "criterionPass": {
+          "full": 1,
+          "coverage": 5,
+          "trimmed": 1,
+          "retained": [
+            "task-03",
+            "task-04",
+            "task-05"
+          ],
+          "dropped": [
+            "task-02",
+            "task-06"
+          ]
+        }
+      }
+    },
+    "alignment": "pending independent Capy/human review"
+  },
+  "rootDispositions": [
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-2",
+      "pass": false,
+      "category": "operative-priority",
+      "disputed": true,
+      "reason": "The initial request to fill the refund row is weakened by allocation-or-solidarity alternatives and the operative post-publication dependency. The mandatory final-project correction is not reliably imposed before closing."
+    },
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-3",
+      "pass": false,
+      "category": "legal-scope",
+      "disputed": false,
+      "reason": "The elected statutory-transfer explanation does not qualify the later blanket creditor-consent gate, and the required partial/full-estate statutory tension is omitted."
+    },
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-6",
+      "pass": false,
+      "category": "operative-voting-rule",
+      "disputed": false,
+      "reason": "The amendment gate mixes ordinary SARL majority rules into adoption and does not qualify the default threshold by the articles."
+    },
+    {
+      "taskId": "task-03",
+      "mode": "broad",
+      "criterionId": "03-4",
+      "pass": false,
+      "category": "authority-description",
+      "disputed": true,
+      "reason": "Substantive advice and the comparative Belgian limitation are correct, but the express requirement to identify judicial precedent discussed by the Luxembourg manual is not satisfied by a doctrine label."
+    },
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "criterionId": "03-4",
+      "pass": false,
+      "category": "authority-description",
+      "disputed": true,
+      "reason": "The substantive reserve/interim distinction is correct, but the required Belgian judicial precedent and its source-host description are absent."
+    },
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "criterionId": "03-5",
+      "pass": false,
+      "category": "workpaper-presentation",
+      "disputed": true,
+      "reason": "Every displayed calculation is correct, but the expressly requested combined EUR 12,000 unsupported total is not presented. This is not an arithmetic error or a second legal-classification penalty."
+    },
+    {
+      "taskId": "task-04",
+      "mode": "broad",
+      "criterionId": "04-6",
+      "pass": false,
+      "category": "dated-operative-test",
+      "disputed": true,
+      "reason": "The present advisory-vote hold is safe, but the operative SME qualification row uses superseded numerical thresholds. Full supplied amendment footnotes establish the date-applicable truth, not consultation."
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "criterionId": "05-3",
+      "pass": false,
+      "category": "mandatory-distinction",
+      "disputed": true,
+      "reason": "Correct conditional listed-company advice does not supply the mandatory unlisted-remuneration contrast; a categorical denial of relevant remuneration doctrine is contradicted by supplied corpus evidence."
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "criterionId": "05-5",
+      "pass": false,
+      "category": "current-law-repair",
+      "disputed": false,
+      "reason": "The signature shortcut is rejected, but the current consolidated statutory splitting-State choice rule and pinpoint are missing. Received historical quotations are not a current statutory repair."
+    },
+    {
+      "taskId": "task-05",
+      "mode": "harvey",
+      "criterionId": "05-5",
+      "pass": false,
+      "category": "cross-border-scope",
+      "disputed": true,
+      "reason": "The European statutory advice is correct, but the broader claim that no Luxembourg rule exists outside that scope conflicts with the supplied unqualified cross-border choice rule. No third-country eligibility permission is inferred."
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "criterionId": "05-6",
+      "pass": true,
+      "category": "corrected-receipt-traceability",
+      "disputed": false,
+      "reason": "Recovered parent-visible clauses supply relevant traceable authority. The previous absence rationale is withdrawn. The separate current-law defect belongs to 05-5 and is not charged twice."
+    },
+    {
+      "taskId": "task-05",
+      "mode": "harvey",
+      "criterionId": "05-6",
+      "pass": true,
+      "category": "receipt-traceability",
+      "disputed": false,
+      "reason": "Core affirmative conclusions have visible support. Citation-specific method/version and scope weaknesses reduce accuracy without duplicating 05-1 or 05-5 failures."
+    }
+  ],
+  "passDisagreements": [
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-2",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-3",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-02",
+      "mode": "broad",
+      "criterionId": "02-6",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-03",
+      "mode": "broad",
+      "criterionId": "03-4",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "criterionId": "03-4",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-03",
+      "mode": "harvey",
+      "criterionId": "03-5",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-04",
+      "mode": "broad",
+      "criterionId": "04-6",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "criterionId": "05-3",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-05",
+      "mode": "broad",
+      "criterionId": "05-5",
+      "jevPass": true,
+      "independentPass": false
+    },
+    {
+      "taskId": "task-05",
+      "mode": "harvey",
+      "criterionId": "05-5",
+      "jevPass": true,
+      "independentPass": false
+    }
+  ],
+  "alignment": {
+    "status": "independent review completed; consequential disagreements root reconciled under the full frozen requirements",
+    "automatedAllPassAccepted": false,
+    "disagreements": 10,
+    "scoresBlended": false
+  },
+  "ambiguitySensitivity": {
+    "cases": [
+      {
+        "taskId": "task-02",
+        "mode": "broad",
+        "criterionId": "02-2",
+        "category": "operative-priority"
+      },
+      {
+        "taskId": "task-03",
+        "mode": "broad",
+        "criterionId": "03-4",
+        "category": "authority-description"
+      },
+      {
+        "taskId": "task-03",
+        "mode": "harvey",
+        "criterionId": "03-4",
+        "category": "authority-description"
+      },
+      {
+        "taskId": "task-03",
+        "mode": "harvey",
+        "criterionId": "03-5",
+        "category": "workpaper-presentation"
+      },
+      {
+        "taskId": "task-04",
+        "mode": "broad",
+        "criterionId": "04-6",
+        "category": "dated-operative-test"
+      },
+      {
+        "taskId": "task-05",
+        "mode": "broad",
+        "criterionId": "05-3",
+        "category": "mandatory-distinction"
+      },
+      {
+        "taskId": "task-05",
+        "mode": "harvey",
+        "criterionId": "05-5",
+        "category": "cross-border-scope"
+      }
+    ],
+    "allDisputedPassUpperIllustration": {
+      "harvey": {
+        "full": 1,
+        "trimmed": 1,
+        "description": "Illustrative upper sensitivity only if every listed disputed Boolean obligation is resolved in the system's favor; not adopted grading or adjusted continuous scores."
+      },
+      "broad": {
+        "full": 0.9095238095238095,
+        "trimmed": 0.9444444444444443,
+        "description": "Illustrative upper sensitivity only if every listed disputed Boolean obligation is resolved in the system's favor; not adopted grading or adjusted continuous scores."
+      }
+    },
+    "continuousMetrics": "No scores adjusted by the Boolean sensitivity illustration; corrected independent direct 0–1 scores remain the reported measurements."
+  },
+  "replay": {
+    "policy": "parent-visible-findings-v3 explicit historical regrade override; unchanged producer-v2/default and Harvey extraction",
+    "arms": [
+      {
+        "taskId": "task-02",
+        "alias": "amber",
+        "mode": "harvey",
+        "outputHashes": {
+          "memo.md": "0bcdc082fe72e6ede178f3b693109fcd2782c44c56e26c1919084f08a7f0b2c2"
+        },
+        "priorCaptures": 192,
+        "correctedCaptures": 192,
+        "recoveredCaptures": 0,
+        "recoveredCharacters": 0,
+        "packetSha256": "3f084008af79963c5992ce08263597fb36514bb6d7f63538e67394afa9ac0188",
+        "replaySha256": "5bcc89850291ab630b3e4597b527b97181a0445c20e70028844cbff88afd8935",
+        "quoteAuditEntries": 0
+      },
+      {
+        "taskId": "task-02",
+        "alias": "slate",
+        "mode": "broad",
+        "outputHashes": {
+          "memo.md": "349054dabecdfcc0c8044e0f28fb255e0952b775a09baa5b90c636b601b1d0c5"
+        },
+        "priorCaptures": 98,
+        "correctedCaptures": 109,
+        "recoveredCaptures": 11,
+        "recoveredCharacters": 2817,
+        "packetSha256": "0a8af59f40c185d617720b47a932a80fdc6b27f3996cb5ebd5e2981f2a05c71f",
+        "replaySha256": "e98f578f6fe9271450d9f80eae70e913fb20cabaa27977b039a7f72dfbb9df66",
+        "quoteAuditEntries": 11
+      },
+      {
+        "taskId": "task-03",
+        "alias": "amber",
+        "mode": "broad",
+        "outputHashes": {
+          "memo.md": "ac5d132ae619049480c38df218bf22d1f6c0fbf25e512733495cd02ce284926b"
+        },
+        "priorCaptures": 54,
+        "correctedCaptures": 78,
+        "recoveredCaptures": 24,
+        "recoveredCharacters": 3000,
+        "packetSha256": "191bcac992ecedf2df0cf4b9e2946d0b808da181dad6d14d9702cbd3ddc08c6d",
+        "replaySha256": "367c54953a9ea2c21be6b5141bf8ab5994964b8632bc8a89b8703a1c38b167b0",
+        "quoteAuditEntries": 27
+      },
+      {
+        "taskId": "task-03",
+        "alias": "slate",
+        "mode": "harvey",
+        "outputHashes": {
+          "memo.md": "44cc5e6659111ce0c3bc4ccb9a3f2f2987dfac5d84a3b86a3da5a6e87f39536a"
+        },
+        "priorCaptures": 44,
+        "correctedCaptures": 44,
+        "recoveredCaptures": 0,
+        "recoveredCharacters": 0,
+        "packetSha256": "735c7aed821dcbfcb6c061b22a86671e3dd50e42eb3b3884b3a574c30a0ba215",
+        "replaySha256": "fdbeabe7830a144a09e80a4939764da179b2cc6745632fcb89e4c18f4101306f",
+        "quoteAuditEntries": 0
+      },
+      {
+        "taskId": "task-04",
+        "alias": "amber",
+        "mode": "broad",
+        "outputHashes": {
+          "memo.md": "3d7bdd182951c5bdb41f369b944d70e35ca9c8268daccbb6644959378b071d1b"
+        },
+        "priorCaptures": 70,
+        "correctedCaptures": 72,
+        "recoveredCaptures": 2,
+        "recoveredCharacters": 138,
+        "packetSha256": "e303dc00edb97aaa018e9d316a81d2cb814753ca5cb78d44f1dfe71826d58c83",
+        "replaySha256": "5fa54174fb46c75a8976fd5652771e098edc52083981275a815fcecec18d0ad7",
+        "quoteAuditEntries": 6
+      },
+      {
+        "taskId": "task-04",
+        "alias": "slate",
+        "mode": "harvey",
+        "outputHashes": {
+          "memo.md": "0c2c091b9ac5187656b7152435bb13d1b57f57bc343b471e9ff271f7dfee820f"
+        },
+        "priorCaptures": 62,
+        "correctedCaptures": 62,
+        "recoveredCaptures": 0,
+        "recoveredCharacters": 0,
+        "packetSha256": "8a8a8d30729055ec0c740cafbc4e3f458d76f39fc280e4edeb33cafb840e2c4f",
+        "replaySha256": "afa2ab112c25e2e58b8c7aee816238749e17700c21ec412d8cb1e9087bb8ae2b",
+        "quoteAuditEntries": 0
+      },
+      {
+        "taskId": "task-05",
+        "alias": "amber",
+        "mode": "broad",
+        "outputHashes": {
+          "memo.md": "7348317af200d9e52e39bac7cc823f415cbf3e943fb455ed4fa97b06aa4fd94b"
+        },
+        "priorCaptures": 91,
+        "correctedCaptures": 101,
+        "recoveredCaptures": 10,
+        "recoveredCharacters": 2039,
+        "packetSha256": "dbe1d18e5ef39da10ea7d0df107e5e9a2f645be3a4e78d0dd2502b721fc1a3bd",
+        "replaySha256": "d3b70cad030366b86d54ee1b062ef205da33d41a6a96edfdf473b8d392df6ec7",
+        "quoteAuditEntries": 7
+      },
+      {
+        "taskId": "task-05",
+        "alias": "slate",
+        "mode": "harvey",
+        "outputHashes": {
+          "memo.md": "32e7dc425dea9f24f2c151de402c692021cc55a82b72574e1fa139235efb1f8c"
+        },
+        "priorCaptures": 337,
+        "correctedCaptures": 337,
+        "recoveredCaptures": 0,
+        "recoveredCharacters": 0,
+        "packetSha256": "0f672749021293281fd774334436a1b0721046710e3c2923fa923b9ee33f40b9",
+        "replaySha256": "23ebdc216f660680af45bad79fc2e5c7b3814e674c379e9aa1231867ecfce056",
+        "quoteAuditEntries": 0
+      },
+      {
+        "taskId": "task-06",
+        "alias": "amber",
+        "mode": "broad",
+        "outputHashes": {
+          "memo.md": "752f4a62e00a6ef1fbf8bae549ec0bb7898856660be002564bb5ca71b041f996"
+        },
+        "priorCaptures": 26,
+        "correctedCaptures": 42,
+        "recoveredCaptures": 16,
+        "recoveredCharacters": 2188,
+        "packetSha256": "15ac5a80e004d41118e0c5f4d14550c9e9aa3e4ed11425e8661156d84ca2ac9a",
+        "replaySha256": "3ced73762979e52d0d645dd892c0acda0ebfb138cb7cee27e097a800b2537764",
+        "quoteAuditEntries": 17
+      },
+      {
+        "taskId": "task-06",
+        "alias": "slate",
+        "mode": "harvey",
+        "outputHashes": {
+          "memo.md": "eff47f22662a7f7d786521422eb019313697f2ae0eff32cdd514df496071891f"
+        },
+        "priorCaptures": 155,
+        "correctedCaptures": 155,
+        "recoveredCaptures": 0,
+        "recoveredCharacters": 0,
+        "packetSha256": "0ae15337609bb27815f281a1507ea1c311d2e1136de606b241db44f9e2195d50",
+        "replaySha256": "5c3c45740edbee8c5242b5dbfb44774a18b747ee445b4a35c0b79a582678cc0b",
+        "quoteAuditEntries": 0
+      }
+    ],
+    "recoveredOpulentCaptures": 63,
+    "recoveredOpulentCharacters": 10182,
+    "task05Clauses": [
+      {
+        "sourceId": "doc-02:s0043:c158",
+        "canonicalStart": 1772,
+        "canonicalEnd": 1824,
+        "stdoutStart": 5426,
+        "stdoutEnd": 5478
+      },
+      {
+        "sourceId": "doc-02:s0034:c6",
+        "canonicalStart": 2096,
+        "canonicalEnd": 2176,
+        "stdoutStart": 7105,
+        "stdoutEnd": 7185
+      }
+    ],
+    "causalAttribution": "Fresh judge variability is not causal evidence of replay improvement. All 31 Harvey requests were unchanged, all 31 Opulent requests changed; neither arm's Jev pass decisions changed."
+  },
+  "retryAudit": [
+    {
+      "taskId": "task-03",
+      "mode": "broad",
+      "attempt": 1,
+      "status": "failed",
+      "stage": "deliverable",
+      "startedAt": "2026-10-03T20:09:39.573Z",
+      "endedAt": "2026-10-03T20:12:36.796Z"
+    }
+  ],
+  "limitations": [
+    "Harvey is the pinned public LAB harness, not proprietary hosted Harvey.",
+    "Five task pairs are descriptive evidence, not a statistically established general winner.",
+    "The initial ten arms ran concurrently; the final Opulent task-03 retry ran with only that unfinished arm active, so its latency has different provider load.",
+    "Known native token usage excludes unreturned usage on physical failed/retried provider requests. Native dollar charges and E2B costs are not measured.",
+    "Polygres is repository provenance architecture, not a verified live database connection. Hosted MCP, storage and other unavailable integrations were not faked.",
+    "RLM state reads and completed child VMs do not imply every completed child report was read in full or critically assessed. Some printed report slices and kernel stdout were truncated; no blanket complete-adoption claim is made.",
+    "Supplementary task-04 truth reconciliation supplies full canonical amendment footnotes without crediting those hidden bodies as answerer consultation.",
+    "Original Jev pass decisions remain visible where the independent output/source review disagrees; scores from different judges are not averaged.",
+    "The fresh child/RLM delivery recheck proves relevant canonical quotations reached the parent but were omitted from its grading packet; the 05-6 absence rationale and semantic aggregate conclusion are not final.",
+    "This historical regrade does not measure the separately versioned delivery-v9 runtime or establish screenshot-coordinate actuation.",
+    "Strict Boolean failures include explicitly documented presentation and authority-description disputes; they must not be described as ten material legal errors.",
+    "The five-pair sample does not establish statistical superiority, general legal competence or lawyer sign-off."
+  ]
+}
