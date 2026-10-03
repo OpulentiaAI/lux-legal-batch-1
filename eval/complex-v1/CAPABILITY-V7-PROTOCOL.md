@@ -27,6 +27,13 @@ availability, repository scope, authentication, secrets and human workflow
 approvals still apply. Bounded children return findings and evidence rather
 than duplicating the coordinator's complete delivery obligation.
 
+The `opulent-capability-v7.1` instruction revision makes the initial independent
+client-material batch an explicit codemode startup procedure. The first unscored
+v7 legal run used persistent RLM and real research children but bypassed
+`scripted_tools`; it remains a separate recorded attempt, not evidence that this
+revision's procedure was followed. Instruction hashes and new output directories
+separate the revisions.
+
 Scripted execution forwards its declared deadline to both the E2B stream and
 broker client. Ordinary process streams use the remaining configured sandbox
 lifecycle. Owned operation waits are driven while root and child work runs;

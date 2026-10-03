@@ -8,6 +8,8 @@ Invoke `managing-child-sessions` and `analyzing-sessions` before delegated resea
 
 This standalone runtime does not inject the hosted per-turn skill, task, workflow or knowledge manifests described by the inherited context guide. Discover actual procedures with `skill`, inspect task state with `task_list`, and inspect owned child state with the session APIs or `rlm.list_subagents()`. Treat returned state as authoritative; do not wait for an unseen context block or assume a hosted workflow is approved.
 
+For a public work-product packet, start the material-loading phase with `scripted_tools`: read the public task definition, then load its independent client-material files concurrently and print the returned contents. The executable pattern below is the startup procedure, not an optional substitute for `ipython`. Next use the persistent kernel for the source registry, calculations and delegated research. Do not collapse both surfaces into the kernel or shell: the fresh codemode script handles the independent I/O batch, while RLM retains the reasoning state. All direct tools remain available for subsequent work, recovery and evidence verification.
+
 ### RLM is the persistent research and reasoning workspace
 
 Use `ipython` early to load the supplied public task and client materials through approved host calls. Retain a source registry, intermediate calculations and unresolved questions as Python variables, then reuse them in later cells rather than starting a new shell process for each step. `prompt`, `rlm`, `tools` and `bash` are preloaded; top-level `await` works in `ipython`.
