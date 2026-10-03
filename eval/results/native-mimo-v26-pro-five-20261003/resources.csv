@@ -1,0 +1,11 @@
+task,system,status,wall_minutes,observed_input_tokens,observed_output_tokens,reported_reasoning_tokens,settlement_reported_reasoning_matched_responses,reasoning_counter_disagreements,observed_cached_input_tokens,logical_request_records,failed_request_records,unknown_physical_attempt_usage,observed_usage_estimate_usd,matched_settled_charge_subtotal_usd,matched_settled_responses,complete_answerer_billing,billing_pricing_versions,tool_calls,errors
+task-02,harvey,completed,15.887516666666667,1892532,80606,60052,0,38,1810688,38,0,2,0.13963488,0.139654,38,False,2026-10-02.3,70,2
+task-02,broad,completed,4.71045,829285,20512,10482,0,10,761984,10,0,0,0.06178234,0.061787,10,True,2026-10-02.3,13,0
+task-03,harvey,completed,6.187716666666667,1034087,30488,13964,0,27,966400,27,0,1,0.0739955,0.074009,27,False,2026-10-02.3,45,0
+task-03,broad,completed,3.683866666666667,810930,18699,9585,0,12,743680,12,0,0,0.0597608,0.059766,12,True,2026-10-02.3,14,0
+task-04,harvey,completed,21.398133333333334,2441999,113861,93987,0,44,2329600,44,0,2,0.1933565,0.193378,44,False,2026-10-02.3,78,0
+task-04,broad,completed,27.187616666666667,10864295,289670,236971,0,104,10433920,105,1,3,0.6091967,0.609248,104,False,2026-10-02.3,179,4
+task-05,harvey,completed,15.055966666666666,2496908,78376,61966,0,44,2404992,44,0,0,0.14838392,0.148402,44,True,2026-10-02.3,75,0
+task-05,broad,completed,10.2039,1650825,58017,40589,0,18,1561088,18,0,0,0.11849638,0.118506,18,True,2026-10-02.3,32,2
+task-06,harvey,completed,13.632916666666667,3103404,76545,59226,0,52,3004544,52,0,0,0.15602044,0.156045,52,True,2026-10-02.3,95,1
+task-06,broad,completed,25.24105,8314879,189575,152475,0,61,8026496,63,0,0,0.41403146,0.41406,63,True,2026-10-02.3,95,3

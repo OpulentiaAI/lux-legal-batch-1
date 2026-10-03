@@ -19,13 +19,56 @@ HARVEY_COMMIT = "845a08840869b21a5c11958aae58bf5f00a7b775"
 LUNA_MODEL = "openai/gpt-6-luna"
 MODAL_MODEL = "deepseek/deepseek-v4.1-flash"
 GLM_MODEL = "zai/glm-5.3"
+MIMO_MODEL = "xiaomi/mimo-v2.6-pro"
 GATEWAY = "https://ai-gateway.vercel.sh/v1"
-E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
+RUNANYWHERE = "https://inference.runanywhere.ai/v1"
+# Templates are per-E2B-account; the harness passes the account's template ID in
+# the request so an account move does not require editing this pinned base image.
+DEFAULT_E2B_TEMPLATE = "gfkhlvaqlbbjrjm04d6d"
 HARVEY_IMAGE = "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2"
 CORPUS_README = ("This directory contains the full evaluation source corpus, not reference answers or grading rubrics. "
                  "Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID "
                  "shown in the first line in square brackets. index.json lists all chunk paths; documents.json lists "
                  "document metadata.\n")
+TASK_CONFIGURATION_STANZA = ("- **Task configuration** (`task.json`) — contains the task definition and the\n"
+                             "  grading rubric. Do not read, search, or reference it. Doing so will be\n"
+                             "  flagged as a rule violation and automatically fail the task.\n")
+PUBLIC_TASK_CONFIGURATION_STANZA = ("- **Public task configuration** (`/workspace/task/task.json`) — contains only\n"
+                                    "  the supplied public task definition, not a grading rubric. You may read,\n"
+                                    "  search, and reference this file to complete the assignment. Do not read,\n"
+                                    "  search for, or reference grading rubrics, reference answers, or hidden\n"
+                                    "  evaluation materials.\n")
+
+
+def build_prompts(preamble, skills, request):
+    policy = request.get("work_product_prompt_policy")
+    work_product = request.get("work_product")
+    if "work_product_prompt_policy" in request and (policy != "public-task-v2" or not work_product):
+        raise ValueError("Invalid Harvey work-product prompt policy")
+    if policy:
+        if preamble.count(TASK_CONFIGURATION_STANZA) != 1:
+            raise RuntimeError("Harvey task-configuration prompt stanza changed")
+        preamble = preamble.replace(TASK_CONFIGURATION_STANZA, PUBLIC_TASK_CONFIGURATION_STANZA, 1)
+    if work_product:
+        user_prompt = (
+            "Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
+            "Lis les matériaux sous /workspace/task/materials et recherche les sources juridiques dans /workspace/documents. "
+            "Écris chaque livrable déclaré dans /workspace/output/ sous son nom exact. "
+            "Cite les identifiants de chunks [id] pour les affirmations juridiques importantes, "
+            "signale les limites et ne cherche aucun barème ni corrigé. La réponse finale ne remplace pas les fichiers.\n\n"
+            "Demande : " + request["question"] +
+            ("" if policy else "\n\n" + work_product["task"]["instructions"])
+        )
+    else:
+        user_prompt = (
+            "Réponds à la question de droit luxembourgeois uniquement avec les fichiers du corpus "
+            "dans /workspace/documents. Cherche les passages pertinents avec les outils du workspace. "
+            "Réponds en français en 120 mots maximum dans output/response.md. Cite pour chaque affirmation "
+            "importante les identifiants exacts [doc-XX:...:cN] visibles avec les passages lus. "
+            "Si les documents ne suffisent pas, signale les limites. N'utilise aucune source externe.\n\n"
+            "Question : " + request["question"]
+        )
+    return preamble + skills, user_prompt
 
 
 def validate_corpus(documents, expected_hash):
@@ -185,13 +228,15 @@ class TracedAdapter:
         try:
             response = self.adapter.chat(messages, tools)
         except BaseException as error:
-            trace.append("model_failure", turn=trace.turn, errorType=type(error).__name__)
+            trace.append("model_failure", turn=trace.turn, errorType=type(error).__name__,
+                         **({"providerAttempts": error.inference_attempts} if hasattr(error, "inference_attempts") else {}))
             raise
         trace.pending = [(call.id, call.name, call.arguments) for call in response.tool_calls]
         trace.append("assistant", turn=trace.turn, text=response.text,
                      toolCalls=[{"id": call.id, "name": call.name, "arguments": call.arguments}
                                 for call in response.tool_calls], inputTokens=response.input_tokens,
-                     outputTokens=response.output_tokens)
+                     outputTokens=response.output_tokens,
+                     **({"providerUsage": self.adapter.usage_records[-1]} if getattr(self.adapter, "native", False) and getattr(self.adapter, "usage_records", None) else {}))
         return response
 
     def make_tool_result_messages(self, results):
@@ -372,13 +417,24 @@ def main():
         raise RuntimeError("Harvey upstream checkout is dirty")
     smoke = "--smoke" in sys.argv[1:]
     model = request.get("model", LUNA_MODEL)
+    e2b_template = request.get("e2b_template") or os.environ.get("HARVEY_E2B_TEMPLATE") or DEFAULT_E2B_TEMPLATE
     provider_only = request.get("provider_only")
-    if not ((model == LUNA_MODEL and provider_only is None) or
+    inference_provider = request.get("inference_provider", "gateway")
+    native = inference_provider == "runanywhere"
+    if inference_provider not in ("gateway", "runanywhere"):
+        raise RuntimeError("Unknown inference provider; no fallback permitted")
+    if native and (model != MIMO_MODEL or provider_only is not None or request.get("reasoning_effort") is not None or
+                   not isinstance(request.get("provider_model"), str) or not re.fullmatch(r"(?:xiaomi/)?mimo-v2\.6-pro", request["provider_model"], re.I)):
+        raise RuntimeError("Invalid native RunAnywhere model/provider pairing")
+    if not native and not ((model == LUNA_MODEL and provider_only is None) or
             (model == MODAL_MODEL and provider_only == ["modal"]) or
-            (model == GLM_MODEL and provider_only is None)):
+            (model in (GLM_MODEL, MIMO_MODEL) and provider_only is None)):
         raise RuntimeError("Invalid Harvey model/provider pairing")
-    if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != GATEWAY or not os.environ.get("OPENAI_API_KEY")):
-        raise RuntimeError("Exact AI Gateway endpoint and credentials required")
+    endpoint = RUNANYWHERE if native else GATEWAY
+    credential_name = "RUNA_CLOUD_KEY" if native else "AI_GATEWAY_API_KEY"
+    if not smoke and (os.environ.get("OPENAI_BASE_URL", "").rstrip("/") != endpoint or not os.environ.get("OPENAI_API_KEY") or
+                      native and os.environ.get("OPENAI_API_KEY") != os.environ.get(credential_name)):
+        raise RuntimeError("Exact inference endpoint and credentials required")
     if not os.environ.get("E2B_API_KEY"):
         raise RuntimeError("E2B_API_KEY required")
     if not documents.is_dir() or not (documents / "index.json").is_file():
@@ -388,6 +444,7 @@ def main():
 
     sys.path.insert(0, str(root))
     from e2b import Sandbox as E2BSandbox
+    from e2b.exceptions import TimeoutException as E2BTimeoutException
     from harness.adapters.openai import OpenAIAdapter
     from harness.agent_loop import run_agent
     from harness.run import DEFAULT_SKILLS, SYSTEM_PROMPT_PREAMBLE, load_skills
@@ -396,7 +453,8 @@ def main():
     tools = get_all_tool_definitions()
     if sorted(tool["name"] for tool in tools) != ["bash", "edit", "glob", "grep", "read", "write"]:
         raise RuntimeError("Harvey tool policy changed")
-    prompt = SYSTEM_PROMPT_PREAMBLE + load_skills(DEFAULT_SKILLS)
+    if not smoke:
+        prompt, user_prompt = build_prompts(SYSTEM_PROMPT_PREAMBLE, load_skills(DEFAULT_SKILLS), request)
     artifacts.mkdir(parents=True, exist_ok=False, mode=0o700)
     trajectory = Trajectory(artifacts / "trajectory.jsonl") if not smoke else None
     active_trajectory = trajectory
@@ -423,9 +481,12 @@ def main():
                 {row["path"] for row in work_product["materials"]} != set(paths)):
             raise ValueError("Invalid public work-product packet")
     archive = create_archive(root, documents, source_files, smoke=smoke, work_product=work_product)
-    sandbox = E2BSandbox.create(template=E2B_TEMPLATE, secure=True, allow_internet_access=False,
+    record_sandbox = trajectory is not None and request.get("work_product_prompt_policy") == "public-task-v2"
+    sandbox = E2BSandbox.create(template=e2b_template, secure=True, allow_internet_access=False,
                                 timeout=3600, api_key=os.environ["E2B_API_KEY"])
     try:
+        if record_sandbox:
+            trajectory.append("sandbox_created", sandboxId=sandbox.sandbox_id)
         setup = sandbox.commands.run("mkdir -p /workspace && chown root:root /workspace && chmod 1777 /workspace", user="root")
         if setup.exit_code != 0:
             raise RuntimeError("E2B workspace preparation failed")
@@ -477,7 +538,7 @@ def main():
                 "test \"$(stat -c %a /workspace)\" = 1777 && test \"$(stat -c %u /workspace/documents)\" = 0 && test \"$(stat -c %u /workspace/harvey-rpc.py)\" = 0",
                 "if mv /workspace/documents /workspace/documents-renamed 2>/dev/null; then exit 1; fi",
                 "if sudo -n sh -c 'touch /workspace/documents/injected' 2>/dev/null; then exit 1; fi",
-                "test -z \"${AI_GATEWAY_API_KEY:-}\" && test -z \"${E2B_API_KEY:-}\"",
+                "test -z \"${AI_GATEWAY_API_KEY:-}\" && test -z \"${RUNA_CLOUD_KEY:-}\" && test -z \"${E2B_API_KEY:-}\"",
                 "python3 -c 'import urllib.request; urllib.request.urlopen(\"https://example.com\", timeout=3)' >/dev/null 2>&1 && exit 1 || exit 0",
             ]
             security = [{"command": cmd, "result": rpc({"action": "execute", "tool": "bash", "arguments": {"command": cmd}})} for cmd in checks]
@@ -492,7 +553,7 @@ def main():
                 "command": "python3 /workspace/skills/xlsx/scripts/scan_errors.py /workspace/fixtures/smoke.xlsx"}})
             final_hash = sandbox.commands.run(checksum, cwd="/workspace", user="user", timeout=120)
             report = {"tools": results, "security": security,
-                "template_id": E2B_TEMPLATE, "harvey_base_image": HARVEY_IMAGE,
+                "template_id": e2b_template, "harvey_base_image": HARVEY_IMAGE,
                 "binary_parser_available": "(exit code" not in parser and not parser.startswith("Error:"),
                 "binary_parser_check": parser[:1000],
                 "binary_reads": {extension: text[:1000] for extension, text in binary.items()},
@@ -522,7 +583,9 @@ def main():
                 except BaseException as error:
                     trajectory.append("tool_failure", turn=trajectory.turn, toolCallId=call_id, tool=tool,
                                       arguments=arguments, errorType=type(error).__name__)
-                    raise
+                    if not isinstance(error, E2BTimeoutException):
+                        raise
+                    result = "Error: remote tool transport timed out; execution state is unknown. Inspect state before retrying writes."
                 if trajectory.pending:
                     trajectory.pending.pop(0)
                 trajectory.append("tool_output", turn=trajectory.turn, toolCallId=call_id,
@@ -538,32 +601,21 @@ def main():
                 return rpc(payload)
 
         reasoning_effort = request.get("reasoning_effort")
-        if provider_only or reasoning_effort:
+        if native or provider_only or reasoning_effort:
             from importlib.util import module_from_spec, spec_from_file_location
             spec = spec_from_file_location("harvey_modal_adapter", Path(__file__).with_name("harvey-modal-adapter.py"))
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
-            adapter = module.GatewayReasoningAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), reasoning_effort=reasoning_effort, provider_only=provider_only, capture_usage=bool(work_product))
+            if native:
+                adapter = module.RunAnywhereAdapter(model=model, provider_model=request["provider_model"], max_tokens=request.get("max_completion_tokens", 4000), capture_usage=bool(work_product))
+            else:
+                adapter = module.GatewayReasoningAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000), reasoning_effort=reasoning_effort, provider_only=provider_only, capture_usage=bool(work_product))
         else:
             adapter = OpenAIAdapter(model=model, max_tokens=request.get("max_completion_tokens", 4000))
         result = run_agent(
             adapter=TracedAdapter(adapter, trajectory),
             system_prompt=prompt,
-            user_prompt=(
-                ("Rédige les livrables demandés par le dossier public /workspace/task/task.json. "
-                 "Lis les matériaux sous /workspace/task/materials et recherche les sources juridiques dans /workspace/documents. "
-                 "Écris chaque livrable déclaré dans /workspace/output/ sous son nom exact. "
-                 "Cite les identifiants de chunks [id] pour les affirmations juridiques importantes, "
-                 "signale les limites et ne cherche aucun barème ni corrigé. La réponse finale ne remplace pas les fichiers.\n\n"
-                 "Demande : " + request["question"] + "\n\n" + task["instructions"])
-                if work_product else
-                "Réponds à la question de droit luxembourgeois uniquement avec les fichiers du corpus "
-                "dans /workspace/documents. Cherche les passages pertinents avec les outils du workspace. "
-                "Réponds en français en 120 mots maximum dans output/response.md. Cite pour chaque affirmation "
-                "importante les identifiants exacts [doc-XX:...:cN] visibles avec les passages lus. "
-                "Si les documents ne suffisent pas, signale les limites. N'utilise aucune source externe.\n\n"
-                "Question : " + request["question"]
-            ),
+            user_prompt=user_prompt,
             tool_executor=RemoteExecutor(),
             tools=tools,
             max_turns=request["max_steps"],
@@ -579,12 +631,29 @@ def main():
         if final_hash.exit_code != 0 or final_hash.stdout != initial_hash.stdout:
             raise RuntimeError("E2B source corpus changed during Harvey run")
     finally:
-        sandbox.kill()
+        try:
+            kill_result = sandbox.kill()
+        except BaseException as error:
+            if record_sandbox:
+                try:
+                    trajectory.append("sandbox_termination_failed", sandboxId=sandbox.sandbox_id,
+                                      terminationOutcome="api_kill_failed", errorType=type(error).__name__,
+                                      absenceVerified=False)
+                except BaseException:
+                    pass
+            raise
+        else:
+            if record_sandbox:
+                trajectory.append("sandbox_terminated", sandboxId=sandbox.sandbox_id,
+                                  terminationOutcome="api_kill_succeeded" if kill_result else "api_kill_not_found",
+                                  apiKillResult=kill_result, absenceVerified=False)
 
     payload = {
         "answer": answer,
-        "template_id": E2B_TEMPLATE,
+        "template_id": e2b_template,
         "harvey_base_image": HARVEY_IMAGE,
+        "inference_provider": inference_provider,
+        "provider_model": request.get("provider_model"),
         "finished_cleanly": result["finished_cleanly"],
         "turn_count": result["turn_count"],
         "input_tokens": result["input_tokens"],
@@ -592,6 +661,8 @@ def main():
         "wall_clock_seconds": result["wall_clock_seconds"],
         "tool_metrics": result["tool_metrics"],
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+        **({"work_product_prompt_policy": request["work_product_prompt_policy"]} if request.get("work_product_prompt_policy") else {}),
+        **({"sandbox_id": sandbox.sandbox_id} if record_sandbox else {}),
         "tool_names": [tool["name"] for tool in tools],
         **({"deliverables": deliverables, "missingDeliverables": missing,
             "provider_usage_records": getattr(adapter, "usage_records", None),

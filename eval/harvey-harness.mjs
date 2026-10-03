@@ -6,14 +6,25 @@ import { fileURLToPath } from 'node:url'
 import { captureVisibleSources } from './comparison-corpus.mjs'
 import { redact } from '../runtime/security.mjs'
 import { LUNA_MODEL, validateEvalModel } from '../runtime/eval-model-profile.mjs'
+import { modelTransport } from '../runtime/model-provider.mjs'
 
 const HARVEY_COMMIT = '845a08840869b21a5c11958aae58bf5f00a7b775'
 const MODEL = LUNA_MODEL
-const GATEWAY = 'https://ai-gateway.vercel.sh/v1'
 const HARVEY_IMAGE = 'ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2'
-const E2B_TEMPLATE = 'gfkhlvaqlbbjrjm04d6d'
+// Templates are per-E2B-account: rebuilding the pinned base image in another
+// project yields a new template ID. Override without editing provenance when
+// the account moves; the base image digest is unchanged and stays pinned.
+const E2B_TEMPLATE = process.env.HARVEY_E2B_TEMPLATE ?? 'gfkhlvaqlbbjrjm04d6d'
 const TOOLS = Object.freeze(['bash', 'read', 'write', 'edit', 'glob', 'grep'])
 const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
+const TASK_CONFIGURATION_STANZA = '- **Task configuration** (`task.json`) — contains the task definition and the\n' +
+  '  grading rubric. Do not read, search, or reference it. Doing so will be\n' +
+  '  flagged as a rule violation and automatically fail the task.\n'
+const PUBLIC_TASK_CONFIGURATION_STANZA = '- **Public task configuration** (`/workspace/task/task.json`) — contains only\n' +
+  '  the supplied public task definition, not a grading rubric. You may read,\n' +
+  '  search, and reference this file to complete the assignment. Do not read,\n' +
+  '  search for, or reference grading rubrics, reference answers, or hidden\n' +
+  '  evaluation materials.\n'
 
 function validateWorkProduct(input) {
   const { task, materials } = input ?? {}
@@ -128,7 +139,7 @@ function invoke(python, script, request, env, cwd, args = []) {
   })
 }
 
-function collectEvidence(artifacts, corpus, answer, start, response, workProduct = false) {
+function collectEvidence(artifacts, corpus, answer, start, response, workProduct = false, transport) {
   const calls = existsSync(join(artifacts, 'tool-results.jsonl'))
     ? readFileSync(join(artifacts, 'tool-results.jsonl'), 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
   const visible = new Map()
@@ -139,24 +150,41 @@ function collectEvidence(artifacts, corpus, answer, start, response, workProduct
       result: { ids: sources.map(source => source.id), count: sources.length,
         error: /^(?:Error:|SecurityError:)/.test(result) || /\(exit code \d+\)$/.test(result) } }
   })
+  const trajectoryProof = trajectoryAudit(artifacts)
+  const partialNative = !response && workProduct && transport?.provider === 'runanywhere'
+  const trajectory = partialNative && trajectoryProof.trajectoryArtifact ? readFileSync(trajectoryProof.trajectoryArtifact, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
+  const observedUsage = trajectory.filter(event => event.event === 'assistant' && event.providerUsage?.inferenceProvider === 'runanywhere')
+    .map(event => event.providerUsage)
+  const failedUsage = trajectory.filter(event => event.event === 'model_failure' && Array.isArray(event.providerAttempts))
+    .map(event => ({ inferenceProvider: 'runanywhere', requestedModel: transport.providerModel, failed: true, usageUnknown: true, requestAttempts: event.providerAttempts }))
+  const partialRecords = [...observedUsage, ...failedUsage]
+  const observedTokens = name => {
+    const values = observedUsage.map(record => record[name]).filter(value => Number.isFinite(value) && value >= 0)
+    return values.length ? values.reduce((sum, value) => sum + value, 0) : null
+  }
   return { ...(typeof answer === 'string' ? { answer } : {}), sources: [...visible.values()],
     trace: auditCalls.map(call => ({ stage: 'tool', tool: call.tool, ok: !call.result.error })),
     metrics: { errors: auditCalls.filter(call => call.result.error).length + Number(!response?.finished_cleanly || (!workProduct && !answer?.trim())),
-      toolCalls: calls.length, sourceCount: visible.size, turns: response?.turn_count ?? 0,
-      usage: { input_tokens: response?.input_tokens ?? 0, output_tokens: response?.output_tokens ?? 0 },
-      ...(workProduct ? { providerUsageRecords: response?.provider_usage_records ?? null } : {}),
+      toolCalls: calls.length, sourceCount: visible.size, turns: response?.turn_count ?? trajectory.filter(event => event.event === 'model_call').length,
+      usage: response ? { input_tokens: response.input_tokens ?? 0, output_tokens: response.output_tokens ?? 0 } : partialNative ? {
+        input_tokens: observedTokens('prompt_tokens'), output_tokens: observedTokens('completion_tokens'),
+      } : { input_tokens: 0, output_tokens: 0 },
+      ...(workProduct ? { providerUsageRecords: response?.provider_usage_records ?? (partialRecords.length ? partialRecords : null) } : {}),
+      ...(partialNative ? { usageState: 'observed partial subtotal only; failed-attempt usage remains unknown' } : {}),
       latencyMs: Math.round(performance.now() - start) },
     audit: { calls: auditCalls, finalAnswer: typeof answer === 'string' ? redact(answer) : null,
-      ...trajectoryAudit(artifacts) } }
+      ...trajectoryProof } }
 }
 
-export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, workProduct } = {}) {
-  validateEvalModel(model, providerOnly)
+export function createHarveyHarness({ workspace, harveyRoot, python, corpus, artifactsDir, maxSteps, model = MODEL, providerOnly = null, reasoningEffort = null, inferenceProvider = 'gateway', providerModel, workProduct, workProductPromptPolicy } = {}) {
+  validateEvalModel(model, providerOnly, inferenceProvider)
+  const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
         !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
     workProduct = { maxCompletionTokens: workProduct.maxCompletionTokens ?? 8000 }
   }
+  if (workProductPromptPolicy !== undefined && (workProductPromptPolicy !== 'public-task-v2' || !workProduct)) throw new Error('Invalid Harvey work-product prompt policy')
   maxSteps ??= workProduct ? 80 : 40
   if (!corpus?.sources?.length || !corpus.directory || !corpus.hash) throw new Error('Prepared comparison corpus required')
   if (workProduct ? !Number.isSafeInteger(maxSteps) || maxSteps < 1 : maxSteps !== 40) throw new Error('Harvey comparison requires exactly 40 steps in QA mode')
@@ -169,12 +197,16 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
   validateCorpus(corpus)
   const script = resolve(workspace, 'eval/harvey-bridge.py')
   let prompt = readFileSync(join(harveyRoot, 'harness/system_prompt.md'), 'utf8')
+  if (workProductPromptPolicy) {
+    if (prompt.split(TASK_CONFIGURATION_STANZA).length !== 2) throw new Error('Harvey task-configuration prompt stanza changed')
+    prompt = prompt.replace(TASK_CONFIGURATION_STANZA, PUBLIC_TASK_CONFIGURATION_STANZA)
+  }
   const skillsDir = join(harveyRoot, 'harness/skills')
   const skills = existsSync(skillsDir) ? readdirSync(skillsDir).filter(name => existsSync(join(skillsDir, name, 'SKILL.md'))).sort() : []
   prompt += skills.map(name => `\n\n## Skill: ${name}\n\n${readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8')}`).join('\n')
   const provenance = Object.freeze({
-    harvey_commit: HARVEY_COMMIT, model, providerOnly, reasoningEffort, endpoint: GATEWAY,
-    adapter: reasoningEffort ? 'eval.harvey-modal-adapter.GatewayReasoningAdapter' : providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
+    harvey_commit: HARVEY_COMMIT, model, providerOnly, reasoningEffort, endpoint: transport.endpoint, inference: transport,
+    adapter: inferenceProvider === 'runanywhere' ? 'eval.harvey-modal-adapter.RunAnywhereAdapter' : reasoningEffort ? 'eval.harvey-modal-adapter.GatewayReasoningAdapter' : providerOnly ? 'eval.harvey-modal-adapter.ModalDeepSeekAdapter' : 'harness.adapters.openai.OpenAIAdapter',
     agent_loop: 'harness.agent_loop.run_agent', executor: 'harness.tools.ToolExecutor', sandbox: 'E2B pinned Harvey image (remote upstream ToolExecutor)',
     harvey_base_image: HARVEY_IMAGE, e2b_template_id: E2B_TEMPLATE,
     e2b_sdk: '2.34.0', e2b_internet_access: false,
@@ -183,6 +215,7 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
     system_prompt_sha256: hash(prompt), evidence_policy: 'full-model-visible-tool-result-v1',
     ...(workProduct ? { work_product: { version: 'complex-v1', materialPath: '/workspace/task/materials', outputPath: '/workspace/output', evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
     ...(workProduct ? { sandbox_timeout_seconds: 3600 } : {}),
+    ...(workProductPromptPolicy ? { work_product_prompt_policy: workProductPromptPolicy } : {}),
   })
 
   return {
@@ -191,29 +224,34 @@ export function createHarveyHarness({ workspace, harveyRoot, python, corpus, art
       if (mode !== 'harvey' || typeof question !== 'string' || !question.trim()) throw new Error('Harvey mode and question required')
       if (workProduct ? !packet : packet !== undefined) throw new Error('Work-product run mode mismatch')
       if (workProduct) validateWorkProduct(packet)
-      if (!process.env.AI_GATEWAY_API_KEY || !process.env.E2B_API_KEY) throw new Error('AI_GATEWAY_API_KEY and E2B_API_KEY required; no model substitution')
+      if (!process.env[transport.credentialEnvironment] || !process.env.E2B_API_KEY) throw new Error(`${transport.credentialEnvironment} and E2B_API_KEY required; no model substitution`)
       const artifacts = resolve(artifactsDir, randomUUID())
       mkdirSync(dirname(artifacts), { recursive: true })
       const request = { harvey_root: harveyRoot, documents: corpus.directory, corpus_hash: corpus.hash,
         artifacts, question, max_steps: maxSteps, model, provider_only: providerOnly, reasoning_effort: reasoningEffort,
-        ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}) }
+        inference_provider: inferenceProvider, ...(providerModel ? { provider_model: providerModel } : {}),
+        e2b_template: E2B_TEMPLATE,
+        ...(workProduct ? { work_product: packet, max_completion_tokens: workProduct.maxCompletionTokens } : {}),
+        ...(workProductPromptPolicy ? { work_product_prompt_policy: workProductPromptPolicy } : {}) }
       const start = performance.now()
-      const env = { ...process.env, OPENAI_BASE_URL: GATEWAY, OPENAI_API_KEY: process.env.AI_GATEWAY_API_KEY }
+      const env = { ...process.env, OPENAI_BASE_URL: transport.endpoint, OPENAI_API_KEY: process.env[transport.credentialEnvironment] }
       let response
       try {
         response = await invoke(python, script, request, env, harveyRoot)
       } catch (error) {
-        Object.assign(error, collectEvidence(artifacts, corpus, null, start, null, !!workProduct))
+        Object.assign(error, collectEvidence(artifacts, corpus, null, start, null, !!workProduct, transport))
         if (workProduct) error.artifactPaths = ['tool-results.jsonl', 'bridge-failure.json'].map(file => join(artifacts, file)).filter(existsSync)
         throw error
       }
       if (response.prompt_sha256 !== provenance.system_prompt_sha256 || JSON.stringify(response.tool_names) !== JSON.stringify(TOOLS) ||
-          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE) {
+          response.template_id !== E2B_TEMPLATE || response.harvey_base_image !== HARVEY_IMAGE ||
+          workProductPromptPolicy && response.work_product_prompt_policy !== workProductPromptPolicy ||
+          inferenceProvider === 'runanywhere' && (response.inference_provider !== inferenceProvider || response.provider_model !== providerModel)) {
         const error = new Error('Harvey upstream policy changed')
         error.audit = trajectoryAudit(artifacts)
         throw error
       }
-      const output = collectEvidence(artifacts, corpus, response.answer, start, response, !!workProduct)
+      const output = collectEvidence(artifacts, corpus, response.answer, start, response, !!workProduct, transport)
       if (workProduct) {
         if (!Array.isArray(response.deliverables) || !Array.isArray(response.missingDeliverables) ||
             response.deliverables.some(row => !packet.task.deliverables.includes(row.file) || typeof row.content !== 'string' || row.sha256 !== hash(row.content)) ||

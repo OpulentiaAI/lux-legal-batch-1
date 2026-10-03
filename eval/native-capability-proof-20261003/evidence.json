@@ -1,0 +1,1860 @@
+{
+  "version": "native-rlm-vm-codemode-evidence-v1",
+  "classification": "operator-requested unscored model-driven capability integration; not spontaneous scored adoption",
+  "startedAt": "2026-10-03T08:20:57.505Z",
+  "finishedAt": "2026-10-03T08:23:20.558Z",
+  "nonce": "49efb376-71c2-4ea1-a8c3-3b1db53e76cf",
+  "verified": true,
+  "independentlyValidated": true,
+  "historicalComparison": {
+    "checkpointSha256": "e057df35e3dca2c651703f57c40a1954133e6659ca9baabdb1de70b4a875cec2",
+    "scoredBase": "57bffcba08141829346fd2b887a9ecdf065d7afc",
+    "frozenSuiteSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+    "auditSha256": "5fb7f25bced6e0d631cc4a4717c824541e30caee95fad963662f4afebcd6819a",
+    "auditEvidenceSha256": "022fe4210b89c7826c7f15906d37f4585f840f3f92831e1a7e7391e2b161f82c",
+    "arithmeticIpythonCallId": "call_fc14b3f807fc4d688399f2e1",
+    "modelDrivenScriptedTools": 0,
+    "rlmHostCallEvents": 0,
+    "brokerCalls": 0,
+    "vmIdentityLimit": "Three task-04 child identities were saved; task-06 child and root VM identities were omitted. One task-04 child was still running at collection.",
+    "unchanged": true
+  },
+  "sourceBindings": {
+    "driverSha256": "d215a51433560b2b916abf888a4d0a3f292f541a6ef88a89dd0f7c4688e8c549",
+    "proofSha256": "74468c2d0ada74230c849b77d4bbd725ea349d1ac0c279c8ff5548c421fc9d19",
+    "trajectorySha256": "6d71cb38d44cc40ecd7bc4f78017cd6ce2c2b1089342284e2280950efa556fb6",
+    "implementationSha256": {
+      "runtime/core.mjs": "f18b51c08220fdff3c53d150d3b8a5c9eb57352820a32e388474314a16dfb289",
+      "runtime/broad-legal-eval.mjs": "5a1a0b4c0917a71eb0db56ca56f2e6f59a5787bdbc7d84f9bd6e42f57b0ebb8c",
+      "runtime/model.mjs": "409cc6563839cf7208b27ef26ab4bec57da48343cdf594a6ebd703c145eb5a00",
+      "runtime/model-provider.mjs": "e1d7eba1cb2bcae2eea4a0050a4e3b1b8c3b78ed0856329d00a31649a8ff4ce2",
+      "runtime/rlm.mjs": "dd3f79c979ab8b8e186525a7dac44a5743d09cef889992de0a3e93c09dc927f8",
+      "runtime/rlm-kernel.py": "d5e0663c2a2e694c5d530dfb7e5f55b3296a6b6991f9113342aaac0659e8acb9",
+      "runtime/tools/scripts.mjs": "c2ede1260948a7b43a476b6e035e18f807f6f834404fcf5d08db9ef1d8930cc8",
+      "runtime/script-execution.mjs": "58889e658b8bddff82bb3fc220a120974aa9b3081cb01ddcf9eaba7d1dce3f50",
+      "runtime/tools/resources.mjs": "7d174a3d289c7baaf453ad3cb83df624a009c1dc678536baf11147206ddeac28",
+      "runtime/tools/orchestration.mjs": "3071b9598eadaf0ff45a06e662121623dd8a6befeab3efa45f94f77bc02b294b"
+    }
+  },
+  "provenance": {
+    "policy": "broad-legal-native-rlm-unrestricted-v5",
+    "model": "xiaomi/mimo-v2.6-pro",
+    "providerOnly": null,
+    "reasoningEffort": null,
+    "inference": {
+      "provider": "runanywhere",
+      "endpoint": "https://inference.runanywhere.ai/v1",
+      "credentialEnvironment": "RUNA_CLOUD_KEY",
+      "providerModel": "mimo-v2.6-pro",
+      "reasoningPolicy": "provider-default; no documented reasoning-effort control",
+      "requestPolicy": {
+        "maxAttempts": 3,
+        "retryStatuses": [
+          429,
+          502,
+          503,
+          504
+        ],
+        "backoffMs": [
+          1000,
+          2000
+        ],
+        "maxRetryAfterMs": 30000,
+        "transportErrors": "not retried; usage unknown"
+      }
+    },
+    "maxSteps": 50,
+    "maxCompletionTokens": 8192,
+    "workProduct": {
+      "version": "complex-v1",
+      "taskPath": "/tmp/broad-legal-workspace/task",
+      "outputPath": "/tmp/broad-legal-workspace/output",
+      "evidencePolicy": "full-model-visible-tool-results-and-collected-deliverables-v1"
+    },
+    "sandboxTimeoutMs": 3600000,
+    "modelRequestTimeoutMs": 600000,
+    "toolSurface": "initial-scripted-v1",
+    "semanticSurface": "toolbox",
+    "rlm": {
+      "capability": "rlm-v1",
+      "initialToolPolicy": {
+        "version": "opulent-rlm-unrestricted-initial-v1",
+        "inventory": "canonical implemented catalog, corpus and enabled runtime capability definitions",
+        "addedDefinitions": [
+          "lx_search",
+          "lx_chunk",
+          "lx_documents",
+          "browser",
+          "wait_for_operations",
+          "ipython"
+        ]
+      },
+      "initialToolPolicySha256": "b424cb9fd73b9df72e9f662386f831acbf192301fcef63373fa49e171bcfc1be",
+      "definitionsSha256": "9ebfe9133fd422eee54b2d8c6650fa743709afd304e7252c433cd604b1967e4e",
+      "sourcesSha256": {
+        "rlm.mjs": "dd3f79c979ab8b8e186525a7dac44a5743d09cef889992de0a3e93c09dc927f8",
+        "rlm-kernel.py": "d5e0663c2a2e694c5d530dfb7e5f55b3296a6b6991f9113342aaac0659e8acb9"
+      },
+      "settings": {
+        "unrestrictedTools": true,
+        "maxRlmHostCallsPerCell": null,
+        "maxRlmChildren": null,
+        "maxSessionDepth": null,
+        "maxConcurrentSessions": null,
+        "maxScriptToolCalls": null,
+        "maxConcurrentScriptToolCalls": null
+      }
+    },
+    "unrestrictedTools": true,
+    "runtimeCapabilities": [
+      "browser-v1",
+      "operation-waits-v1",
+      "rlm-v1"
+    ],
+    "effectiveDefinitionsSha256": "776230de10cdf9e7249fe643419c5e1e3c6fe5cd143afa6bba3d98efbf818ce5",
+    "effectiveDefinitionSourcesSha256": {
+      "catalog.json": "322f992ad884d48ece641169a3f1417c39d93ac6d451d273a28122f01c0917e3",
+      "core.mjs": "f18b51c08220fdff3c53d150d3b8a5c9eb57352820a32e388474314a16dfb289",
+      "initial-tool-policy.mjs": "7f25df03d4be0f89aa1c94a7e20029612f683c60c6bfc8df030fb3b85484d194",
+      "browser-tools.mjs": "1f45d78f046018ec227435bf0e40943fa296d098608b47ede3171d0f4115337c",
+      "operation-waits.mjs": "196aaac8d91c872e70e760924e27c29caa471eee021e7f296f31af60fb512c6c",
+      "rlm.mjs": "dd3f79c979ab8b8e186525a7dac44a5743d09cef889992de0a3e93c09dc927f8",
+      "rlm-kernel.py": "d5e0663c2a2e694c5d530dfb7e5f55b3296a6b6991f9113342aaac0659e8acb9",
+      "script-execution.mjs": "58889e658b8bddff82bb3fc220a120974aa9b3081cb01ddcf9eaba7d1dce3f50",
+      "tools/legal.mjs": "0c46eed7a3800f7cf337b308f0c38829431fc4591e21ad02d7f99ca7092b6425",
+      "e2b.mjs": "b8070e4a145c6cb348d79ed779806b8c44dbfba38291b04cb53f603d808c6da7"
+    },
+    "excludedCategories": {
+      "devin_blueprint_test": "blueprints",
+      "end_voice_call": "voice",
+      "ask_question": "repository Q&A",
+      "generate_wiki": "wiki",
+      "list_available_repos": "wiki repository discovery",
+      "read_wiki_contents": "wiki",
+      "read_wiki_structure": "wiki",
+      "devin_user_list": "user management",
+      "find_setting": "settings",
+      "read_environment_config": "settings",
+      "update_environment_config": "settings",
+      "devin_docs": "wiki/documentation gateway",
+      "code_scan_setup_form": "settings/scan setup UI"
+    },
+    "networkPolicy": {
+      "allowPublicTraffic": false
+    },
+    "availability": {
+      "storage": "tools registered; no storage provider configured",
+      "browserOrigins": [],
+      "externalProviders": "tools registered; credentials and live connectivity not assumed"
+    },
+    "initialTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "workflowApproval": "operator-approved exact script hashes required; none configured for this evaluation",
+    "builtinSkills": [
+      {
+        "name": "managing-knowledge",
+        "path": "/opt/opulent/skills/managing-knowledge/SKILL.md",
+        "sha256": "29d64dee0a8a90a36a6794baac233b735df22f2fe3e683360c27c68f02d08ccf"
+      },
+      {
+        "name": "managing-playbooks",
+        "path": "/opt/opulent/skills/managing-playbooks/SKILL.md",
+        "sha256": "2ebf1ec0df745d812ba860d39384739c56bde01326b6db9edbe8d3fa1efb9fd8"
+      },
+      {
+        "name": "managing-automations",
+        "path": "/opt/opulent/skills/managing-automations/SKILL.md",
+        "sha256": "97779c41ebe723a1ffac9efb006183c503b5bd1b769c8133a62b89607fbf67d5"
+      },
+      {
+        "name": "managing-child-sessions",
+        "path": "/opt/opulent/skills/managing-child-sessions/SKILL.md",
+        "sha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea"
+      },
+      {
+        "name": "analyzing-sessions",
+        "path": "/opt/opulent/skills/analyzing-sessions/SKILL.md",
+        "sha256": "d28de1b5113c3667818339fc6606478b4e98e71da66991c961a3701f07c697a6"
+      },
+      {
+        "name": "data-analysis",
+        "path": "/opt/opulent/skills/data-analysis/SKILL.md",
+        "sha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3"
+      }
+    ],
+    "instructions": {
+      "variant": "broad-legal-native-rlm-unrestricted-v5",
+      "version": "opulent-context-v6",
+      "profile": "opulent-context-v6",
+      "inheritedVersion": "opulent-rlm-unrestricted-v5",
+      "baseSha256": "5257b9af33c2b8476155bd08ccb65202c88352459dc60d4bb48d2c26168862b8",
+      "inheritedKnowledgeManifestSha256": "ed43a97a4c8880d0742e4204ccdab72c962a9b3b6b8c675d8340856657a2bfb9",
+      "inheritedRlmManifestSha256": "19e864ad357b6a7f673ae83c9281efdc4bb3ef189e44aa6efae804c47315fa48",
+      "inheritedV5ManifestSha256": "dcb086c0b29bd6def28c691946cd8d0aa02d2048d1b0c8d5f4af921a8f294dc2",
+      "inheritedV5AddendumSha256": "e6349096d903fe1d44d9aaddfe00aae35f78a968e178a09945db0ca718315519",
+      "addendumSha256": "b29386a4d3e6693cf44086f4a7e5a0ec3879b31f747d644ef2cf0210d63dae89",
+      "manifestSha256": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+      "effectivePromptSha256": "e1614869585527c152658a7dc4c64d2a939ae0d6282486f4a83a806b5624b30c"
+    },
+    "effectiveToolOverlay": {
+      "version": "opulent-runtime-tool-overlay-v3",
+      "sha256": "2da00efdc9dfa4eb0855cb51b586af7095f279ae07bcc15a3f79170824ab39d6",
+      "sourceCatalogSha256": "322f992ad884d48ece641169a3f1417c39d93ac6d451d273a28122f01c0917e3",
+      "toolNames": [
+        "opulent_mcp",
+        "scripted_tools",
+        "report_blocker",
+        "run_workflow"
+      ]
+    },
+    "allowedTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "excluded": [],
+    "corpus": {
+      "hash": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+      "count": 8809,
+      "version": "comparison-corpus-v1"
+    },
+    "evidencePolicy": "Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally",
+    "sandbox": {
+      "provider": "E2B",
+      "preparedTemplate": "aacky3169dfjvjyw7bsu",
+      "computerImageSha256": "e85fdd87dfeebc02f178d011fbb43a5511cf6275a364bdef57fe611d340dbeba",
+      "corpusUpload": "configured; lazy on first sandbox tool, not a live availability claim",
+      "integrity": "root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed"
+    },
+    "integrations": {
+      "webSearch": "available tool; BRAVE_SEARCH_API_KEY unavailable",
+      "imageGeneration": "available tool; OPENAI_API_KEY unavailable",
+      "github": "available tools; GITHUB_TOKEN unavailable and repository allowlist empty",
+      "runtimeBroker": {
+        "status": "scoped authenticated broker configured; verify live before scoring",
+        "origin": "https://8790-cs95wrmi2zcpiin39jo96386bt1t74lm.capysandbox.net",
+        "network": {
+          "allowPublicTraffic": false
+        }
+      },
+      "desktop": "available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot",
+      "storage": "unconfigured; storage tools visible but provider calls unavailable",
+      "mcp": "available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified"
+    }
+  },
+  "fixture": {
+    "task": {
+      "id": "native-rlm-vm-codemode-proof",
+      "title": "Native RLM, isolated VM agents and codemode integration",
+      "instructions": "This is an explicitly requested non-legal runtime integration, not a scored comparison. Use native RunAnywhere MiMo and the actual tools; no fabricated results. Keep human approvals, secrets and repository restrictions intact. Do not use storage, external MCP, workflow execution or other hosted services. Do not spawn grandchildren. Produce capability-ledger.md as JSON or a JSON code block, with nonce, persistentValue, functionValue, rlmChildId, codemodeChildId, childResults, and observations.\n\n1. Invoke the managing-child-sessions and analyzing-sessions skills and follow their applicable session/readback guidance.\n2. Use ipython to seed rlm_probe_value = sum(range(1001)) and define rlm_probe_add(n) using that retained value. Print RLM_SEEDED with the computed value and a boolean verifying the preloaded prompt includes this nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. In a separate later ipython call, without reassigning that variable or redefining the function, call rlm_probe_add(7), print RLM_PERSISTENCE and the actual computed result.\n3. From ipython, create exactly one VM-backed child with await rlm.spawn(..., name='rlm-reader'). Give it a standalone prompt: invoke managing-child-sessions, read /tmp/broad-legal-workspace/corpus/README.txt, run Python through exec to compute sum([7,11,13]), and write /tmp/broad-legal-workspace/output/rlm-only.txt containing nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and its computed total. It must return JSON with nonce, role='rlm-reader', total, hostname from an actual shell command, and a real excerpt read from README.txt. No child or workflow spawning.\n4. Use scripted_tools, the runtime's Python codemode interface. In the script, use opulent_tools.describe to discover read, opulent_session_create and read_subagent schemas. Use asyncio.gather on actual tools.read calls for /tmp/broad-legal-workspace/task/task.json and /tmp/broad-legal-workspace/task/materials/facts.md and print both returned results. Then call tools.opulent_session_create with sessions=[{'prompt': ..., 'title': 'codemode-reader'}] to create exactly one more child with a standalone prompt: invoke managing-child-sessions, read the same corpus README, compute sum([17,19,23]) with exec, and write its nonce/total in output/codemode-only.txt. Return JSON with nonce, role='codemode-reader', total, actual hostname and a real README excerpt. No grandchildren or workflows. Print and retain its returned session_id; queued is not completed. Every tool function must be named literally in the script and awaited.\n5. Wait for both children to finish and read their actual completed responses. For the RLM child use await rlm.result(id) in a later ipython cell and print the complete returned output with status. Poll with asyncio.sleep(2) if needed; never treat a running result as complete. For the codemode child, use another scripted_tools call with await tools.read_subagent(agent_id=..., block=True, timeout=90), print the completed response, and repeat if it is still running. All cells must finish within 300 seconds.\n6. Prove VM isolation from the parent: after both children complete, exec must find neither child-only file in the parent's output directory. Do not copy these marker files to the parent. Use the actual returned child totals and IDs in capability-ledger.md, retain the real README excerpts, and finish only when both children are completed. Do not assert API permission checks passed; those are outside this fixture.",
+      "scope": {
+        "jurisdiction": "Non-legal capability fixture",
+        "companyForm": "None",
+        "asOf": "2026-10-03"
+      },
+      "deliverables": [
+        "capability-ledger.md"
+      ],
+      "materials": [
+        "materials/facts.md"
+      ]
+    },
+    "materials": [
+      {
+        "path": "materials/facts.md",
+        "content": "Public non-legal fixture. Nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. RLM child input: [7,11,13]. Codemode child input: [17,19,23]. The parent must collect completed child responses, not admission IDs. Corpus README excerpts are real operator-provisioned source text, not generated provider results."
+      }
+    ]
+  },
+  "capabilities": {
+    "rlm": {
+      "cells": 4,
+      "seedCall": "call_154ed6ddeb8d4d63b1ceacc7",
+      "persistenceCall": "call_7af09c9e7b0d42aea0e7bd1f",
+      "spawnCall": "call_c484fc31d27e4766a6148ff5",
+      "resultCall": "call_d10ae66243b44da3a8c3920f",
+      "childTotal": 31
+    },
+    "codemode": {
+      "modelRequests": 5,
+      "successfulScripts": 2,
+      "failedScripts": 3,
+      "parallelReadCall": "call_c4977dd96d8f427187dd41b1",
+      "completedReadbackCall": "call_6acf52ad650d4dcaa1eb8dfc",
+      "childTotal": 59
+    },
+    "brokerCalls": {
+      "opulent_session_create": 2,
+      "read": 2,
+      "read_subagent": 2
+    },
+    "cleanupVerified": true
+  },
+  "sessions": [
+    {
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "parentSessionId": null,
+      "sandboxId": "i2r8p2xzt02xx42uhkupe",
+      "status": "completed",
+      "visibility": "answerer",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "output": null
+    },
+    {
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55",
+      "parentSessionId": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "sandboxId": "iludvx6m959qu9psauxhm",
+      "status": "completed",
+      "visibility": "child-only",
+      "firstUserPromptSha256": "6b1e0793cca343e2855de06a35a88a3f825faccc8ce34b1ac796271096e5c344",
+      "output": "```json\n{\"nonce\": \"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\", \"role\": \"rlm-reader\", \"total\": 31, \"hostname\": \"e2b.local\", \"readme_excerpt\": \"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\"}\n```"
+    },
+    {
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+      "parentSessionId": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "sandboxId": "i5kbnez6mpqa9rfl2yo3d",
+      "status": "completed",
+      "visibility": "child-only",
+      "firstUserPromptSha256": "68f1c4e7035e2d0678fc4c02a81b415b945e3c7fe1907aa8ea5cacb928e749f4",
+      "output": "{\"nonce\": \"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\", \"role\": \"codemode-reader\", \"total\": 59, \"hostname\": \"e2b.local\", \"readme_excerpt\": \"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\"}"
+    }
+  ],
+  "modelSelectedTools": {
+    "skill": 4,
+    "exec": 8,
+    "ipython": 4,
+    "scripted_tools": 5,
+    "read": 1,
+    "write": 1
+  },
+  "modelRequests": [
+    {
+      "startedAt": "2026-10-03T08:21:18.721Z",
+      "finishedAt": "2026-10-03T08:21:24.194Z",
+      "requestId": "d68c1f46-84c4-442e-ae66-8bab0f422dbf",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 272,
+        "prompt_tokens": 49148,
+        "total_tokens": 49420,
+        "completion_tokens_details": {
+          "reasoning_tokens": 75
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47232
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 5439
+        }
+      ],
+      "selectedTools": [
+        "skill",
+        "skill",
+        "exec"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:21:39.700Z",
+      "finishedAt": "2026-10-03T08:21:43.553Z",
+      "requestId": "2591e684-5006-41a0-a9aa-44113825ba0b",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 269,
+        "prompt_tokens": 55395,
+        "total_tokens": 55664,
+        "completion_tokens_details": {
+          "reasoning_tokens": 77
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47616
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 3823
+        }
+      ],
+      "selectedTools": [
+        "ipython"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:21:44.605Z",
+      "finishedAt": "2026-10-03T08:21:47.479Z",
+      "requestId": "9acc7835-3234-453e-a9ba-4e518ddc6f3b",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 104,
+        "prompt_tokens": 55648,
+        "total_tokens": 55752,
+        "completion_tokens_details": {
+          "reasoning_tokens": 12
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 49024
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 2826
+        }
+      ],
+      "selectedTools": [
+        "ipython"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:21:48.057Z",
+      "finishedAt": "2026-10-03T08:21:54.948Z",
+      "requestId": "4753d12f-3228-4c00-9995-e6de6be31e4d",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 566,
+        "prompt_tokens": 55797,
+        "total_tokens": 56363,
+        "completion_tokens_details": {
+          "reasoning_tokens": 144
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 55296
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 6861
+        }
+      ],
+      "selectedTools": [
+        "ipython"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:21:55.327Z",
+      "finishedAt": "2026-10-03T08:22:00.086Z",
+      "requestId": "2d8af0ed-a85b-4e79-bf06-4003b5f4fc98",
+      "firstUserPromptSha256": "6b1e0793cca343e2855de06a35a88a3f825faccc8ce34b1ac796271096e5c344",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 47675,
+        "total_tokens": 47754,
+        "completion_tokens_details": {
+          "reasoning_tokens": 16
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47232
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 4684
+        }
+      ],
+      "selectedTools": [
+        "skill",
+        "exec"
+      ],
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55"
+    },
+    {
+      "startedAt": "2026-10-03T08:21:55.632Z",
+      "finishedAt": "2026-10-03T08:22:01.810Z",
+      "requestId": "86fb0cfd-ff7a-4193-83ce-9d1335da9edb",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 709,
+        "prompt_tokens": 56320,
+        "total_tokens": 57029,
+        "completion_tokens_details": {
+          "reasoning_tokens": 84
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 55552
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 6124
+        }
+      ],
+      "selectedTools": [
+        "scripted_tools"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:02.828Z",
+      "finishedAt": "2026-10-03T08:22:10.597Z",
+      "requestId": "a0190300-2841-4642-8e3a-0fa50a6ea5d7",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 663,
+        "prompt_tokens": 57200,
+        "total_tokens": 57863,
+        "completion_tokens_details": {
+          "reasoning_tokens": 36
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 55680
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 7687
+        }
+      ],
+      "selectedTools": [
+        "scripted_tools"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:11.699Z",
+      "finishedAt": "2026-10-03T08:22:19.238Z",
+      "requestId": "ec0911c7-d329-42ce-8f5d-4ae97d6e69a9",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 705,
+        "prompt_tokens": 58265,
+        "total_tokens": 58970,
+        "completion_tokens_details": {
+          "reasoning_tokens": 95
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 56320
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 7481
+        }
+      ],
+      "selectedTools": [
+        "scripted_tools"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:15.103Z",
+      "finishedAt": "2026-10-03T08:22:19.130Z",
+      "requestId": "bea82981-9288-4dfe-b211-9582793f0162",
+      "firstUserPromptSha256": "6b1e0793cca343e2855de06a35a88a3f825faccc8ce34b1ac796271096e5c344",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 73,
+        "prompt_tokens": 51473,
+        "total_tokens": 51546,
+        "completion_tokens_details": {
+          "reasoning_tokens": 35
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47616
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 3957
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:19.380Z",
+      "finishedAt": "2026-10-03T08:22:25.269Z",
+      "requestId": "d58695e6-838d-4036-957c-625b9e7774bc",
+      "firstUserPromptSha256": "6b1e0793cca343e2855de06a35a88a3f825faccc8ce34b1ac796271096e5c344",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 137,
+        "prompt_tokens": 51578,
+        "total_tokens": 51715,
+        "completion_tokens_details": {
+          "reasoning_tokens": 29
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 51456
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 5832
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:20.221Z",
+      "finishedAt": "2026-10-03T08:22:26.653Z",
+      "requestId": "08004c4c-9704-41ba-ac0b-75088075f22e",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 694,
+        "prompt_tokens": 59313,
+        "total_tokens": 60007,
+        "completion_tokens_details": {
+          "reasoning_tokens": 42
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 57088
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 6361
+        }
+      ],
+      "selectedTools": [
+        "scripted_tools"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:25.498Z",
+      "finishedAt": "2026-10-03T08:22:26.950Z",
+      "requestId": "3794bc88-822f-4ca7-a9f3-3af1d8209fd3",
+      "firstUserPromptSha256": "6b1e0793cca343e2855de06a35a88a3f825faccc8ce34b1ac796271096e5c344",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 99,
+        "prompt_tokens": 51795,
+        "total_tokens": 51894,
+        "completion_tokens_details": {
+          "reasoning_tokens": 8
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 51456
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 1382
+        }
+      ],
+      "selectedTools": [],
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:28.233Z",
+      "finishedAt": "2026-10-03T08:22:32.773Z",
+      "requestId": "8e5b567b-0eca-4f1b-bae0-c29a7a7bf39e",
+      "firstUserPromptSha256": "68f1c4e7035e2d0678fc4c02a81b415b945e3c7fe1907aa8ea5cacb928e749f4",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 409,
+        "prompt_tokens": 47676,
+        "total_tokens": 48085,
+        "completion_tokens_details": {
+          "reasoning_tokens": 349
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47232
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 4442
+        }
+      ],
+      "selectedTools": [
+        "skill",
+        "read"
+      ],
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:28.581Z",
+      "finishedAt": "2026-10-03T08:22:32.636Z",
+      "requestId": "90508928-3489-421c-af8d-b53fac7da477",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 401,
+        "prompt_tokens": 62109,
+        "total_tokens": 62510,
+        "completion_tokens_details": {
+          "reasoning_tokens": 150
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 58240
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 3986
+        }
+      ],
+      "selectedTools": [
+        "ipython"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:34.260Z",
+      "finishedAt": "2026-10-03T08:22:40.351Z",
+      "requestId": "23a79b4a-651a-4389-9395-9a86f3763a1d",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 229,
+        "prompt_tokens": 62544,
+        "total_tokens": 62773,
+        "completion_tokens_details": {
+          "reasoning_tokens": 41
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 59264
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 5983
+        }
+      ],
+      "selectedTools": [
+        "scripted_tools"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:47.626Z",
+      "finishedAt": "2026-10-03T08:22:49.804Z",
+      "requestId": "8fd11db5-888d-4fc9-8fbd-1a498b709f95",
+      "firstUserPromptSha256": "68f1c4e7035e2d0678fc4c02a81b415b945e3c7fe1907aa8ea5cacb928e749f4",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 90,
+        "prompt_tokens": 51423,
+        "total_tokens": 51513,
+        "completion_tokens_details": {
+          "reasoning_tokens": 46
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 47616
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 2071
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:50.073Z",
+      "finishedAt": "2026-10-03T08:22:51.774Z",
+      "requestId": "0fead74e-9f86-474b-8da8-0b2659248953",
+      "firstUserPromptSha256": "68f1c4e7035e2d0678fc4c02a81b415b945e3c7fe1907aa8ea5cacb928e749f4",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 118,
+        "prompt_tokens": 51535,
+        "total_tokens": 51653,
+        "completion_tokens_details": {
+          "reasoning_tokens": 10
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 51328
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 1594
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:52.053Z",
+      "finishedAt": "2026-10-03T08:22:54.119Z",
+      "requestId": "0f39acd8-2ba1-4fab-babc-bf4c9d368fea",
+      "firstUserPromptSha256": "68f1c4e7035e2d0678fc4c02a81b415b945e3c7fe1907aa8ea5cacb928e749f4",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 51744,
+        "total_tokens": 51868,
+        "completion_tokens_details": {
+          "reasoning_tokens": 37
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 51456
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 1974
+        }
+      ],
+      "selectedTools": [],
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:54.523Z",
+      "finishedAt": "2026-10-03T08:22:57.223Z",
+      "requestId": "be253b77-27c6-4bd8-ab56-7bf692d68059",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 251,
+        "prompt_tokens": 62908,
+        "total_tokens": 63159,
+        "completion_tokens_details": {
+          "reasoning_tokens": 129
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 62080
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 2618
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:22:57.524Z",
+      "finishedAt": "2026-10-03T08:23:08.109Z",
+      "requestId": "280c5e4b-7817-4c07-8c3f-d14f4ea56993",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 1696,
+        "prompt_tokens": 63239,
+        "total_tokens": 64935,
+        "completion_tokens_details": {
+          "reasoning_tokens": 26
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 62464
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 10482
+        }
+      ],
+      "selectedTools": [
+        "write"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:23:08.691Z",
+      "finishedAt": "2026-10-03T08:23:12.385Z",
+      "requestId": "1c772b1e-4562-4f68-af81-66b5330f1a7d",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 328,
+        "prompt_tokens": 64935,
+        "total_tokens": 65263,
+        "completion_tokens_details": {
+          "reasoning_tokens": 150
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 62848
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 3606
+        }
+      ],
+      "selectedTools": [
+        "exec"
+      ],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    },
+    {
+      "startedAt": "2026-10-03T08:23:12.736Z",
+      "finishedAt": "2026-10-03T08:23:18.671Z",
+      "requestId": "a10c9812-0aff-4c9b-b8bb-01a31482db07",
+      "firstUserPromptSha256": "4ceee2e7acc3a19ed5943cee79a746a228160dfa540915bc3a3c789cbc79a831",
+      "configuredProvider": "runanywhere",
+      "configuredModel": "mimo-v2.6-pro",
+      "responseModel": "mimo-v2.6-pro",
+      "usage": {
+        "completion_tokens": 767,
+        "prompt_tokens": 65426,
+        "total_tokens": 66193,
+        "completion_tokens_details": {
+          "reasoning_tokens": 34
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 63232
+        }
+      },
+      "inferenceAttempts": [
+        {
+          "status": 200,
+          "elapsedMs": 5843
+        }
+      ],
+      "selectedTools": [],
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33"
+    }
+  ],
+  "capabilityCalls": [
+    {
+      "callId": "call_154ed6ddeb8d4d63b1ceacc7",
+      "tool": "ipython",
+      "arguments": {
+        "code": "rlm_probe_value = sum(range(1001))\ndef rlm_probe_add(n):\n    return rlm_probe_value + n\nnonce = \"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\"\nprompt_text = str(globals().get('prompt', ''))\nprompt_has_nonce = nonce in prompt_text\nprint(\"RLM_SEEDED value =\", rlm_probe_value)\nprint(\"RLM_SEEDED nonce_in_prompt =\", prompt_has_nonce)\nprint(\"RLM_SEEDED prompt_len =\", len(prompt_text))"
+      },
+      "result": {
+        "stdout": "RLM_SEEDED value = 500500\nRLM_SEEDED nonce_in_prompt = True\nRLM_SEEDED prompt_len = 7688\n",
+        "stderr": "",
+        "result": null,
+        "ok": true
+      },
+      "eventId": "a1ebc02c-50c2-4617-9cf6-9ec2c32c507f",
+      "at": "2026-10-03T08:21:44.568Z"
+    },
+    {
+      "callId": "call_7af09c9e7b0d42aea0e7bd1f",
+      "tool": "ipython",
+      "arguments": {
+        "code": "print(\"RLM_PERSISTENCE value =\", rlm_probe_value)\nprint(\"RLM_PERSISTENCE rlm_probe_add(7) =\", rlm_probe_add(7))"
+      },
+      "result": {
+        "stdout": "RLM_PERSISTENCE value = 500500\nRLM_PERSISTENCE rlm_probe_add(7) = 500507\n",
+        "stderr": "",
+        "result": null,
+        "ok": true
+      },
+      "eventId": "b68b3858-bda7-4b81-94b5-d449a13044f4",
+      "at": "2026-10-03T08:21:48.038Z"
+    },
+    {
+      "callId": "call_c484fc31d27e4766a6148ff5",
+      "tool": "ipython",
+      "arguments": {
+        "code": "rlm_prompt = \"\"\"You are the 'rlm-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([7,11,13]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/rlm-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'rlm-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and rlm-only.txt exists with the nonce and total.\"\"\"\n\nchild_id = await rlm.spawn(rlm_prompt, name='rlm-reader')\nprint(\"RLM_CHILD_ID =\", child_id)"
+      },
+      "result": {
+        "stdout": "RLM_CHILD_ID = {'rlm_child_id': 'fe415064-e740-4885-8ff2-beb1d0188c55', 'name': 'rlm-reader', 'session_dir': None, 'model': 'xiaomi/mimo-v2.6-pro', 'status': 'queued'}\n",
+        "stderr": "",
+        "result": null,
+        "ok": true
+      },
+      "eventId": "fa76c8c0-f7a2-47fb-b1f4-0523c51c3552",
+      "at": "2026-10-03T08:21:55.581Z"
+    },
+    {
+      "callId": "call_81e3a757b6ef4271b85fc97d",
+      "tool": "scripted_tools",
+      "arguments": {
+        "script": "import asyncio, json\n\nd_read = await opulent_tools.describe('read')\nd_create = await opulent_tools.describe('opulent_session_create')\nd_sub = await opulent_tools.describe('read_subagent')\nprint(\"DESCRIBE read:\", json.dumps(d_read)[:1500])\nprint(\"DESCRIBE opulent_session_create:\", json.dumps(d_create)[:1500])\nprint(\"DESCRIBE read_subagent:\", json.dumps(d_sub)[:1500])\n\nr_task, r_facts = await asyncio.gather(\n    tools.read(file_path='/tmp/broad-legal-workspace/task/task.json'),\n    tools.read(file_path='/tmp/broad-legal-workspace/task/materials/facts.md'),\n)\nprint(\"READ task.json:\", r_task)\nprint(\"READ facts.md:\", r_facts)\n\ncodemode_prompt = \"\"\"You are the 'codemode-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([17,19,23]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/codemode-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'codemode-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and codemode-only.txt exists with the nonce and total.\"\"\"\n\ncreate_result = await tools.opulent_session_create(sessions=[{'prompt': codemode_prompt, 'title': 'codemode-reader'}])\nprint(\"CODEMODE_CREATE_RESULT:\", create_result)"
+      },
+      "result": {
+        "error": "Script exited 1: Traceback (most recent call last):\n  File \"/tmp/runtime-launcher-9530acbe-88dd-41e4-a719-8dddfefb9799.py\", line 183, in <module>\n    exec(compile(tree,script_path,'exec'),{'__name__':'__main__','__file__':script_path})\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/runtime-script-9530acbe-88dd-41e4-a719-8dddfefb9799.py\", line 3\n    d_read = await opulent_tools.describe('read')\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nSyntaxError: 'await' outside function\n (Script run 16605b43-bc96-4c63-a066-3c78eab396af ledger: 0 completed, 0 failed, 0 uncertain; inspect script_runs/script_calls before retrying.)"
+      },
+      "eventId": "9ea9a814-be2c-4d6d-8547-1d5cfdc7a277",
+      "at": "2026-10-03T08:22:02.790Z"
+    },
+    {
+      "callId": "call_bc9af64a70024186990dea16",
+      "tool": "scripted_tools",
+      "arguments": {
+        "script": "import asyncio, json\n\nasync def main():\n    d_read = await opulent_tools.describe('read')\n    d_create = await opulent_tools.describe('opulent_session_create')\n    d_sub = await opulent_tools.describe('read_subagent')\n    print(\"DESCRIBE read:\", json.dumps(d_read)[:1500])\n    print(\"DESCRIBE opulent_session_create:\", json.dumps(d_create)[:1500])\n    print(\"DESCRIBE read_subagent:\", json.dumps(d_sub)[:1500])\n\n    r_task, r_facts = await asyncio.gather(\n        tools.read(file_path='/tmp/broad-legal-workspace/task/task.json'),\n        tools.read(file_path='/tmp/broad-legal-workspace/task/materials/facts.md'),\n    )\n    print(\"READ task.json:\", r_task)\n    print(\"READ facts.md:\", r_facts)\n\n    codemode_prompt = \"\"\"You are the 'codemode-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([17,19,23]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/codemode-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'codemode-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and codemode-only.txt exists with the nonce and total.\"\"\"\n\n    create_result = await tools.opulent_session_create(sessions=[{'prompt': codemode_prompt, 'title': 'codemode-reader'}])\n    print(\"CODEMODE_CREATE_RESULT:\", create_result)\n\nasyncio.run(main())"
+      },
+      "result": {
+        "error": "Script exited 1: Traceback (most recent call last):\n  File \"/tmp/runtime-launcher-fdc49fd3-01dd-4c96-9ec6-4a97c27d8d0e.py\", line 183, in <module>\n    exec(compile(tree,script_path,'exec'),{'__name__':'__main__','__file__':script_path})\n  File \"/tmp/runtime-script-fdc49fd3-01dd-4c96-9ec6-4a97c27d8d0e.py\", line 32, in <module>\n    asyncio.run(main())\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 194, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/tmp/runtime-script-fdc49fd3-01dd-4c96-9ec6-4a97c27d8d0e.py\", line 4, in main\n    d_read = await opulent_tools.describe('read')\n                   ^^^^^^^^^^^^^\nNameError: name 'opulent_tools' is not defined\n (Script run 815ac584-a2ba-4aab-a5d9-7e2ef9ebd47f ledger: 0 completed, 0 failed, 0 uncertain; inspect script_runs/script_calls before retrying.)"
+      },
+      "eventId": "4cbb0a89-cdb1-4755-954a-b1d5f2b9b797",
+      "at": "2026-10-03T08:22:11.626Z"
+    },
+    {
+      "callId": "call_f9e4d925ccd349f5ba7e1f02",
+      "tool": "scripted_tools",
+      "arguments": {
+        "script": "import asyncio, json\nfrom opulent_tools import tools, describe\n\nasync def main():\n    d_read = await describe('read')\n    d_create = await describe('opulent_session_create')\n    d_sub = await describe('read_subagent')\n    print(\"DESCRIBE read:\", json.dumps(d_read)[:1500])\n    print(\"DESCRIBE opulent_session_create:\", json.dumps(d_create)[:1500])\n    print(\"DESCRIBE read_subagent:\", json.dumps(d_sub)[:1500])\n\n    r_task, r_facts = await asyncio.gather(\n        tools.read(file_path='/tmp/broad-legal-workspace/task/task.json'),\n        tools.read(file_path='/tmp/broad-legal-workspace/task/materials/facts.md'),\n    )\n    print(\"READ task.json:\", r_task)\n    print(\"READ facts.md:\", r_facts)\n\n    codemode_prompt = \"\"\"You are the 'codemode-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([17,19,23]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/codemode-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'codemode-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and codemode-only.txt exists with the nonce and total.\"\"\"\n\n    create_result = await tools.opulent_session_create(sessions=[{'prompt': codemode_prompt, 'title': 'codemode-reader'}])\n    print(\"CODEMODE_CREATE_RESULT:\", create_result)\n\nasyncio.run(main())"
+      },
+      "result": {
+        "error": "Script exited 1: Traceback (most recent call last):\n  File \"/tmp/runtime-launcher-521d5278-c193-4b88-81de-1bc95caa046c.py\", line 183, in <module>\n    exec(compile(tree,script_path,'exec'),{'__name__':'__main__','__file__':script_path})\n  File \"/tmp/runtime-script-521d5278-c193-4b88-81de-1bc95caa046c.py\", line 33, in <module>\n    asyncio.run(main())\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 194, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/tmp/runtime-script-521d5278-c193-4b88-81de-1bc95caa046c.py\", line 5, in main\n    d_read = await describe('read')\n             ^^^^^^^^^^^^^^^^^^^^^^\nTypeError: object str can't be used in 'await' expression\n (Script run 1f52fce8-badc-4b0b-b14a-a415447e7bca ledger: 0 completed, 0 failed, 0 uncertain; inspect script_runs/script_calls before retrying.)"
+      },
+      "eventId": "5dee8255-46dc-4652-8174-8e96703b2a70",
+      "at": "2026-10-03T08:22:20.135Z"
+    },
+    {
+      "callId": "call_c4977dd96d8f427187dd41b1",
+      "tool": "scripted_tools",
+      "arguments": {
+        "script": "import asyncio, json\nfrom opulent_tools import tools, describe\n\nasync def main():\n    d_read = describe('read')\n    d_create = describe('opulent_session_create')\n    d_sub = describe('read_subagent')\n    print(\"DESCRIBE read:\", d_read[:1500] if isinstance(d_read, str) else json.dumps(d_read)[:1500])\n    print(\"DESCRIBE opulent_session_create:\", d_create[:1500] if isinstance(d_create, str) else json.dumps(d_create)[:1500])\n    print(\"DESCRIBE read_subagent:\", d_sub[:1500] if isinstance(d_sub, str) else json.dumps(d_sub)[:1500])\n\n    r_task, r_facts = await asyncio.gather(\n        tools.read(file_path='/tmp/broad-legal-workspace/task/task.json'),\n        tools.read(file_path='/tmp/broad-legal-workspace/task/materials/facts.md'),\n    )\n    print(\"READ task.json:\", r_task)\n    print(\"READ facts.md:\", r_facts)\n\n    codemode_prompt = \"\"\"You are the 'codemode-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([17,19,23]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/codemode-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'codemode-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and codemode-only.txt exists with the nonce and total.\"\"\"\n\n    create_result = await tools.opulent_session_create(sessions=[{'prompt': codemode_prompt, 'title': 'codemode-reader'}])\n    print(\"CODEMODE_CREATE_RESULT:\", create_result)\n\nasyncio.run(main())"
+      },
+      "result": {
+        "stdout": "DESCRIBE read: tools.read(*, file_path: string, offset: integer = None, limit: integer = None)\nRead a UTF-8 file from the configured sandbox workspace. The file_path must resolve inside that workspace; absolute and workspace-relative paths are accepted. By default, reads up to 2000 lines; use positive line `offset` and `limit` for long files. Read before making exact-string edits, and do not assume missing content means a file is empty when a limit was applied.\n  file_path (required): The absolute path to the file to read.\n  offset: Optional line number to start reading from (1-based).\n  limit: Optional number of lines to read.\nSchema: {\n  \"type\": \"object\",\n  \"properties\": {\n    \"file_path\": {\n      \"description\": \"The absolute path to the file to read.\",\n      \"type\": \"string\"\n    },\n    \"offset\": {\n      \"description\": \"Optional line number to start reading from (1-based).\",\n      \"type\": \"integer\"\n    },\n    \"limit\": {\n      \"description\": \"Optional number of lines to read.\",\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [\n    \"file_path\"\n  ]\n}\nDESCRIBE opulent_session_create: tools.opulent_session_create(*, sessions: array, structured_output_schema: any = None, repos: any = None, platform: any = None, tags: any = None, board_ticket_ids: any = None, opulent_mode: any = None)\nCreate one or more child Opulent sessions in this runtime. Only use this when prompted to; do not parallelize by default. Children must use repositories in the configured allowlist. Returned IDs identify locally owned child sessions; pass them unchanged to `opulent_session_interact`. This is not the hosted v3 REST API and does not expose organization-wide sessions.\n  sessions (required): Array of session specs; only 'prompt' is required in each.\n  structured_output_schema: JSON Schema applied to created children without a per-session override. A child is asked to return JSON matching the schema, and final output is validated locally; no provide_structured_output tool or hosted polling contract is involved.\n  repos: List of repository identifiers in 'owner/repo' format (e.g. ['myorg/myrepo']) to restrict ALL created sessions to. Each session spec can also include a 'repos' key to override this value for that session.\n  platform: Batch platform value retained in the schema; local startSession ignores VM/outpost placement overrides.\n  tags: Tags to apply to ALL created sessions (e.g. a shared run or campaign identifier). Each session spec can also include a 'tags' key to override this value for that session.\n  board_ticket_ids: Ticket IDs retained in the schema but not validated, \nDESCRIBE read_subagent: tools.read_subagent(*, agent_id: string, block: boolean = None, timeout: number = None)\nRead a child agent’s locally recorded response using its `agent_id`. Set `block=true` to wait up to the handler’s limit for terminal status, or continue other work and check later. This call does not interrupt the child. Do not assume an external completion notification is configured.\n  agent_id (required): The ID of the background subagent to read output from.\n  block: If true, block until the subagent finishes or the timeout expires.\n  timeout: Maximum number of seconds to wait when blocking. Defaults to 30, capped at 600, unless the tool description documents different limits for a specific subagent type.\nSchema: {\n  \"type\": \"object\",\n  \"properties\": {\n    \"agent_id\": {\n      \"type\": \"string\",\n      \"description\": \"The ID of the background subagent to read output from.\"\n    },\n    \"block\": {\n      \"type\": \"boolean\",\n      \"description\": \"If true, block until the subagent finishes or the timeout expires.\"\n    },\n    \"timeout\": {\n      \"type\": \"number\",\n      \"description\": \"Maximum number of seconds to wait when blocking. Defaults to 30, capped at 600, unless the tool description documents different limits for a specific subagent type.\"\n    }\n  },\n  \"required\": [\n    \"agent_id\"\n  ]\n}\nREAD task.json: {\"content\": \"{\\\"id\\\":\\\"native-rlm-vm-codemode-proof\\\",\\\"title\\\":\\\"Native RLM, isolated VM agents and codemode integration\\\",\\\"instructions\\\":\\\"This is an explicitly requested non-legal runtime integration, not a scored comparison. Use native RunAnywhere MiMo and the actual tools; no fabricated results. Keep human approvals, secrets and repository restrictions intact. Do not use storage, external MCP, workflow execution or other hosted services. Do not spawn grandchildren. Produce capability-ledger.md as JSON or a JSON code block, with nonce, persistentValue, functionValue, rlmChildId, codemodeChildId, childResults, and observations.\\\\n\\\\n1. Invoke the managing-child-sessions and analyzing-sessions skills and follow their applicable session/readback guidance.\\\\n2. Use ipython to seed rlm_probe_value = sum(range(1001)) and define rlm_probe_add(n) using that retained value. Print RLM_SEEDED with the computed value and a boolean verifying the preloaded prompt includes this nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. In a separate later ipython call, without reassigning that variable or redefining the function, call rlm_probe_add(7), print RLM_PERSISTENCE and the actual computed result.\\\\n3. From ipython, create exactly one VM-backed child with await rlm.spawn(..., name='rlm-reader'). Give it a standalone prompt: invoke managing-child-sessions, read /tmp/broad-legal-workspace/corpus/README.txt, run Python through exec to compute sum([7,11,13]), and write /tmp/broad-legal-workspace/output/rlm-only.txt containing nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and its computed total. It must return JSON with nonce, role='rlm-reader', total, hostname from an actual shell command, and a real excerpt read from README.txt. No child or workflow spawning.\\\\n4. Use scripted_tools, the runtime's Python codemode interface. In the script, use opulent_tools.describe to discover read, opulent_session_create and read_subagent schemas. Use asyncio.gather on actual tools.read calls for /tmp/broad-legal-workspace/task/task.json and /tmp/broad-legal-workspace/task/materials/facts.md and print both returned results. Then call tools.opulent_session_create with sessions=[{'prompt': ..., 'title': 'codemode-reader'}] to create exactly one more child with a standalone prompt: invoke managing-child-sessions, read the same corpus README, compute sum([17,19,23]) with exec, and write its nonce/total in output/codemode-only.txt. Return JSON with nonce, role='codemode-reader', total, actual hostname and a real README excerpt. No grandchildren or workflows. Print and retain its returned session_id; queued is not completed. Every tool function must be named literally in the script and awaited.\\\\n5. Wait for both children to finish and read their actual completed responses. For the RLM child use await rlm.result(id) in a later ipython cell and print the complete returned output with status. Poll with asyncio.sleep(2) if needed; never treat a running result as complete. For the codemode child, use another scripted_tools call with await tools.read_subagent(agent_id=..., block=True, timeout=90), print the completed response, and repeat if it is still running. All cells must finish within 300 seconds.\\\\n6. Prove VM isolation from the parent: after both children complete, exec must find neither child-only file in the parent's output directory. Do not copy these marker files to the parent. Use the actual returned child totals and IDs in capability-ledger.md, retain the real README excerpts, and finish only when both children are completed. Do not assert API permission checks passed; those are outside this fixture.\\\",\\\"scope\\\":{\\\"jurisdiction\\\":\\\"Non-legal capability fixture\\\",\\\"companyForm\\\":\\\"None\\\",\\\"asOf\\\":\\\"2026-10-03\\\"},\\\"deliverables\\\":[\\\"capability-ledger.md\\\"],\\\"materials\\\":[\\\"materials/facts.md\\\"]}\", \"total_lines\": 1}\nREAD facts.md: {\"content\": \"Public non-legal fixture. Nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. RLM child input: [7,11,13]. Codemode child input: [17,19,23]. The parent must collect completed child responses, not admission IDs. Corpus README excerpts are real operator-provisioned source text, not generated provider results.\", \"total_lines\": 1}\nCODEMODE_CREATE_RESULT: {\"sessions\": [{\"session_id\": \"bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e\", \"title\": \"codemode-reader\", \"status\": \"queued\"}]}\n",
+        "stderr": "",
+        "exit_code": 0
+      },
+      "eventId": "8baa9a6c-2e99-4f24-b702-95a98082b766",
+      "at": "2026-10-03T08:22:28.511Z"
+    },
+    {
+      "callId": "call_d10ae66243b44da3a8c3920f",
+      "tool": "ipython",
+      "arguments": {
+        "code": "import asyncio, time\ndeadline = time.time() + 240\nwhile True:\n    res = await rlm.result('fe415064-e740-4885-8ff2-beb1d0188c55')\n    status = res.get('status') if isinstance(res, dict) else None\n    print(\"poll status:\", status)\n    if status not in (None, 'queued', 'running', 'pending') or (isinstance(res, dict) and res.get('result') is not None):\n        break\n    if time.time() > deadline:\n        break\n    await asyncio.sleep(2)\nprint(\"RLM_RESULT_STATUS:\", res.get('status') if isinstance(res, dict) else 'unknown')\nprint(\"RLM_RESULT_FULL:\", res)"
+      },
+      "result": {
+        "stdout": "poll status: completed\nRLM_RESULT_STATUS: completed\nRLM_RESULT_FULL: {'rlm_child_id': 'fe415064-e740-4885-8ff2-beb1d0188c55', 'status': 'completed', 'output': '```json\\n{\"nonce\": \"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\", \"role\": \"rlm-reader\", \"total\": 31, \"hostname\": \"e2b.local\", \"readme_excerpt\": \"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\"}\\n```', 'error': None}\n",
+        "stderr": "",
+        "result": null,
+        "ok": true
+      },
+      "eventId": "a4120b0b-ea18-4961-9a57-c734e9990b21",
+      "at": "2026-10-03T08:22:34.184Z"
+    },
+    {
+      "callId": "call_6acf52ad650d4dcaa1eb8dfc",
+      "tool": "scripted_tools",
+      "arguments": {
+        "script": "import asyncio\nfrom opulent_tools import tools\n\nasync def main():\n    for attempt in range(3):\n        res = await tools.read_subagent(agent_id='bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e', block=True, timeout=90)\n        print(f\"READ_SUBAGENT attempt {attempt+1}:\", res)\n        text = str(res)\n        if 'running' not in text.lower() and 'queued' not in text.lower() and 'pending' not in text.lower():\n            break\n        await asyncio.sleep(2)\n\nasyncio.run(main())"
+      },
+      "result": {
+        "stdout": "READ_SUBAGENT attempt 1: {\"agent_id\": \"bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e\", \"status\": \"completed\", \"response\": \"{\\\"nonce\\\": \\\"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\\\", \\\"role\\\": \\\"codemode-reader\\\", \\\"total\\\": 59, \\\"hostname\\\": \\\"e2b.local\\\", \\\"readme_excerpt\\\": \\\"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\\\"}\"}\n",
+        "stderr": "",
+        "exit_code": 0
+      },
+      "eventId": "931cc927-a132-4914-b8f4-855cc818de94",
+      "at": "2026-10-03T08:22:54.441Z"
+    }
+  ],
+  "rlmHostEvents": [
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "type": "rlm_host_call_started",
+      "data": {
+        "cell_id": "5a3960dd-fc18-42a7-975c-bcb2c3826ced",
+        "operation": "spawn"
+      },
+      "created_at": "2026-10-03T08:21:55.309Z",
+      "id": "1b7a2ca0-82a5-4a63-8f88-21850f625607"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "type": "rlm_host_call_finished",
+      "data": {
+        "cell_id": "5a3960dd-fc18-42a7-975c-bcb2c3826ced",
+        "operation": "spawn",
+        "ok": true
+      },
+      "created_at": "2026-10-03T08:21:55.405Z",
+      "id": "4ad6997e-f721-4b8d-8cc6-9fda664c8224"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "type": "rlm_host_call_started",
+      "data": {
+        "cell_id": "aea2c694-74a0-49a9-95bd-cf523ffae42d",
+        "operation": "result"
+      },
+      "created_at": "2026-10-03T08:22:33.981Z",
+      "id": "bd48e95c-5b6f-485d-8bf1-ad790709c8f4"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "type": "rlm_host_call_finished",
+      "data": {
+        "cell_id": "aea2c694-74a0-49a9-95bd-cf523ffae42d",
+        "operation": "result",
+        "ok": true
+      },
+      "created_at": "2026-10-03T08:22:34.004Z",
+      "id": "f9f93cc5-ba73-443a-9013-16b2dd4b3682"
+    }
+  ],
+  "scriptRuns": [
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:21:43.979Z",
+      "id": "cefefbdc-ab40-4284-b25f-0a675ebb74e0",
+      "finished_at": "2026-10-03T08:21:44.294Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:21:47.518Z",
+      "id": "018af67b-4d7f-4c3a-bd20-76b4e7ed7733",
+      "finished_at": "2026-10-03T08:21:47.799Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:21:55.038Z",
+      "id": "1276a283-0c2e-4396-8714-ebf4bd6a0a13",
+      "finished_at": "2026-10-03T08:21:55.493Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "failed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:01.926Z",
+      "id": "16605b43-bc96-4c63-a066-3c78eab396af",
+      "finished_at": "2026-10-03T08:22:02.566Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "failed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:10.690Z",
+      "id": "815ac584-a2ba-4aab-a5d9-7e2ef9ebd47f",
+      "finished_at": "2026-10-03T08:22:11.298Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "failed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:19.302Z",
+      "id": "1f52fce8-badc-4b0b-b14a-a415447e7bca",
+      "finished_at": "2026-10-03T08:22:19.962Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:26.762Z",
+      "id": "596931f3-0abd-4c60-9ad7-a732be5f2836",
+      "finished_at": "2026-10-03T08:22:28.426Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:32.771Z",
+      "id": "feb31b31-a24a-4a49-91cb-2f5be491709c",
+      "finished_at": "2026-10-03T08:22:34.088Z"
+    },
+    {
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "status": "completed",
+      "max_tool_calls": null,
+      "max_concurrent_tool_calls": null,
+      "started_at": "2026-10-03T08:22:40.467Z",
+      "id": "32a34625-2049-4a21-93a7-76dabe29bbf0",
+      "finished_at": "2026-10-03T08:22:54.355Z"
+    }
+  ],
+  "scriptCalls": [
+    {
+      "run_id": "1276a283-0c2e-4396-8714-ebf4bd6a0a13",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 1,
+      "name": "opulent_session_create",
+      "arguments": {
+        "sessions": [
+          {
+            "prompt": "You are the 'rlm-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([7,11,13]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/rlm-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'rlm-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and rlm-only.txt exists with the nonce and total.",
+            "title": "rlm-reader",
+            "repos": [],
+            "tags": [
+              "rlm-v1:f1d96733-26da-45f6-8674-5af5d300dd33"
+            ]
+          }
+        ]
+      },
+      "started_at": "2026-10-03T08:21:55.312Z",
+      "status": "completed",
+      "result": {
+        "sessions": [
+          {
+            "session_id": "fe415064-e740-4885-8ff2-beb1d0188c55",
+            "title": "rlm-reader",
+            "status": "queued"
+          }
+        ]
+      },
+      "finished_at": "2026-10-03T08:21:55.404Z",
+      "id": "1276a283-0c2e-4396-8714-ebf4bd6a0a13:1"
+    },
+    {
+      "run_id": "596931f3-0abd-4c60-9ad7-a732be5f2836",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 1,
+      "name": "read",
+      "arguments": {
+        "file_path": "/tmp/broad-legal-workspace/task/materials/facts.md"
+      },
+      "started_at": "2026-10-03T08:22:27.517Z",
+      "status": "completed",
+      "result": {
+        "content": "Public non-legal fixture. Nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. RLM child input: [7,11,13]. Codemode child input: [17,19,23]. The parent must collect completed child responses, not admission IDs. Corpus README excerpts are real operator-provisioned source text, not generated provider results.",
+        "total_lines": 1
+      },
+      "finished_at": "2026-10-03T08:22:27.841Z",
+      "id": "596931f3-0abd-4c60-9ad7-a732be5f2836:1"
+    },
+    {
+      "run_id": "596931f3-0abd-4c60-9ad7-a732be5f2836",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 2,
+      "name": "read",
+      "arguments": {
+        "file_path": "/tmp/broad-legal-workspace/task/task.json"
+      },
+      "started_at": "2026-10-03T08:22:27.524Z",
+      "status": "completed",
+      "result": {
+        "content": "{\"id\":\"native-rlm-vm-codemode-proof\",\"title\":\"Native RLM, isolated VM agents and codemode integration\",\"instructions\":\"This is an explicitly requested non-legal runtime integration, not a scored comparison. Use native RunAnywhere MiMo and the actual tools; no fabricated results. Keep human approvals, secrets and repository restrictions intact. Do not use storage, external MCP, workflow execution or other hosted services. Do not spawn grandchildren. Produce capability-ledger.md as JSON or a JSON code block, with nonce, persistentValue, functionValue, rlmChildId, codemodeChildId, childResults, and observations.\\n\\n1. Invoke the managing-child-sessions and analyzing-sessions skills and follow their applicable session/readback guidance.\\n2. Use ipython to seed rlm_probe_value = sum(range(1001)) and define rlm_probe_add(n) using that retained value. Print RLM_SEEDED with the computed value and a boolean verifying the preloaded prompt includes this nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf. In a separate later ipython call, without reassigning that variable or redefining the function, call rlm_probe_add(7), print RLM_PERSISTENCE and the actual computed result.\\n3. From ipython, create exactly one VM-backed child with await rlm.spawn(..., name='rlm-reader'). Give it a standalone prompt: invoke managing-child-sessions, read /tmp/broad-legal-workspace/corpus/README.txt, run Python through exec to compute sum([7,11,13]), and write /tmp/broad-legal-workspace/output/rlm-only.txt containing nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and its computed total. It must return JSON with nonce, role='rlm-reader', total, hostname from an actual shell command, and a real excerpt read from README.txt. No child or workflow spawning.\\n4. Use scripted_tools, the runtime's Python codemode interface. In the script, use opulent_tools.describe to discover read, opulent_session_create and read_subagent schemas. Use asyncio.gather on actual tools.read calls for /tmp/broad-legal-workspace/task/task.json and /tmp/broad-legal-workspace/task/materials/facts.md and print both returned results. Then call tools.opulent_session_create with sessions=[{'prompt': ..., 'title': 'codemode-reader'}] to create exactly one more child with a standalone prompt: invoke managing-child-sessions, read the same corpus README, compute sum([17,19,23]) with exec, and write its nonce/total in output/codemode-only.txt. Return JSON with nonce, role='codemode-reader', total, actual hostname and a real README excerpt. No grandchildren or workflows. Print and retain its returned session_id; queued is not completed. Every tool function must be named literally in the script and awaited.\\n5. Wait for both children to finish and read their actual completed responses. For the RLM child use await rlm.result(id) in a later ipython cell and print the complete returned output with status. Poll with asyncio.sleep(2) if needed; never treat a running result as complete. For the codemode child, use another scripted_tools call with await tools.read_subagent(agent_id=..., block=True, timeout=90), print the completed response, and repeat if it is still running. All cells must finish within 300 seconds.\\n6. Prove VM isolation from the parent: after both children complete, exec must find neither child-only file in the parent's output directory. Do not copy these marker files to the parent. Use the actual returned child totals and IDs in capability-ledger.md, retain the real README excerpts, and finish only when both children are completed. Do not assert API permission checks passed; those are outside this fixture.\",\"scope\":{\"jurisdiction\":\"Non-legal capability fixture\",\"companyForm\":\"None\",\"asOf\":\"2026-10-03\"},\"deliverables\":[\"capability-ledger.md\"],\"materials\":[\"materials/facts.md\"]}",
+        "total_lines": 1
+      },
+      "finished_at": "2026-10-03T08:22:28.000Z",
+      "id": "596931f3-0abd-4c60-9ad7-a732be5f2836:2"
+    },
+    {
+      "run_id": "596931f3-0abd-4c60-9ad7-a732be5f2836",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 3,
+      "name": "opulent_session_create",
+      "arguments": {
+        "sessions": [
+          {
+            "prompt": "You are the 'codemode-reader' probe child on your own isolated VM. Complete these steps exactly, then return the JSON. Do NOT spawn any child sessions or workflows.\n\n1. Invoke the 'managing-child-sessions' skill (skill tool, command='invoke', skill='managing-child-sessions') and follow its applicable guidance.\n2. Read the file /tmp/broad-legal-workspace/corpus/README.txt and note a real excerpt from it (verbatim text you actually read).\n3. Run Python through the exec shell tool to compute sum([17,19,23]) and record the actual result.\n4. Get your real hostname from an actual shell command (e.g. exec 'hostname').\n5. Write the file /tmp/broad-legal-workspace/output/codemode-only.txt containing both the nonce 49efb376-71c2-4ea1-a8c3-3b1db53e76cf and your computed total.\n6. Finish by returning ONLY a JSON object with these keys: nonce (the literal 49efb376-71c2-4ea1-a8c3-3b1db53e76cf), role (the literal 'codemode-reader'), total (your computed sum), hostname (the actual hostname from the shell command), readme_excerpt (a real verbatim excerpt from README.txt).\n\nSuccess criteria: the JSON is valid, total equals the actual computed sum, hostname is from a real shell command, readme_excerpt is verbatim from README.txt, and codemode-only.txt exists with the nonce and total.",
+            "title": "codemode-reader"
+          }
+        ]
+      },
+      "started_at": "2026-10-03T08:22:28.211Z",
+      "status": "completed",
+      "result": {
+        "sessions": [
+          {
+            "session_id": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+            "title": "codemode-reader",
+            "status": "queued"
+          }
+        ]
+      },
+      "finished_at": "2026-10-03T08:22:28.335Z",
+      "id": "596931f3-0abd-4c60-9ad7-a732be5f2836:3"
+    },
+    {
+      "run_id": "feb31b31-a24a-4a49-91cb-2f5be491709c",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 1,
+      "name": "read_subagent",
+      "arguments": {
+        "agent_id": "fe415064-e740-4885-8ff2-beb1d0188c55",
+        "block": false
+      },
+      "started_at": "2026-10-03T08:22:33.990Z",
+      "status": "completed",
+      "result": {
+        "agent_id": "fe415064-e740-4885-8ff2-beb1d0188c55",
+        "status": "completed",
+        "response": "```json\n{\"nonce\": \"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\", \"role\": \"rlm-reader\", \"total\": 31, \"hostname\": \"e2b.local\", \"readme_excerpt\": \"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\"}\n```"
+      },
+      "finished_at": "2026-10-03T08:22:34.003Z",
+      "id": "feb31b31-a24a-4a49-91cb-2f5be491709c:1"
+    },
+    {
+      "run_id": "32a34625-2049-4a21-93a7-76dabe29bbf0",
+      "session_id": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "call_id": 1,
+      "name": "read_subagent",
+      "arguments": {
+        "agent_id": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+        "block": true,
+        "timeout": 90
+      },
+      "started_at": "2026-10-03T08:22:41.044Z",
+      "status": "completed",
+      "result": {
+        "agent_id": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+        "status": "completed",
+        "response": "{\"nonce\":\"49efb376-71c2-4ea1-a8c3-3b1db53e76cf\",\"role\":\"codemode-reader\",\"total\":59,\"hostname\":\"e2b.local\",\"readme_excerpt\":\"This directory contains the full evaluation source corpus, not reference answers or grading rubrics.\"}"
+      },
+      "finished_at": "2026-10-03T08:22:54.262Z",
+      "id": "32a34625-2049-4a21-93a7-76dabe29bbf0:1"
+    }
+  ],
+  "skillInvocations": [
+    {
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "callId": "call_0eeeb56b81a6447e8c1e7053",
+      "skill": "managing-child-sessions",
+      "command": "invoke",
+      "contentSha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea",
+      "source": "runtime/skills/managing-child-sessions/SKILL.md",
+      "observedAt": "2026-10-03T08:21:39.466Z"
+    },
+    {
+      "sessionId": "f1d96733-26da-45f6-8674-5af5d300dd33",
+      "callId": "call_4d0e21b4564b4c93b03583ad",
+      "skill": "analyzing-sessions",
+      "command": "invoke",
+      "contentSha256": "d28de1b5113c3667818339fc6606478b4e98e71da66991c961a3701f07c697a6",
+      "source": "runtime/skills/analyzing-sessions/SKILL.md",
+      "observedAt": "2026-10-03T08:21:39.568Z"
+    },
+    {
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55",
+      "callId": "call_4028be6792704a67801eff8e",
+      "skill": "managing-child-sessions",
+      "command": "invoke",
+      "contentSha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea",
+      "source": "runtime/skills/managing-child-sessions/SKILL.md",
+      "observedAt": "2026-10-03T08:22:14.974Z"
+    },
+    {
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+      "callId": "call_5da322775d4540abb142f664",
+      "skill": "managing-child-sessions",
+      "command": "invoke",
+      "contentSha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea",
+      "source": "runtime/skills/managing-child-sessions/SKILL.md",
+      "observedAt": "2026-10-03T08:22:47.131Z"
+    }
+  ],
+  "childExecutionCalls": [
+    {
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55",
+      "sandboxId": "iludvx6m959qu9psauxhm",
+      "callId": "call_f1254af823d1431ba3cf3531",
+      "tool": "exec",
+      "arguments": {
+        "command": "cat /tmp/broad-legal-workspace/corpus/README.txt"
+      },
+      "result": {
+        "shell_id": "5bb7a678-9d24-4a6d-9f58-de3996116524",
+        "stdout": "This directory contains the full evaluation source corpus, not reference answers or grading rubrics. Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID shown in the first line in square brackets. index.json lists all chunk paths; documents.json lists document metadata.\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "observedAt": "2026-10-03T08:22:15.078Z",
+      "timestampSource": "event:tool_finished"
+    },
+    {
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55",
+      "sandboxId": "iludvx6m959qu9psauxhm",
+      "callId": "call_f1e156d36a5b45378adbca71",
+      "tool": "exec",
+      "arguments": {
+        "command": "python3 -c \"print(sum([7,11,13]))\" && hostname"
+      },
+      "result": {
+        "shell_id": "fadab6a8-a4b6-4e14-b684-e64b74d1ccd3",
+        "stdout": "31\ne2b.local\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "observedAt": "2026-10-03T08:22:19.358Z",
+      "timestampSource": "event:tool_finished"
+    },
+    {
+      "sessionId": "fe415064-e740-4885-8ff2-beb1d0188c55",
+      "sandboxId": "iludvx6m959qu9psauxhm",
+      "callId": "call_6cbd22f11a204b21b032f62a",
+      "tool": "exec",
+      "arguments": {
+        "command": "mkdir -p /tmp/broad-legal-workspace/output && printf 'nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\\ntotal: 31\\n' > /tmp/broad-legal-workspace/output/rlm-only.txt && cat /tmp/broad-legal-workspace/output/rlm-only.txt"
+      },
+      "result": {
+        "shell_id": "d77201b9-2744-4d96-9802-77b7e79058f1",
+        "stdout": "nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\ntotal: 31\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "observedAt": "2026-10-03T08:22:25.459Z",
+      "timestampSource": "event:tool_finished"
+    },
+    {
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+      "sandboxId": "i5kbnez6mpqa9rfl2yo3d",
+      "callId": "call_9b603ab6d65b46a992a0c0fd",
+      "tool": "read",
+      "arguments": {
+        "file_path": "/tmp/broad-legal-workspace/corpus/README.txt"
+      },
+      "result": {
+        "content": "This directory contains the full evaluation source corpus, not reference answers or grading rubrics. Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID shown in the first line in square brackets. index.json lists all chunk paths; documents.json lists document metadata.\n",
+        "total_lines": 1
+      },
+      "observedAt": "2026-10-03T08:22:47.601Z",
+      "timestampSource": "event:tool_finished"
+    },
+    {
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+      "sandboxId": "i5kbnez6mpqa9rfl2yo3d",
+      "callId": "call_c3e5b698dc334dd4b3a6728e",
+      "tool": "exec",
+      "arguments": {
+        "command": "python3 -c \"print(sum([17,19,23]))\"; echo \"HOSTNAME=$(hostname)\""
+      },
+      "result": {
+        "shell_id": "eff8353e-7012-4dad-adb8-8c906eca3cb4",
+        "stdout": "59\nHOSTNAME=e2b.local\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "observedAt": "2026-10-03T08:22:50.043Z",
+      "timestampSource": "event:tool_finished"
+    },
+    {
+      "sessionId": "bc078de2-2a4e-4f51-a3c7-2fbfc4faff1e",
+      "sandboxId": "i5kbnez6mpqa9rfl2yo3d",
+      "callId": "call_f21d73136ba049eeb0bd5304",
+      "tool": "exec",
+      "arguments": {
+        "command": "mkdir -p /tmp/broad-legal-workspace/output && printf 'nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\\ntotal: 59\\n' > /tmp/broad-legal-workspace/output/codemode-only.txt && cat /tmp/broad-legal-workspace/output/codemode-only.txt"
+      },
+      "result": {
+        "shell_id": "51ea6653-fa8e-4ccb-aca6-adb126463513",
+        "stdout": "nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\ntotal: 59\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "observedAt": "2026-10-03T08:22:52.012Z",
+      "timestampSource": "event:tool_finished"
+    }
+  ],
+  "isolationChecks": [
+    {
+      "callId": "call_84d9753c3ffa4effa16ff50b",
+      "tool": "exec",
+      "arguments": {
+        "command": "ls -la /tmp/broad-legal-workspace/output/; echo '---'; for f in rlm-only.txt codemode-only.txt; do if [ -e \"/tmp/broad-legal-workspace/output/$f\" ]; then echo \"PRESENT: $f\"; else echo \"ABSENT: $f\"; fi; done; echo '---README---'; cat /tmp/broad-legal-workspace/corpus/README.txt"
+      },
+      "result": {
+        "shell_id": "a38b582b-9f8d-4f91-af9a-d58976e6e0e9",
+        "stdout": "total 0\ndrwxrwxrwx 2 user user  60 Oct  3 08:21 .\ndrwxrwxrwt 6 root root 128 Oct  3 08:21 ..\n---\nABSENT: rlm-only.txt\nABSENT: codemode-only.txt\n---README---\nThis directory contains the full evaluation source corpus, not reference answers or grading rubrics. Search chunks with grep or other filesystem tools, then read the relevant files. Cite the exact chunk ID shown in the first line in square brackets. index.json lists all chunk paths; documents.json lists document metadata.\n",
+        "stderr": "",
+        "exit_code": 0,
+        "running": false,
+        "truncated": false
+      },
+      "eventId": "28ff3a67-24be-436f-97fb-5de7f98e657c",
+      "at": "2026-10-03T08:22:57.468Z"
+    }
+  ],
+  "sandboxes": [
+    {
+      "sandboxId": "i2r8p2xzt02xx42uhkupe",
+      "template": "aacky3169dfjvjyw7bsu",
+      "createdAt": "2026-10-03T08:21:26.959Z",
+      "killOutcomes": [
+        {
+          "at": "2026-10-03T08:23:19.721Z",
+          "ok": true
+        },
+        {
+          "at": "2026-10-03T08:23:19.965Z",
+          "ok": true
+        }
+      ],
+      "absence": {
+        "verified": true,
+        "error": "Sandbox i2r8p2xzt02xx42uhkupe not found",
+        "status": null
+      }
+    },
+    {
+      "sandboxId": "iludvx6m959qu9psauxhm",
+      "template": "aacky3169dfjvjyw7bsu",
+      "createdAt": "2026-10-03T08:22:02.702Z",
+      "killOutcomes": [
+        {
+          "at": "2026-10-03T08:23:20.073Z",
+          "ok": true
+        }
+      ],
+      "markerReadback": {
+        "stdout": "{\"rlm-only.txt\": \"nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\\ntotal: 31\\n\", \"codemode-only.txt\": null}\n",
+        "exitCode": 0,
+        "observedAt": "2026-10-03T08:22:27.531Z"
+      },
+      "absence": {
+        "verified": true,
+        "error": "Sandbox iludvx6m959qu9psauxhm not found",
+        "status": null
+      }
+    },
+    {
+      "sandboxId": "i5kbnez6mpqa9rfl2yo3d",
+      "template": "aacky3169dfjvjyw7bsu",
+      "createdAt": "2026-10-03T08:22:35.035Z",
+      "killOutcomes": [
+        {
+          "at": "2026-10-03T08:23:20.197Z",
+          "ok": true
+        }
+      ],
+      "markerReadback": {
+        "stdout": "{\"rlm-only.txt\": null, \"codemode-only.txt\": \"nonce: 49efb376-71c2-4ea1-a8c3-3b1db53e76cf\\ntotal: 59\\n\"}\n",
+        "exitCode": 0,
+        "observedAt": "2026-10-03T08:22:54.949Z"
+      },
+      "absence": {
+        "verified": true,
+        "error": "Sandbox i5kbnez6mpqa9rfl2yo3d not found",
+        "status": null
+      }
+    }
+  ],
+  "resources": {
+    "logicalRequests": 22,
+    "physicalAttempts": 22,
+    "promptTokensIncludingChildren": 1233146,
+    "completionTokensIncludingChildren": 8783,
+    "billing": "No settlement reconciliation or E2B/retrieval charges collected for this fixture. Do not add this run to historical comparison totals."
+  },
+  "priorProbe": {
+    "verified": false,
+    "failure": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'idle'\n- 'completed'\n",
+    "nativeRequests": 23,
+    "proofSha256": "2af4017fb37ff51c1d74a6603712b0a6637b6f030577d606bff21a9ae957c24c",
+    "cleanup": [
+      {
+        "sandboxId": "iole2iocfe3fiqwad7ur9",
+        "absence": {
+          "verified": true,
+          "error": "Sandbox iole2iocfe3fiqwad7ur9 not found",
+          "status": null
+        }
+      },
+      {
+        "sandboxId": "inhkwdbw60xbzqe4oqa9v",
+        "absence": {
+          "verified": true,
+          "error": "Sandbox inhkwdbw60xbzqe4oqa9v not found",
+          "status": null
+        }
+      },
+      {
+        "sandboxId": "i06aw9y09r6ewigppktsh",
+        "absence": {
+          "verified": true,
+          "error": "Sandbox i06aw9y09r6ewigppktsh not found",
+          "status": null
+        }
+      }
+    ],
+    "classification": "Failed verifier selection of idle bookkeeping session; not reported as a verified integration."
+  },
+  "limitations": [
+    "Operator-directed capability fixture, not spontaneous adoption or a scored legal task.",
+    "Three scripted-tools requests failed before broker dispatch: top-level await, missing import, and awaiting synchronous describe. Two succeeded; the parent summary incorrectly mentions only two failures.",
+    "Skill procedure text was invoked and source-hash matched; full execution of every procedure step or all six installed skills is not established.",
+    "This proves spawn/result and broker-backed orchestration, not list_subagents, arbitrary recursion depth, context-chunked legal synthesis or whole-catalog connectivity.",
+    "No external MCP, storage or hosted workflow was invoked; repository scope, authentication, approvals and secret restrictions were not relaxed.",
+    "Existing failed live SDK/POSIX permission checks remain unresolved; this fixture does not verify that boundary."
+  ]
+}

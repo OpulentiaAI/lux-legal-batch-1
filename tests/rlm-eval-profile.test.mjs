@@ -56,7 +56,7 @@ test('RLM profile adds ipython to both model-visible and dispatcher policy witho
   }
   assert.deepEqual(suppliedInitialToolsFor(NATIVE_BROAD_TOOLS), prepared.initialTools)
   assert.throws(() => rlmInitialToolsFor(NATIVE_BROAD_TOOLS), /requires ipython/)
-  assert.throws(() => createBroadHarness({ ...base, instructionProfile: 'opulent-rlm-v4', toolSurface: 'full-catalog-v1' }), /prepared native work-product/)
+  assert.throws(() => createBroadHarness({ ...base, instructionProfile: 'opulent-rlm-v4', toolSurface: 'full-catalog-v1' }), /prepared work-product tool surface/)
 
   const seen = []
   const runtime = createRuntime({ store: createStore(':memory:'), storage: {}, config: {

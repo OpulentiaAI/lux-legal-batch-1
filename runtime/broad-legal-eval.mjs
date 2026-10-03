@@ -3,10 +3,13 @@ import { execFileSync } from 'node:child_process'
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
-import { createSandbox } from './e2b.mjs'
+import { connectSandbox, createSandbox } from './e2b.mjs'
+import { protectSandboxFileAccess } from './sandbox-file-access.mjs'
 import { createModel } from './model.mjs'
+import { modelTransport } from './model-provider.mjs'
 import { LUNA_MODEL, validateEvalModel } from './eval-model-profile.mjs'
 import { brokerNetwork } from './eval-broker.mjs'
 import { createComputer } from './computer/index.mjs'
@@ -41,6 +44,9 @@ const quote = value => `'${value.replaceAll("'", "'\\''")}'`
 const PUBLIC_FILE = /^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|csv|txt)$/
 const TASK_PATH = `${BROAD_SANDBOX_WORKSPACE}/task`
 const OUTPUT_PATH = `${BROAD_SANDBOX_WORKSPACE}/output`
+// Bound the sleep-resume loop so an orphaned operation wait can never spin forever.
+const OPERATION_WAIT_RESUME_MS = 6 * 60 * 60 * 1000
+const CORPUS_DIGEST = Symbol('corpusDigest')
 
 function validateWorkProduct(packet) {
   const { task, materials } = packet ?? {}
@@ -104,9 +110,11 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
       const conversation = store.get('conversations', row.id)
       const messages = conversation?.messages ?? []
       const modelEvents = events.filter(event => event.type === 'model_usage')
-      const toolEvents = events.filter(event => event.type === 'tool_finished')
+      const toolEvents = events.filter(event => ['tool_finished', 'tool_rejected'].includes(event.type))
+      const toolEventsById = new Map(toolEvents.filter(event => event.data?.tool_call_id).map(event => [event.data.tool_call_id, event]))
       let turn = 0, tool = 0
-      return { sessionId: row.id, parentSessionId: row.parent_session_id, visibility: row.id === rootId ? 'answerer' : 'child-only',
+      return { sessionId: row.id, parentSessionId: row.parent_session_id, sandboxId: row.sandbox_id ?? null,
+        sandboxIds: [...new Set([...(row.sandbox_ids ?? []), row.sandbox_id].filter(Boolean))], visibility: row.id === rootId ? 'answerer' : 'child-only',
         createdAt: row.created_at ?? null, updatedAt: row.updated_at ?? null, status: row.status, error: row.error ?? null,
         output: row.id === rootId ? null : row.output ?? null, deliveredMessageIds: conversation?.delivered ?? [],
         pendingToolCallId: conversation?.pending_tool_call_id ?? null,
@@ -116,8 +124,13 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
           if (message.role === 'tool') {
             const call = messages.slice(0, index).findLast(entry => entry.role === 'assistant' &&
               entry.tool_calls?.some(item => item.id === message.tool_call_id))?.tool_calls?.find(item => item.id === message.tool_call_id)
-            const match = toolEvents.findIndex((event, i) => i >= tool && event.data?.name === call?.function?.name)
-            if (match >= 0) { anchor = toolEvents[match]; tool = match + 1 }
+            anchor = toolEventsById.get(message.tool_call_id) ?? null
+            if (!anchor) {
+              let failed = false
+              try { failed = !!JSON.parse(message.content)?.error } catch {}
+              const match = failed ? -1 : toolEvents.findIndex((event, i) => i >= tool && !event.data?.tool_call_id && event.data?.name === call?.function?.name)
+              if (match >= 0) { anchor = toolEvents[match]; tool = match + 1 }
+            }
           }
           return { index, observedAt: anchor?.created_at ?? null,
             timestampSource: anchor ? `event:${anchor.type}` : 'not-recorded', ...message }
@@ -161,21 +174,50 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
       await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
       for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
     }
+    // Built-in skills are installed from the hash-verified control-plane source
+    // at provisioning time: template aliases can resolve to snapshots that predate
+    // the skill bundle, so image contents are never assumed. Root-owned read-only
+    // placement matches the prepared-image contract and the provision-time
+    // verification below.
+    const skillsManifest = JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8'))
+    const staged = '/tmp/opulent-skill-staging'
+    for (const { name, artifactSha256 } of skillsManifest.skills) {
+      const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
+      if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
+      await sandbox.files.write(`${staged}/${name}.md`, bytes)
+    }
+    const skillDirs = skillsManifest.skills.map(({ name }) => `${skillsManifest.destinationRoot}/${name}`).join(' ')
+    const skillFiles = skillsManifest.skills.map(({ name }) =>
+      `sudo -n install -o root -g root -m 0444 ${staged}/${name}.md ${skillsManifest.destinationRoot}/${name}/SKILL.md`).join('; ')
+    const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
+    if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
     const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
     if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
-    const originalRun = sandbox.commands.run.bind(sandbox.commands)
-    const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
-    const baseline = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
-    if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
-    sandbox.commands.run = (command, options = {}) => {
-      if (typeof command !== 'string') throw new Error('Sandbox command must be text')
-      return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
-    }
-    if (sandbox.pty?.create) {
-      const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
-      sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
-    }
-    for (const method of ['makeDir', 'remove', 'rename', 'writeFiles']) {
+    return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
+  } catch (error) {
+    await sandbox.kill().catch(() => {})
+    throw error
+  }
+}
+
+async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = false) {
+  const originalRun = sandbox.commands.run.bind(sandbox.commands)
+  const digestCommand = `bash -o pipefail -c ${quote(`cd ${SANDBOX_CORPUS} && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . | sha256sum | cut -d' ' -f1`)}`
+  const baseline = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
+  if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
+  if (expectedDigest && baseline !== expectedDigest) throw new Error('Corpus integrity changed while sandbox was paused')
+  sandbox[CORPUS_DIGEST] = baseline
+  sandbox.commands.run = (command, options = {}) => {
+    if (typeof command !== 'string') throw new Error('Sandbox command must be text')
+    return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
+  }
+  if (sandbox.pty?.create) {
+    const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
+    sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
+  }
+  if (secureFileAccess) protectSandboxFileAccess(sandbox)
+  else {
+    for (const method of ['read', 'list', 'exists', 'getInfo', 'makeDir', 'remove', 'rename', 'writeFiles']) {
       if (!sandbox.files?.[method]) continue
       const original = sandbox.files[method].bind(sandbox.files)
       sandbox.files[method] = (...args) => {
@@ -188,17 +230,14 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     sandbox.files.write = (pathOrFiles, dataOrOptions, options) => typeof pathOrFiles === 'string'
       ? originalWrite(pathOrFiles, dataOrOptions, { ...options, user: 'user' })
       : originalWrite(pathOrFiles, { ...dataOrOptions, user: 'user' })
-    const originalPause = sandbox.pause.bind(sandbox)
-    sandbox.pause = async (...args) => {
-      const current = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
-      if (current !== baseline) throw new Error('Corpus integrity changed during evaluation')
-      return originalPause(...args)
-    }
-    return sandbox
-  } catch (error) {
-    await sandbox.kill().catch(() => {})
-    throw error
   }
+  const originalPause = sandbox.pause.bind(sandbox)
+  sandbox.pause = async (...args) => {
+    const current = (await originalRun(digestCommand, { user: 'user' })).stdout.trim()
+    if (current !== baseline) throw new Error('Corpus integrity changed during evaluation')
+    return originalPause(...args)
+  }
+  return sandbox
 }
 
 function visibleSources(value, corpusSources) {
@@ -229,7 +268,7 @@ function visibleSources(value, corpusSources) {
   return [...found.values()]
 }
 
-function auditMessages(messages, evidence, corpusSources) {
+function auditMessages(messages, evidence, corpusSources, parentVisibleV2 = false) {
   const calls = []
   const byId = new Map()
   const observed = new Map()
@@ -239,7 +278,7 @@ function auditMessages(messages, evidence, corpusSources) {
         let args = null
         try { args = JSON.parse(call.function.arguments) } catch {}
         const rawArguments = redactAudit(call.function?.arguments ?? '')
-        const entry = { tool: call.function?.name ?? 'unknown', argsHash: sha256(rawArguments), args: redactAudit(args), rawArguments,
+        const entry = { toolCallId: call.id ?? null, tool: call.function?.name ?? 'unknown', argsHash: sha256(rawArguments), args: redactAudit(args), rawArguments,
           result: { error: true, sha256: null } }
         calls.push(entry)
         if (typeof call.id === 'string') byId.set(call.id, entry)
@@ -253,7 +292,7 @@ function auditMessages(messages, evidence, corpusSources) {
     entry.result = { error: true, sha256: sha256(output) }
     let result
     try { result = JSON.parse(message.content) } catch { continue }
-    if (result?.error !== undefined) continue
+    if (result?.error !== undefined || parentVisibleV2 && result?.ok === false) continue
     entry.result.error = false
     if (entry.tool === 'lx_search' || entry.tool === 'lx_chunk') {
       const items = entry.tool === 'lx_search' ? result.results : [result]
@@ -271,10 +310,12 @@ function auditMessages(messages, evidence, corpusSources) {
 
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
-  reasoningEffort = null,
+  reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface = 'full-catalog-v1', instructionProfile,
-  runtimeFactory = createRuntime, sandboxFactory = createSandbox, modelFactory = createModel } = {}) {
-  validateEvalModel(model, providerOnly)
+  semanticSurface = 'mcp',
+  runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
+  validateEvalModel(model, providerOnly, inferenceProvider)
+  const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
     if (!workProduct || typeof workProduct !== 'object' || Array.isArray(workProduct) || Object.keys(workProduct).some(key => key !== 'maxCompletionTokens') ||
         !Number.isSafeInteger(workProduct.maxCompletionTokens ?? 8000) || (workProduct.maxCompletionTokens ?? 8000) < 1) throw new Error('Invalid work-product completion budget')
@@ -282,11 +323,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const unrestricted = instructionProfile === 'opulent-rlm-unrestricted-v5'
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)
+  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8'].includes(instructionProfile)
+  const capabilityV8 = instructionProfile === 'opulent-capability-v8'
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
-  if (rlm && (toolSurface !== 'initial-scripted-v1' || !nativeMcp || !workProduct)) throw new Error('RLM comparison requires the prepared native work-product tool surface')
-  if (toolSurface === 'initial-scripted-v1' && !nativeMcp) throw new Error('Prepared initial/scripted comparison requires native MCP')
+  if (rlm && (toolSurface !== 'initial-scripted-v1' || (!nativeMcp && semanticSurface !== 'toolbox') || !workProduct)) throw new Error('RLM comparison requires the prepared work-product tool surface')
+  if (toolSurface === 'initial-scripted-v1' && !nativeMcp && semanticSurface !== 'toolbox') throw new Error('Prepared initial/scripted comparison requires native MCP or toolbox')
   const evalModel = model
   if (typeof workspace !== 'string' || !isAbsolute(workspace)) throw new Error('Absolute corpus workspace is required')
   if (!corpus?.directory || !corpus.hash || !Array.isArray(corpus.sources) || corpus.count !== corpus.sources.length) throw new Error('Prepared corpus export is required')
@@ -313,23 +356,24 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     ? permittedAppendix.replace('en 120 mots maximum.', 'en produisant les livrables demandés.').replace('Pour la recherche juridique, utilise', 'Si tu choisis la recherche MCP, découvre les schémas via').replace('Termine par la réponse finale directement dans ton texte d’assistant.', `Écris les livrables dans ${OUTPUT_PATH}, sous leurs noms déclarés ; la réponse finale ne remplace pas les fichiers.`)
     : permittedAppendix
   const initialAppendix = unrestricted
-    ? `${appendix}\nLes outils mcp_list_tools, mcp_call_tool, lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement. Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels. Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
+    ? `${appendix}\nLes outils lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement.${nativeMcp ? ` Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels.` : ' La recherche sémantique native est fournie par la toolbox corpus configurée ; utilise directement lx_search, lx_chunk et lx_documents.'} Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
     : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
   const instructions = renderInstructions({ appendix: initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
-    variant: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
+    variant: capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    policy: unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    policy: capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
+    ...(capabilityV7 ? { evidenceReplayVersion: 'parent-visible-outputs-v2', schedulerPolicy: 'owned-operation-waits-ticked-during-parent-and-child-work-v1', accountingPolicy: 'quiesced-descendants-before-final-snapshot-v1' } : {}),
     ...(workProduct ? { workProduct: { version: 'complex-v1', taskPath: TASK_PATH, outputPath: OUTPUT_PATH, evidencePolicy: 'full-model-visible-tool-results-and-collected-deliverables-v1' } } : {}),
-    ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 120_000 } : {}),
-    toolSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
+    ...(workProduct ? { sandboxTimeoutMs: 3_600_000, modelRequestTimeoutMs: 600_000 } : {}),
+    toolSurface, semanticSurface, ...(rlm ? { rlm: { capability: RLM_CAPABILITY_VERSION, initialToolPolicy: unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY,
       initialToolPolicySha256: sha256(JSON.stringify({ ...(unrestricted ? UNRESTRICTED_INITIAL_TOOL_POLICY : RLM_INITIAL_TOOL_POLICY), initialTools })),
       definitionsSha256: sha256(JSON.stringify(rlmDefinitions)),
       sourcesSha256: Object.fromEntries(['rlm.mjs', 'rlm-kernel.py'].map(path =>
         [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])),
-      settings: unrestricted ? { unrestrictedTools: true, maxRlmHostCallsPerCell: null, maxRlmChildren: null,
+      settings: unrestricted ? { unrestrictedTools: true, ...(capabilityV8 ? { reportRlmState: true } : {}), maxRlmHostCallsPerCell: null, maxRlmChildren: null,
         maxSessionDepth: null, maxConcurrentSessions: null, maxScriptToolCalls: null, maxConcurrentScriptToolCalls: null }
         : { maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } } } : {}),
     ...(unrestricted ? { unrestrictedTools: true, runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION],
@@ -350,7 +394,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     effectiveToolOverlay: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     allowedTools, excluded: unrestricted ? [] : BROAD_POLICY.excluded, corpus: { hash: corpus?.hash ?? null, count: corpus?.count ?? null, version: 'comparison-corpus-v1' },
     evidencePolicy: 'Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally',
-    sandbox: { provider: 'E2B', ...(nativeMcp ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: 'configured; lazy on first sandbox tool, not a live availability claim',
+    sandbox: { provider: 'E2B', ...(sandboxTemplate ? { preparedTemplate: sandboxTemplate, computerImageSha256 } : {}), corpusUpload: capabilityV8 ? 'full approved export in every provisioned VM; child provisioning before first model turn; live verification required' : 'configured; lazy on first sandbox tool, not a live availability claim',
+      ...(capabilityV8 ? { eagerChildSandbox: true, secureSandboxFileAccess: true, corpusRoot: SANDBOX_CORPUS, corpusIndex: `${SANDBOX_CORPUS}/index.json`, workingCopies: 'permitted in writable analysis directories; canonical corpus remains read-only', sdkFilePolicy: 'actual unprivileged POSIX reads, scans and mutations with no privileged SDK filesystem fallback; reapplied on reconnect' } : {}),
       integrity: unrestricted ? 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed'
         : 'root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; tree hash checked before pause' },
     integrations: { webSearch: process.env.BRAVE_SEARCH_API_KEY ? 'configured, not probed' : 'available tool; BRAVE_SEARCH_API_KEY unavailable',
@@ -367,58 +412,78 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
   function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors) {
+    async function trackSandbox(sandbox) {
+      if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
+      provisionedSandboxes.add(sandbox)
+      const originalKill = sandbox.kill.bind(sandbox)
+      let termination
+      sandbox.kill = (...args) => termination ??= Promise.resolve().then(() => originalKill(...args)).catch(error => {
+        termination = undefined
+        throw error
+      })
+      if (packet) {
+        const collectWorkProduct = async () => {
+          const deliverables = [], missingDeliverables = []
+          const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
+          if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
+          for (const file of packet.task.deliverables) {
+            const path = `${OUTPUT_PATH}/${file}`
+            const check = await sandbox.commands.run(`if test ! -e ${quote(path)} && test ! -L ${quote(path)}; then printf missing; elif test -f ${quote(path)} && test ! -L ${quote(path)} && test "$(stat -c %s ${quote(path)})" -le 1048576; then printf ok; else printf unsafe; fi`)
+            const status = check.stdout.trim()
+            if (status === 'missing') { missingDeliverables.push(file); continue }
+            if (status !== 'ok') throw new Error(`Unsafe or oversized work-product deliverable: ${file}`)
+            const bytes = await sandbox.files.read(path, { format: 'bytes' })
+            if (!(bytes instanceof Uint8Array)) throw new Error(`Unreadable work-product deliverable: ${file}`)
+            if (bytes.byteLength > 1_048_576) throw new Error(`Oversized work-product deliverable: ${file}`)
+            const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+            deliverables.push({ file, content, sha256: sha256(bytes) })
+          }
+          collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
+        }
+        collectors?.set(sandbox.sandboxId, collectWorkProduct)
+        const originalPause = sandbox.pause.bind(sandbox)
+        sandbox.pause = async (...args) => {
+          await collectWorkProduct()
+          return originalPause(...args)
+        }
+      }
+      if (skills) {
+        for (const { name, artifactSha256 } of skills.skills) {
+          const path = `${skills.destinationRoot}/${name}/SKILL.md`
+          if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
+          const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
+          if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
+        }
+      }
+      return sandbox
+    }
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
+        inferenceProvider, ...(providerModel ? { providerModel } : {}),
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(unrestricted ? { runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION], unrestrictedTools: true }
           : rlm ? { runtimeCapabilities: [RLM_CAPABILITY_VERSION], maxRlmHostCallsPerCell: 64, maxRlmChildren: 16 } : {}),
         ...(scriptLimits ?? {}),
         ...(providerOnly ? { providerOnly } : {}),
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
-        ...(nativeMcp ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
+        ...(capabilityV7 ? { instructionProfile } : {}),
+        ...(capabilityV8 ? { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true } : {}),
+        ...(sandboxTemplate ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),
       },
       storage: {},
       provision: async config => {
         const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
-        if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
         provisionedSandboxes.add(sandbox)
-        if (packet) {
-          const collectWorkProduct = async () => {
-            const deliverables = [], missingDeliverables = []
-            const root = await sandbox.commands.run(`if test -d ${quote(OUTPUT_PATH)} && test ! -L ${quote(OUTPUT_PATH)}; then printf ok; else printf unsafe; fi`)
-            if (root.stdout.trim() !== 'ok') throw new Error('Work-product output directory is unsafe')
-            for (const file of packet.task.deliverables) {
-              const path = `${OUTPUT_PATH}/${file}`
-              const check = await sandbox.commands.run(`if test ! -e ${quote(path)} && test ! -L ${quote(path)}; then printf missing; elif test -f ${quote(path)} && test ! -L ${quote(path)} && test "$(stat -c %s ${quote(path)})" -le 1048576; then printf ok; else printf unsafe; fi`)
-              const status = check.stdout.trim()
-              if (status === 'missing') { missingDeliverables.push(file); continue }
-              if (status !== 'ok') throw new Error(`Unsafe or oversized work-product deliverable: ${file}`)
-              const bytes = await sandbox.files.read(path, { format: 'bytes' })
-              if (!(bytes instanceof Uint8Array)) throw new Error(`Unreadable work-product deliverable: ${file}`)
-              if (bytes.byteLength > 1_048_576) throw new Error(`Oversized work-product deliverable: ${file}`)
-              const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-              deliverables.push({ file, content, sha256: sha256(bytes) })
-            }
-            collected.set(sandbox.sandboxId, { deliverables, missingDeliverables })
-          }
-          collectors?.set(sandbox.sandboxId, collectWorkProduct)
-          const originalPause = sandbox.pause.bind(sandbox)
-          sandbox.pause = async (...args) => {
-            await collectWorkProduct()
-            return originalPause(...args)
-          }
-        }
-        if (skills) {
-          for (const { name, artifactSha256 } of skills.skills) {
-            const path = `${skills.destinationRoot}/${name}/SKILL.md`
-            if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
-            const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
-            if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
-          }
-        }
-        return sandbox
+        if (provision && capabilityV8) await protectCorpusSandbox(sandbox, undefined, true)
+        return await trackSandbox(sandbox)
+      },
+      connect: async (id, config) => {
+        const previous = [...provisionedSandboxes].find(sandbox => sandbox.sandboxId === id)
+        const sandbox = await sandboxConnect(id, config)
+        provisionedSandboxes.add(sandbox)
+        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], capabilityV8))
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
@@ -430,43 +495,68 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const record = Object.fromEntries(Object.entries(usage)
             .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number' && Number.isFinite(value)))
           record.finishReason = typeof raw.choices?.[0]?.finish_reason === 'string' ? raw.choices[0].finish_reason : null
+          if (transport.provider === 'runanywhere') {
+            record.inferenceProvider = transport.provider
+            record.requestedModel = transport.providerModel
+            record.responseModel = typeof raw.model === 'string' ? raw.model : null
+            record.requestId = typeof raw.id === 'string' ? raw.id : null
+            record.requestAttempts = raw.inferenceAttempts ?? []
+            for (const [name, value] of Object.entries({ reasoning_tokens: usage.completion_tokens_details?.reasoning_tokens,
+              cached_prompt_tokens: usage.prompt_tokens_details?.cached_tokens })) {
+              if (Number.isSafeInteger(value) && value >= 0) record[name] = value
+            }
+          }
           providerRecords.push(record)
           return response
+        }, error => {
+          if (transport.provider === 'runanywhere' && error.inferenceAttempts) providerRecords.push({ inferenceProvider: transport.provider,
+            requestedModel: transport.providerModel, failed: true, usageUnknown: true, requestAttempts: error.inferenceAttempts })
+          throw error
         })
       },
     }
   }
   return { provenance,
     async preflight() {
-      if (!nativeMcp) throw new Error('Native comparison preflight requires native MCP mode')
+      if (!nativeMcp && semanticSurface !== 'toolbox') throw new Error('Comparison preflight requires native MCP or toolbox mode')
       const stateDir = mkdtempSync(join(tmpdir(), 'broad-legal-preflight-'))
       const sandboxes = new Set()
       let runtime, detach
       let stage = 'native-provision'
       try {
-        await mcp.provision(stateDir)
+        if (nativeMcp) await mcp.provision(stateDir)
         runtime = runtimeFactory(runtimeOptions(stateDir, () => { throw new Error('Preflight must not call a model') }, sandboxes))
         detach = broker.attach(runtime)
         const session = runtime.allocate()
         stage = 'native-catalog'
-        const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
-        const names = listed.tools?.map(tool => tool.name)
-        if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
-          JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
-        for (const name of NATIVE_LX_TOOLS) {
-          stage = `native-${name}`
-          const probe = mcp.probes.find(item => item.name === name)
-          const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
-          if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
-          if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
+        if (!nativeMcp) {
+          stage = 'toolbox-direct-corpus'
+          const source = corpus.sources[0]
+          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Native toolbox chunk response differs from prepared source')
+          const search = await runtime.invoke(session.id, 'lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
+          if (!Array.isArray(search?.results) || !search.results.length) throw new Error('Native toolbox semantic search returned no results')
         }
-        if (unrestricted) {
+        if (nativeMcp) {
+          const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
+          const names = listed.tools?.map(tool => tool.name)
+          if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
+            JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
+          for (const name of NATIVE_LX_TOOLS) {
+            stage = `native-${name}`
+            const probe = mcp.probes.find(item => item.name === name)
+            const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
+            if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
+            if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
+          }
+        }
+        if (nativeMcp && unrestricted) {
           stage = 'direct-corpus-access'
           const source = corpus.sources[0]
           if (!source) throw new Error('Prepared corpus source required for direct-corpus verification')
           const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Direct corpus chunk response differs from prepared source')
-        } else {
+        } else if (nativeMcp) {
           stage = 'direct-corpus-denial'
           let directDenied = false
           try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
@@ -477,19 +567,28 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           script: 'import asyncio\nfrom opulent_tools import tools\nasync def main():\n    print(await tools.noop())\nasyncio.run(main())', timeout_secs: 30,
         })
         if (brokerCall.exit_code !== 0 || brokerCall.stdout.trim() !== '{}') throw new Error('Scored runtime broker callback failed')
-        stage = 'desktop-screenshot'
-        const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
-        if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
         const sandbox = runtime.context(session.id).sandbox
-        stage = 'local-browser-open'
-        await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, '<!doctype html><title>Legal comparison preflight</title><body>legal-comparison-preflight</body>')
-        const localServer = await sandbox.commands.run(`python3 -m http.server 8765 --bind 127.0.0.1 --directory ${BROAD_SANDBOX_WORKSPACE}`, { background: true })
-        await localServer.disconnect()
-        const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
-        if (local?.ok === false) throw new Error('Local browser failed to open')
-        stage = 'local-browser-console'
-        const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
-        if (location?.result !== true) throw new Error('Local browser verification failed')
+        if (skills) {
+          stage = 'builtin-skills'
+          for (const { name, artifactSha256 } of skills.skills) {
+            const result = await runtime.invoke(session.id, 'skill', { command: 'invoke', skill: name })
+            if (result.path !== `${skills.destinationRoot}/${name}/SKILL.md` || sha256(result.content) !== artifactSha256) throw new Error(`Built-in skill invocation mismatch: ${name}`)
+          }
+        }
+        if (nativeMcp) {
+          stage = 'desktop-screenshot'
+          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
+          stage = 'local-browser-open'
+          await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, '<!doctype html><title>Legal comparison preflight</title><body>legal-comparison-preflight</body>')
+          const localServer = await sandbox.commands.run(`python3 -m http.server 8765 --bind 127.0.0.1 --directory ${BROAD_SANDBOX_WORKSPACE}`, { background: true })
+          await localServer.disconnect()
+          const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
+          if (local?.ok === false) throw new Error('Local browser failed to open')
+          stage = 'local-browser-console'
+          const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
+          if (location?.result !== true) throw new Error('Local browser verification failed')
+        }
         stage = 'no-new-privileges'
         const privilege = await sandbox.commands.run('test "$(id -u)" != 0 && grep -q "NoNewPrivs:[[:space:]]*1" /proc/self/status')
         if (privilege.exitCode !== 0) throw new Error('Sandbox no-new-privs protection failed')
@@ -502,7 +601,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const outbound = await sandbox.commands.run("python3 - <<'PY'\nimport socket\ns=socket.socket(); s.settimeout(4)\ntry:\n s.connect(('1.1.1.1',80))\n s.sendall(b'GET / HTTP/1.1\\r\\nHost: 1.1.1.1\\r\\nConnection: close\\r\\n\\r\\n')\n print('reachable' if s.recv(4096) else 'blocked')\nexcept OSError:\n print('blocked')\nfinally:\n s.close()\nPY")
           if (outbound.exitCode !== 0 || outbound.stdout.trim() !== 'blocked') throw new Error('Sandbox outbound deny failed')
         }
-        return { mcp: { verified: true, tools: NATIVE_LX_TOOLS }, runtimeBroker: { verified: true }, desktop: { verified: true }, sandbox: { verified: true },
+        return { mcp: nativeMcp ? { verified: true, tools: NATIVE_LX_TOOLS } : { verified: true, mode: 'toolbox', tools: ['lx_search', 'lx_chunk', 'lx_documents'] },
+          runtimeBroker: { verified: true }, ...(nativeMcp ? { desktop: { verified: true } } : {}), sandbox: { verified: true },
+          ...(skills ? { builtinSkills: { verified: true, invoked: skills.skills.map(({ name }) => name) } } : {}),
           ...(unrestricted ? { egress: { network, configured: 'general outbound without public inbound', verified: true, probe: 'https://example.com/' } } : {}) }
       } catch (error) {
         if (error && typeof error === 'object') error.preflightStage = stage
@@ -510,7 +611,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       } finally {
         let failed = false
         try { detach?.() } catch { failed = true }
-        try { await runtime?.close() } catch { failed = true }
+        try { if ((await runtime?.close())?.cleanup_succeeded === false) failed = true } catch { failed = true }
         const outcomes = await Promise.allSettled([...sandboxes].map(sandbox => sandbox.kill()))
         if (outcomes.some(outcome => outcome.status === 'rejected') || failed) throw new Error('Preflight cleanup failed')
         rmSync(stateDir, { recursive: true, force: true })
@@ -530,18 +631,57 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const collected = new Map()
       const collectors = new Map()
       const providerRecords = []
-      let runtime, session, completed, runError, runDetails, detachBroker
+      let runtime, session, completed, runError, runDetails, detachBroker, scheduler, schedulerError, quiesceError
+      const schedulerController = new AbortController()
+      const stopScheduler = async () => {
+        schedulerController.abort()
+        await scheduler
+      }
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: provenance.model, ...(providerOnly ? { providerOnly } : {}) })
+        const model = modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
+          ...(reasoningEffort ? { reasoningEffort } : {}),
+          ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors))
         if (broker) detachBroker = broker.attach(runtime)
         session = await runtime.startSession({ title: 'Broad legal evaluation',
           prompt: workProduct
-            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée. Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}\n\n${packet.task.instructions}`
+            ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. ${capabilityV7 ? `Applique le protocole ${capabilityV8 ? 'capability-v8' : 'capability-v7'} au travail réel : invoque les procédures adaptées, utilise ipython comme espace persistant de recherche et de raisonnement, scripted_tools pour les appels programmatiques indépendants et rlm.spawn pour les questions de recherche séparables. Découvre les schémas, lis les réponses réellement terminées des enfants et vérifie toi-même leurs sources déterminantes avant la synthèse. Les autres outils autorisés restent disponibles ; aucun quota artificiel de profondeur, de fan-out ou d’appels Python n’est ajouté.` : 'Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée.'} Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}${capabilityV7 ? '' : `\n\n${packet.task.instructions}`}`
             : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
+        if (capabilityV7 && typeof runtime.tick === 'function') {
+          scheduler = (async () => {
+            while (!schedulerController.signal.aborted) {
+              await runtime.tick(session.id)
+              await sleep(1000, undefined, { signal: schedulerController.signal })
+            }
+          })().catch(async error => {
+            if (schedulerController.signal.aborted) return
+            schedulerError = error
+            await runtime.cancelSession(session.id)
+          })
+        }
+        // A session that calls `wait_for_operations` parks itself as `sleeping`
+        // and its worker exits; only the runtime's tick delivers the child/workflow
+        // completion notification and relaunches it. Drive that scheduler here so a
+        // delegated session is scored on its final state rather than on its parked
+        // state. Only a genuinely terminal state breaks the loop: a wake can land
+        // between ticks and a bare status poll must never be mistaken for the final
+        // result. A session that sleeps with no resumable wait is terminal, and a
+        // bounded deadline prevents an orphaned wait from spinning forever.
         completed = await runtime.waitSession(session.id)
+        const resumeDeadline = Date.now() + OPERATION_WAIT_RESUME_MS
+        while (completed.status === 'sleeping') {
+          const pending = runtime.store.list('operation_waits').some(wait => wait.session_id === session.id &&
+            ['waiting', 'notified'].includes(wait.status))
+          if (!pending || Date.now() > resumeDeadline) break
+          if (!capabilityV7) await runtime.tick(session.id)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          completed = await runtime.waitSession(session.id)
+        }
+        await stopScheduler()
+        if (schedulerError) throw schedulerError
+        if (capabilityV7) await runtime.quiesce?.()
         let deliverables, missingDeliverables
         if (workProduct) {
           const sandboxId = runtime.store.get('sessions', session.id)?.sandbox_id
@@ -578,6 +718,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         return { answer: completed.output, ...details, ...(workProduct ? { deliverables, missingDeliverables,
           artifactPaths: [details.audit.evidenceArtifact] } : {}) }
       } catch (cause) {
+        await stopScheduler()
+        if (capabilityV7) {
+          try { await runtime?.quiesce?.() }
+          catch (error) { quiesceError = error }
+        }
         if (cause?.audit && (cause.message === 'Broad legal session failed' || cause.message.startsWith('Broad missing deliverables:'))) runError = cause
         else {
           runError = new Error(cause?.preflightStage === 'resident-work-product-collection' ? cause.message : 'Broad legal session failed')
@@ -594,17 +739,37 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         }
         throw runError
       } finally {
+        await stopScheduler()
         let closeFailed = false
+        let closeErrors = []
         try { detachBroker?.() } catch { closeFailed = true }
-        try { await runtime?.close() } catch { closeFailed = true }
+        try {
+          const result = await runtime?.close()
+          if (result?.cleanup_succeeded === false) {
+            closeFailed = true
+            closeErrors = (result.errors ?? []).map(error => redactAudit(String(error)))
+          }
+        } catch (error) { closeFailed = true; closeErrors = [redactAudit(String(error))] }
         const sandboxes = [...provisionedSandboxes]
         const outcomes = await Promise.allSettled(sandboxes.map(sandbox => Promise.resolve().then(() => sandbox.kill())))
         const failedIds = sandboxes.filter((_, index) => outcomes[index].status === 'rejected').map(sandbox => sandbox.sandboxId)
+        if (capabilityV7) {
+          const cleanup = { version: 'owned-sandbox-cleanup-v1', checkedAt: new Date().toISOString(), runtimeCloseSucceeded: !closeFailed,
+            runtimeCloseErrors: closeErrors,
+            sandboxes: sandboxes.map((sandbox, index) => ({ sandboxId: sandbox.sandboxId, termination: outcomes[index].status,
+              ...(outcomes[index].status === 'rejected' ? { error: redactAudit(String(outcomes[index].reason)) } : {}) })),
+            evidenceBoundary: 'API termination outcomes; a separate provider listing must verify absence' }
+          const cleanupPath = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}-cleanup.json`)
+          writeFileSync(cleanupPath, JSON.stringify(cleanup, null, 2) + '\n', { mode: 0o600 })
+          const details = runError ?? runDetails
+          if (details?.audit) Object.assign(details.audit, { cleanupArtifact: cleanupPath, cleanupSha256: sha256(readFileSync(cleanupPath)) })
+        }
         if (closeFailed || failedIds.length) {
           const cleanupError = new Error('Broad legal sandbox cleanup failed')
           cleanupError.cleanup = { sandboxIds: failedIds, runtimeCloseFailed: closeFailed, stateDir }
           const details = runError ?? runDetails
           if (details) Object.assign(cleanupError, { audit: details.audit, trace: details.trace,
+            ...(typeof (details.answer ?? completed?.output) === 'string' ? { answer: details.answer ?? completed.output } : {}),
             sources: details.sources, metrics: { ...details.metrics, errors: Math.max(details.metrics?.errors ?? 0, 1) },
             ...(workProduct ? { deliverables: details.deliverables ?? [], missingDeliverables: details.missingDeliverables ?? [],
               artifactPaths: details.artifactPaths ?? (details.audit?.evidenceArtifact ? [details.audit.evidenceArtifact] : []) } : {}) })
@@ -622,7 +787,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
             evidence = runtime.context(session.id).evidence
           } catch {}
         }
-        const observed = auditMessages(messages, evidence, corpus?.sources)
+        const observed = auditMessages(messages, evidence, corpus?.sources, capabilityV7)
         const trace = events.map(event => ({ stage: event.type, ...(event.data?.name ? { tool: event.data.name } : {}),
           ...(event.data?.ok !== undefined ? { ok: event.data.ok } : {}) }))
         const terminal = completed ? { status: completed.status,
@@ -631,9 +796,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (terminal) trace.push({ stage: 'session_terminal', ...terminal })
         const audit = { provenance: runProvenance, terminalStatus: terminal?.status ?? null, terminal, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
+        if (capabilityV7) audit.accounting = { status: quiesceError ? 'failed' : typeof runtime?.quiesce === 'function' ? 'settled' : 'unavailable',
+          ...(quiesceError ? { error: redactAudit(String(quiesceError)) } : {}) }
         const artifact = join(evidenceDir, `${session?.id ?? 'startup'}-${sha256(question).slice(0, 12)}.json`)
-        writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ tool, args, rawArguments, output, result }) =>
-          ({ tool, args, rawArguments, output, result })) }), { mode: 0o600 })
+        writeFileSync(artifact, JSON.stringify({ provenance: runProvenance, calls: observed.calls.map(({ toolCallId, tool, args, rawArguments, output, result }) =>
+          ({ toolCallId, tool, args, rawArguments, output, result })) }), { mode: 0o600 })
         audit.evidenceArtifact = artifact
         if (workProduct && session && runtime?.store?.list && runtime?.store?.get) {
           const trajectoryPath = join(evidenceDir, `${session.id}-${sha256(question).slice(0, 12)}-trajectory.json`)

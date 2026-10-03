@@ -6,11 +6,13 @@ import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
 import { COMPARISON_PROFILES } from '../../runtime/eval-model-profile.mjs'
+import { resolveRunAnywhereMiMo } from '../../runtime/model-provider.mjs'
 import { brokerNetwork, createEvaluationBroker, verifyEvaluationBroker } from '../../runtime/eval-broker.mjs'
 import { createHarveyHarness } from '../harvey-harness.mjs'
 import { createBroadHarness, provisionCorpus } from '../../runtime/broad-legal-eval.mjs'
 import { createSandbox } from '../../runtime/e2b.mjs'
 import { redact } from '../../runtime/security.mjs'
+import { renderInstructions } from '../../runtime/instructions/render.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const suite = fileURLToPath(new URL('.', import.meta.url))
@@ -54,25 +56,28 @@ export function parseOptions(args) {
   const keys = { '--tasks': 'tasks', '--output': 'output', '--harvey-root': 'harveyRoot', '--python': 'python',
     '--native-module': 'nativeModule', '--broker-origin': 'brokerOrigin', '--broker-port': 'brokerPort',
     '--sandbox-template': 'sandboxTemplate', '--computer-image-sha256': 'computerImageSha256', '--max-steps': 'maxSteps',
-    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency', '--model-profile': 'modelProfile' }
+    '--instruction-profile': 'instructionProfile', '--concurrency': 'concurrency', '--model-profile': 'modelProfile', '--semantic-surface': 'semanticSurface' }
   const options = {}
   for (let i = 0; i < args.length; i++) {
     const key = keys[args[i]]
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile', 'semanticSurface'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
   options.modelProfile ??= 'modal-deepseek-v4.1-flash'
   if (!COMPARISON_PROFILES[options.modelProfile]) throw new Error('Invalid model profile')
+  options.semanticSurface ??= 'mcp'
+  if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile === 'opulent-capability-v8' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
     validConcurrency(/^[1-9]\d*$/.test(options.concurrency) ? Number(options.concurrency) : NaN)
   if (options.instructionProfile === 'opulent-knowledge-v3' && options.maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && options.maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
-  if (options.instructionProfile === 'opulent-rlm-unrestricted-v5' && options.maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
+  if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && options.maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
   options.tasks = options.tasks.split(',')
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
@@ -226,10 +231,12 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  const capabilityV8 = options.instructionProfile === 'opulent-capability-v8'
+  if (capabilityV8 && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
   if (options.instructionProfile === 'opulent-rlm-v4' && maxSteps !== 160) throw new Error('RLM comparison requires 160 steps for both arms')
-  if (options.instructionProfile === 'opulent-rlm-unrestricted-v5' && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
+  if (['opulent-rlm-unrestricted-v5', 'opulent-context-v6'].includes(options.instructionProfile) && maxSteps !== 250) throw new Error('Unrestricted RLM comparison requires 250 steps for both arms')
   const source = dependencies.workspace ?? workspace
   const suiteRoot = dependencies.suite ?? suite
   const manifestPath = join(suiteRoot, 'manifest.json')
@@ -249,35 +256,49 @@ export async function run(options, dependencies = {}) {
   const nativeModuleHash = fileHash(options.nativeModule)
   const native = await (dependencies.loadNative ?? (path => import(pathToFileURL(path).href)))(options.nativeModule)
   if (typeof native.createComparisonMcp !== 'function') throw new Error('Native module must export createComparisonMcp')
-  const mcp = await native.createComparisonMcp({ workspace: source, corpus })
-  if (!mcp || typeof mcp.provision !== 'function' || typeof mcp.verify !== 'function' || !mcp.server || !Array.isArray(mcp.servers) || !Array.isArray(mcp.probes)) throw new Error('Incomplete approved native MCP configuration')
+  const mcp = options.semanticSurface === 'mcp' ? await native.createComparisonMcp({ workspace: source, corpus }) : null
+  if (options.semanticSurface === 'mcp' && (!mcp || typeof mcp.provision !== 'function' || typeof mcp.verify !== 'function' || !mcp.server || !Array.isArray(mcp.servers) || !Array.isArray(mcp.probes))) throw new Error('Incomplete approved native MCP configuration')
   const broker = await (dependencies.createBroker ?? createEvaluationBroker)({ port: options.brokerPort, host: '0.0.0.0' })
   if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
   broker.origin = options.brokerOrigin
   try {
     const profile = COMPARISON_PROFILES[options.modelProfile ?? 'modal-deepseek-v4.1-flash']
     if (!profile) throw new Error('Invalid model profile')
-    const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, workProduct: { maxCompletionTokens: 32768 } }
+    const inferenceProvider = profile.inferenceProvider ?? 'gateway'
+    const nativeModel = inferenceProvider === 'runanywhere' ? await (dependencies.resolveRunAnywhereMiMo ?? resolveRunAnywhereMiMo)() : null
+    const common = { workspace: source, corpus, maxSteps, model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null,
+      inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
-      harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common, harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
-      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: true, mcp, broker,
+      harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common,
+        ...(['opulent-capability-v7', 'opulent-capability-v8'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
+        harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
+      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
         nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
-        model: profile.model, providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, maxSteps, maxCompletionTokens: 32768, concurrency,
+        model: profile.model, modelProfile: options.modelProfile ?? 'modal-deepseek-v4.1-flash', inferenceProvider, nativeModel,
+        providerOnly: profile.providerOnly, reasoningEffort: profile.reasoningEffort ?? null, maxSteps, maxCompletionTokens: 32768, concurrency,
       suiteManifestSha256: hash(manifest), corpusHash: corpus.hash, corpusCount: corpus.count,
       taskPackets: JSON.parse(manifest).packets, suitePolicy: JSON.parse(manifest).policy,
       implementations: Object.fromEntries(['eval/complex-v1/run.mjs', 'eval/harvey-harness.mjs', 'eval/harvey-bridge.py',
         'eval/harvey-modal-adapter.py', 'runtime/broad-legal-eval.mjs', 'runtime/eval-broker.mjs',
-        'runtime/eval-model-profile.mjs', 'runtime/script-execution.mjs'].map(path => [path, fileHash(join(source, path))])),
+        'runtime/eval-model-profile.mjs', 'runtime/model.mjs', 'runtime/model-provider.mjs', 'runtime/script-execution.mjs',
+        ...(capabilityV8 ? ['runtime/sandbox-file-access.mjs', 'runtime/tools/scripts.mjs', 'runtime/core.mjs', 'runtime/rlm.mjs', 'runtime/rlm-kernel.py'] : [])].map(path => [path, fileHash(join(source, path))])),
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
-      nativeModuleHash, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
+      ...(capabilityV8 ? { capabilityProtocol: {
+        version: 'opulent-capability-v8', protocolSha256: fileHash(join(suiteRoot, 'CAPABILITY-V8-PROTOCOL.md')),
+        profileInstructions: renderInstructions({ profile: options.instructionProfile }).provenance,
+        requiredRuntime: { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true, descendantModelPolicy: 'inherit-native-runanywhere-mimo-v2.6-pro',
+          evidenceReplayVersion: 'parent-visible-outputs-v2', canonicalCorpusPath: '/tmp/broad-legal-workspace/corpus',
+          canonicalCorpusAccess: 'read-only', analysisCorpusPath: '/tmp/broad-legal-workspace/analysis/corpus' },
+      } } : {}),
+      nativeModuleHash, semanticSurface: options.semanticSurface, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
       harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
       integration: { sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
-        nativeMcp: mcp.server, servers: redact(mcp.servers), probesSha256: hash(JSON.stringify(mcp.probes)),
+        nativeMcp: mcp?.server ?? null, servers: redact(mcp?.servers ?? []), probesSha256: hash(JSON.stringify(mcp?.probes ?? [])),
         brokerPort: options.brokerPort, brokerOriginSha256: hash(options.brokerOrigin) },
       evidencePolicy: 'actual answerer-visible evidence only; hidden reference never promoted',
       gradingPolicy: 'ungraded; separate criterion adapter required', costPolicy: 'unknown unless metered',
@@ -285,7 +306,7 @@ export async function run(options, dependencies = {}) {
     const checkpoint = checkpointFor(provenance, existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, 'utf8')) : null)
     const save = value => atomic(checkpointPath, value)
     if (!existsSync(checkpointPath)) save(checkpoint)
-    for (const name of ['AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
+    for (const name of [inferenceProvider === 'runanywhere' ? 'RUNA_CLOUD_KEY' : 'AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
       if (!process.env[name] && !dependencies.skipCredentials) {
         checkpoint.preflight = failure(new Error(`Missing ${name}`), 'credentials'); save(checkpoint)
         return checkpoint
@@ -294,10 +315,11 @@ export async function run(options, dependencies = {}) {
     try {
       const brokerProof = await (dependencies.verifyBroker ?? verifyEvaluationBroker)({ broker, origin: options.brokerOrigin,
         sandboxFactory: sandboxConfig => provisionCorpus({ ...sandboxConfig, sandboxTemplate: options.sandboxTemplate,
-          computerPreparedImage: true, computerImageSha256: options.computerImageSha256 }, corpus, source, createSandbox) })
+          computerPreparedImage: true, computerImageSha256: options.computerImageSha256,
+          ...(capabilityV8 ? { secureSandboxFileAccess: true } : {}) }, corpus, source, createSandbox) })
       const preflight = await harnesses.broad.preflight()
       if (brokerProof?.verified !== true || preflight?.sandbox?.verified !== true ||
-        ['mcp', 'runtimeBroker', 'desktop'].some(name => preflight[name]?.verified !== true)) throw new Error('Full comparison blocked: live provider or security preflight failed')
+        ['mcp', 'runtimeBroker'].some(name => preflight[name]?.verified !== true) || options.semanticSurface === 'mcp' && preflight.desktop?.verified !== true) throw new Error('Full comparison blocked: live provider or security preflight failed')
       checkpoint.preflight = { status: 'verified', broker: brokerProof, integrations: preflight, checkedAt: new Date().toISOString() }
       save(checkpoint)
     } catch (error) {

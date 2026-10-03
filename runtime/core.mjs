@@ -26,13 +26,12 @@ import { extractToolImages } from './model-images.mjs';
 import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-overflow.mjs';
 import { createScriptExecutions } from './script-execution.mjs';
 import { browserDefinitions, createBrowserTools, validateBrowserOrigins } from './browser-tools.mjs';
-import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits } from './operation-waits.mjs';
+import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits, isSessionTerminal } from './operation-waits.mjs';
 import { rlmDefinitions, createRlmTools } from './rlm.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
 const sandboxNames = new Set(['read', 'write', 'edit', 'MultiEdit', 'find_file_by_name', 'grep', 'notebook_read', 'notebook_edit', 'apply_patch', 'exec', 'get_output', 'kill_shell', 'write_to_process', 'scripted_tools', 'run_workflow', 'deploy', 'git_stack', 'fetch_pr_template', 'skill', 'install_personal_plugin', 'manage_personal_plugin', 'suggest_save_secret', 'upload_attachment', 'download_attachment', 'describe_image', 'generate_image']);
-const terminal = new Set(['completed', 'failed', 'cancelled', 'sleeping', 'stopped', 'blocked', 'interrupted', 'terminated']);
 const scriptBlocked = new Set(['scripted_tools', 'ipython', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow', 'wait_for_operations']);
 const MAX_TOOL_RESULT_CHARS = 80000;
 const ajv = new Ajv({ strict: false, allErrors: true });
@@ -54,7 +53,10 @@ function modelVisibleToolResult(result, overflow) {
 
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
+  if (!Number.isFinite(config.sandboxTimeoutMs) || config.sandboxTimeoutMs <= 0) throw new TypeError('sandboxTimeoutMs must be positive finite milliseconds');
   if (config.unrestrictedTools !== undefined && typeof config.unrestrictedTools !== 'boolean') throw new TypeError('unrestrictedTools must be a boolean');
+  if (config.eagerChildSandbox !== undefined && typeof config.eagerChildSandbox !== 'boolean') throw new TypeError('eagerChildSandbox must be a boolean');
+  if (config.reportRlmState !== undefined && typeof config.reportRlmState !== 'boolean') throw new TypeError('reportRlmState must be a boolean');
   const unrestricted = config.unrestrictedTools === true;
   const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
@@ -84,12 +86,16 @@ export function createRuntime(options = {}) {
     definitionsSha256: createHash('sha256').update(JSON.stringify(effectiveExtensions)).digest('hex'),
     effectiveTools: effectiveExtensions.map(tool => tool.name),
     settings: { browserAllowedOrigins: browserEnabled ? validateBrowserOrigins(config.browserAllowedOrigins) ?? [] : [],
-      unrestrictedTools: unrestricted,
+      unrestrictedTools: unrestricted, eagerChildSandbox: config.eagerChildSandbox === true,
+      ...(config.reportRlmState === true ? { reportRlmState: true } : {}),
       ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
         maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions,
         ...(unrestricted ? { effectiveRlmChildLimit: null, effectiveRlmHostCallLimit: null, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null } : {}) } : {}) },
   };
   const contexts = new Map(), workers = new Map(), continuationRequested = new Set(), sleepWakeRequested = new Set(), workflowTokens = new Map(), workflowCalls = new Map();
+  const sandboxHandles = new Map();
+  const invocations = new Set();
+  let quiescing = false, quiescence;
   const invocationPolicy = new AsyncLocalStorage();
   const scrub = (id, data) => {
     const secrets = [contexts.get(id)?.config.scriptToken, ...scriptExecutions.tokens(id), ...(contexts.get(id)?.secrets.values() ?? [])];
@@ -103,6 +109,12 @@ export function createRuntime(options = {}) {
   const update = (id, data) => store.put('sessions', id, { ...store.get('sessions', id), ...scrub(id, data), updated_at: new Date().toISOString() });
   const event = (id, type, data) => store.put('events', randomUUID(), { session_id: id, type, data: scrub(id, data), created_at: new Date().toISOString() });
   for (const row of store.list('sessions')) if (['queued', 'running', 'starting'].includes(row.status)) update(row.id, { status: 'interrupted', error: 'Control-plane restarted; explicitly resume this session.' });
+
+  function trackInvocation(call) {
+    const pending = call.finally(() => invocations.delete(pending));
+    invocations.add(pending);
+    return pending;
+  }
 
   function context(id) {
     if (contexts.has(id)) return contexts.get(id);
@@ -181,7 +193,8 @@ export function createRuntime(options = {}) {
     ctx.tools = tools;
     ctx.availableToolDefinitions = () => Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)));
     ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !nestedBlocked.has(tool.name));
-    ctx.invoke = async (requestedName, args = {}) => {
+    ctx.invoke = (requestedName, args = {}, metadata = {}) => trackInvocation((async () => {
+      const correlation = typeof metadata.toolCallId === 'string' && metadata.toolCallId ? { tool_call_id: metadata.toolCallId } : {};
       const name = catalog.aliases[requestedName] ?? requestedName;
       if (requestedName !== name && catalog.tools[name]) {
         const normalize = value => {
@@ -201,20 +214,20 @@ export function createRuntime(options = {}) {
       const overflowRead = name === 'read' ? normalizeOverflowRead({ ctx, store, args }) : null;
       if (overflowRead) args = overflowRead.args;
       if (sandboxNames.has(name)) await ensureSandbox(ctx);
-      event(id, 'tool_started', { name });
+      event(id, 'tool_started', { name, ...correlation });
       try {
         const output = await tools[name](args);
         const result = scrub(id, overflowRead ? { ...output, overflow_paging: overflowRead.paging } : output);
         const actionFailed = (name === 'computer' || name === 'browser') && (output?.ok === false || !!output?.failure);
-        event(id, 'tool_finished', actionFailed ? { name, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ok: true });
+        event(id, 'tool_finished', actionFailed ? { name, ...correlation, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ...correlation, ok: true });
         return result;
       } catch (error) {
-        event(id, 'tool_finished', { name, invocation_ok: false, ok: false, error: safeError(error) });
+        event(id, 'tool_finished', { name, ...correlation, invocation_ok: false, ok: false, error: safeError(error) });
         throw new Error(scrub(id, safeError(error)));
       }
-    };
-    ctx.rlmInvoke = (execution, name, args, blocked = nestedBlocked) => scriptExecutions.call(id, execution.token, name, args,
-      () => invocationPolicy.run({ blocked }, () => ctx.invoke(name, args)));
+    })());
+    ctx.rlmInvoke = (execution, name, args, blocked = nestedBlocked) => trackInvocation(scriptExecutions.call(id, execution.token, name, args,
+      () => invocationPolicy.run({ blocked }, () => ctx.invoke(name, args))));
     contexts.set(id, ctx);
     return ctx;
   }
@@ -226,11 +239,18 @@ export function createRuntime(options = {}) {
         const row = store.get('sessions', ctx.sessionId);
         let sandbox;
         try {
+          const sandboxDeadlineAt = Date.now() + config.sandboxTimeoutMs;
           sandbox = row.sandbox_id
             ? await (options.connect ?? connectSandbox)(row.sandbox_id, { ...config, desktop: false })
             : await (options.provision ?? createSandbox)({ ...config, desktop: false });
+          sandboxHandles.set(ctx.sessionId, sandbox);
+          if (typeof sandbox.sandboxId === 'string' && sandbox.sandboxId) {
+            update(ctx.sessionId, { sandbox_ids: [...new Set([...(store.get('sessions', ctx.sessionId).sandbox_ids ?? []), sandbox.sandboxId])] });
+            event(ctx.sessionId, row.sandbox_id ? 'sandbox_attached' : 'sandbox_created', { sandbox_id: sandbox.sandboxId });
+          }
           ctx.signal.throwIfAborted();
           ctx.sandbox = sandbox;
+          ctx.sandboxDeadlineAt = sandboxDeadlineAt;
           for (const [api, method] of [[sandbox.commands, 'run'], [sandbox.pty, 'create']]) {
             if (!api?.[method]) continue;
             const original = api[method].bind(api);
@@ -260,6 +280,7 @@ export function createRuntime(options = {}) {
             ctx.sandbox = undefined;
             let cleanupError;
             try { await sandbox.kill(); } catch (failure) { cleanupError = failure; }
+            if (!cleanupError) sandboxHandles.delete(ctx.sessionId);
             update(ctx.sessionId, { sandbox_id: cleanupError ? sandbox.sandboxId : null, desktop_ready: false });
             if (cleanupError) {
               event(ctx.sessionId, 'sandbox_kill_failed', { error: safeError(cleanupError), provisioning_error: safeError(error) });
@@ -285,6 +306,7 @@ export function createRuntime(options = {}) {
   }
 
   function allocate(args = {}) {
+    if (quiescing) throw new Error('Runtime is quiescing');
     if (args.repos?.some(repo => !config.allowedRepos.includes(typeof repo === 'string' ? repo : repo.repo))) throw new Error('Session repository is not allowlisted');
     const parent = args.parent_session_id ? store.get('sessions', args.parent_session_id) : null;
     if (args.parent_session_id && !parent) throw new Error('Parent session not found');
@@ -312,7 +334,7 @@ export function createRuntime(options = {}) {
       const row = store.get('sessions', id);
       const delivered = new Set(store.get('conversations', id)?.delivered ?? []);
       const queued = store.list('orchestration_messages').some(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
-      if (!requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || row.status === 'sleeping' && !wakeFromSleep) return;
+      if (quiescing || !requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || row.status === 'sleeping' && !wakeFromSleep) return;
       if ((row.steps ?? 0) >= config.maxSteps) {
         update(id, { status: 'failed', error: 'Agent step budget exhausted; queued messages remain undelivered.' });
         return;
@@ -329,7 +351,10 @@ export function createRuntime(options = {}) {
     ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
+    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8'].includes(config.instructionProfile) && row.parent_session_id
+      ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
+      : '';
+    let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
     let delivered = new Set(previous?.delivered ?? []);
     const usage = { ...(row.usage ?? {}) };
     let pendingToolCallId = previous?.pending_tool_call_id ?? null;
@@ -349,7 +374,7 @@ export function createRuntime(options = {}) {
     };
     try {
       update(id, { status: 'running' });
-      if (row.repos?.length) await ensureSandbox(ctx);
+      if (row.repos?.length || config.eagerChildSandbox === true && row.parent_session_id) await ensureSandbox(ctx);
       const assistantIndex = messages.findLastIndex(entry => entry.role === 'assistant');
       const last = messages[assistantIndex];
       if (last?.tool_calls?.length) {
@@ -395,10 +420,10 @@ export function createRuntime(options = {}) {
         checkpoint();
         update(id, { steps: (store.get('sessions', id).steps ?? 0) + 1 });
         const response = await model(prepared.messages, { tools, signal: ctx.signal });
-        ctx.signal.throwIfAborted();
-        for (const [key, value] of Object.entries(response.usage ?? {})) if (typeof value === 'number') usage[key] = (usage[key] ?? 0) + value;
+        for (const [key, value] of Object.entries(response.usage ?? {})) if (typeof value === 'number' && Number.isFinite(value)) usage[key] = (usage[key] ?? 0) + value;
         update(id, { usage });
         event(id, 'model_usage', { usage: response.usage ?? {} });
+        ctx.signal.throwIfAborted();
         const message = response.choices[0].message;
         messages.push(message);
         checkpoint();
@@ -424,11 +449,14 @@ export function createRuntime(options = {}) {
           try {
             if (initial && !initial.has(call.function.name)) throw new Error(`Tool is not visible for direct model calls: ${call.function.name}`);
             args = JSON.parse(call.function.arguments);
-            result = await ctx.invoke(call.function.name, args);
+            result = await ctx.invoke(call.function.name, args, { toolCallId: call.id });
           }
           catch (error) {
             if (ctx.signal.aborted) throw error;
             result = { error: safeError(error) };
+            if (typeof call.id === 'string' && !store.list('events').some(row => row.session_id === id && row.data?.tool_call_id === call.id)) {
+              event(id, 'tool_rejected', { name: call.function.name, tool_call_id: call.id, ok: false, error: safeError(error) });
+            }
           }
           const requestedName = catalog.aliases[call.function.name] ?? call.function.name;
           const imageName = requestedName === 'opulent_mcp' && args?.command === 'call_tool'
@@ -461,12 +489,14 @@ export function createRuntime(options = {}) {
       }
       throw new Error('Agent step budget exhausted');
     } catch (error) {
+      if (error.inferenceAttempts) event(id, 'model_failed', { error: safeError(error), request_attempts: error.inferenceAttempts, usage_unknown: true });
       for (const [key, value] of Object.entries(error.compactionUsage ?? {})) usage[key] = (usage[key] ?? 0) + value;
       if (error.compactionUsage) {
         update(id, { usage });
         event(id, 'context_compaction_failed', { usage: error.compactionUsage, error: safeError(error) });
       }
-      update(id, { status: ctx.signal.aborted ? 'cancelled' : 'failed', error: safeError(error) });
+      const currentStatus = store.get('sessions', id)?.status;
+      update(id, { status: ctx.signal.aborted ? (['sleeping', 'terminated'].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(error) });
       event(id, 'session_failed', { error: safeError(error) });
     } finally {
       checkpoint();
@@ -480,6 +510,7 @@ export function createRuntime(options = {}) {
   }
 
   async function messageSession(id, body) {
+    if (quiescing) throw new Error('Runtime is quiescing');
     if (!store.get('sessions', id) || typeof body !== 'string' || !body.trim()) throw new Error('Session and message are required');
     if (waitsEnabled) {
       cancelOperationWaits({ store }, id, 'user_continuation');
@@ -503,6 +534,7 @@ export function createRuntime(options = {}) {
   }
 
   async function wakeOperationSession(id, notificationId, text) {
+    if (quiescing) return;
     const wait = store.get('operation_waits', notificationId.slice('operation-wait:'.length));
     if (!wait || wait.session_id !== id || wait.notification_id !== notificationId || wait.status !== 'notified') return;
     const row = store.get('sessions', id);
@@ -527,8 +559,10 @@ export function createRuntime(options = {}) {
     launch(id);
   }
 
-  async function cancelSession(id) {
-    if (!store.get('sessions', id)) throw new Error('Session not found');
+  async function cancelSession(id, activeOnly = false) {
+    const row = store.get('sessions', id);
+    if (!row) throw new Error('Session not found');
+    if (activeOnly && isSessionTerminal(store, row)) return;
     if (waitsEnabled) {
       cancelOperationWaits({ store }, id);
       for (const wait of store.list('operation_waits').filter(row => row.session_id === id && row.status === 'cancelled' && row.notification_id)) {
@@ -537,23 +571,31 @@ export function createRuntime(options = {}) {
     }
     const ctx = contexts.get(id);
     ctx?.controller.abort(new Error('Session cancelled'));
-    for (const child of store.list('sessions').filter(row => row.parent_session_id === id && !terminal.has(row.status))) await cancelSession(child.id);
+    for (const child of store.list('sessions').filter(row => row.parent_session_id === id && !isSessionTerminal(store, row))) await cancelSession(child.id, activeOnly);
+    update(id, { status: 'cancelled' });
+    await releaseSessionResources(id);
+  }
+
+  async function releaseSessionResources(id) {
+    const ctx = contexts.get(id);
     await ctx?.rlm?.close();
     if (ctx?.provisioning) await ctx.provisioning.catch(() => {});
     if (ctx?.desktopStarting) await ctx.desktopStarting.catch(() => {});
-    const sandboxId = ctx?.sandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
+    const ownedSandbox = ctx?.sandbox ?? sandboxHandles.get(id);
+    const sandboxId = ownedSandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
     let cleanupError;
     try {
-      if (ctx?.sandbox) { const sandbox = ctx.sandbox; ctx.sandbox = undefined; await sandbox.kill(); }
+      if (ownedSandbox) { if (ctx) ctx.sandbox = undefined; await ownedSandbox.kill(); }
       else if (sandboxId) {
         const sandbox = await (options.connect ?? connectSandbox)(sandboxId, { ...config, desktop: false });
         await sandbox.kill();
       }
     } catch (error) {
-      cleanupError = error;
+      cleanupError = new Error(scrub(id, safeError(error)));
       event(id, 'sandbox_kill_failed', { error: safeError(error) });
     }
-    update(id, { status: 'cancelled', sandbox_id: cleanupError ? sandboxId : null, desktop_ready: false });
+    update(id, { sandbox_id: cleanupError ? sandboxId : null, desktop_ready: false });
+    if (!cleanupError) sandboxHandles.delete(id);
     if (ctx) ctx.computer = undefined;
     ctx?.secrets.clear();
     if (cleanupError) throw cleanupError;
@@ -612,17 +654,19 @@ export function createRuntime(options = {}) {
       if (['secret_save', 'skill'].includes(args.kind)) await ensureSandbox(ctx);
       return redact(await approveResource(ctx, args));
     },
-    async scriptCall(id, token, name, args) {
-      const ctx = context(id);
-      const invoke = () => {
-        if (nestedBlocked.has(name)) throw new Error('Script broker authorization failed');
-        return invocationPolicy.run({ blocked: nestedBlocked }, () => ctx.invoke(name, args));
-      };
-      try {
-        if (!scriptExecutions.enabled && sameToken(token, ctx.config.scriptToken)) return await invoke();
-        return await scriptExecutions.call(id, token, ctx.scriptCatalog.some(tool => tool.name === name) ? name : '[unavailable]', args, invoke);
-      }
-      catch (error) { throw new Error(scrub(id, safeError(error))); }
+    scriptCall(id, token, name, args) {
+      return trackInvocation((async () => {
+        const ctx = context(id);
+        const invoke = () => {
+          if (nestedBlocked.has(name)) throw new Error('Script broker authorization failed');
+          return invocationPolicy.run({ blocked: nestedBlocked }, () => ctx.invoke(name, args));
+        };
+        try {
+          if (!scriptExecutions.enabled && sameToken(token, ctx.config.scriptToken)) return await invoke();
+          return await scriptExecutions.call(id, token, ctx.scriptCatalog.some(tool => tool.name === name) ? name : '[unavailable]', args, invoke);
+        }
+        catch (error) { throw new Error(scrub(id, safeError(error))); }
+      })());
     },
     async waitSession(id) {
       while (workers.has(id)) await workers.get(id);
@@ -634,10 +678,38 @@ export function createRuntime(options = {}) {
       return result;
     },
     async dispatchEvent(id, value, dispatchId = null) { return dispatchEvent(context(id), value, dispatchId); },
+    async quiesce() {
+      quiescing = true;
+      quiescence ??= (async () => {
+        const errors = [];
+        for (const row of store.list('workflows').filter(row => row.status === 'running')) {
+          try { await context(row.owner_session_id).tools.kill_workflow({ run_id: row.id }); }
+          catch (error) { errors.push(error); }
+        }
+        for (const row of store.list('sessions')) {
+          try { await cancelSession(row.id, true); }
+          catch (error) { errors.push(error); }
+        }
+        await Promise.allSettled([...workers.values()]);
+        await Promise.allSettled([...workflowCalls.values()]);
+        while (invocations.size) await Promise.allSettled([...invocations]);
+        if (errors.length) throw new AggregateError(errors, 'Runtime quiescence cleanup failed');
+      })();
+      return quiescence;
+    },
     async close() {
-      for (const [id, ctx] of contexts) if (ctx.sandbox || workers.has(id)) await cancelSession(id).catch(() => {});
-      await Promise.allSettled([...workers.values()]);
+      const errors = [];
+      await runtime.quiesce().catch(error => { errors.push(safeError(error)); });
+      for (const [id, ctx] of contexts) if (ctx.sandbox || sandboxHandles.has(id) || store.get('sessions', id)?.sandbox_id) {
+        try { await releaseSessionResources(id); }
+        catch (error) {
+          const text = scrub(id, safeError(error));
+          errors.push(text);
+          event(id, 'runtime_cleanup_failed', { error: text });
+        }
+      }
       store.close();
+      return { cleanup_succeeded: errors.length === 0, errors };
     },
   };
   return runtime;

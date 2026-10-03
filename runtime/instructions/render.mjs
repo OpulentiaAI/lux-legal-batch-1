@@ -28,11 +28,86 @@ if (sha256(unrestricted) !== unrestrictedManifest.addendumSha256 ||
     unrestrictedManifest.inheritedManifestSha256 !== sha256(rlmManifestText) ||
     unrestrictedManifest.inheritedAddendumSha256 !== rlmManifest.addendumSha256) throw new Error('Unrestricted RLM instructions differ from the audited manifest')
 
+const contextV6 = readFileSync(new URL('./opulent-context-v6.md', import.meta.url), 'utf8').trimEnd()
+const contextV6ManifestText = readFileSync(new URL('./manifest-opulent-context-v6.json', import.meta.url), 'utf8')
+const contextV6Manifest = JSON.parse(contextV6ManifestText)
+if (sha256(contextV6) !== contextV6Manifest.addendumSha256 ||
+    contextV6Manifest.inheritedManifestSha256 !== sha256(unrestrictedManifestText) ||
+    contextV6Manifest.inheritedAddendumSha256 !== sha256(unrestricted)) throw new Error('Context v6 Opulent instructions differ from the audited manifest')
+
+const capabilityV7 = readFileSync(new URL('./opulent-capability-v7.md', import.meta.url), 'utf8').trimEnd()
+const capabilityV7ManifestText = readFileSync(new URL('./manifest-opulent-capability-v7.json', import.meta.url), 'utf8')
+const capabilityV7Manifest = JSON.parse(capabilityV7ManifestText)
+if (sha256(capabilityV7) !== capabilityV7Manifest.addendumSha256 ||
+    capabilityV7Manifest.inheritedManifestSha256 !== sha256(contextV6ManifestText) ||
+    capabilityV7Manifest.inheritedAddendumSha256 !== sha256(contextV6)) throw new Error('Capability v7 Opulent instructions differ from the audited manifest')
+
+const capabilityV8 = readFileSync(new URL('./opulent-capability-v8.md', import.meta.url), 'utf8').trimEnd()
+const capabilityV8ManifestText = readFileSync(new URL('./manifest-opulent-capability-v8.json', import.meta.url), 'utf8')
+const capabilityV8Manifest = JSON.parse(capabilityV8ManifestText)
+if (sha256(capabilityV8) !== capabilityV8Manifest.addendumSha256 ||
+    capabilityV8Manifest.inheritedVersion !== capabilityV7Manifest.version ||
+    capabilityV8Manifest.inheritedManifestSha256 !== sha256(capabilityV7ManifestText) ||
+    capabilityV8Manifest.inheritedAddendumSha256 !== sha256(capabilityV7) ||
+    capabilityV8Manifest.foundationProfile !== 'opulent-context-v6' ||
+    capabilityV8Manifest.foundationManifestSha256 !== sha256(contextV6ManifestText) ||
+    capabilityV8Manifest.inheritedEffectivePromptSha256 !== sha256(`${knowledge}\n\n${rlm}\n\n${unrestricted}\n\n${contextV6}\n\n${capabilityV7}`)) throw new Error('Capability v8 Opulent instructions differ from the audited manifest')
+
 export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
-  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6' && profile !== 'opulent-capability-v7' && profile !== 'opulent-capability-v8') throw new Error(`Unknown instruction profile: ${profile}`)
+  if (profile === 'opulent-capability-v8') {
+    variant ??= profile
+    const inherited = renderInstructions({ profile: 'opulent-capability-v7' })
+    const foundation = renderInstructions({ profile: capabilityV8Manifest.foundationProfile })
+    const prompt = `${foundation.systemPrompt}\n\n${capabilityV8}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      ...inherited.provenance, variant, version: capabilityV8Manifest.version, profile,
+      inheritedVersion: capabilityV8Manifest.inheritedVersion,
+      inheritedV7ManifestSha256: capabilityV8Manifest.inheritedManifestSha256,
+      inheritedV7AddendumSha256: capabilityV8Manifest.inheritedAddendumSha256,
+      inheritedV7EffectivePromptSha256: capabilityV8Manifest.inheritedEffectivePromptSha256,
+      composition: capabilityV8Manifest.composition,
+      foundationProfile: capabilityV8Manifest.foundationProfile,
+      foundationManifestSha256: capabilityV8Manifest.foundationManifestSha256,
+      addendumSha256: capabilityV8Manifest.addendumSha256,
+      manifestSha256: sha256(capabilityV8ManifestText), effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
+  if (profile === 'opulent-capability-v7') {
+    variant ??= profile
+    const inherited = renderInstructions({ profile: 'opulent-context-v6' })
+    const prompt = `${inherited.systemPrompt}\n\n${capabilityV7}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      ...inherited.provenance, variant, version: capabilityV7Manifest.version, profile,
+      inheritedVersion: capabilityV7Manifest.inheritedVersion,
+      inheritedV6ManifestSha256: capabilityV7Manifest.inheritedManifestSha256,
+      inheritedV6AddendumSha256: capabilityV7Manifest.inheritedAddendumSha256,
+      addendumSha256: capabilityV7Manifest.addendumSha256,
+      manifestSha256: sha256(capabilityV7ManifestText), effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
+  if (profile === 'opulent-context-v6') {
+    variant ??= profile
+    const prompt = `${knowledge}\n\n${rlm}\n\n${unrestricted}\n\n${contextV6}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: {
+      variant, version: contextV6Manifest.version, profile,
+      inheritedVersion: contextV6Manifest.inheritedVersion,
+      baseSha256: knowledgeManifest.baseSha256,
+      inheritedKnowledgeManifestSha256: sha256(knowledgeManifestText),
+      inheritedRlmManifestSha256: sha256(rlmManifestText),
+      inheritedV5ManifestSha256: contextV6Manifest.inheritedManifestSha256,
+      inheritedV5AddendumSha256: contextV6Manifest.inheritedAddendumSha256,
+      addendumSha256: contextV6Manifest.addendumSha256,
+      manifestSha256: sha256(contextV6ManifestText),
+      effectivePromptSha256: sha256(systemPrompt),
+    } }
+  }
   if (profile === 'opulent-rlm-unrestricted-v5') {
     variant ??= profile
     const prompt = `${knowledge}\n\n${rlm}\n\n${unrestricted}`

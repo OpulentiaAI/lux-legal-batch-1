@@ -1,0 +1,5 @@
+system,metric,full_mean,covered_tasks,trimmed_mean,retained_ids,dropped_ids
+harvey,quality,0.8853174603174603,5,0.8783068783068783,task-06|task-02|task-03,task-05|task-04
+harvey,accuracy,0.8706349206349207,5,0.8796296296296295,task-06|task-05|task-04,task-02|task-03
+broad,quality,0.8663492063492063,5,0.8439153439153438,task-02|task-06|task-03,task-05|task-04
+broad,accuracy,0.861984126984127,5,0.8671957671957672,task-05|task-02|task-03,task-06|task-04

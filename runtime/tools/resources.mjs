@@ -22,6 +22,12 @@ const safeWorkspacePath = (workspace, value) => {
   if (resolved !== root && !resolved.startsWith(`${root}/`)) throw new Error('Path outside workspace');
   return resolved;
 };
+const isMissingEntry = error => {
+  if (error?.status != null && error.status !== 404) return false;
+  if (error?.statusCode != null && error.statusCode !== 404) return false;
+  if (error?.code != null && error.code !== 'ENOENT') return false;
+  return error?.status === 404 || error?.statusCode === 404 || error?.code === 'ENOENT' || /not found|does not exist/i.test(error?.message || '');
+};
 export const BUILTIN_SKILLS = Object.freeze(['managing-knowledge', 'managing-playbooks', 'managing-automations', 'managing-child-sessions', 'analyzing-sessions', 'data-analysis']);
 export const BUILTIN_SKILL_ROOT = '/opt/opulent/skills';
 const builtinSkillPath = name => `${BUILTIN_SKILL_ROOT}/${name}/SKILL.md`;
@@ -160,7 +166,7 @@ export function createTools(ctx) {
           let entries;
           try { entries = await ctx.sandbox.files.list(folder); }
           catch (error) {
-            if (!args.path && folder === root && (error?.status === 404 || error?.code === 'ENOENT' || /not found|does not exist/i.test(error?.message || ''))) return;
+            if (!args.path && folder === root && isMissingEntry(error)) return;
             throw error;
           }
           for (const entry of entries) {
@@ -170,7 +176,7 @@ export function createTools(ctx) {
             try {
               const content = await ctx.sandbox.files.read(p);
               if (!args.keywords?.length || (args.keywords_mode === 'and' ? args.keywords.every(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())) : args.keywords.some(word => `${name} ${content}`.toLowerCase().includes(word.toLowerCase())))) found.push({ name, path: p });
-            } catch (error) { if (error?.status !== 404 && !/not found/i.test(error?.message || '')) throw error; }
+            } catch (error) { if (!isMissingEntry(error)) throw error; }
             if (command === 'search') await scan(path.posix.join(folder, name));
           }
         };

@@ -7,6 +7,46 @@ import { redact } from '../runtime/security.mjs'
 const hash = value => createHash('sha256').update(value).digest('hex')
 const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
 const printsHead = command => /\bhead\s+(?:-c\s+\d+|-(?:n\s+)?\d+)\b/.test(command ?? '')
+export const PARENT_VISIBLE_EVIDENCE_VERSION = 'parent-visible-outputs-v2'
+
+function pythonLiteral(value) {
+  let converted = ''
+  for (let index = 0; index < value.length;) {
+    const quote = value[index]
+    if (quote === "'" || quote === '"') {
+      let text = '', closed = false
+      index++
+      while (index < value.length) {
+        const character = value[index++]
+        if (character === quote) { closed = true; break }
+        if (character !== '\\') { text += character; continue }
+        const escape = value[index++]
+        const escapes = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', a: '\x07', v: '\x0b', '\\': '\\', "'": "'", '"': '"' }
+        if (Object.hasOwn(escapes, escape)) text += escapes[escape]
+        else {
+          const length = { x: 2, u: 4, U: 8 }[escape]
+          const digits = length && value.slice(index, index + length)
+          if (!digits || !new RegExp(`^[a-fA-F0-9]{${length}}$`).test(digits) || parseInt(digits, 16) > 0x10ffff) return undefined
+          text += String.fromCodePoint(parseInt(digits, 16))
+          index += length
+        }
+      }
+      if (!closed) return undefined
+      converted += JSON.stringify(text)
+    } else {
+      const token = value.slice(index).match(/^(True|False|None)\b/)
+      if (token) {
+        converted += { True: 'true', False: 'false', None: 'null' }[token[0]]
+        index += token[0].length
+      } else {
+        if (!/[\s\d.eE+\-\[\]{},:]/.test(quote)) return undefined
+        converted += quote
+        index++
+      }
+    }
+  }
+  try { return JSON.parse(converted) } catch { return undefined }
+}
 
 function inside(path, root) {
   const rel = relative(root, path)
@@ -235,7 +275,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const lines = source.text.split('\n')
       const canonicalLine = lines[lineNumber - 2]
       if (canonicalLine === undefined) throw new Error('Invalid evidence grep contents')
-      if (!canonicalLine.includes(match[3])) {
+      let excerpt = match[3]
+      let byteCutWidth
+      if (!canonicalLine.includes(excerpt)) {
         const redacted = redact(canonicalLine).replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
           try {
             const url = new URL(raw)
@@ -243,14 +285,23 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           } catch { return raw }
         }).replace(/\bBearer\s+[A-Za-z0-9._~+/-]+/gi, 'Bearer [redacted]')
           .replace(/("(?:token|api_?key|secret|password|authorization)"\s*:\s*")[^"]*/gi, '$1[redacted]')
-        if (match[3] === redacted && redacted !== canonicalLine) continue
-        throw new Error('Invalid evidence grep contents')
+        if (excerpt === redacted && redacted !== canonicalLine) continue
+        if (excerpt.endsWith('\ufffd')) {
+          const marker = `${match[1]}.txt:${match[2]}:`
+          const bodyStart = line.indexOf(marker, match.index) + marker.length
+          const fullLine = Buffer.from(`${line.slice(0, bodyStart)}${canonicalLine}`)
+          const widths = [...(typeof command === 'string' ? command : '').matchAll(/\|\s*cut\s+-(?:b|c)\s*1-(\d+)(?=\s|[;|]|$)/g)].map(item => Number(item[1]))
+          byteCutWidth = widths.find(width => Number.isSafeInteger(width) && width > 0 &&
+            fullLine.subarray(0, width).toString('utf8') === line)
+          if (byteCutWidth !== undefined) excerpt = excerpt.slice(0, -1)
+        }
+        if (byteCutWidth === undefined || !excerpt.trim() || !canonicalLine.includes(excerpt)) throw new Error('Invalid evidence grep contents')
       }
-      const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(match[3])
-      attach(found, match[1], match[3], { ...origin, line: lineNumber }, 'excerpt', start)
+      const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(excerpt)
+      attach(found, match[1], excerpt, { ...origin, line: lineNumber, ...(byteCutWidth === undefined ? {} : { byteCutWidth, truncatedUTF8Suffix: true }) }, 'excerpt', start)
       const existing = visibleLines.get(match[1]) ?? new Map()
-      if (existing.has(lineNumber) && existing.get(lineNumber) !== match[3]) throw new Error('Invalid evidence ambiguous grep line')
-      existing.set(lineNumber, match[3])
+      if (existing.has(lineNumber) && existing.get(lineNumber) !== excerpt) throw new Error('Invalid evidence ambiguous grep line')
+      existing.set(lineNumber, excerpt)
       visibleLines.set(match[1], existing)
     }
     for (const [id, lines] of visibleLines) {
@@ -363,6 +414,121 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
     records.forEach((record, index) => visible(record, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout), stdoutRecord: index }))
   }
+  function parentVisible(found, metadata, value, origin, depth = 0) {
+    if (depth > 8 || value == null) return
+    if (typeof value === 'string') {
+      if (!value.trim() || value.length > 1_000_000 || value.includes('\n... truncated ...\n')) return
+      let decoded
+      try { decoded = JSON.parse(value) } catch {
+        if (origin.channel === 'result' || origin.channel === 'stdout') decoded = pythonLiteral(value)
+      }
+      if (decoded !== undefined) {
+        parentVisible(found, metadata, decoded, origin, depth + 1)
+        return
+      }
+      const lines = value.split(/\r?\n/).filter(line => line.trim())
+      const records = []
+      if (lines.length >= 2 && lines.length <= 1000) {
+        for (const [index, line] of lines.entries()) {
+          try { records.push({ value: JSON.parse(line), index }) } catch {}
+        }
+      }
+      records.forEach(({ value: record, index }) => parentVisible(found, metadata, record,
+        { ...origin, visibleRecord: index }, depth + 1))
+      visibleFileText(found, value, origin)
+      return
+    }
+    if (Array.isArray(value)) {
+      for (const child of value) parentVisible(found, metadata, child, origin, depth + 1)
+      return
+    }
+    if (typeof value !== 'object' || value.truncated === true || value.ok === false ||
+        value.error != null && value.error !== false || value.exit_code != null && value.exit_code !== 0) return
+    const childId = value.rlm_child_id ?? value.agent_id ?? value.session_id
+    if (childId != null && Object.hasOwn(value, 'status')) {
+      if (value.status !== 'completed') return
+      for (const channel of ['response', 'output']) parentVisible(found, metadata, value[channel],
+        { ...origin, channel, childSessionId: childId }, depth + 1)
+      return
+    }
+    const id = value.chunk_id ?? value.id
+    if (typeof id === 'string' && (typeof value.doc === 'string' || !Object.hasOwn(value, 'doc')) && manifest.has(id)) {
+      if (Object.hasOwn(value, 'start') || Object.hasOwn(value, 'end')) {
+        if (!Number.isSafeInteger(value.start) || !Number.isSafeInteger(value.end) || value.start < 0 ||
+            value.end <= value.start || typeof value.text !== 'string' ||
+            value.end - value.start !== value.text.length || sourceFor(id).text.slice(value.start, value.end) !== value.text) {
+          throw new Error('Invalid evidence coordinates')
+        }
+      }
+      native(found, metadata, { ...value, chunk_id: id, doc: value.doc ?? sourceFor(id).doc }, origin)
+      return
+    }
+    if (typeof value.chunk_id === 'string' && typeof value.doc === 'string') {
+      native(found, metadata, value, origin)
+      return
+    }
+    if (Array.isArray(value.matches)) opulentGrep(found, value, origin)
+    if (Object.hasOwn(value, 'stdout')) {
+      parentVisible(found, metadata, value.stdout, { ...origin, channel: 'stdout',
+        ...(typeof value.stdout === 'string' ? { stdoutSha256: hash(value.stdout) } : {}) }, depth + 1)
+      parentVisible(found, metadata, value.result, { ...origin, channel: 'result' }, depth + 1)
+      return
+    }
+    for (const [key, child] of Object.entries(value)) {
+      if (['scriptCalls', 'script_calls', 'scriptRuns', 'script_runs', 'trajectory', 'sessions', 'childSessions',
+        'conversation', 'conversations', 'messages', 'orchestrationMessages', 'timeline', 'events', 'stderr'].includes(key)) continue
+      parentVisible(found, metadata, child, origin, depth + 1)
+    }
+  }
+  function overflowKey(path) {
+    return typeof path === 'string' ? path.match(/(?:^|\/)(\.(?:rlm-overflows|scripted-tools-overflows|opulent-tool-results)\/[^/]+\.(?:txt|json))$/)?.[1] : null
+  }
+  function overflowRead(found, metadata, args, output, origin, overflows) {
+    const key = overflowKey(args?.file_path)
+    const entry = key && overflows.get(key)
+    if (!entry || !entry.allowed || output?.truncated) return
+    const paging = output.overflow_paging
+    const offset = args.offset ?? 1
+    const requested = args.limit ?? 2000
+    const limit = paging ? paging.limit : requested
+    if (!Number.isSafeInteger(offset) || offset < 1 || !Number.isSafeInteger(requested) || requested < 1 ||
+        !Number.isSafeInteger(limit) || limit < 1 || !Number.isSafeInteger(output.total_lines) || output.total_lines < 0 ||
+        typeof output.content !== 'string' || output.content.length > 1_000_000 ||
+        entry.totalLines != null && entry.totalLines !== output.total_lines || paging &&
+        (paging.offset !== offset || paging.requested_limit !== requested || paging.limit !== Math.min(requested, 2) ||
+          paging.total_lines !== output.total_lines || overflowKey(paging.overflow_path) !== key ||
+          paging.encoding !== 'jsonl-string-chunks')) throw new Error('Invalid evidence overflow read range')
+    const lines = output.content.match(/[^\n]*\n|[^\n]+$/g) ?? []
+    if (lines.length !== Math.max(0, Math.min(limit, output.total_lines - offset + 1))) throw new Error('Invalid evidence overflow read contents')
+    entry.totalLines = output.total_lines
+    for (const [index, line] of lines.entries()) {
+      const number = offset + index
+      if (entry.lines.has(number) && entry.lines.get(number) !== line) throw new Error('Invalid evidence conflicting overflow pages')
+      entry.lines.set(number, line)
+    }
+    entry.reads.push({ call: origin.call, outputSha256: origin.outputSha256, offset, limit })
+    const prefix = []
+    for (let number = 1; entry.lines.has(number); number++) prefix.push(entry.lines.get(number))
+    const provenance = { ...origin, overflow_path: key, overflowOwnerCall: entry.call, overflowReadCalls: [...entry.reads] }
+    if (key.startsWith('.opulent-tool-results/')) {
+      if (prefix.length !== entry.totalLines) return
+      let chunks
+      try { chunks = prefix.map(line => JSON.parse(line)) } catch { throw new Error('Invalid evidence overflow encoding') }
+      if (chunks.some(chunk => typeof chunk !== 'string')) throw new Error('Invalid evidence overflow encoding')
+      const serialized = chunks.join('')
+      if (!validHash(entry.sha256) || hash(serialized) !== entry.sha256 || serialized.length !== entry.characters) {
+        throw new Error('Invalid evidence overflow hash')
+      }
+      parentVisible(found, metadata, serialized, { ...provenance, channel: 'overflow' })
+    } else if (key.startsWith('.rlm-overflows/')) {
+      const content = prefix.join('')
+      if (!content.startsWith('\n--- stdout ---\n')) return
+      const stdout = content.slice('\n--- stdout ---\n'.length).split('\n--- stderr ---\n')[0]
+      parentVisible(found, metadata, stdout, { ...provenance, channel: 'stdout', stdoutSha256: hash(stdout) })
+    } else if (prefix.length === entry.totalLines) {
+      parentVisible(found, metadata, prefix.join(''), { ...provenance, channel: 'overflow' })
+    }
+  }
   function harvey(found, call, origin) {
     let args
     try { args = JSON.parse(call.arguments) } catch { throw new Error('Invalid evidence Harvey arguments') }
@@ -411,6 +577,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     const found = new Map()
     const modelVisibleMetadata = []
     const argumentHashUnverifiable = []
+    const diagnostics = []
+    let parentVisiblePolicy = false
     if (row.mode === 'broad') {
       if (typeof row.audit.evidenceArtifact !== 'string') throw new Error('Invalid evidence artifact identity')
       const name = basename(row.audit.evidenceArtifact)
@@ -420,6 +588,10 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           artifact.calls?.length !== row.audit.calls.length ||
           !(row.answer === null ? row.error && row.audit.finalAnswerHash === null :
             typeof row.answer === 'string' && hash(row.answer) === row.audit.finalAnswerHash)) throw new Error('Invalid evidence run identity')
+      const version = artifact.provenance?.evidenceReplayVersion
+      if (version !== undefined && version !== PARENT_VISIBLE_EVIDENCE_VERSION) throw new Error('Invalid evidence replay version')
+      parentVisiblePolicy = version === PARENT_VISIBLE_EVIDENCE_VERSION
+      const overflows = new Map()
       artifact.calls.forEach((call, index) => {
         const audit = row.audit.calls[index]
         if (call.tool !== audit.tool ||
@@ -440,6 +612,39 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (!argsVerified) {
           if (call.tool !== 'mcp_call_tool' || !['lx_search', 'lx_chunk'].includes(call.args?.name)) throw new Error('Invalid evidence call argument hash')
           argumentHashUnverifiable.push(index)
+        }
+        if (parentVisiblePolicy) {
+          const origin = { artifact: name, call: index, tool: call.tool,
+            outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
+          let output
+          try { output = JSON.parse(call.output) } catch {}
+          const failed = call.result.error || output?.ok === false || output?.error != null && output.error !== false
+          const key = overflowKey(output?.overflow_path)
+          if (key) overflows.set(key, { allowed: !failed, call: index, lines: new Map(), reads: [],
+            sha256: output.sha256, characters: output.characters, totalLines: output.encoding === 'jsonl-string-chunks' ? output.lines : null })
+          if (failed) {
+            diagnostics.push({ ...origin, status: 'failed', error: output?.error ?? output?.stderr ?? null })
+            return
+          }
+          if (call.tool === 'ipython') {
+            if (output?.ok === true) parentVisible(found, modelVisibleMetadata, output, origin)
+            return
+          }
+          if (call.tool === 'scripted_tools') {
+            parentVisible(found, modelVisibleMetadata, output, origin)
+            return
+          }
+          if (call.tool === 'read_subagent' || call.tool === 'opulent_session_interact' && call.args?.action === 'get') {
+            if (output?.status === 'completed') {
+              for (const channel of ['response', 'output']) parentVisible(found, modelVisibleMetadata, output[channel],
+                { ...origin, channel, childSessionId: output.agent_id ?? output.session_id ?? output.id })
+            }
+            return
+          }
+          if (call.tool === 'read' && overflowKey(call.args?.file_path)) {
+            overflowRead(found, modelVisibleMetadata, call.args, output, origin, overflows)
+            return
+          }
         }
         if (!call.result.error) {
           const origin = { artifact: name, call: index, tool: call.tool,
@@ -476,8 +681,10 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
     verifyFullSources(row, found)
     return { answer: row.answer, sources: [...found.values()], modelVisibleMetadata, trace: row.trace,
+      ...(parentVisiblePolicy ? { diagnostics } : {}),
       proof: { binding_strength: row.mode === 'broad' ? 'recorded-output-sha256' : 'legacy-artifact-snapshot-arguments-canonical',
-        argument_hash_unverifiable: argumentHashUnverifiable, historical_result_hash_missing: row.mode === 'harvey' },
+        argument_hash_unverifiable: argumentHashUnverifiable, historical_result_hash_missing: row.mode === 'harvey',
+        ...(parentVisiblePolicy ? { evidenceReplayVersion: PARENT_VISIBLE_EVIDENCE_VERSION } : {}) },
       metrics: { errors: row.degraded ? Math.max(1, row.metrics?.errors ?? 0) : 0, replay: true, sourceCount: found.size } }
   }
   return { replay, get artifactHashes() { return Object.fromEntries([...artifactHashes].sort(([a], [b]) => a.localeCompare(b))) } }

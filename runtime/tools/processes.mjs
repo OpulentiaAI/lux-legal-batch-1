@@ -68,16 +68,18 @@ export function createTools(ctx) {
         await settle(state, timeout, ctx.signal);
         return snapshot(state);
       }
+      const streamTimeout = ctx.sandboxDeadlineAt === undefined ? ctx.config?.sandboxTimeoutMs ?? 300_000 : ctx.sandboxDeadlineAt - Date.now();
+      if (!Number.isFinite(streamTimeout) || streamTimeout <= 0) throw new Error('Sandbox lifecycle deadline exceeded');
       const id = randomUUID();
       const state = { id, stdout: '', stderr: '', stdoutStart: 0, stderrStart: 0, stdoutCursor: 0, stderrCursor: 0, running: true, exitCode: null, tty: !!args.tty };
       if (args.tty) {
-        const handle = await ctx.sandbox.pty.create({ cols: 100, rows: 30, cwd: args.workdir || ctx.workspace, onData: bytes => append(state, 'stdout', new TextDecoder().decode(bytes)), signal: ctx.signal });
+        const handle = await ctx.sandbox.pty.create({ cols: 100, rows: 30, timeoutMs: Math.ceil(streamTimeout), cwd: args.workdir || ctx.workspace, onData: bytes => append(state, 'stdout', new TextDecoder().decode(bytes)), signal: ctx.signal });
         state.handle = handle;
         registry.set(id, state);
         state.done = handle.wait().then(result => { state.exitCode = result.exitCode; }, error => { state.exitCode = error.exitCode ?? -1; append(state, 'stderr', error.message); }).finally(() => { state.running = false; ctx.signal?.removeEventListener('abort', state.onAbort); });
         await ctx.sandbox.pty.sendInput(handle.pid, new TextEncoder().encode(args.command + '\n'), { signal: ctx.signal });
       } else {
-        const handle = await ctx.sandbox.commands.run(args.command, { background: true, stdin: true, cwd: args.workdir || ctx.workspace, onStdout: chunk => append(state, 'stdout', chunk), onStderr: chunk => append(state, 'stderr', chunk), signal: ctx.signal });
+        const handle = await ctx.sandbox.commands.run(args.command, { background: true, stdin: true, timeoutMs: Math.ceil(streamTimeout), cwd: args.workdir || ctx.workspace, onStdout: chunk => append(state, 'stdout', chunk), onStderr: chunk => append(state, 'stderr', chunk), signal: ctx.signal });
         state.handle = handle;
         registry.set(id, state);
         state.done = handle.wait().then(result => { state.exitCode = result.exitCode; }, error => { state.exitCode = error.exitCode ?? -1; if (!state.stderr && error.message) append(state, 'stderr', error.message); }).finally(() => { state.running = false; ctx.signal?.removeEventListener('abort', state.onAbort); });

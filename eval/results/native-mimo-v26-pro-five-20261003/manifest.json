@@ -1,0 +1,16 @@
+{
+  "checkpointSha256": "e057df35e3dca2c651703f57c40a1954133e6659ca9baabdb1de70b4a875cec2",
+  "files": {
+    "alignment-disagreements.csv": "ef7768e49590b7d735fa711f4806b3d12f9de25e3e30b648f1dc1530af0b5c04",
+    "summary.json": "34e973c51249c14c26e539c9cd4852ce34e5e0f46ee5880d6369d850499e41f7",
+    "paired-scores.csv": "4b5bbde70332383967c9ecc3ff17234a2a57198802485e80bfd0520d1c9e8348",
+    "trimmed-scores.csv": "c10c3f1da0659ac30a179e47af7f82d24cc3a48c4c17c63cfb08570f98a97d1b",
+    "independent-paired-scores.csv": "ac9dee297537d79f987e7beceec6e134d2010b9e262d435d87a5a1ba6acacef2",
+    "independent-trimmed-scores.csv": "89dfd2e33e58140f77093071c16a24eab61a6fefb9e4e35e50ec1d1ee4f280cf",
+    "comparison-corrected.png": "3e992a6da8da80f6a2e61804139552b3e5317e4b8e2075b679b29dbc277690fe",
+    "comparison-corrected.svg": "61127ffbb7756820f39352de3bddb6c189d589244b9415d0ee021b19a0bc86e6",
+    "comparison-independent.png": "e5aeb0b605969fd70f412d22041a03d531dccff6294eea0283eef87b14e87b66",
+    "comparison-independent.svg": "c51c95c68951e51f66c0d971e417e1b5b8bf871c9ce738e6fe8bdb41878ff370",
+    "resources.csv": "dbef34403589f30e63548a59f8aa91065fc6a9337690303b7d37ad264ff0bf85"
+  }
+}
