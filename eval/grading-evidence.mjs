@@ -235,7 +235,9 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const lines = source.text.split('\n')
       const canonicalLine = lines[lineNumber - 2]
       if (canonicalLine === undefined) throw new Error('Invalid evidence grep contents')
-      if (!canonicalLine.includes(match[3])) {
+      let excerpt = match[3]
+      let byteCutWidth
+      if (!canonicalLine.includes(excerpt)) {
         const redacted = redact(canonicalLine).replace(/https?:\/\/[^\s"'<>\\]+/g, raw => {
           try {
             const url = new URL(raw)
@@ -243,14 +245,23 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           } catch { return raw }
         }).replace(/\bBearer\s+[A-Za-z0-9._~+/-]+/gi, 'Bearer [redacted]')
           .replace(/("(?:token|api_?key|secret|password|authorization)"\s*:\s*")[^"]*/gi, '$1[redacted]')
-        if (match[3] === redacted && redacted !== canonicalLine) continue
-        throw new Error('Invalid evidence grep contents')
+        if (excerpt === redacted && redacted !== canonicalLine) continue
+        if (excerpt.endsWith('\ufffd')) {
+          const marker = `${match[1]}.txt:${match[2]}:`
+          const bodyStart = line.indexOf(marker, match.index) + marker.length
+          const fullLine = Buffer.from(`${line.slice(0, bodyStart)}${canonicalLine}`)
+          const widths = [...(typeof command === 'string' ? command : '').matchAll(/\|\s*cut\s+-(?:b|c)\s*1-(\d+)(?=\s|[;|]|$)/g)].map(item => Number(item[1]))
+          byteCutWidth = widths.find(width => Number.isSafeInteger(width) && width > 0 &&
+            fullLine.subarray(0, width).toString('utf8') === line)
+          if (byteCutWidth !== undefined) excerpt = excerpt.slice(0, -1)
+        }
+        if (byteCutWidth === undefined || !excerpt.trim() || !canonicalLine.includes(excerpt)) throw new Error('Invalid evidence grep contents')
       }
-      const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(match[3])
-      attach(found, match[1], match[3], { ...origin, line: lineNumber }, 'excerpt', start)
+      const start = lines.slice(0, lineNumber - 2).join('\n').length + (lineNumber > 2 ? 1 : 0) + canonicalLine.indexOf(excerpt)
+      attach(found, match[1], excerpt, { ...origin, line: lineNumber, ...(byteCutWidth === undefined ? {} : { byteCutWidth, truncatedUTF8Suffix: true }) }, 'excerpt', start)
       const existing = visibleLines.get(match[1]) ?? new Map()
-      if (existing.has(lineNumber) && existing.get(lineNumber) !== match[3]) throw new Error('Invalid evidence ambiguous grep line')
-      existing.set(lineNumber, match[3])
+      if (existing.has(lineNumber) && existing.get(lineNumber) !== excerpt) throw new Error('Invalid evidence ambiguous grep line')
+      existing.set(lineNumber, excerpt)
       visibleLines.set(match[1], existing)
     }
     for (const [id, lines] of visibleLines) {

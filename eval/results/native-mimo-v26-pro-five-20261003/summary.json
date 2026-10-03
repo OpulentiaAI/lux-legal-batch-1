@@ -1,0 +1,2210 @@
+{
+  "version": "native-mimo-five-publication-v1",
+  "checkpointSha256": "e057df35e3dca2c651703f57c40a1954133e6659ca9baabdb1de70b4a875cec2",
+  "suiteSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+  "gradesSha256": "0fa5e51044e59b63bc916f3e430ffd0d900a0cc91e9c2ef93e10bb2845b8ba6f",
+  "alignmentSha256": "e4757ed5a4d19bef94f47dc0aa2000b84aaee0512bddb36da420ffb4a2aef8a3",
+  "reviewHashes": {
+    "task-02": "27b7b2d1b70c5d2dea7a0f9054419cb319d810f0bf39dc966db680e31e857847",
+    "task-03": "ba466755337164a6881b5ebabf3580aadfd21ac74fe698036c7778457d16b24c",
+    "task-04": "51e71e9ab5f427b4a296c87a1b1ce33ac901840a0e715b28980ce11405d9ac52",
+    "task-05": "1f569e8a3f551e954c677fdd18ead3fedf3248a495e9eca8648531fa78cd3a7b",
+    "task-06": "ad0efee16da255e708823a6fa2a8becd88458c2dee8f77e50954b1ce47a5e984"
+  },
+  "scoredBaseCommit": "57bffcba08141829346fd2b887a9ecdf065d7afc",
+  "provenance": {
+    "protocol": "complex-v1-paired-work-product",
+    "selectedTasks": [
+      "task-02",
+      "task-03",
+      "task-04",
+      "task-05",
+      "task-06"
+    ],
+    "model": "xiaomi/mimo-v2.6-pro",
+    "modelProfile": "runanywhere-mimo-v2.6-pro",
+    "inferenceProvider": "runanywhere",
+    "nativeModel": {
+      "providerModel": "mimo-v2.6-pro",
+      "catalogue": {
+        "endpoint": "https://inference.runanywhere.ai/v1/models",
+        "modelIds": [
+          "deepseek-v4.1-flash",
+          "glm-5.3-flash",
+          "mimo-v2.6-pro"
+        ],
+        "sha256": "248b488febc8ed1474d3a66d80af9edf9602ddfc31c034e110a7ac085e410ecb"
+      }
+    },
+    "providerOnly": null,
+    "reasoningEffort": null,
+    "maxSteps": 250,
+    "maxCompletionTokens": 32768,
+    "concurrency": 2,
+    "suiteManifestSha256": "2cb2dc9ebd69d006354785c26475f0673988a485fb009ae8fda5ea3facb09afc",
+    "corpusHash": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+    "corpusCount": 8809,
+    "taskPackets": [
+      {
+        "path": "task-01",
+        "id": "task-01",
+        "title": "Founder term-sheet redline and closing conditions",
+        "taskSha256": "a0061ca73649ca57224ced1f8791d3512192dbe772df84818b9feb1d73a25d10",
+        "rubricSha256": "a358db3e5dade260c6c2955b4cd1fdea0ff5c03e450344407b6726c9426eaef9",
+        "criteria": 7,
+        "materials": {
+          "materials/client.md": "128fde40cd3caffc7e7a2cd274def5bb26b400d9fc2413499b6d9521507c83bc",
+          "materials/funding.csv": "00b6e6335599d119574a085e84fe3fb77bd2e8bc816bc98e7b61246ed9dcea46",
+          "materials/term-sheet.md": "bca28885355acd88c1e8897e4fc8df91d3f66a42f242c8166c3de95f9e9f6bb2"
+        },
+        "references": [
+          {
+            "id": "doc-06:art3101:c0",
+            "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+          },
+          {
+            "id": "doc-06:art4201:c0",
+            "sha256": "26e6faa1ca43fc2239f8993c4abaa1ba822ab74c1b4f28e7a91f7733d54f9b3b"
+          },
+          {
+            "id": "doc-06:s0052:c0",
+            "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+          },
+          {
+            "id": "doc-06:s0095:c0",
+            "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+          },
+          {
+            "id": "doc-06:s0102:c0",
+            "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+          },
+          {
+            "id": "doc-06:s0109:c0",
+            "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+          },
+          {
+            "id": "doc-08:s0061:c0",
+            "sha256": "23cf8996e880de6e559756e6a45216c5e28c4e8781cf13b33c5bfd207ad0ba2d"
+          }
+        ]
+      },
+      {
+        "path": "task-02",
+        "id": "task-02",
+        "title": "Multi-entity closing exception and dependency checklist",
+        "taskSha256": "ebe46330c998ff371ff8e785081d8b84049aacc8f66edd3df090a6f10e13b477",
+        "rubricSha256": "dfaa1f15a677143679e8794f35764fce7e04bc1ca59a9271aa2f30a6952163aa",
+        "criteria": 7,
+        "materials": {
+          "materials/instructions.md": "754550abf78ec30dad872e7df14912457524b4e240d6f6fa6dc2114ba7cf928b",
+          "materials/allocation.csv": "4eb1bc0f2ea8cb3fd1f10baec123f7d99521140673be1589acf01d6de0c07e5e",
+          "materials/closing-log.md": "c4276647071bb9ebc642b9db1a27d4e474cfa914e5f65c4fc2335b84b4346cc9"
+        },
+        "references": [
+          {
+            "id": "doc-04:s0240:c0",
+            "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+          },
+          {
+            "id": "doc-06:s0102:c0",
+            "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+          },
+          {
+            "id": "doc-06:s0158:c0",
+            "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a"
+          },
+          {
+            "id": "doc-06:s0158:c1",
+            "sha256": "37affd65d20c720cb5d3656dbfaa40e29c35d85cbbcb16c05811c567943c6115"
+          },
+          {
+            "id": "doc-06:s0159:c0",
+            "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+          },
+          {
+            "id": "doc-06:s0160:c0",
+            "sha256": "678cbc97b5085e79ed42f4f82ca385192461eda82754eff3c8db1cd2c270fa4e"
+          }
+        ]
+      },
+      {
+        "path": "task-03",
+        "id": "task-03",
+        "title": "Year-end dividend income cut-off and assertion workpaper",
+        "taskSha256": "887339cd55d80d7edc84d816eb4adca8684391648c260f05228f3d237881d035",
+        "rubricSha256": "f676fe3cac2c4339b9a7313fe53465dcf1d6413f57c16e96a6cd302ea1f4662b",
+        "criteria": 6,
+        "materials": {
+          "materials/controller.md": "911660911a1877afa6a0f05336163f1e7df2a679b7cc1a52549771a143ab7eff",
+          "materials/events.csv": "9eb8215427717d76631778d7b66ab284c9ff2faef8bbd42047d1a537e5b4c7cf"
+        },
+        "references": [
+          {
+            "id": "doc-04:s0240:c0",
+            "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+          },
+          {
+            "id": "doc-09:s0493:c0",
+            "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9"
+          }
+        ]
+      },
+      {
+        "path": "task-04",
+        "id": "task-04",
+        "title": "Listed remuneration report evidence and publication audit",
+        "taskSha256": "7bdf40aa75b4e3a43a7f09b66d0e78461b1cf455570a4ba5ef4082d7ab8fc33e",
+        "rubricSha256": "65f595998b60df1fdf77b1f78283ff7ff51cb048118a6335f1a60514d9625aa8",
+        "criteria": 8,
+        "materials": {
+          "materials/secretary.md": "45b14bd750d680f20b6716f7f89b2f539295857150c11f9ec003489456775cfe",
+          "materials/draft-report.md": "9cb1dd539b3e29a3e8905b14bd6bb11893b7cb01707d09ea9f4a0aea3e97cda3"
+        },
+        "references": [
+          {
+            "id": "doc-06:s0315:c0",
+            "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+          },
+          {
+            "id": "doc-06:s0315:c1",
+            "sha256": "788327c589a50dbbe87a0c6e54c13eed0a38eeeeeb329c02b1ff47d14b538a84"
+          }
+        ]
+      },
+      {
+        "path": "task-05",
+        "id": "task-05",
+        "title": "Research memo authority audit and citation repair",
+        "taskSha256": "4daa11bde003d3ed2149760302a863786a269c0fb287edf24f6b81a3340fa00c",
+        "rubricSha256": "05dcd021ab91044f1812950696c3e85b0f86995af976b4bc53acc1c1c46bdeb2",
+        "criteria": 6,
+        "materials": {
+          "materials/partner.md": "30cd307e831b729fad40716e72e82f897b1e1ace6461d489501bf69a2b3c1a7e",
+          "materials/junior-memo.md": "59f007cf202adf11e67b9add34c5967491813edd9e84f4c335e0d8f0fcbaa8a9"
+        },
+        "references": [
+          {
+            "id": "doc-05:s0011:c0",
+            "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501"
+          },
+          {
+            "id": "doc-06:art13-2:c0",
+            "sha256": "4b188aedbf21584a429e728fadab976167e3df3ecc2e7ac78eae1563345dcb56"
+          },
+          {
+            "id": "doc-06:s0109:c0",
+            "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+          },
+          {
+            "id": "doc-06:s0159:c0",
+            "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+          },
+          {
+            "id": "doc-06:s0314:c0",
+            "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+          },
+          {
+            "id": "doc-08:s0443:c1",
+            "sha256": "a54f096e33aaadc9359aee2d452f3cfcfb7b2b89d6481663a66d3fa487efebf4"
+          }
+        ]
+      },
+      {
+        "path": "task-06",
+        "id": "task-06",
+        "title": "Parallel capital actions: vote-tabulation and board certification pack",
+        "taskSha256": "028035e37a5dec6eef0808aff64372098a689dc1327b92f61b612cff7fccd4f6",
+        "rubricSha256": "330ba5518d6fad263faf2641378028edb2454bedb57b5a1ea54ce22e9da06d7f",
+        "criteria": 4,
+        "materials": {
+          "materials/secretary.md": "07bf8da83cadc43cfcafc5842558bcc101a67eafe91738ae52cc3556e8723c07",
+          "materials/vote-tallies.csv": "c3969159612c8699d7def5915458f68da16770ee9e04b40c4849da56d6407347"
+        },
+        "references": [
+          {
+            "id": "doc-06:art3105:c0",
+            "sha256": "ce2b4d3cf675bac85dd634c0c8bcff9d90de3ac6be6b16c0f91c137e5a0c3468"
+          },
+          {
+            "id": "doc-06:s0052:c0",
+            "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+          },
+          {
+            "id": "doc-06:s0102:c0",
+            "sha256": "47e04107cd86b5397d234688a95aec251fe2b227358e3cc73e58daee4df00eca"
+          }
+        ]
+      },
+      {
+        "path": "task-07",
+        "id": "task-07",
+        "title": "Listed-SA remuneration vote and payment remediation",
+        "taskSha256": "bef5a5c482393d8dd1b05b98c1d67dfc5654a202b52e41c5e3bcc2ed0447ce0d",
+        "rubricSha256": "10ed79a4e21ab404663e71a17f514df41285a5fdd4222af67577bd77d1a97f45",
+        "criteria": 8,
+        "materials": {
+          "materials/chair-email.md": "6b89506bf36d26eb9de9bca1e2bf6b4528e3c123b1df6f864d2678080e4866b8",
+          "materials/secretariat-record.md": "073a8f38cc46176b69859272ab586a44b21ac18dc19cb78c62eb34bed58df529",
+          "materials/payroll-extract.csv": "b1656b3bbcedb2867e57f944aa0de4adcd483a549d0ba72f5df38dc5ded63803"
+        },
+        "references": [
+          {
+            "id": "doc-06:s0301:c0",
+            "sha256": "dc122774a3fdcd45add0a49de9098cf876945f63c21cd98f7e2d0c295e18ba48"
+          },
+          {
+            "id": "doc-06:s0314:c0",
+            "sha256": "eb7e97089c480c35754fd38d1a8a9acfb473b5236e2a625bb79f8dfac3455b76"
+          },
+          {
+            "id": "doc-06:s0314:c1",
+            "sha256": "c1f9dd8f0796d266472ec9e7410c58d03fda4b86377143acc358844f9c0a4f01"
+          },
+          {
+            "id": "doc-06:s0315:c0",
+            "sha256": "102985aadfbdecd956339b27bbbebeba2cd08178dc5b241504ce14f315d72fe8"
+          }
+        ]
+      },
+      {
+        "path": "task-08",
+        "id": "task-08",
+        "title": "SA in-year reserve distribution and interim-dividend close",
+        "taskSha256": "cecb84e11ba2ca7c22f11d4dfed1b936cd1badf83c2e637ce819d00e0b76055d",
+        "rubricSha256": "dd13a38adca11688737dd7ebc1947c45c218421eaa910c6541607101667b3d99",
+        "criteria": 7,
+        "materials": {
+          "materials/treasury-email.md": "a2c74580682f53791216eae2f34c934870e2e136b97574a33139a7780cf2061a",
+          "materials/accounts-and-minutes.md": "2aceb1bb0f1e133e87e5f309bc6361250be4658b3eab89a4ca0d794bfdc345a2",
+          "materials/distribution-ledger.csv": "77b71ee15337bb7c3919c9271900c08ceb5f141e9a7ef4ba8d92443a9a15bd71"
+        },
+        "references": [
+          {
+            "id": "doc-04:s0240:c0",
+            "sha256": "18ee83826b7dac7c27c251583dceee5660fdce75620808dc44837ff3f64d961a"
+          },
+          {
+            "id": "doc-06:s0055:c0",
+            "sha256": "f3de38fff16c66ae24b4d89da2b0b3a029bbdeb26cf58a08d1dfde5935476008"
+          },
+          {
+            "id": "doc-07:s0083:c0",
+            "sha256": "b1fe514db128f70978fc83e757e839c7a283f93407b46a395c4014aa6ce0b33b"
+          },
+          {
+            "id": "doc-09:s0456:c0",
+            "sha256": "26ce05d104012a274f77ea94971f759a17de3f8ebf2f996f4c4d3f3625f8e299"
+          },
+          {
+            "id": "doc-09:s0493:c0",
+            "sha256": "5b6efab6cdcd49651e283eb2936b8024934110df8e5dd7d44f4b72791f1b7dc9"
+          }
+        ]
+      },
+      {
+        "path": "task-09",
+        "id": "task-09",
+        "title": "SA capital-increase resolution and board execution",
+        "taskSha256": "78254bc56bd3bc5c6b3f52c0e505b952515f5b74568f4098f4aee6488f9fe824",
+        "rubricSha256": "9762bb1e9c9a6bc2d7c596a8b948b51ac9a0c8f75ca866e50e6a4bcfb79cde0d",
+        "criteria": 7,
+        "materials": {
+          "materials/ceo-instruction.md": "8e87d4927039a7ea49e91987556338efbff3863264815214a855d24bfd7c443d",
+          "materials/secretary-meeting-file.md": "d2dd25dd6ef9d73b53a9c164cae0872fab540bd53112fb83fd504618d7ff05f1",
+          "materials/cap-table.csv": "46f189cb8ba7f838e57a8e558f44dbe96e0a8d6d51f8e96dd080fa395a7b14cc"
+        },
+        "references": [
+          {
+            "id": "doc-06:s0024:c0",
+            "sha256": "7d49407adc50cc9f59a2081664cf974b149c74139ee993c30acba894afeb1f2d"
+          },
+          {
+            "id": "doc-06:s0025:c0",
+            "sha256": "9332e0b12e66286d0f2606c4627456c7b5c7060500cc9aab6c8234d168a84cfe"
+          },
+          {
+            "id": "doc-06:s0052:c0",
+            "sha256": "e5daee640e3165cfdc17877ecf644fdc285686be1151c7c87c1e92316a539493"
+          }
+        ]
+      },
+      {
+        "path": "task-10",
+        "id": "task-10",
+        "title": "Luxembourg\u2013France complete split: executable closing sequence",
+        "taskSha256": "1de6e43b0c6b0423447aaf896c77cec5218e56647e53f8b1f28d8fbfe107985d",
+        "rubricSha256": "1d4f20dac40d4a9fc8d35bf18bc937658a9a6cff0206fb6edbc3a91777c315f8",
+        "criteria": 8,
+        "materials": {
+          "materials/client.md": "a2a7acfc7baaabb7c6f964d386ff2fc0e2ae97d5309a89cf9d0f5e6d593b8575",
+          "materials/workplan.md": "818638d4b77a45bb9ccca9d4d0af438a3f88019eb5528505bfc9f875c3c5b31c"
+        },
+        "references": [
+          {
+            "id": "doc-06:s0158:c0",
+            "sha256": "0ccfd8fcf04ac9cee5fa68d15466470a3b8c36281973af78b3aa1edf914aaa3a"
+          },
+          {
+            "id": "doc-06:s0159:c0",
+            "sha256": "9b4a31ae0edcc2048e70a3295f2e34bfdc6ab39ee8155c42fac90d0adf7bf2ed"
+          },
+          {
+            "id": "doc-06:s0163:c0",
+            "sha256": "fad77beb45a9f2f43558c76a785f9c48fdc1b4d8c604c5b3ef24f1e1a9432d4f"
+          },
+          {
+            "id": "doc-06:s0165:c0",
+            "sha256": "78f8aca89f0b207d58ec7efb7455a2aac9032ea6b2f4a3634d0b6eb7619c7150"
+          },
+          {
+            "id": "doc-06:s0166:c0",
+            "sha256": "a490d4c52b421763b023145102aaf6d528be3da266c043cb9b3b242de13507b1"
+          },
+          {
+            "id": "doc-06:s0166:c1",
+            "sha256": "ff351d73553ad51a57f57393807926fe74cc892f3203d6ce4ce9240703414498"
+          },
+          {
+            "id": "doc-06:s0167:c0",
+            "sha256": "2c279d296962f64a6ba1829a1aebc4206e27469986e8db661d5525e85734f787"
+          },
+          {
+            "id": "doc-06:s0168:c0",
+            "sha256": "7b8e6641565765dcf76f7699d76a4418f87f04bd3171bcc5d0d1a6b37069dc24"
+          },
+          {
+            "id": "doc-06:s0170:c0",
+            "sha256": "e889183b014739d0aceb4bde02b5bcbe01d9d7eff19d7bf87c42df38363107ce"
+          },
+          {
+            "id": "doc-06:s0171:c0",
+            "sha256": "8f1234a4998d6ceb082df93b517a2da00b3b94b675b688c2cd8cb22a7035b8e1"
+          },
+          {
+            "id": "doc-06:s0172:c0",
+            "sha256": "16e6f68f0f31e5982fca5c60bea623ae9b59d7b8df84310e662dd7d50dbdabba"
+          },
+          {
+            "id": "doc-06:s0173:c0",
+            "sha256": "288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f"
+          }
+        ]
+      },
+      {
+        "path": "task-11",
+        "id": "task-11",
+        "title": "Partial European split: allocation, universal transfer, and creditor fallback",
+        "taskSha256": "7d3fe2cd1e6a49dd535972f6e795c00ffd7a0b3034524cdb991e03d1b4514078",
+        "rubricSha256": "1ea0f8d055a79ef2abbff775173512dc21419d3a7b1d57c8992db1dd8a30fd2e",
+        "criteria": 8,
+        "materials": {
+          "materials/client.md": "171580175f52bfe7e301b53b14b20f7845dd7e3109e7777039b125560c10b1ca",
+          "materials/ledger.csv": "90c417f66243e28babeb190f3ba8584cd9f1a3312cd81dfba30f5adf7f62f954"
+        },
+        "references": [
+          {
+            "id": "doc-06:s0163:c0",
+            "sha256": "fad77beb45a9f2f43558c76a785f9c48fdc1b4d8c604c5b3ef24f1e1a9432d4f"
+          },
+          {
+            "id": "doc-06:s0166:c0",
+            "sha256": "a490d4c52b421763b023145102aaf6d528be3da266c043cb9b3b242de13507b1"
+          },
+          {
+            "id": "doc-06:s0169:c0",
+            "sha256": "9a320cf4ef490ae5c3a8fdfa549393f4288998395540f82aeff611b844d14c62"
+          },
+          {
+            "id": "doc-06:s0173:c0",
+            "sha256": "288d8ad1a4a7b39d9b546e4fb98f3ed12594dfdddbf738eea70bda1d2d80865f"
+          },
+          {
+            "id": "doc-06:s0173:c1",
+            "sha256": "6a566b2433048b59e9dd752c19721dbad5da112e7fd5b435cbc22304090ba830"
+          }
+        ]
+      },
+      {
+        "path": "task-12",
+        "id": "task-12",
+        "title": "Commandite selection and limited-partner governance diligence",
+        "taskSha256": "bdf2615745eb1966ebbce15bc77e16e75608068967833f11752aaaf02a5c3e8c",
+        "rubricSha256": "2bdf0edaff5fd052805dd1fe80de524fcbb7d2d74ce44e3d321c22a268e4bed8",
+        "criteria": 7,
+        "materials": {
+          "materials/client.md": "46ef402809ce1da953cb6f339ae82b7c593362266f68f3796fbc169932029371",
+          "materials/term-sheet.md": "cdb4aced7c9084bb4f266abcdbbc1eff4cb07a0a85f813dd8f511280b22a7337"
+        },
+        "references": [
+          {
+            "id": "doc-06:art1002:c0",
+            "sha256": "26403126d07709579c1a4c5dbe5a621abcc37ed66e18bf9b5ee148f531030b87"
+          },
+          {
+            "id": "doc-06:art3101:c0",
+            "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+          },
+          {
+            "id": "doc-06:art3103:c0",
+            "sha256": "57fdb9885f88132cfd20285f95ec870bb1766ac5bcb199bdadad218fc5df573c"
+          },
+          {
+            "id": "doc-06:art3104:c0",
+            "sha256": "9091f668d4169c2607374b9825a40e39bbc0635556f8f8a0121ad86cf01ec583"
+          },
+          {
+            "id": "doc-06:art6001:c0",
+            "sha256": "281d5fed9ae51e3097303754060b39cfe8c6858ceff2b8ada090887488203931"
+          },
+          {
+            "id": "doc-06:s0013:c0",
+            "sha256": "bcf23e9600761c21c9adc1c880f56c899fa8c98dec99db25c2ac4783c2439559"
+          },
+          {
+            "id": "doc-06:s0092:c0",
+            "sha256": "c8d6a350aa4994af839ffee5f02a77f1c3d783065c1015fc60177766fb4cf4f0"
+          }
+        ]
+      },
+      {
+        "path": "task-13",
+        "id": "task-13",
+        "title": "Financing choice: Belgian SRL versus Luxembourg SARL and SARL-S",
+        "taskSha256": "bbfef433cf8dbcfc82df50bfa87faf08063d51d31db306df7a3885eac7f8f509",
+        "rubricSha256": "b9a39bc16cb83fffa6efb162ea4f553bb60d3a9efd6a7249f816b86f5ec0af3a",
+        "criteria": 7,
+        "materials": {
+          "materials/client.md": "acc7eec7c956469836b00433df4a9184c513eae8a2030f8662774d1b55c39927",
+          "materials/runway.csv": "3e2f52d3e1a0eaf0e3b9db02c5f3e500ecf734ca79733e27be7f12bc6d2b2101",
+          "materials/adviser-note.md": "de14b7c106305643cb530d62d351808aef529954dc5d466a2b0f71f73782ce41"
+        },
+        "references": [
+          {
+            "id": "doc-05:s0011:c0",
+            "sha256": "fb78001b8ccd0dfac08408d76ca5fc0cb59e92d4ed6101cc8c34ab27affb6501"
+          },
+          {
+            "id": "doc-05:s0050:c0",
+            "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad"
+          },
+          {
+            "id": "doc-05:s0052:c0",
+            "sha256": "8d2b4c9643bb01e8425876cc7f7b6688d386e1021967dc99e9b75b5f80301a31"
+          },
+          {
+            "id": "doc-06:s0095:c0",
+            "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+          },
+          {
+            "id": "doc-06:s0108:c0",
+            "sha256": "990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d"
+          },
+          {
+            "id": "doc-06:s0109:c0",
+            "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+          }
+        ]
+      },
+      {
+        "path": "task-14",
+        "id": "task-14",
+        "title": "Industry contributions and capital/rights structuring",
+        "taskSha256": "e38d8390a569027d946ffb32d9e639bdba1de59acb5030b6abb7ff3db71a0f2c",
+        "rubricSha256": "77a9d3076d2e3594b98cc2c7cff209f8ccbdfcb2bcfcbed320e78910baf0f7ab",
+        "criteria": 7,
+        "materials": {
+          "materials/client.md": "757f9efa4c653f9da5042adff401eeaaed7c0ea0aa61a38680f42f3f0829feef",
+          "materials/contributions.csv": "7d8bcb65bd935058254ce46014e3bf8148e3b4b7f80d3697ee06a7e2cf555238",
+          "materials/terms.md": "9f60ede5416f34d25e90747d7ea5d15944fa036c80275b33524b9b6370cfbfa1"
+        },
+        "references": [
+          {
+            "id": "doc-05:s0050:c0",
+            "sha256": "634b507fcc9a6a1cf72d45e8309baf1707667b87401f8adde76f8fb4817f31ad"
+          },
+          {
+            "id": "doc-05:s0054:c0",
+            "sha256": "093eacd0d3bbc6041cf01be025f5a27f74ca84293b271c0f3e2a412bef4842e4"
+          },
+          {
+            "id": "doc-05:s0055:c0",
+            "sha256": "b9baf3e7522449d09c8f2730dafb112db3d74e356ff974e9ab9c52310c62372e"
+          },
+          {
+            "id": "doc-06:art3101:c0",
+            "sha256": "21ef5bf204fb9e87a432cc39f7f363ad79f4eeb0c5bcca3b5d0afe2c453da0cf"
+          },
+          {
+            "id": "doc-06:s0095:c0",
+            "sha256": "926c02f845d6e9bb2fae9d42b8072bb2d4ab835cbdbbc81a75de3ff6435d6896"
+          },
+          {
+            "id": "doc-06:s0096:c0",
+            "sha256": "a48558d06271c9a387f72daa9bb27f3c39b39673e221db79ef66926c389ca054"
+          },
+          {
+            "id": "doc-06:s0108:c0",
+            "sha256": "990de3170bfe067e700bcd221ee673c7454730ed60aeb628120ae40b6dd1160d"
+          },
+          {
+            "id": "doc-06:s0109:c0",
+            "sha256": "7f10dfe1fa6bce12a85e9c5d58ac3032eb632620c8c1100de6d5aef8e2745bea"
+          },
+          {
+            "id": "doc-06:s0110:c0",
+            "sha256": "0713986d4db57fc0246d2f2d4371e7f0c1231a534ed84090ee914dc9dba87234"
+          },
+          {
+            "id": "doc-08:s0061:c0",
+            "sha256": "23cf8996e880de6e559756e6a45216c5e28c4e8781cf13b33c5bfd207ad0ba2d"
+          }
+        ]
+      },
+      {
+        "path": "task-15",
+        "id": "task-15",
+        "title": "Contractual-obligation triage and draft correction",
+        "taskSha256": "ef7e5d614fba01e944f3f29a5b32ce2cceaa70f65f028f406e3bc8776177dff6",
+        "rubricSha256": "54f8ec964dcf8c4abd1b641a5f63088ce5b3f8eb0a39bfb12ed9f0aa8fbc3d23",
+        "criteria": 4,
+        "materials": {
+          "materials/client.md": "b44882c2d1d83fa14ccbc96a52be10969816c06b62c4bb8ef841aa1a6a404ed3",
+          "materials/draft.md": "7384a20c479be307781c3ff6c5a42c0fe7791128d42b28099ff86be5926f5dba",
+          "materials/chronology.csv": "f54da2460a2ed104729d83f92e9ea38034bfac044cc121ac280a2288aa0de12b"
+        },
+        "references": [
+          {
+            "id": "doc-01:s0014:c0",
+            "sha256": "28b4874e535b358f2ec2b04b2533d5397c12ae10dbf80ac633f1cafee2584d45"
+          },
+          {
+            "id": "doc-01:s0015:c0",
+            "sha256": "b16f3c8f6dc81dd4ea00a90c8b124eabad4966ccc1f7fd9c0616e9b2b086274f"
+          },
+          {
+            "id": "doc-01:s0015:c3",
+            "sha256": "05e70709d2ccc5c61a57d93ed114ad5c4d979778e7dd090eccb90a3fcf0bd2ea"
+          },
+          {
+            "id": "doc-01:s0016:c0",
+            "sha256": "6c7d7951e6c74087bf92f0d9be4aeab81b41e373ff06bfeb4b34267a4e9f3584"
+          },
+          {
+            "id": "doc-01:s0016:c1",
+            "sha256": "dfe8c3c49d272ed94d3a058733934cbd928f4c66b4f06153025691e0fa8d559a"
+          },
+          {
+            "id": "doc-01:s0017:c13",
+            "sha256": "2b2086bd202d5d087e16c9fe1f536b467d3df4e8b581deb63a120c2d63ed664d"
+          },
+          {
+            "id": "doc-01:s0034:c0",
+            "sha256": "a17f678973ff882a625f999972dcbc576d6c8dc2cb0b926c9214d45c6f077bc5"
+          }
+        ]
+      }
+    ],
+    "suitePolicy": {
+      "validate.mjs": "527f5702ae5f5bfb4f1ccb033d9f4d4edb0cbff6e6ae77fff71f53acb4000b48",
+      "judge.mjs": "88520aa3c712c1b05e51b81a148866a44b3d4ae4a8086da8b2c106f5c15c879e",
+      "freeze.mjs": "874df3470db2e1c606e6ee4d40e60ef4aa1b16f08a06c2d7abad18a03b061914",
+      "SCHEMA.md": "38ef775882c631f83b10a32c09a179ca7fdc3e3cffdbaf7399105a6b981595f7",
+      "README.md": "ff7dce1bc483c3c210d525c7ca9efa23832980fb6f5f2dee68263b8b2b014ae0"
+    },
+    "implementations": {
+      "eval/complex-v1/run.mjs": "1cbfa47e305d703d6e601ad9757521916259d5547c263a427ccf5869194ee193",
+      "eval/harvey-harness.mjs": "d888fb71e85ad98055f68eb36a2e31181de018e14366c163ca0ca450f1b99714",
+      "eval/harvey-bridge.py": "9d2e56073c42882078e26dd0bcc79b425207866e09cc1b23ddcfea4bc6c63ba8",
+      "eval/harvey-modal-adapter.py": "c29fc2317d467de0e9a6a1d4d37b3de0a8c10228cb3278a313149a5eadb5b729",
+      "runtime/broad-legal-eval.mjs": "af6be5a57faa2794bde1ec5be41dc962bff459f396d0639e870af825e2f6f855",
+      "runtime/eval-broker.mjs": "fdc31e19613fe899dbefb8568cdd570e8413948e743ef6a352d792addbdc2d09",
+      "runtime/eval-model-profile.mjs": "1588d0e33c48671f107eb0f63286e6970efd4cf3012629870cc6a523bd295282",
+      "runtime/model.mjs": "409cc6563839cf7208b27ef26ab4bec57da48343cdf594a6ebd703c145eb5a00",
+      "runtime/model-provider.mjs": "e1d7eba1cb2bcae2eea4a0050a4e3b1b8c3b78ed0856329d00a31649a8ff4ce2",
+      "runtime/script-execution.mjs": "58889e658b8bddff82bb3fc220a120974aa9b3081cb01ddcf9eaba7d1dce3f50"
+    },
+    "executionSha256": "bb0d5e607385040844c16def542fc0106f3aebf1957533fb0485cebcad82278a",
+    "runPlanSha256": "a20ac33ec33217241f97732c98eedfeb8f8b3200573b138ac0c2f6c58717159e",
+    "nativeModuleHash": "7b2602b10c7166cd639c5c125a4326f480c458d2e7cbe37cfdcfd2c7d06eeb5b",
+    "semanticSurface": "toolbox",
+    "instructionProfile": "opulent-context-v6",
+    "harveyPolicy": {
+      "harvey_commit": "845a08840869b21a5c11958aae58bf5f00a7b775",
+      "model": "xiaomi/mimo-v2.6-pro",
+      "providerOnly": null,
+      "reasoningEffort": null,
+      "endpoint": "https://inference.runanywhere.ai/v1",
+      "inference": {
+        "provider": "runanywhere",
+        "endpoint": "https://inference.runanywhere.ai/v1",
+        "credentialEnvironment": "RUNA_CLOUD_KEY",
+        "providerModel": "mimo-v2.6-pro",
+        "reasoningPolicy": "provider-default; no documented reasoning-effort control",
+        "requestPolicy": {
+          "maxAttempts": 3,
+          "retryStatuses": [
+            429,
+            502,
+            503,
+            504
+          ],
+          "backoffMs": [
+            1000,
+            2000
+          ],
+          "maxRetryAfterMs": 30000,
+          "transportErrors": "not retried; usage unknown"
+        }
+      },
+      "adapter": "eval.harvey-modal-adapter.RunAnywhereAdapter",
+      "agent_loop": "harness.agent_loop.run_agent",
+      "executor": "harness.tools.ToolExecutor",
+      "sandbox": "E2B pinned Harvey image (remote upstream ToolExecutor)",
+      "harvey_base_image": "ghcr.io/harveyai/lab-sandbox@sha256:96f6d1e51bc01de6f51e24539b7191c6a59c6b498f4646cec334d95f0717d6c2",
+      "e2b_template_id": "vj9cdw6z2kti276qs60r",
+      "e2b_sdk": "2.34.0",
+      "e2b_internet_access": false,
+      "skills": [
+        "docx",
+        "pptx",
+        "xlsx"
+      ],
+      "tools": [
+        "bash",
+        "read",
+        "write",
+        "edit",
+        "glob",
+        "grep"
+      ],
+      "corpus_sha256": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+      "max_steps": 250,
+      "max_completion_tokens": 32768,
+      "system_prompt_sha256": "c1a50b8e34e7f3534c54b16d11ea71b32afaa33dbeb84a6a7e17d37310208d05",
+      "evidence_policy": "full-model-visible-tool-result-v1",
+      "work_product": {
+        "version": "complex-v1",
+        "materialPath": "/workspace/task/materials",
+        "outputPath": "/workspace/output",
+        "evidencePolicy": "full-model-visible-tool-results-and-collected-deliverables-v1"
+      },
+      "sandbox_timeout_seconds": 3600
+    },
+    "broadPolicy": {
+      "policy": "broad-legal-native-rlm-unrestricted-v5",
+      "model": "xiaomi/mimo-v2.6-pro",
+      "providerOnly": null,
+      "reasoningEffort": null,
+      "inference": {
+        "provider": "runanywhere",
+        "endpoint": "https://inference.runanywhere.ai/v1",
+        "credentialEnvironment": "RUNA_CLOUD_KEY",
+        "providerModel": "mimo-v2.6-pro",
+        "reasoningPolicy": "provider-default; no documented reasoning-effort control",
+        "requestPolicy": {
+          "maxAttempts": 3,
+          "retryStatuses": [
+            429,
+            502,
+            503,
+            504
+          ],
+          "backoffMs": [
+            1000,
+            2000
+          ],
+          "maxRetryAfterMs": 30000,
+          "transportErrors": "not retried; usage unknown"
+        }
+      },
+      "maxSteps": 250,
+      "maxCompletionTokens": 32768,
+      "workProduct": {
+        "version": "complex-v1",
+        "taskPath": "/tmp/broad-legal-workspace/task",
+        "outputPath": "/tmp/broad-legal-workspace/output",
+        "evidencePolicy": "full-model-visible-tool-results-and-collected-deliverables-v1"
+      },
+      "sandboxTimeoutMs": 3600000,
+      "modelRequestTimeoutMs": 600000,
+      "toolSurface": "initial-scripted-v1",
+      "semanticSurface": "toolbox",
+      "rlm": {
+        "capability": "rlm-v1",
+        "initialToolPolicy": {
+          "version": "opulent-rlm-unrestricted-initial-v1",
+          "inventory": "canonical implemented catalog, corpus and enabled runtime capability definitions",
+          "addedDefinitions": [
+            "lx_search",
+            "lx_chunk",
+            "lx_documents",
+            "browser",
+            "wait_for_operations",
+            "ipython"
+          ]
+        },
+        "initialToolPolicySha256": "b424cb9fd73b9df72e9f662386f831acbf192301fcef63373fa49e171bcfc1be",
+        "definitionsSha256": "9ebfe9133fd422eee54b2d8c6650fa743709afd304e7252c433cd604b1967e4e",
+        "sourcesSha256": {
+          "rlm.mjs": "dd3f79c979ab8b8e186525a7dac44a5743d09cef889992de0a3e93c09dc927f8",
+          "rlm-kernel.py": "d5e0663c2a2e694c5d530dfb7e5f55b3296a6b6991f9113342aaac0659e8acb9"
+        },
+        "settings": {
+          "unrestrictedTools": true,
+          "maxRlmHostCallsPerCell": null,
+          "maxRlmChildren": null,
+          "maxSessionDepth": null,
+          "maxConcurrentSessions": null,
+          "maxScriptToolCalls": null,
+          "maxConcurrentScriptToolCalls": null
+        }
+      },
+      "unrestrictedTools": true,
+      "runtimeCapabilities": [
+        "browser-v1",
+        "operation-waits-v1",
+        "rlm-v1"
+      ],
+      "effectiveDefinitionsSha256": "776230de10cdf9e7249fe643419c5e1e3c6fe5cd143afa6bba3d98efbf818ce5",
+      "effectiveDefinitionSourcesSha256": {
+        "catalog.json": "322f992ad884d48ece641169a3f1417c39d93ac6d451d273a28122f01c0917e3",
+        "core.mjs": "abc932071862a1ddc794a5a253d4afb5a5ab654a8a2077dc95e74e535e75be6d",
+        "initial-tool-policy.mjs": "7f25df03d4be0f89aa1c94a7e20029612f683c60c6bfc8df030fb3b85484d194",
+        "browser-tools.mjs": "1f45d78f046018ec227435bf0e40943fa296d098608b47ede3171d0f4115337c",
+        "operation-waits.mjs": "196aaac8d91c872e70e760924e27c29caa471eee021e7f296f31af60fb512c6c",
+        "rlm.mjs": "dd3f79c979ab8b8e186525a7dac44a5743d09cef889992de0a3e93c09dc927f8",
+        "rlm-kernel.py": "d5e0663c2a2e694c5d530dfb7e5f55b3296a6b6991f9113342aaac0659e8acb9",
+        "script-execution.mjs": "58889e658b8bddff82bb3fc220a120974aa9b3081cb01ddcf9eaba7d1dce3f50",
+        "tools/legal.mjs": "0c46eed7a3800f7cf337b308f0c38829431fc4591e21ad02d7f99ca7092b6425",
+        "e2b.mjs": "b8070e4a145c6cb348d79ed779806b8c44dbfba38291b04cb53f603d808c6da7"
+      },
+      "excludedCategories": {
+        "devin_blueprint_test": "blueprints",
+        "end_voice_call": "voice",
+        "ask_question": "repository Q&A",
+        "generate_wiki": "wiki",
+        "list_available_repos": "wiki repository discovery",
+        "read_wiki_contents": "wiki",
+        "read_wiki_structure": "wiki",
+        "devin_user_list": "user management",
+        "find_setting": "settings",
+        "read_environment_config": "settings",
+        "update_environment_config": "settings",
+        "devin_docs": "wiki/documentation gateway",
+        "code_scan_setup_form": "settings/scan setup UI"
+      },
+      "networkPolicy": {
+        "allowPublicTraffic": false
+      },
+      "availability": {
+        "storage": "tools registered; no storage provider configured",
+        "browserOrigins": [],
+        "externalProviders": "tools registered; credentials and live connectivity not assumed"
+      },
+      "initialTools": [
+        "MultiEdit",
+        "annotate_recording",
+        "apply_patch",
+        "browser_console",
+        "browser_preview",
+        "computer",
+        "deploy",
+        "describe_image",
+        "opulent_automation_manage",
+        "opulent_billing_tag_manage",
+        "opulent_code_scan_manage",
+        "opulent_knowledge_manage",
+        "opulent_mcp",
+        "opulent_mcp_server_manage",
+        "opulent_oncall_manage",
+        "opulent_playbook_manage",
+        "opulent_review_manage",
+        "opulent_schedule_manage",
+        "opulent_session_create",
+        "opulent_session_events",
+        "opulent_session_interact",
+        "opulent_session_search",
+        "download_attachment",
+        "edit",
+        "exec",
+        "fetch_pr_template",
+        "find_file_by_name",
+        "generate_image",
+        "get_knowledge_note",
+        "get_output",
+        "get_workflow_output",
+        "git_add_labels",
+        "git_ci_job_logs",
+        "git_close_pr",
+        "git_comment_on_pr",
+        "git_create_pr",
+        "git_delete_comment",
+        "git_edit_comment",
+        "git_list_repos",
+        "git_pr_checks",
+        "git_remove_labels",
+        "git_stack",
+        "git_take_over_pr",
+        "git_update_pr",
+        "git_update_pr_base",
+        "git_view_pr",
+        "grep",
+        "install_personal_plugin",
+        "kill_shell",
+        "kill_workflow",
+        "linear",
+        "list_integrations",
+        "list_knowledge_notes",
+        "list_secrets",
+        "manage_personal_plugin",
+        "mcp_call_tool",
+        "mcp_list_servers",
+        "mcp_list_tools",
+        "mcp_read_resource",
+        "mcp_tool",
+        "message_user",
+        "message_workflow_agent",
+        "noop",
+        "notebook_edit",
+        "notebook_read",
+        "read",
+        "read_build_logs",
+        "read_subagent",
+        "recording_start",
+        "recording_stop",
+        "rename_title",
+        "report_blocker",
+        "request_secret",
+        "run_workflow",
+        "save_browser_profile",
+        "scripted_tools",
+        "set_workflow_agent_soft_time_limit",
+        "sidekick",
+        "skill",
+        "stop",
+        "suggest_knowledge",
+        "suggest_save_secret",
+        "suggest_skill_pr",
+        "task_create",
+        "task_get",
+        "task_list",
+        "task_update",
+        "testing_agent",
+        "todo_write",
+        "tool_search_tool_bm25",
+        "upload_attachment",
+        "view_image",
+        "wait",
+        "web_get_contents",
+        "web_search",
+        "write",
+        "write_to_process",
+        "lx_search",
+        "lx_chunk",
+        "lx_documents",
+        "browser",
+        "wait_for_operations",
+        "ipython"
+      ],
+      "workflowApproval": "operator-approved exact script hashes required; none configured for this evaluation",
+      "builtinSkills": [
+        {
+          "name": "managing-knowledge",
+          "path": "/opt/opulent/skills/managing-knowledge/SKILL.md",
+          "sha256": "29d64dee0a8a90a36a6794baac233b735df22f2fe3e683360c27c68f02d08ccf"
+        },
+        {
+          "name": "managing-playbooks",
+          "path": "/opt/opulent/skills/managing-playbooks/SKILL.md",
+          "sha256": "2ebf1ec0df745d812ba860d39384739c56bde01326b6db9edbe8d3fa1efb9fd8"
+        },
+        {
+          "name": "managing-automations",
+          "path": "/opt/opulent/skills/managing-automations/SKILL.md",
+          "sha256": "97779c41ebe723a1ffac9efb006183c503b5bd1b769c8133a62b89607fbf67d5"
+        },
+        {
+          "name": "managing-child-sessions",
+          "path": "/opt/opulent/skills/managing-child-sessions/SKILL.md",
+          "sha256": "e08c1ca0041b5b822f86bd1d44cef3d0387295407236c743fdf7a864f9e8edea"
+        },
+        {
+          "name": "analyzing-sessions",
+          "path": "/opt/opulent/skills/analyzing-sessions/SKILL.md",
+          "sha256": "d28de1b5113c3667818339fc6606478b4e98e71da66991c961a3701f07c697a6"
+        },
+        {
+          "name": "data-analysis",
+          "path": "/opt/opulent/skills/data-analysis/SKILL.md",
+          "sha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3"
+        }
+      ],
+      "instructions": {
+        "variant": "broad-legal-native-rlm-unrestricted-v5",
+        "version": "opulent-context-v6",
+        "profile": "opulent-context-v6",
+        "inheritedVersion": "opulent-rlm-unrestricted-v5",
+        "baseSha256": "5257b9af33c2b8476155bd08ccb65202c88352459dc60d4bb48d2c26168862b8",
+        "inheritedKnowledgeManifestSha256": "ed43a97a4c8880d0742e4204ccdab72c962a9b3b6b8c675d8340856657a2bfb9",
+        "inheritedRlmManifestSha256": "19e864ad357b6a7f673ae83c9281efdc4bb3ef189e44aa6efae804c47315fa48",
+        "inheritedV5ManifestSha256": "dcb086c0b29bd6def28c691946cd8d0aa02d2048d1b0c8d5f4af921a8f294dc2",
+        "inheritedV5AddendumSha256": "e6349096d903fe1d44d9aaddfe00aae35f78a968e178a09945db0ca718315519",
+        "addendumSha256": "b29386a4d3e6693cf44086f4a7e5a0ec3879b31f747d644ef2cf0210d63dae89",
+        "manifestSha256": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+        "effectivePromptSha256": "e1614869585527c152658a7dc4c64d2a939ae0d6282486f4a83a806b5624b30c"
+      },
+      "effectiveToolOverlay": {
+        "version": "opulent-runtime-tool-overlay-v3",
+        "sha256": "2da00efdc9dfa4eb0855cb51b586af7095f279ae07bcc15a3f79170824ab39d6",
+        "sourceCatalogSha256": "322f992ad884d48ece641169a3f1417c39d93ac6d451d273a28122f01c0917e3",
+        "toolNames": [
+          "opulent_mcp",
+          "scripted_tools",
+          "report_blocker",
+          "run_workflow"
+        ]
+      },
+      "allowedTools": [
+        "MultiEdit",
+        "annotate_recording",
+        "apply_patch",
+        "browser_console",
+        "browser_preview",
+        "computer",
+        "deploy",
+        "describe_image",
+        "opulent_automation_manage",
+        "opulent_billing_tag_manage",
+        "opulent_code_scan_manage",
+        "opulent_knowledge_manage",
+        "opulent_mcp",
+        "opulent_mcp_server_manage",
+        "opulent_oncall_manage",
+        "opulent_playbook_manage",
+        "opulent_review_manage",
+        "opulent_schedule_manage",
+        "opulent_session_create",
+        "opulent_session_events",
+        "opulent_session_interact",
+        "opulent_session_search",
+        "download_attachment",
+        "edit",
+        "exec",
+        "fetch_pr_template",
+        "find_file_by_name",
+        "generate_image",
+        "get_knowledge_note",
+        "get_output",
+        "get_workflow_output",
+        "git_add_labels",
+        "git_ci_job_logs",
+        "git_close_pr",
+        "git_comment_on_pr",
+        "git_create_pr",
+        "git_delete_comment",
+        "git_edit_comment",
+        "git_list_repos",
+        "git_pr_checks",
+        "git_remove_labels",
+        "git_stack",
+        "git_take_over_pr",
+        "git_update_pr",
+        "git_update_pr_base",
+        "git_view_pr",
+        "grep",
+        "install_personal_plugin",
+        "kill_shell",
+        "kill_workflow",
+        "linear",
+        "list_integrations",
+        "list_knowledge_notes",
+        "list_secrets",
+        "manage_personal_plugin",
+        "mcp_call_tool",
+        "mcp_list_servers",
+        "mcp_list_tools",
+        "mcp_read_resource",
+        "mcp_tool",
+        "message_user",
+        "message_workflow_agent",
+        "noop",
+        "notebook_edit",
+        "notebook_read",
+        "read",
+        "read_build_logs",
+        "read_subagent",
+        "recording_start",
+        "recording_stop",
+        "rename_title",
+        "report_blocker",
+        "request_secret",
+        "run_workflow",
+        "save_browser_profile",
+        "scripted_tools",
+        "set_workflow_agent_soft_time_limit",
+        "sidekick",
+        "skill",
+        "stop",
+        "suggest_knowledge",
+        "suggest_save_secret",
+        "suggest_skill_pr",
+        "task_create",
+        "task_get",
+        "task_list",
+        "task_update",
+        "testing_agent",
+        "todo_write",
+        "tool_search_tool_bm25",
+        "upload_attachment",
+        "view_image",
+        "wait",
+        "web_get_contents",
+        "web_search",
+        "write",
+        "write_to_process",
+        "lx_search",
+        "lx_chunk",
+        "lx_documents",
+        "browser",
+        "wait_for_operations",
+        "ipython"
+      ],
+      "excluded": [],
+      "corpus": {
+        "hash": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+        "count": 8809,
+        "version": "comparison-corpus-v1"
+      },
+      "evidencePolicy": "Parent-visible corpus responses and exact visible exported chunks only; child reads are not silently promoted; redacted model-visible tool responses retained locally",
+      "sandbox": {
+        "provider": "E2B",
+        "preparedTemplate": "aacky3169dfjvjyw7bsu",
+        "computerImageSha256": "e85fdd87dfeebc02f178d011fbb43a5511cf6275a364bdef57fe611d340dbeba",
+        "corpusUpload": "configured; lazy on first sandbox tool, not a live availability claim",
+        "integrity": "root-owned read-only corpus in root-owned sticky workspace; setuid/setgid removed; commands run as user with no-new-privs; PTY forced to user; resident sandbox remains live through collection, so no final pause-time corpus digest is claimed"
+      },
+      "integrations": {
+        "webSearch": "available tool; BRAVE_SEARCH_API_KEY unavailable",
+        "imageGeneration": "available tool; OPENAI_API_KEY unavailable",
+        "github": "available tools; GITHUB_TOKEN unavailable and repository allowlist empty",
+        "runtimeBroker": {
+          "status": "scoped authenticated broker configured; verify live before scoring",
+          "origin": "https://8789-csjljmb0n3tvingvteq1csq9s6yvro1s.capysandbox.net",
+          "network": {
+            "allowPublicTraffic": false
+          }
+        },
+        "desktop": "available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot",
+        "storage": "unconfigured; storage tools visible but provider calls unavailable",
+        "mcp": "available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified"
+      }
+    },
+    "integration": {
+      "sandboxTemplate": "aacky3169dfjvjyw7bsu",
+      "computerImageSha256": "e85fdd87dfeebc02f178d011fbb43a5511cf6275a364bdef57fe611d340dbeba",
+      "nativeMcp": null,
+      "servers": [],
+      "probesSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "brokerPort": 8789,
+      "brokerOriginSha256": "6d616bbc260947eccef8287bea87a523e8af8d824b287ba8f622d6acde1266fb"
+    },
+    "evidencePolicy": "actual answerer-visible evidence only; hidden reference never promoted",
+    "gradingPolicy": "ungraded; separate criterion adapter required",
+    "costPolicy": "unknown unless metered",
+    "harveyIdentity": "pinned public Harvey LAB harness, not proprietary hosted Harvey product"
+  },
+  "jevPolicy": {
+    "version": "native-mimo-jev-criterion-v5",
+    "model": "typesafe-ai/jev",
+    "endpoint": "https://ai-gateway.vercel.sh/v1/evaluate",
+    "providerOnly": [
+      "typesafe-ai"
+    ],
+    "scores": "interpolated Jev 0\u20133 scores divided by 3; equal criterion weights within each task and equal task weights in summaries",
+    "accuracy": "asserted relevant claims only; absent claims are not perfect accuracy",
+    "evidence": "full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining IDs and a bound full-inventory digest are audit metadata, never absence proof",
+    "maxVisibleBodies": 6,
+    "references": "hidden references establish legal truth, never consultation or citation compliance",
+    "resources": "no turn, latency or token penalty in semantic scores",
+    "alignment": "satisfaction binds the complete requirement and pass condition; typed decisions require independent Capy/human review",
+    "unknowns": "unresolved judgments and judge failures remain visible; no fabricated grades",
+    "trimming": "independently remove one highest and one lowest task score per system and metric",
+    "providerVersion": "not returned by provider",
+    "timeoutMs": 120000,
+    "maxAttempts": 2
+  },
+  "jevPaired": [
+    {
+      "taskId": "task-02",
+      "harvey": {
+        "quality": 0.9661904761904763,
+        "accuracy": 0.89,
+        "criterionPass": 1,
+        "criteria": 7,
+        "resolved": 7,
+        "accuracyCoverage": 7,
+        "unresolved": 0,
+        "failures": 0
+      },
+      "broad": {
+        "quality": 0.9376190476190477,
+        "accuracy": 0.8647619047619047,
+        "criterionPass": 1,
+        "criteria": 7,
+        "resolved": 7,
+        "accuracyCoverage": 7,
+        "unresolved": 0,
+        "failures": 0
+      }
+    },
+    {
+      "taskId": "task-03",
+      "harvey": {
+        "quality": 0.9266666666666667,
+        "accuracy": 0.9022222222222221,
+        "criterionPass": 1,
+        "criteria": 6,
+        "resolved": 6,
+        "accuracyCoverage": 6,
+        "unresolved": 0,
+        "failures": 0
+      },
+      "broad": {
+        "quality": 0.9538888888888889,
+        "accuracy": 0.8633333333333333,
+        "criterionPass": 1,
+        "criteria": 6,
+        "resolved": 6,
+        "accuracyCoverage": 6,
+        "unresolved": 0,
+        "failures": 0
+      }
+    },
+    {
+      "taskId": "task-04",
+      "harvey": {
+        "quality": 0.9375,
+        "accuracy": 0.9166666666666667,
+        "criterionPass": 1,
+        "criteria": 8,
+        "resolved": 8,
+        "accuracyCoverage": 8,
+        "unresolved": 0,
+        "failures": 0
+      },
+      "broad": {
+        "quality": 0.9158333333333333,
+        "accuracy": 0.905,
+        "criterionPass": 1,
+        "criteria": 8,
+        "resolved": 8,
+        "accuracyCoverage": 8,
+        "unresolved": 0,
+        "failures": 0
+      }
+    },
+    {
+      "taskId": "task-05",
+      "harvey": {
+        "quality": 0.9711111111111111,
+        "accuracy": 0.9211111111111111,
+        "criterionPass": 1,
+        "criteria": 6,
+        "resolved": 6,
+        "accuracyCoverage": 6,
+        "unresolved": 0,
+        "failures": 0
+      },
+      "broad": {
+        "quality": 0.9716666666666667,
+        "accuracy": 0.918888888888889,
+        "criterionPass": 1,
+        "criteria": 6,
+        "resolved": 6,
+        "accuracyCoverage": 6,
+        "unresolved": 0,
+        "failures": 0
+      }
+    },
+    {
+      "taskId": "task-06",
+      "harvey": {
+        "quality": 0.9783333333333334,
+        "accuracy": 0.9075000000000001,
+        "criterionPass": 1,
+        "criteria": 4,
+        "resolved": 4,
+        "accuracyCoverage": 4,
+        "unresolved": 0,
+        "failures": 0
+      },
+      "broad": {
+        "quality": 0.9775,
+        "accuracy": 0.8816666666666666,
+        "criterionPass": 1,
+        "criteria": 4,
+        "resolved": 4,
+        "accuracyCoverage": 4,
+        "unresolved": 0,
+        "failures": 0
+      }
+    }
+  ],
+  "jevSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.9559603174603175,
+        "coverage": 5,
+        "trimmed": 0.9582671957671959,
+        "retained": [
+          "task-04",
+          "task-02",
+          "task-05"
+        ],
+        "dropped": [
+          "task-03",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.9075000000000001,
+        "coverage": 5,
+        "trimmed": 0.9087962962962962,
+        "retained": [
+          "task-03",
+          "task-06",
+          "task-04"
+        ],
+        "dropped": [
+          "task-02",
+          "task-05"
+        ]
+      },
+      "criterionPass": {
+        "full": 1,
+        "coverage": 5,
+        "trimmed": 1,
+        "retained": [
+          "task-03",
+          "task-04",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.9513015873015874,
+        "coverage": 5,
+        "trimmed": 0.9543915343915345,
+        "retained": [
+          "task-02",
+          "task-03",
+          "task-05"
+        ],
+        "dropped": [
+          "task-04",
+          "task-06"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8867301587301586,
+        "coverage": 5,
+        "trimmed": 0.8838095238095237,
+        "retained": [
+          "task-02",
+          "task-06",
+          "task-04"
+        ],
+        "dropped": [
+          "task-03",
+          "task-05"
+        ]
+      },
+      "criterionPass": {
+        "full": 1,
+        "coverage": 5,
+        "trimmed": 1,
+        "retained": [
+          "task-03",
+          "task-04",
+          "task-05"
+        ],
+        "dropped": [
+          "task-02",
+          "task-06"
+        ]
+      }
+    }
+  },
+  "independentPaired": [
+    {
+      "taskId": "task-02",
+      "harvey": {
+        "quality": 0.8571428571428571,
+        "accuracy": 0.7142857142857143,
+        "passes": 5,
+        "failures": 2,
+        "unresolved": 0,
+        "criteria": 7,
+        "qualityCoverage": 7,
+        "accuracyCoverage": 7
+      },
+      "broad": {
+        "quality": 0.8095238095238095,
+        "accuracy": 0.8571428571428571,
+        "passes": 4,
+        "failures": 3,
+        "unresolved": 0,
+        "criteria": 7,
+        "qualityCoverage": 7,
+        "accuracyCoverage": 7
+      }
+    },
+    {
+      "taskId": "task-03",
+      "harvey": {
+        "quality": 0.9444444444444444,
+        "accuracy": 1.0,
+        "passes": 5,
+        "failures": 1,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6
+      },
+      "broad": {
+        "quality": 0.8888888888888888,
+        "accuracy": 0.9444444444444444,
+        "passes": 4,
+        "failures": 2,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6
+      }
+    },
+    {
+      "taskId": "task-04",
+      "harvey": {
+        "quality": 0.9583333333333334,
+        "accuracy": 0.9166666666666666,
+        "passes": 8,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 8,
+        "qualityCoverage": 8,
+        "accuracyCoverage": 8
+      },
+      "broad": {
+        "quality": 1.0,
+        "accuracy": 0.9583333333333334,
+        "passes": 8,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 8,
+        "qualityCoverage": 8,
+        "accuracyCoverage": 8
+      }
+    },
+    {
+      "taskId": "task-05",
+      "harvey": {
+        "quality": 0.8333333333333333,
+        "accuracy": 0.8888888888888888,
+        "passes": 3,
+        "failures": 3,
+        "unresolved": 0,
+        "criteria": 6,
+        "qualityCoverage": 6,
+        "accuracyCoverage": 6
+      },
+      "broad": {
+        "quality": 0.8,
+        "accuracy": 0.7999999999999999,
+        "passes": 4,
+        "failures": 1,
+        "unresolved": 1,
+        "criteria": 6,
+        "qualityCoverage": 5,
+        "accuracyCoverage": 5
+      }
+    },
+    {
+      "taskId": "task-06",
+      "harvey": {
+        "quality": 0.8333333333333333,
+        "accuracy": 0.8333333333333333,
+        "passes": 3,
+        "failures": 1,
+        "unresolved": 0,
+        "criteria": 4,
+        "qualityCoverage": 4,
+        "accuracyCoverage": 4
+      },
+      "broad": {
+        "quality": 0.8333333333333333,
+        "accuracy": 0.75,
+        "passes": 4,
+        "failures": 0,
+        "unresolved": 0,
+        "criteria": 4,
+        "qualityCoverage": 4,
+        "accuracyCoverage": 4
+      }
+    }
+  ],
+  "independentSummaries": {
+    "harvey": {
+      "quality": {
+        "full": 0.8853174603174603,
+        "trimmed": 0.8783068783068783,
+        "coverage": 5,
+        "retained": [
+          "task-06",
+          "task-02",
+          "task-03"
+        ],
+        "dropped": [
+          "task-05",
+          "task-04"
+        ]
+      },
+      "accuracy": {
+        "full": 0.8706349206349207,
+        "trimmed": 0.8796296296296295,
+        "coverage": 5,
+        "retained": [
+          "task-06",
+          "task-05",
+          "task-04"
+        ],
+        "dropped": [
+          "task-02",
+          "task-03"
+        ]
+      }
+    },
+    "broad": {
+      "quality": {
+        "full": 0.8663492063492063,
+        "trimmed": 0.8439153439153438,
+        "coverage": 5,
+        "retained": [
+          "task-02",
+          "task-06",
+          "task-03"
+        ],
+        "dropped": [
+          "task-05",
+          "task-04"
+        ]
+      },
+      "accuracy": {
+        "full": 0.861984126984127,
+        "trimmed": 0.8671957671957672,
+        "coverage": 5,
+        "retained": [
+          "task-05",
+          "task-02",
+          "task-03"
+        ],
+        "dropped": [
+          "task-06",
+          "task-04"
+        ]
+      }
+    }
+  },
+  "independentCounts": {
+    "pass": 48,
+    "fail": 13,
+    "unresolved": 1
+  },
+  "independentTaskAllPass": {
+    "harvey": [
+      "task-04"
+    ],
+    "broad": [
+      "task-04",
+      "task-06"
+    ]
+  },
+  "satisfactionDisagreements": 13,
+  "unresolvedDisagreements": 1,
+  "resources": {
+    "version": "native-separated-resource-summary-v1",
+    "inputSha256": "e057df35e3dca2c651703f57c40a1954133e6659ca9baabdb1de70b4a875cec2",
+    "gradesSha256": "0fa5e51044e59b63bc916f3e430ffd0d900a0cc91e9c2ef93e10bb2845b8ba6f",
+    "ledgerSha256": "703baf8329faa5a04770eac6f107badd59bf028272c250896463f4012e0e979b",
+    "toolAuditSha256": "7d9f421cca4e29ee3f05ed8683ffa794a76743bf1fc2d1b0e43bb13663c0c1f9",
+    "answerers": {
+      "harvey": {
+        "inputTokens": 10968930,
+        "outputTokens": 379876,
+        "chatReportedReasoningTokens": 289195,
+        "cachedInputTokens": 10516224,
+        "armWallMinutesSum": 72.16225,
+        "unknownPhysicalAttemptUsage": 5,
+        "nativeSuccessfulResponses": 205,
+        "matchedSettledResponses": 205,
+        "matchedSettledChargeSubtotalUSD": "0.711488",
+        "completeAnswererBillingArms": 2,
+        "reasoningCounterDisagreements": 205,
+        "settlementReportedReasoningTokens": 0
+      },
+      "broad": {
+        "inputTokens": 22470214,
+        "outputTokens": 576473,
+        "chatReportedReasoningTokens": 450102,
+        "cachedInputTokens": 21527168,
+        "armWallMinutesSum": 71.02688333333333,
+        "unknownPhysicalAttemptUsage": 3,
+        "nativeSuccessfulResponses": 207,
+        "matchedSettledResponses": 207,
+        "matchedSettledChargeSubtotalUSD": "1.263367",
+        "completeAnswererBillingArms": 4,
+        "reasoningCounterDisagreements": 205,
+        "settlementReportedReasoningTokens": 0
+      }
+    },
+    "retrieval": {
+      "modelDispatchedCalls": {
+        "lx_search": 89,
+        "lx_chunk": 20,
+        "lx_documents": 7
+      },
+      "billedProviderRequests": null,
+      "settledCostUSD": null,
+      "policy": "Embedding, reranking and database billing were not captured. Tool dispatch counts are not provider billing counts."
+    },
+    "e2b": {
+      "settledCostUSD": null,
+      "policy": "Sandbox invoices, CPU and RAM usage were not captured. Arm wall time is not sandbox billable duration, and concurrent arm durations are not elapsed batch time."
+    },
+    "operatorAndHostEngineering": {
+      "settledCostUSD": null,
+      "policy": "Live operator fixtures and host engineering usage are outside this answerer checkpoint and are not inferred from its tokens."
+    },
+    "policy": "Costs stay separated by provider/activity and evidence strength. Matched native charges are partial subtotals when failed/cancelled usage is unknown; no total experiment cost is claimed. Child records appear exactly once in Opulent totals. Chat and settlement reasoning counters remain separate; neither is added as an extra token category."
+  },
+  "judgeResources": {
+    "requests": 62,
+    "inputTokens": 1316059,
+    "outputTokens": 6696,
+    "providerReportedCostSubtotalUSD": "0.055274478",
+    "costBasis": "Successful Jev response metadata, not an independently reconciled Gateway account invoice. Separate from native answerer charges."
+  },
+  "toolAudit": {
+    "inputSha256": "e057df35e3dca2c651703f57c40a1954133e6659ca9baabdb1de70b4a875cec2",
+    "supplementSha256": "e8b27c9ea1f12e0d18aad8df53f57a30fc48bc1e9f1c7f0049f38f4badf4a66e",
+    "policy": "Model requests, dispatch starts, finished outcomes and error-valued returns are different counts. Skill list/search requests are not procedure invocations. Session statuses are snapshots collected before harness cleanup, not proof that an active child later completed. Operator probes are excluded.",
+    "configuredTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "permittedTools": [
+      "MultiEdit",
+      "annotate_recording",
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "opulent_session_create",
+      "opulent_session_events",
+      "opulent_session_interact",
+      "opulent_session_search",
+      "download_attachment",
+      "edit",
+      "exec",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "grep",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read",
+      "read_build_logs",
+      "read_subagent",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "skill",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_create",
+      "task_get",
+      "task_list",
+      "task_update",
+      "testing_agent",
+      "todo_write",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "wait",
+      "web_get_contents",
+      "web_search",
+      "write",
+      "write_to_process",
+      "lx_search",
+      "lx_chunk",
+      "lx_documents",
+      "browser",
+      "wait_for_operations",
+      "ipython"
+    ],
+    "definitionsSha256": "776230de10cdf9e7249fe643419c5e1e3c6fe5cd143afa6bba3d98efbf818ce5",
+    "providerAvailability": {
+      "webSearch": "available tool; BRAVE_SEARCH_API_KEY unavailable",
+      "imageGeneration": "available tool; OPENAI_API_KEY unavailable",
+      "github": "available tools; GITHUB_TOKEN unavailable and repository allowlist empty",
+      "runtimeBroker": {
+        "status": "scoped authenticated broker configured; verify live before scoring",
+        "origin": "https://8789-csjljmb0n3tvingvteq1csq9s6yvro1s.capysandbox.net",
+        "network": {
+          "allowPublicTraffic": false
+        }
+      },
+      "desktop": "available tools; privileged bootstrap unavailable after no-new-privs hardening without an approved snapshot",
+      "storage": "unconfigured; storage tools visible but provider calls unavailable",
+      "mcp": "available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified"
+    },
+    "unusedPermittedTools": [
+      "apply_patch",
+      "browser_console",
+      "browser_preview",
+      "computer",
+      "deploy",
+      "describe_image",
+      "opulent_automation_manage",
+      "opulent_billing_tag_manage",
+      "opulent_code_scan_manage",
+      "opulent_knowledge_manage",
+      "opulent_mcp",
+      "opulent_mcp_server_manage",
+      "opulent_oncall_manage",
+      "opulent_playbook_manage",
+      "opulent_review_manage",
+      "opulent_schedule_manage",
+      "download_attachment",
+      "fetch_pr_template",
+      "find_file_by_name",
+      "generate_image",
+      "get_knowledge_note",
+      "get_output",
+      "get_workflow_output",
+      "git_add_labels",
+      "git_ci_job_logs",
+      "git_close_pr",
+      "git_comment_on_pr",
+      "git_create_pr",
+      "git_delete_comment",
+      "git_edit_comment",
+      "git_list_repos",
+      "git_pr_checks",
+      "git_remove_labels",
+      "git_stack",
+      "git_take_over_pr",
+      "git_update_pr",
+      "git_update_pr_base",
+      "git_view_pr",
+      "install_personal_plugin",
+      "kill_shell",
+      "kill_workflow",
+      "linear",
+      "list_integrations",
+      "list_knowledge_notes",
+      "list_secrets",
+      "manage_personal_plugin",
+      "mcp_call_tool",
+      "mcp_list_servers",
+      "mcp_list_tools",
+      "mcp_read_resource",
+      "mcp_tool",
+      "message_user",
+      "message_workflow_agent",
+      "noop",
+      "notebook_edit",
+      "notebook_read",
+      "read_build_logs",
+      "recording_start",
+      "recording_stop",
+      "rename_title",
+      "report_blocker",
+      "request_secret",
+      "run_workflow",
+      "save_browser_profile",
+      "scripted_tools",
+      "set_workflow_agent_soft_time_limit",
+      "sidekick",
+      "stop",
+      "suggest_knowledge",
+      "suggest_save_secret",
+      "suggest_skill_pr",
+      "task_get",
+      "task_list",
+      "testing_agent",
+      "tool_search_tool_bm25",
+      "upload_attachment",
+      "view_image",
+      "web_get_contents",
+      "web_search",
+      "write_to_process",
+      "browser"
+    ],
+    "tools": {
+      "annotate_recording": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 0,
+        "finishedFailed": 1,
+        "returnedError": 1
+      },
+      "edit": {
+        "requested": 17,
+        "dispatchStarts": 17,
+        "finishedOK": 17,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "exec": {
+        "requested": 148,
+        "dispatchStarts": 148,
+        "finishedOK": 148,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "grep": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "ipython": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "lx_chunk": {
+        "requested": 20,
+        "dispatchStarts": 20,
+        "finishedOK": 18,
+        "finishedFailed": 2,
+        "returnedError": 2
+      },
+      "lx_documents": {
+        "requested": 7,
+        "dispatchStarts": 7,
+        "finishedOK": 7,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "lx_search": {
+        "requested": 89,
+        "dispatchStarts": 89,
+        "finishedOK": 89,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "MultiEdit": {
+        "requested": 6,
+        "dispatchStarts": 6,
+        "finishedOK": 4,
+        "finishedFailed": 2,
+        "returnedError": 2
+      },
+      "opulent_session_create": {
+        "requested": 3,
+        "dispatchStarts": 3,
+        "finishedOK": 3,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "opulent_session_events": {
+        "requested": 1,
+        "dispatchStarts": 0,
+        "finishedOK": 0,
+        "finishedFailed": 0,
+        "returnedError": 1
+      },
+      "opulent_session_interact": {
+        "requested": 4,
+        "dispatchStarts": 4,
+        "finishedOK": 4,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "opulent_session_search": {
+        "requested": 2,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 1
+      },
+      "read": {
+        "requested": 3,
+        "dispatchStarts": 3,
+        "finishedOK": 3,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "read_subagent": {
+        "requested": 9,
+        "dispatchStarts": 9,
+        "finishedOK": 9,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "skill": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 0,
+        "finishedFailed": 1,
+        "returnedError": 1
+      },
+      "task_create": {
+        "requested": 3,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 2
+      },
+      "task_update": {
+        "requested": 5,
+        "dispatchStarts": 4,
+        "finishedOK": 3,
+        "finishedFailed": 1,
+        "returnedError": 2
+      },
+      "todo_write": {
+        "requested": 2,
+        "dispatchStarts": 2,
+        "finishedOK": 2,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "wait": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "wait_for_operations": {
+        "requested": 1,
+        "dispatchStarts": 1,
+        "finishedOK": 1,
+        "finishedFailed": 0,
+        "returnedError": 0
+      },
+      "write": {
+        "requested": 8,
+        "dispatchStarts": 8,
+        "finishedOK": 8,
+        "finishedFailed": 0,
+        "returnedError": 0
+      }
+    },
+    "sessions": [
+      {
+        "taskId": "task-02",
+        "sessionId": "ae385824-d788-485d-ab3c-5d60a37baa62",
+        "parentSessionId": null,
+        "role": "parent",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-03",
+        "sessionId": "729f5622-ad82-41c8-ace4-e06742fe93ee",
+        "parentSessionId": null,
+        "role": "parent",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-04",
+        "sessionId": "bd737db1-8d60-425a-b39f-c5fff120920f",
+        "parentSessionId": null,
+        "role": "parent",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [
+          {
+            "arguments": "{\"command\": \"list\", \"path\": \"/tmp/broad-legal-workspace\"}"
+          }
+        ],
+        "skillFinishes": [
+          {
+            "ok": false,
+            "invocationOK": false,
+            "error": "path '/tmp/broad-legal-workspace/corpus/SKILL.md' does not exist"
+          }
+        ]
+      },
+      {
+        "taskId": "task-04",
+        "sessionId": "4d3b90af-1eeb-45a6-9a90-4c50022878e8",
+        "parentSessionId": "bd737db1-8d60-425a-b39f-c5fff120920f",
+        "role": "child",
+        "statusAtCollection": "running",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-04",
+        "sessionId": "481f2c8b-9132-4072-a9fe-e5fec5bba49a",
+        "parentSessionId": "bd737db1-8d60-425a-b39f-c5fff120920f",
+        "role": "child",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-04",
+        "sessionId": "3f77394c-2f40-49ee-a781-9966ca11c6d0",
+        "parentSessionId": "481f2c8b-9132-4072-a9fe-e5fec5bba49a",
+        "role": "child",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-05",
+        "sessionId": "0a46a2b2-81c3-4615-b214-7a72bece4466",
+        "parentSessionId": null,
+        "role": "parent",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-06",
+        "sessionId": "83938088-6432-4dc6-bd5e-e43d7b97bf7b",
+        "parentSessionId": null,
+        "role": "parent",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      },
+      {
+        "taskId": "task-06",
+        "sessionId": "f3f84b84-ba0c-4195-bba0-0a8594791bef",
+        "parentSessionId": "83938088-6432-4dc6-bd5e-e43d7b97bf7b",
+        "role": "child",
+        "statusAtCollection": "completed",
+        "systemMessages": 1,
+        "exactV6SupplementPresent": true,
+        "skillRequests": [],
+        "skillFinishes": []
+      }
+    ]
+  },
+  "liveSkillVerification": {
+    "evidenceSha256": "71251d3c23d0db1f0403fa0cc412141fcf4a81bc1b841c274528b39407822157",
+    "summary": {
+      "coreDiscoveryVerifiedLive": true,
+      "coreAssertionsPassed": 15,
+      "mainAssertionsPassed": 17,
+      "mainAssertionsFailed": 2,
+      "realPosixPermissionFailureConfirmed": true,
+      "realSdkPermissionExceptionObserved": false,
+      "liveHandlerPermissionPropagationVerified": false,
+      "allRequestedLiveChecksPassed": false,
+      "allThreeOwnedSandboxesKilledAndConfirmedNotRunning": true,
+      "repositoryPatchTestsHeadAndIndexUnchanged": true,
+      "modelCalls": 0,
+      "externalInferenceOrMcpProviderCalls": 0
+    },
+    "limitations": [
+      "This is an operator-controlled discovery verification using isolated E2B sandboxes, not a scored answerer rerun, skill-adoption result, or benchmark score.",
+      "The 15 core live assertions pass, including exact unpatched reproduction, patched explicit list/search, scoped/default/builtin discovery, six nonempty hash-matched builtin procedure invocations, explicit nonexistent-root failure and local path/name rejection.",
+      "Live handler permission propagation is NOT verified. Both default and explicit-user SDK reads/listings return root-owned mode-000 fixtures, and patched list/search consequently return those fixtures. The two permission assertions remain failed and visible.",
+      "The permission fixtures are real: commands run as UID 1001 receive actual Permission denied errors for cat and ls. Their E2B CommandExitError objects are recorded, but they are not file-SDK errors and are not claimed as resource-handler permission propagation.",
+      "At the pinned base, protectCorpusSandbox forces command/mutation users but does not bind read/list. This probe leaves that code and the active run untouched; explicit SDK user:user alone did not enforce the observed POSIX read/list restrictions.",
+      "Builtin skill invocation returns installed procedure text and verifies its nonempty length and manifest SHA-256; no workflow described by that text is executed.",
+      "Only resource-handler discovery/invocation and these SDK/POSIX boundaries are exercised. No full runtime/broker/MCP/model loop, external provider procedure, or model-driven adoption is tested.",
+      "The template content digest is the actual image-manifest file SHA-256, not a whole-VM or immutable Ubuntu base-image digest; only the base label ubuntu:24.04 is available from that marker.",
+      "Missing builtin installations, transport failures and conflicting/misleading structured error signals remain covered by the existing focused mocked regression tests, not induced by modifying the live installed builtin bundle or provider behavior."
+    ]
+  }
+}
