@@ -141,6 +141,11 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (!Object.hasOwn(value, field)) continue
         const item = value[field]
         if (item == null) continue
+        if (field === 'path' && typeof item === 'string' && ['stdout', 'result'].includes(origin.channel) &&
+            ['ipython', 'scripted_tools', 'exec'].includes(origin.tool)) {
+          visibleMetadata.filesystemPath = item
+          continue
+        }
         if (field === 'path' || field === 'structure') {
           if (!Array.isArray(item) || !item.every(part => typeof part === 'string')) throw new Error('Invalid evidence metadata')
         } else if (typeof item !== 'string') throw new Error('Invalid evidence metadata')
@@ -426,16 +431,40 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         parentVisible(found, metadata, decoded, origin, depth + 1)
         return
       }
-      const lines = value.split(/\r?\n/).filter(line => line.trim())
+      const lines = value.split(/\r?\n/)
       const records = []
-      if (lines.length >= 2 && lines.length <= 1000) {
+      const structuredLines = new Set()
+      const identityHeaders = []
+      const recordCount = lines.filter(line => line.trim()).length
+      if (recordCount >= 2 && recordCount <= 1000) {
         for (const [index, line] of lines.entries()) {
-          try { records.push({ value: JSON.parse(line), index }) } catch {}
+          let record
+          try { record = JSON.parse(line) } catch {
+            if (origin.channel === 'result' || origin.channel === 'stdout') record = pythonLiteral(line)
+          }
+          if (record !== undefined) {
+            records.push({ value: record, index })
+            if (record !== null && typeof record === 'object' || typeof record === 'string') structuredLines.add(index)
+          }
+          if (['stdout', 'result'].includes(origin.channel) && ['ipython', 'scripted_tools', 'exec'].includes(origin.tool)) {
+            const caption = line.match(/^([A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)(?: (\{.*\}))?$/)
+            const id = record?.chunk_id ?? record?.id ?? (caption && (!caption[2] || pythonLiteral(caption[2]) !== undefined) ? caption[1] : null)
+            if (typeof id === 'string' && manifest.has(id)) identityHeaders.push({ id, index })
+          }
         }
       }
       records.forEach(({ value: record, index }) => parentVisible(found, metadata, record,
         { ...origin, visibleRecord: index }, depth + 1))
-      visibleFileText(found, value, origin)
+      for (const [index, header] of identityHeaders.entries()) {
+        const block = lines.slice(header.index + 1, identityHeaders[index + 1]?.index ?? lines.length).join('\n')
+          .split(/\n(?:={10,}|-{10,})(?:\n|$)/, 1)[0]
+        const source = sourceFor(header.id)
+        const full = block === source.text || block.startsWith(`${source.text}\n`)
+        const printed = full ? source.text : block.replace(/\n$/, '')
+        if (printed.trim() && source.text.startsWith(printed)) attach(found, header.id, printed,
+          { ...origin, visibleRecord: header.index, format: 'printed-source-identity' }, full ? 'full' : 'excerpt', 0)
+      }
+      visibleFileText(found, structuredLines.size ? lines.filter((_line, index) => !structuredLines.has(index)).join('\n') : value, origin)
       return
     }
     if (Array.isArray(value)) {

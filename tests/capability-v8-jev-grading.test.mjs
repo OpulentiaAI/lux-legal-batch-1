@@ -47,16 +47,22 @@ test('native v8 grading accepts bound completed output and preserves resource-fr
     assert.match(request.questions.quality.instructions, /Do not use turn count, token use, latency/)
     return { ok: true, status: 200, json: async () => ({ model: 'typesafe-ai/jev', answers: {
       quality: { type: 'score', score: 2.4 }, accuracy: { type: 'score', score: 2.7 },
+      completeness: { type: 'score', score: 1.8 },
       claimsPresent: { type: 'boolean', probability: 1 }, satisfied: { type: 'boolean', probability: 1 },
       sourceCompliance: { type: 'boolean', probability: 0 }, unresolved: { type: 'boolean', probability: 0 },
     } }) }
   }
-  const graded = await gradeNativeRun({ input, output, fetchImpl })
+  const graded = await gradeNativeRun({ input, output, fetchImpl, metricsProfile: 'completed-work-v6' })
   assert.equal(calls, bundle.rubric.criteria.length)
-  assert.ok(graded.rows.filter(row => row.mode === 'broad').every(row => row.status === 'graded' && row.scores.quality === 2.4 / 3 && row.scores.accuracy === 2.7 / 3))
+  assert.ok(graded.rows.filter(row => row.mode === 'broad').every(row => row.status === 'graded' && row.scores.quality === 2.4 / 3 && row.scores.accuracy === 2.7 / 3 && row.scores.completeness === 1.8 / 3))
   assert.ok(graded.rows.filter(row => row.mode === 'harvey').every(row => row.status === 'answererFailure'))
-  await gradeNativeRun({ input, output, fetchImpl })
+  await gradeNativeRun({ input, output, fetchImpl, metricsProfile: 'completed-work-v6' })
   assert.equal(calls, bundle.rubric.criteria.length)
+  await assert.rejects(gradeNativeRun({ input, output, fetchImpl, metricsProfile: 'semantic-core-v5' }), /Jev resume binding differs/)
+  const legacy = await gradeNativeRun({ input, output: join(root, 'legacy-default-grades'), fetchImpl })
+  assert.ok(legacy.rows.filter(row => row.mode === 'broad').every(row => row.status === 'graded' &&
+    row.scores.quality === 2.4 / 3 && row.scores.accuracy === 2.7 / 3 && row.scores.completeness === undefined))
+  assert.equal(legacy.summary.summaries.broad.completeness, undefined)
 })
 
 test('native v8 grading rejects missing, legacy or mismatched retrieval provenance', async t => {

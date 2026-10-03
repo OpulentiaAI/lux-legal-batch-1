@@ -25,9 +25,21 @@ export const JEV_POLICY = Object.freeze({ version: 'native-mimo-jev-criterion-v5
   trimming: 'independently remove one highest and one lowest task score per system and metric',
   providerVersion: 'not returned by provider', timeoutMs: 120000, maxAttempts: 2 })
 
+export const COMPLETED_WORK_POLICY = Object.freeze({ ...JEV_POLICY, version: 'native-mimo-jev-completed-work-v6',
+  completeness: 'substantive coverage of every mandatory criterion component, scored separately from correctness',
+  completion: 'final saved-deliverable completion; earlier failed attempts are audit history, not reliability scores',
+  performance: 'successful answerer-attempt latency and resource usage reported separately from semantic scores' })
+
+function gradingPolicy(profile) {
+  if (profile === 'semantic-core-v5') return JEV_POLICY
+  if (profile === 'completed-work-v6') return COMPLETED_WORK_POLICY
+  throw new Error('Unknown Jev metrics profile')
+}
+
 const sourceInventory = sources => sources.map(({ id, sha256, text }) => ({ id, sha256, chars: text.length }))
 
-export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSources) {
+export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSources, { metricsProfile = 'semantic-core-v5' } = {}) {
+  const policy = gradingPolicy(metricsProfile)
   const { data } = prepareJudgeRequest(bundle, outputDir, criterionId, visibleSources)
   const mentionedIds = new Set(data.outputs.flatMap(output => output.content?.match(/\b[A-Za-z0-9_-]+:[A-Za-z0-9_:-]+\b/g) ?? []).map(id => id.toLowerCase()))
   const referenceIds = new Set(data.criterion.sourceRefs.map(ref => ref.id.toLowerCase()))
@@ -60,13 +72,18 @@ export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSourc
     accuracy: { type: 'score', instructions: `${instructions} Judge factual and legal accuracy of the relevant claims actually asserted. Use full authoritative reference text and hypothetical public facts for truth. Do not confuse an omission with a false rule, and do not treat hidden references as proof of grounding or consultation. Scope law to company form, jurisdiction and corpus date.`,
       criteria: ['The asserted relevant rules or facts are materially false.', 'The asserted relevant claims contain important inaccuracies or unjustified certainty.',
         'The asserted relevant claims are mostly accurate and qualified with a limited defect.', 'The asserted relevant claims are accurate and appropriately qualified against the supplied authority and facts.'] },
+    ...(policy === COMPLETED_WORK_POLICY ? { completeness: { type: 'score',
+      instructions: `${instructions} Measure how much of every mandatory component in this criterion is substantively addressed, separately from correctness. Missing components reduce completeness. An addressed but incorrect rule primarily reduces accuracy and quality. Empty topic mentions and promises to research or write later are not substantive coverage. Do not measure first-attempt reliability.`,
+      criteria: ['No required component is substantively addressed.', 'A minority of the required components are substantively addressed.',
+        'Most required components are substantively addressed, with a coverage gap.', 'Every mandatory component is substantively addressed; extra prose is unnecessary.'] } } : {}),
     claimsPresent: { type: 'boolean', instructions: `${instructions} Is there any substantive assertion relevant to this criterion in the scoped outputs? An absent or wholly unrelated answer is false.` },
     sourceCompliance: { type: 'boolean', instructions: `${instructions} Are this criterion's explicit source or consultation requirements met by actual replay-verified visible bodies and the scoped output's citations? A hidden reference never proves consultation. An equivalent supporting source is acceptable. Other source identities without bodies are audit metadata, not legal evidence or proof of absence from the entire corpus. If this criterion does not require legal consultation or citation, answer true.` },
     unresolved: { type: 'boolean', instructions: `${instructions} Is the supplied evidence insufficient or contradictory enough that you cannot assess this criterion? Correctly flagging legal uncertainty when the criterion asks for it is assessable, not automatically unresolved.` },
   } }
 }
 
-export function normalizeJev(raw) {
+export function normalizeJev(raw, { metricsProfile = 'semantic-core-v5' } = {}) {
+  const policy = gradingPolicy(metricsProfile)
   if (raw?.model !== JEV_POLICY.model || !raw.answers) throw new Error('Unexpected Jev model or response')
   const probability = name => {
     const answer = raw.answers[name]
@@ -81,12 +98,14 @@ export function normalizeJev(raw) {
   const claimsPresent = probability('claimsPresent') >= 0.5
   const accuracy = score('accuracy')
   return { quality: score('quality'), accuracy: claimsPresent ? accuracy : null, claimsPresent,
+    ...(policy === COMPLETED_WORK_POLICY ? { completeness: score('completeness') } : {}),
     passProbability: probability('satisfied'), sourceComplianceProbability: probability('sourceCompliance'),
     unresolved: probability('unresolved') >= 0.5,
     qualityConfidence: raw.answers.quality.confidence ?? null, accuracyConfidence: raw.answers.accuracy.confidence ?? null }
 }
 
-export function aggregateJev(rows) {
+export function aggregateJev(rows, { metricsProfile = 'semantic-core-v5' } = {}) {
+  const policy = gradingPolicy(metricsProfile)
   const average = values => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
   const tasks = [...new Set(rows.map(row => row.taskId))].sort()
   const paired = tasks.map(taskId => ({ taskId, ...Object.fromEntries(['harvey', 'broad'].map(mode => {
@@ -94,11 +113,13 @@ export function aggregateJev(rows) {
     const graded = criteria.filter(row => row.status === 'graded' && !row.scores.unresolved)
     const accurate = graded.filter(row => row.scores.accuracy !== null)
     return [mode, { quality: average(graded.map(row => row.scores.quality)), accuracy: average(accurate.map(row => row.scores.accuracy)),
+      ...(policy === COMPLETED_WORK_POLICY ? { completeness: average(graded.map(row => row.scores.completeness)) } : {}),
       criterionPass: average(graded.map(row => Number(row.scores.passProbability >= 0.5))), criteria: criteria.length, resolved: graded.length,
       accuracyCoverage: accurate.length, unresolved: criteria.filter(row => row.scores?.unresolved).length,
       failures: criteria.filter(row => row.status !== 'graded').length }]
   })) }))
-  const summaries = Object.fromEntries(['harvey', 'broad'].map(mode => [mode, Object.fromEntries(['quality', 'accuracy', 'criterionPass'].map(metric => {
+  const metrics = ['quality', 'accuracy', ...(policy === COMPLETED_WORK_POLICY ? ['completeness'] : []), 'criterionPass']
+  const summaries = Object.fromEntries(['harvey', 'broad'].map(mode => [mode, Object.fromEntries(metrics.map(metric => {
     const values = paired.filter(row => Number.isFinite(row[mode][metric])).map(row => ({ taskId: row.taskId, score: row[mode][metric] }))
       .sort((a, b) => a.score - b.score || a.taskId.localeCompare(b.taskId))
     const trimmed = values.length >= 3 ? values.slice(1, -1) : []
@@ -114,7 +135,8 @@ function save(path, value) {
   renameSync(temporary, path)
 }
 
-export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurrency = 4 }) {
+export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurrency = 4, metricsProfile = 'semantic-core-v5' }) {
+  const policy = gradingPolicy(metricsProfile)
   if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new Error('Invalid grading concurrency')
   input = realpathSync(input)
   output = resolve(output)
@@ -139,7 +161,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
   }
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
-  const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy: JEV_POLICY, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
+  const binding = { inputSha256: hash(bytes), suiteSha256: hash(frozen), policy, implementationSha256: hash(readFileSync(fileURLToPath(import.meta.url))),
     evidenceImplementations: Object.fromEntries(['eval/complex-v1/grade-run.mjs', 'eval/grading-evidence.mjs', 'runtime/security.mjs'].map(file => [file, hash(readFileSync(join(workspace, file)))])) }
   let result
   if (existsSync(output)) {
@@ -147,7 +169,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     if (JSON.stringify(result.binding) !== JSON.stringify(binding)) throw new Error('Jev resume binding differs')
   } else {
     mkdirSync(output, { mode: 0o700 })
-    result = { binding, rows: [], summary: aggregateJev([]) }
+    result = { binding, rows: [], summary: aggregateJev([], { metricsProfile }) }
     save(join(output, 'grades.json'), result)
   }
   const jobs = []
@@ -176,7 +198,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
         save(inventoryPath, inventory)
       }
       for (const criterion of packet.bundle.rubric.criteria) jobs.push({ identity: `${row.taskId}:${mode}:${criterion.id}`, taskId: row.taskId, mode, criterionId: criterion.id,
-        request: redact(prepareJevCriterion(packet.bundle, directory, criterion.id, visibleSources)) })
+          request: redact(prepareJevCriterion(packet.bundle, directory, criterion.id, visibleSources, { metricsProfile })) })
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }
   if (new Set(result.rows.map(row => row.identity)).size !== result.rows.length || result.rows.some(row => !jobs.some(job => job.identity === row.identity &&
@@ -194,7 +216,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
           const bytes = readFileSync(join(output, `${file}-attempt-${cached.responseAttempt}.json`))
           const capture = JSON.parse(bytes)
           if (hash(bytes) !== cached.responseSha256 || capture.requestSha256 !== cached.requestSha256 || capture.httpStatus !== 200 ||
-            JSON.stringify(normalizeJev(capture.response)) !== JSON.stringify(cached.scores) ||
+            JSON.stringify(normalizeJev(capture.response, { metricsProfile })) !== JSON.stringify(cached.scores) ||
             JSON.stringify(capture.response.usage) !== JSON.stringify(cached.judgeUsage) ||
             JSON.stringify(capture.response.providerMetadata) !== JSON.stringify(cached.judgeProviderMetadata)) throw new Error('Cached Jev response integrity mismatch')
         }
@@ -226,7 +248,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
           try {
             if (capture.requestSha256 !== requestSha256) throw new Error('Jev response binding differs')
             if (capture.error) throw new Error(capture.error)
-            scores = normalizeJev(capture.response)
+            scores = normalizeJev(capture.response, { metricsProfile })
             response = capture.response
             responseAttempt = attempt + 1
             responseSha256 = hash(readFileSync(responsePath))
@@ -237,7 +259,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
           ...(scores ? { scores, responseAttempt, responseSha256, judgeUsage: response.usage, judgeProviderMetadata: response.providerMetadata } : { reason: failure }) })
       }
       result.rows.sort((a, b) => a.identity.localeCompare(b.identity))
-      result.summary = aggregateJev(result.rows)
+      result.summary = aggregateJev(result.rows, { metricsProfile })
       save(join(output, 'grades.json'), result)
     }
   }))
@@ -245,7 +267,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  if (process.argv.length !== 4) throw new Error('Usage: node jev-grade-run.mjs CHECKPOINT OUTPUT_DIRECTORY')
-  const result = await gradeNativeRun({ input: process.argv[2], output: process.argv[3] })
+  if (![4, 5].includes(process.argv.length)) throw new Error('Usage: node jev-grade-run.mjs CHECKPOINT OUTPUT_DIRECTORY [METRICS_PROFILE]')
+  const result = await gradeNativeRun({ input: process.argv[2], output: process.argv[3], metricsProfile: process.argv[4] ?? 'semantic-core-v5' })
   console.log(JSON.stringify({ rows: result.rows.length, summary: result.summary }))
 }
