@@ -108,9 +108,10 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
       const conversation = store.get('conversations', row.id)
       const messages = conversation?.messages ?? []
       const modelEvents = events.filter(event => event.type === 'model_usage')
-      const toolEvents = events.filter(event => event.type === 'tool_finished')
+      const toolEvents = events.filter(event => ['tool_finished', 'tool_rejected'].includes(event.type))
+      const toolEventsById = new Map(toolEvents.filter(event => event.data?.tool_call_id).map(event => [event.data.tool_call_id, event]))
       let turn = 0, tool = 0
-      return { sessionId: row.id, parentSessionId: row.parent_session_id, visibility: row.id === rootId ? 'answerer' : 'child-only',
+      return { sessionId: row.id, parentSessionId: row.parent_session_id, sandboxId: row.sandbox_id ?? null, visibility: row.id === rootId ? 'answerer' : 'child-only',
         createdAt: row.created_at ?? null, updatedAt: row.updated_at ?? null, status: row.status, error: row.error ?? null,
         output: row.id === rootId ? null : row.output ?? null, deliveredMessageIds: conversation?.delivered ?? [],
         pendingToolCallId: conversation?.pending_tool_call_id ?? null,
@@ -120,8 +121,13 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
           if (message.role === 'tool') {
             const call = messages.slice(0, index).findLast(entry => entry.role === 'assistant' &&
               entry.tool_calls?.some(item => item.id === message.tool_call_id))?.tool_calls?.find(item => item.id === message.tool_call_id)
-            const match = toolEvents.findIndex((event, i) => i >= tool && event.data?.name === call?.function?.name)
-            if (match >= 0) { anchor = toolEvents[match]; tool = match + 1 }
+            anchor = toolEventsById.get(message.tool_call_id) ?? null
+            if (!anchor) {
+              let failed = false
+              try { failed = !!JSON.parse(message.content)?.error } catch {}
+              const match = failed ? -1 : toolEvents.findIndex((event, i) => i >= tool && !event.data?.tool_call_id && event.data?.name === call?.function?.name)
+              if (match >= 0) { anchor = toolEvents[match]; tool = match + 1 }
+            }
           }
           return { index, observedAt: anchor?.created_at ?? null,
             timestampSource: anchor ? `event:${anchor.type}` : 'not-recorded', ...message }

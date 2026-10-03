@@ -181,7 +181,8 @@ export function createRuntime(options = {}) {
     ctx.tools = tools;
     ctx.availableToolDefinitions = () => Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)));
     ctx.scriptCatalog = Object.values(definitions).filter(tool => tools[tool.name] && (!allowed || allowed.has(tool.name)) && !nestedBlocked.has(tool.name));
-    ctx.invoke = async (requestedName, args = {}) => {
+    ctx.invoke = async (requestedName, args = {}, metadata = {}) => {
+      const correlation = typeof metadata.toolCallId === 'string' && metadata.toolCallId ? { tool_call_id: metadata.toolCallId } : {};
       const name = catalog.aliases[requestedName] ?? requestedName;
       if (requestedName !== name && catalog.tools[name]) {
         const normalize = value => {
@@ -201,15 +202,15 @@ export function createRuntime(options = {}) {
       const overflowRead = name === 'read' ? normalizeOverflowRead({ ctx, store, args }) : null;
       if (overflowRead) args = overflowRead.args;
       if (sandboxNames.has(name)) await ensureSandbox(ctx);
-      event(id, 'tool_started', { name });
+      event(id, 'tool_started', { name, ...correlation });
       try {
         const output = await tools[name](args);
         const result = scrub(id, overflowRead ? { ...output, overflow_paging: overflowRead.paging } : output);
         const actionFailed = (name === 'computer' || name === 'browser') && (output?.ok === false || !!output?.failure);
-        event(id, 'tool_finished', actionFailed ? { name, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ok: true });
+        event(id, 'tool_finished', actionFailed ? { name, ...correlation, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ...correlation, ok: true });
         return result;
       } catch (error) {
-        event(id, 'tool_finished', { name, invocation_ok: false, ok: false, error: safeError(error) });
+        event(id, 'tool_finished', { name, ...correlation, invocation_ok: false, ok: false, error: safeError(error) });
         throw new Error(scrub(id, safeError(error)));
       }
     };
@@ -424,11 +425,14 @@ export function createRuntime(options = {}) {
           try {
             if (initial && !initial.has(call.function.name)) throw new Error(`Tool is not visible for direct model calls: ${call.function.name}`);
             args = JSON.parse(call.function.arguments);
-            result = await ctx.invoke(call.function.name, args);
+            result = await ctx.invoke(call.function.name, args, { toolCallId: call.id });
           }
           catch (error) {
             if (ctx.signal.aborted) throw error;
             result = { error: safeError(error) };
+            if (typeof call.id === 'string' && !store.list('events').some(row => row.session_id === id && row.data?.tool_call_id === call.id)) {
+              event(id, 'tool_rejected', { name: call.function.name, tool_call_id: call.id, ok: false, error: safeError(error) });
+            }
           }
           const requestedName = catalog.aliases[call.function.name] ?? call.function.name;
           const imageName = requestedName === 'opulent_mcp' && args?.command === 'call_tool'
