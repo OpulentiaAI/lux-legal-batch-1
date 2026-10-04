@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { loadRelease, requireLiveAuthorization, verifyCommittedRelease } from './contract.mjs'
 import { atomic, digest, json, proof } from './io.mjs'
 import { freezeComparison, usedTaskHistory, verifyComparisonFreeze } from './tasks.mjs'
+import { LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
 
 export function seedCheckpoint(provenance, previous) {
   if (previous) {
@@ -82,6 +83,58 @@ export async function runSequential({ checkpoint, arm, initialSnapshot = null, e
 }
 
 export async function runExperiment({ checkpoint, executeOpulent2, executeHarvey, initialSnapshot, save, assertUnchanged, signal }) {
+  const release = checkpoint.provenance.release
+  if (release.experiment === LUNA_EXPERIMENT && release.stage === 'comparison') {
+    assert(typeof executeHarvey === 'function', 'Fresh Harvey execution is required')
+    let predecessor = initialSnapshot
+    for (const row of checkpoint.rows) {
+      const completed = row.opulent2.status === 'completed' && row.harvey.status === 'completed'
+      if (completed) {
+        for (const arm of ['opulent2', 'harvey']) {
+          assert.equal(row[arm].completedSha256, digest(row[arm].completed))
+          assert.equal(row[arm].completed.validation.executionValid, true)
+          assert.equal(row[arm].completed.validation.cleanup.allOwnedAbsent, true)
+        }
+        assert.equal(row.opulent2.completed.inputSnapshotSha256, predecessor?.sha256 ?? null)
+        assert.equal(row.opulent2.completed.snapshot.sha256, row.opulent2.completed.handoff.contentSha256)
+        if (!row.pairGrade) {
+          checkpoint.status = 'awaiting-independent-pair-grading'
+          save(checkpoint)
+          return checkpoint
+        }
+        const grade = json(proof(row.pairGrade.path, row.pairGrade.sha256).path)
+        assert.equal(grade.version, 'opulent2-fixed-pair-grade-v1')
+        assert.equal(grade.issuer, 'parent')
+        assert.equal(grade.taskId, row.taskId)
+        assert.equal(grade.opulent2CompletedSha256, row.opulent2.completedSha256)
+        assert.equal(grade.harveyCompletedSha256, row.harvey.completedSha256)
+        assert.equal(grade.rubricSha256, release.tasks.find(task => task.id === row.taskId).rubricSha256)
+        assert.equal(grade.fullGradingCompleted, true)
+        assert(typeof grade.reference === 'string' && grade.reference.trim())
+        assert(Array.isArray(grade.artifacts) && grade.artifacts.length)
+        for (const artifact of grade.artifacts) proof(artifact.path, artifact.sha256)
+        predecessor = row.opulent2.completed.snapshot
+        continue
+      }
+      const pair = { ...checkpoint, rows: [row] }
+      const persist = value => {
+        checkpoint.status = value.status
+        save(checkpoint)
+      }
+      const results = await Promise.allSettled([
+        runSequential({ checkpoint: pair, arm: 'opulent2', initialSnapshot: predecessor, execute: executeOpulent2, save: persist, assertUnchanged, signal }),
+        runSequential({ checkpoint: pair, arm: 'harvey', execute: executeHarvey, save: persist, assertUnchanged, signal }),
+      ])
+      const failures = results.filter(result => result.status === 'rejected')
+      checkpoint.status = failures.length ? 'execution-failed' : 'awaiting-independent-pair-grading'
+      save(checkpoint)
+      if (failures.length) throw new AggregateError(failures.map(result => result.reason), 'Unfinished pair remains; clean completed counterpart is retained')
+      return checkpoint
+    }
+    checkpoint.status = 'execution-completed'
+    save(checkpoint)
+    return checkpoint
+  }
   const chains = [runSequential({ checkpoint, arm: 'opulent2', initialSnapshot, execute: executeOpulent2, save, assertUnchanged, signal })]
   if (checkpoint.provenance.release.stage === 'comparison') {
     assert(typeof executeHarvey === 'function', 'Fresh Harvey execution is required, never historical task02-06 output')

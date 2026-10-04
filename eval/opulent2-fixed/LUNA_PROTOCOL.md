@@ -1,0 +1,27 @@
+# Separate GPT-6 Luna runaway-guard experiment
+
+This experiment is `gateway-luna-runaway-v1`. It does not replace or resume the historical RunAnywhere MiMo closed or expanded baselines. Both answerers use `openai/gpt-6-luna` through AI Gateway with `reasoning_effort=max`, 32,768 completion tokens and a 600-second request timeout. There is no provider/model substitution or invisible HTTP retry. The unchanged native protocol remains in PROTOCOL.md.
+
+## Disclosed safeguards and compaction
+
+Each fresh task execution attempt and harness arm has one shared ledger capped at 250 provider requests and 2,000,000 full provider-reported input tokens. Opulent2 root, descendant and compaction requests share it. Repeated prompts and cached input count in full; completion tokens remain separately reported. Counters are not reset by compaction, a child spawn or a durable wait. Fresh recovery attempts have separate ledgers and their retained consumption is reported in the failed-attempt audit, not hidden inside completed-run metrics.
+
+Luna's advertised 1,050,000-token context includes input and reserved output; it is not a 2-million-token single request. Opulent2 keeps its existing bounded compaction, coherent recent groups, image observation policy and verified file-backed fallback. Harvey keeps its pinned upstream loop without adding compaction. A source-bound identical neutral budget disclosure is appended once to both system assemblies and independently checked against the prepared and transmitted bytes. No Opulent2 behavioral appendix is added to Harvey.
+
+Before transmission, reservations atomically protect the shared counters. Text admission uses serialized UTF-8 bytes plus explicit conservative framing, not a claimed exact Luna tokenizer. Image or unrecognized content reserves the complete provider input window because its tokenization is not verified. Reservations can stop a request before the measured subtotal reaches two million. Verified successful usage replaces reservations; missing/invalid usage, failed transport or a boundary violation blocks further inference and preserves uncertainty. Unknown consumption is never zero, and safeguards do not create semantic grading or turn-count penalties.
+
+Every admitted request has a ticket binding phase/session, completion reservation, actual response-body ID and usage. Captured wire rows bind the same ticket and exact frozen budgets. Clean acceptance independently joins every ticket to exactly one actual HTTP exchange, verifies totals and context bounds, and rejects pending, unknown or violated consumption. Root/child/compaction totals are reported separately as well as jointly.
+
+## Coverage, proving and clean pairs
+
+First run the separately authorized `coverage` stage on `luna-tool-coverage-01`. It is an ungraded infrastructure fixture, not a legal holdout. Verify all approved tools from model-generated calls and actual returned outcomes on owned VMs; intentional stop/cancel effects and genuine no-matches are distinct from fatal failures. Preserve a coverage matrix and missing observations honestly. Coverage's isolated memory/Drive chain must never seed proving or comparisons.
+
+Then run the historical proving public packets task-02 followed by task-05 in a new empty chain. Only actual acknowledged model-written state from the clean predecessor is carried forward. Parent substantive acceptance of both actual work products, meaningful delegation and observed tools is required before selecting or freezing five unused legal tasks. Existing freshness checks, frozen hidden criteria and independent Jev/Capy grading stay intact.
+
+Compare one fresh task pair at a time. Both arms for the selected task may execute concurrently, but no later task starts until the parent independently grades that clean pair and records a hash-bound grading receipt. Retain a clean completed arm while recovering its unfinished counterpart. The surviving successful memory/Drive chain advances only through accepted Opulent2 outputs. Hidden rubrics, grades, reviewer feedback, coverage outputs and host memory never enter answerer input.
+
+The >=9% improvement target is an acceptance goal, not permission to fabricate gains, weaken grading or selectively discard losses. Report paired quality, accuracy, completeness, completion and completed-run performance on the existing 0–1 grading scale; preserve failed-attempt costs and unknown usage separately. Investigate losses from the actual trajectory and artifacts before changing prompts, wiring, environment or capabilities. Any changed source or policy requires a new release/run identity rather than resuming frozen work under different conditions.
+
+## Provenance and authorization
+
+Source bindings include the experiment policy, common budget ledger/verification, both transports, exact reference registry/addendum and this protocol. The release binds the approved image/template, actual Gateway catalogue, corpus/retrieval, tasks/state chain, model/budgets, tool allowlist, evidence and grading policy. A distinct parent authorization binds the release file bytes. Historical files remain immutable, resume rejects changed policy, and all factory-owned VMs require authenticated typed absence proofs before recovery or progression. Registered adapters and offline tests do not establish live providers, native coverage, legal completion or improvement.

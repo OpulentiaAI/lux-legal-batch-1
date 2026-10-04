@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { basename } from 'node:path'
 import { digest, sha } from './io.mjs'
 import { aggregateNative, readCapture, reconcileNative, sanitize, wireMeasurements } from './native.mjs'
-import { OPULENT2_REFERENCE_UPDATE } from '../../runtime/instructions/opulent2.mjs'
+import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX } from '../../runtime/instructions/opulent2.mjs'
+import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
 
 const same = (left, right) => digest(left) === digest(right)
 const nonempty = value => value !== undefined && value !== null && (typeof value !== 'string' || !!value.trim())
@@ -42,6 +43,17 @@ export function validatePreparedReceipt(release, receipt) {
   assert(Number.isSafeInteger(receipt.depth) && receipt.depth >= 0, 'Actual nonnegative session depth required')
   assert(['answerer', 'context_compaction'].includes(receipt.phase))
   validateGrants(release, receipt.grants)
+  if (release.experiment === LUNA_EXPERIMENT) {
+    assert.equal(release.prompts.budgetDisclosure, LUNA_BUDGET_DISCLOSURE, 'Frozen budget disclosure differs from the shared source')
+    assert.equal(release.prompts.budgetDisclosureSha256, sha(LUNA_BUDGET_DISCLOSURE))
+    assert(typeof release.prompts.skillsRegistry === 'string' && release.prompts.skillsRegistry, 'Luna requires the frozen skills registry')
+    if (receipt.phase === 'answerer') {
+      const systems = receipt.messages.filter(message => message.role === 'system')
+      assert.equal(systems.length, 1)
+      assert.equal(systems[0].content.split(LUNA_BUDGET_DISCLOSURE).length, 2, 'Exact shared budget disclosure must be delivered once to every answerer')
+      assert.equal(systems[0].content.split(OPULENT2_TASK_APPENDIX).length, 2, 'Exact Opulent2 appendix must be delivered once in the answerer system')
+    }
+  }
   if (receipt.phase === 'context_compaction') {
     assert.equal(receipt.tools.length, 0)
     assert.equal(digest(receipt.messages.filter(message => message.role === 'system')), release.prompts.summarySystemMessagesSha256)
@@ -63,6 +75,20 @@ export function validatePreparedReceipt(release, receipt) {
 }
 
 export function verifyPreparedTransmissions(release, snapshot, transmissions) {
+  const luna = release.experiment === LUNA_EXPERIMENT
+  if (luna) {
+    assert.deepEqual(release.budgets, LUNA_BUDGETS)
+    assert.equal(release.model, LUNA_MODEL)
+    assert.equal(release.providerModel, LUNA_MODEL)
+    assert.equal(release.inferenceProvider, 'gateway')
+    assert.equal(release.endpoint, LUNA_ENDPOINT)
+    assert.equal(release.reasoningEffort, 'max')
+    assert(transmissions.length <= release.budgets.maxSteps, 'Shared model-request limit includes root, descendants and compaction')
+    const known = transmissions.filter(item => !item.row.usageUnknown)
+    assert(known.every(item => Number.isSafeInteger(item.row.usage?.prompt_tokens) && item.row.usage.prompt_tokens >= 0 &&
+      Number.isSafeInteger(item.row.usage.completion_tokens) && item.row.usage.completion_tokens >= 0), 'Known consumption requires actual provider token usage')
+    assert(known.reduce((total, item) => total + item.row.usage.prompt_tokens, 0) <= release.budgets.maxInputTokens, 'Cumulative actual input includes repeated and cached context')
+  }
   const receipts = snapshot.opulent2_model_assemblies
   assert(receipts.length, 'Actual prepared model receipts are required')
   assert.equal(new Set(receipts.map(receipt => receipt.request_record_id)).size, receipts.length, 'Duplicate prepared model receipt')
@@ -77,6 +103,26 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
     assert(actual.length, 'Prepared model request has no native wire capture')
     const saved = sanitized({ messages: receipt.messages, tools: receipt.tools })
     for (const item of actual) {
+      if (luna) {
+        const completionTokens = receipt.phase === 'context_compaction' ? release.budgets.summaryMaxTokens : release.budgets.maxCompletionTokens
+        assert.equal(item.row.experiment, LUNA_EXPERIMENT)
+        assert.deepEqual(item.row.budgetConfig, release.budgets, 'Captured configured budgets differ from the frozen experiment')
+        assert(typeof item.row.budgetTicketId === 'string' && item.row.budgetTicketId, 'Actual model-budget reservation must be recorded')
+        assert.equal(item.row.endpoint, `${LUNA_ENDPOINT}/chat/completions`, 'Luna request used a separate, unexpected provider')
+        assert.equal(item.row.model, LUNA_MODEL)
+        assert.equal(item.request.model, LUNA_MODEL)
+        assert.equal(item.request.reasoning_effort, 'max', 'Maximum reasoning must be transmitted')
+        assert.equal(item.request.providerOptions, undefined, 'Cannot inject provider routing preferences')
+        assert(!item.request.stream, 'Complete non-streaming provider evidence is required')
+        assert.equal(item.request.max_tokens, undefined, 'Luna uses the completion-token wire field')
+        assert.equal(item.request.max_completion_tokens, completionTokens, 'Exact answerer or compaction completion budget must be transmitted')
+        assert.equal(item.row.maxTokens, completionTokens)
+        if (!item.row.usageUnknown) {
+          assert.equal(item.response?.model, LUNA_MODEL, 'Returned model identity differs from the pinned request')
+          assert.equal(item.row.responseModel, LUNA_MODEL)
+          assert(item.row.usage.prompt_tokens + item.row.usage.completion_tokens <= release.budgets.maxContextTokens, 'Actual per-request input plus output exceeds the context window')
+        }
+      }
       const raw = { messages: receipt.messages, ...(item.request.tools === undefined && !receipt.tools.length ? {} : { tools: receipt.tools }) }
       assert.deepEqual(item.row.measurements, wireMeasurements(raw), 'Original native measurements differ from raw prepared assembly')
       assert.equal(digest(item.request.messages), digest(saved.messages), 'Saved native messages differ from exact sanitized prepared assembly')
@@ -96,7 +142,11 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
   })
 }
 
-export function validateInitialAssembly({ receipt, session, configuredPrompt, childInstructions = '', memoryIndexes, expectedUser, skillsRegistry }) {
+export function validateInitialAssembly({ receipt, session, configuredPrompt, childInstructions = '', memoryIndexes, expectedUser, skillsRegistry, budgetDisclosure }) {
+  if (budgetDisclosure !== undefined) {
+    assert.equal(budgetDisclosure, LUNA_BUDGET_DISCLOSURE)
+    assert.equal(configuredPrompt.split(budgetDisclosure).length, 2, 'Configured prompt must contain the shared budget disclosure once')
+  }
   if (skillsRegistry !== undefined) {
     assert.equal(configuredPrompt.split(skillsRegistry).length, 2, 'Configured prompt must contain the frozen skill registry once')
     assert.equal((configuredPrompt.match(/^<available_skills>$/gm) ?? []).length, 1, 'Unexpected additional configured skill registry')
@@ -109,7 +159,7 @@ export function validateInitialAssembly({ receipt, session, configuredPrompt, ch
   return expected
 }
 
-function modelDriven(record, snapshot, transmissions) {
+export function modelDriven(record, snapshot, transmissions) {
   const calls = transmissions.filter(item => item.row.phase === 'answerer' && item.row.sessionId === record.session_id)
     .flatMap(item => item.response?.choices?.[0]?.message?.tool_calls ?? [])
   if (record.tool_call_id) return calls.some(call => call.id === record.tool_call_id && call.function?.name === record.name)
@@ -127,7 +177,7 @@ function modelDriven(record, snapshot, transmissions) {
   })
 }
 
-function observed(record, transmissions) {
+export function observed(record, transmissions) {
   return transmissions.some(item => !item.row.usageUnknown && item.row.phase === 'answerer' && item.row.sessionId === record.session_id &&
     transmittedMessages(item).some(message => message.role === 'tool' && contains(message.content, record.returned_result)))
 }
@@ -140,7 +190,7 @@ function imageHashes(value, hashes = new Set()) {
   return hashes
 }
 
-function observedImages(record, transmissions) {
+export function observedImages(record, transmissions) {
   const actual = imageHashes(record.complete_result)
   return transmissions.flatMap(item => !item.row.usageUnknown && item.row.phase === 'answerer' && item.row.sessionId === record.session_id
     ? transmittedMessages(item).flatMap(message => Array.isArray(message.content) ? message.content : []) : [])
@@ -263,7 +313,7 @@ export function verifyTaskExecution({ release, result, snapshot, directory, rows
   assert.equal(cleanup.allOwnedAbsent, true, 'Owned VM cleanup is an execution gate, not a presumed success')
   const transmissions = verifyPreparedTransmissions(release, snapshot, nativeTransmissions(directory, rows))
   const accounting = reconcileNative({ directory, rows, records, modelRequests: snapshot.capy_model_requests,
-    events: snapshot.events, reportedRecords: result.metrics?.providerUsageRecords })
+    events: snapshot.events, reportedRecords: result.metrics?.providerUsageRecords, ...(release.experiment ? { experiment: release.experiment } : {}) })
   assert(snapshot.sessions.length === snapshot.effective_grants.length)
   for (const session of snapshot.sessions) {
     const parent = snapshot.sessions.find(row => row.id === session.parent_session_id)
