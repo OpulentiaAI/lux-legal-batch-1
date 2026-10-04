@@ -52,7 +52,7 @@ function fixture(t, overrides = {}) {
   t.after(() => store.close());
   const files = new Map(), requests = [], events = [];
   const ctx = { sessionId: 'answerer-one', store, workspace: '/vm/workspace', scrub: value => value, ensureSandbox: async () => {},
-    sandbox: { files: { write: async (path, bytes) => files.set(path, bytes) } }, emit: (name, data) => events.push({ name, data }) };
+    sandbox: { files: { write: async (path, bytes) => files.set(path, bytes), read: async path => files.get(path) } }, emit: (name, data) => events.push({ name, data }) };
   ctx.persistCapyResult = (value, bound) => persistCapyResult(ctx, value, bound);
   const config = { model: 'xiaomi/mimo-v2.6-pro', inferenceProvider: 'runanywhere', providerModel: 'mimo-v2.6-pro',
     allowedTools: ['read', 'computer'], initialTools: ['read', 'computer'], contextCompaction: policy, ...overrides };
@@ -111,6 +111,37 @@ test('an old unseen image summarized in text is reattached intact, without turni
   assert.ok(f.requests.every(request => !imageParts(request.messages).length));
   assert.equal(prepared.imageContext.lineage[0].priorCompletedRequestId, null);
   assert.match(JSON.stringify(prepared.messages), /summaries, captions, hashes and file references do not establish pixel observation/);
+});
+
+test('failed text summaries can externalize history without dropping or falsely observing pending pixels', async t => {
+  const f = fixture(t, { instructionProfile: 'opulent2-fixed-v1' }), capture = frame();
+  const messages = [{ role: 'system', content: 'Fixed trusted instructions' }, capture.message, ...history().slice(1)];
+  const original = JSON.stringify(messages);
+  let calls = 0;
+  const model = async input => {
+    calls++;
+    assert.ok(!JSON.stringify(input).includes(';base64,'));
+    return { choices: [{ finish_reason: 'length', message: { role: 'assistant', content: 'Rejected incomplete summary' } }], usage: { prompt_tokens: 10, completion_tokens: 8192 } };
+  };
+  const prepared = await prepareOpulent2ModelContext({ ...f, messages, model });
+  assert.equal(calls, 2);
+  assert.equal(JSON.stringify(messages), original);
+  assert.equal(f.files.size, 1);
+  assert.ok(![...f.files.values()][0].includes(';base64,'));
+  assert.ok(!JSON.stringify(prepared.messages).includes('Rejected incomplete summary'));
+  assert.strictEqual(prepared.messages[0], messages[0]);
+  assert.ok(prepared.messages.includes(messages[2]));
+  assert.ok(prepared.messages.includes(messages.at(-1)));
+  assert.equal(prepared.imageContext.pendingImages, 1);
+  assert.equal(prepared.imageContext.lineage[0].priorCompletedRequestId, null);
+  assert.deepEqual(imageParts(prepared.messages), imageParts([capture.message]));
+  assert.ok(prepared.imageContext.textChars <= policy.maxInputChars);
+  assert.equal(f.ctx.store.list('capy_model_requests').length, 0);
+  const next = await prepareOpulent2ModelContext({ ...f, messages, model, checkpoint: prepared.checkpoint });
+  assert.equal(calls, 2);
+  assert.equal(f.files.size, 1);
+  assert.deepEqual(imageParts(next.messages), imageParts([capture.message]));
+  assert.equal(next.imageContext.pendingImages, 1);
 });
 
 test('only completed actual same-session answerer payloads count, with recent pixels retained and older seen pixels honestly omitted', async t => {

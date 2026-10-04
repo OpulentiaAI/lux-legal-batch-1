@@ -221,3 +221,41 @@ test('Opulent2 still verifies Drive after a pending child wakes a provisionally 
   assert.equal(result.output, 'Verified after child wake')
   assert.equal(runtime.store.list('events').filter(event => event.type === 'opulent2_completion_deferred').length, 1)
 })
+
+test('Opulent2 continues after invalid summaries by actually reading preserved earlier context', async t => {
+  const sentinel = 'EARLY_CONTEXT_RECOVERED_FROM_REAL_BACKING'
+  let answers = 0, summaries = 0, recovered = false
+  const { runtime } = await fixture(t, { config: { maxSteps: 12 }, model: async (messages, options) => {
+    if (options.phase === 'context_compaction') {
+      summaries++
+      return { ...completion('Rejected incomplete summary'), choices: [{ finish_reason: 'length', message: { role: 'assistant', content: 'Rejected incomplete summary' } }] }
+    }
+    answers++
+    if (summaries) {
+      if (!recovered) {
+        assert.equal(summaries, 2)
+        assert(!JSON.stringify(messages).includes(sentinel))
+        assert(!JSON.stringify(messages).includes('Rejected incomplete summary'))
+        const saved = runtime.store.list('capy_results').find(result => result.status === 'available' && result.serialized.includes(sentinel))
+        assert(saved)
+        assert(JSON.stringify(messages).includes(saved.output_path))
+        recovered = true
+        const script = `from pathlib import Path; text=Path(${JSON.stringify(saved.output_path)}).read_text(); start=text.index(${JSON.stringify(sentinel)}); print(text[start:start+${sentinel.length}])`
+        return callsResponse(['bash', { command: `python3 -c ${JSON.stringify(script)}`, description: 'Read needed earlier evidence from the real context file' }])
+      }
+      assert.equal(summaries, 2)
+      assert(messages.some(message => message.role === 'tool' && message.content.includes(sentinel)))
+      return completion('Completed with genuinely recovered context')
+    }
+    assert(answers <= 8)
+    return callsResponse(['execute', { code: `return ${JSON.stringify(answers === 1 ? sentinel : `Later evidence ${answers}`)} + "x".repeat(48000);` }])
+  } })
+  const root = await runtime.startSession({ prompt: 'Keep the actual earlier evidence available after summary failure.' })
+  const result = await runtime.waitSession(root.id)
+  assert.equal(result.status, 'completed', result.error)
+  assert.equal(result.output, 'Completed with genuinely recovered context')
+  assert.equal(summaries, 2)
+  assert.equal(recovered, true)
+  assert.equal(result.usage.total_tokens, (answers + summaries) * 12)
+  assert(runtime.store.list('capy_tool_results').some(result => result.name === 'bash' && result.complete_result.stdout.includes(sentinel)))
+})
