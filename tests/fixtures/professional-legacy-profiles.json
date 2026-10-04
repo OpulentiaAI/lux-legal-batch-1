@@ -1,0 +1,83 @@
+{
+  "profiles": {
+    "standalone-v1": {
+      "systemPromptSha256": "a67b9bd23a5ea6ac16cfb53f38a758466f8cef3a87b95d7161d8b0f7b1b2f0a3",
+      "systemPromptBytes": 24541,
+      "provenanceSha256": "20c3f21b491f1ccae96efb21c580327cbae84c3814b91f33783ee1cf968417cf"
+    },
+    "opulent-prepared-v2": {
+      "systemPromptSha256": "f5779aa811379a7ca5414e05df45582e2365b6acdee58a81e1c269bde443b192",
+      "systemPromptBytes": 27423,
+      "provenanceSha256": "791238f8dacbdc67926b377da4196b47525ae2e07d0be9da9818ebf498f06315"
+    },
+    "opulent-knowledge-v3": {
+      "systemPromptSha256": "5257b9af33c2b8476155bd08ccb65202c88352459dc60d4bb48d2c26168862b8",
+      "systemPromptBytes": 8739,
+      "provenanceSha256": "69de820a82f39e867855ed12f8e3ac0eb3fe33d4059330de98a99778ebaf2005"
+    },
+    "opulent-rlm-v4": {
+      "systemPromptSha256": "4be5a5d166a36c309069569ede72042746fc1d8e12fe42494ce550f55e4b999a",
+      "systemPromptBytes": 10633,
+      "provenanceSha256": "bf1328210e2a374555994b73612a16ba755b0758a8462863b4b965b037372235"
+    },
+    "opulent-rlm-unrestricted-v5": {
+      "systemPromptSha256": "11a3d38d97eb905046e8bf5e18dbbfef423b13341b72a23ba82e71dc984e4410",
+      "systemPromptBytes": 12331,
+      "provenanceSha256": "901fe20b3516fc854bd04f21c0f435ee94d1c76c2952508bf31eefbdb37840b9"
+    },
+    "opulent-context-v6": {
+      "systemPromptSha256": "5ee3bab262dc4c63501ac718935d23a6b84550e2ee2ab4849aeea7c7b5957627",
+      "systemPromptBytes": 18343,
+      "provenanceSha256": "9af3329afc49b74f97210c9d16dae195157fedb751973db2a28b3e8e3ec73491"
+    },
+    "opulent-capability-v7": {
+      "systemPromptSha256": "3def455e898444fcbb5d72b061d636a6d59db9a64990c694403b38d3fdcec444",
+      "systemPromptBytes": 25804,
+      "provenanceSha256": "22c8e1e38e2b28acea57c4771b7d65773c4bdbcba653c076c9dc62c8e83ecfc3"
+    },
+    "opulent-capability-v8": {
+      "systemPromptSha256": "36f7a589c7201c0d2233ccc367d8fcc78ce7a4d7b558a5ed2df8650eadb8ba45",
+      "systemPromptBytes": 37198,
+      "provenanceSha256": "699b05ed81bbb0a1858016138ea0dc9d8553e502d4c5d958bde904ef86dc4460"
+    },
+    "opulent-delivery-v9": {
+      "systemPromptSha256": "18564031bb3d19c5e29846bc4fbe7810b01e3593d17e53885c569acc0c836135",
+      "systemPromptBytes": 31456,
+      "provenanceSha256": "d51af1dfb942746ab781badc57cf010c367e70670a466dcea6b975ea1597be96"
+    },
+    "opulent-delivery-v10": {
+      "systemPromptSha256": "ea9db2bf9210dc180669ff035acd6c70e3ecf07f198f2e6e9511b1fca23e0e3f",
+      "systemPromptBytes": 37338,
+      "provenanceSha256": "b0b70062daff45e0233458395b24f7c064513f574edee2c595703b4c4099185c"
+    },
+    "opulent-delivery-v11": {
+      "systemPromptSha256": "aa65dfff782819b754805f233d9b5819d7ce455d65d3bbde13f91807fc024fa2",
+      "systemPromptBytes": 38401,
+      "provenanceSha256": "b218f8495fea62a45b21c3b6a149de5d0a19c565efac9fed3dbd9f25860b084c"
+    }
+  },
+  "files": {
+    "base-v1.md": "406f152ab3d6a94878df0ae10bdc2d37042bd1db6996169e16c9125563ffb64f",
+    "knowledge-v3.md": "0997a376d2a5d83de1feba4e50bebaa73db38a790704f257aae700eb1c908570",
+    "manifest-knowledge-v3.json": "ed43a97a4c8880d0742e4204ccdab72c962a9b3b6b8c675d8340856657a2bfb9",
+    "manifest-opulent-capability-v7.json": "307143b9e30b1eebaa688d0df9e4d24fde5de179d8ff053d273342f24942f2f4",
+    "manifest-opulent-capability-v8.json": "f59c6cf962be23378b481532985fd416ea94103fa43149d35a7e9d1f92bcf7f3",
+    "manifest-opulent-context-v6.json": "254c44b617b3055a7686bceaa5376dee66ad11e6616e9eb99febe377e51474d0",
+    "manifest-opulent-delivery-v10.json": "aadc4f05dfa5aaa0a86a9db3c328bcd7e56eaa90a503f03a19c647764137cab9",
+    "manifest-opulent-delivery-v11.json": "f0d615271ee648b7d0860d8d527f7cdb177d8843129bb77ba4a6f9aeddc9ff9b",
+    "manifest-opulent-delivery-v9.json": "8b952209c08c1502baaad7c3b5abb93a2715080b730e7fcc9d049b6b2361f478",
+    "manifest-opulent-rlm-unrestricted-v5.json": "dcb086c0b29bd6def28c691946cd8d0aa02d2048d1b0c8d5f4af921a8f294dc2",
+    "manifest-opulent-rlm-v4.json": "19e864ad357b6a7f673ae83c9281efdc4bb3ef189e44aa6efae804c47315fa48",
+    "manifest-prepared-v2.json": "5a2ef85bd8b404df60d597b6e232b0d6c77d30e5e92f75c773a7a534b78e88ff",
+    "manifest-v1.json": "2939fb6ed400a34c8392df1e5b06325dd74cd939b7ae6ff4d6ea1776debeffb0",
+    "opulent-capability-v7.md": "0ce64ca581da61df07295f8a991451cb5da7cb36a3f58183ac1fc48f5e9bfd5c",
+    "opulent-capability-v8.md": "87f70f62927313d4e0e24894ea4e26622f364d938772a6dbbfb3398d14f64262",
+    "opulent-context-v6.md": "e8b27c9ea1f12e0d18aad8df53f57a30fc48bc1e9f1c7f0049f38f4badf4a66e",
+    "opulent-delivery-v10.md": "03b61590744d41a41a37be528888754681a1248261372fb417fe635fc96f86d4",
+    "opulent-delivery-v11.md": "f42256fcfdcd5f9b6fa23449a32bdedd5328863dbe3b431495318a375d74730f",
+    "opulent-delivery-v9.md": "923b2786fe8ee87908d295c0e7864275fad5ca39158578e934cc9dfb60872bd6",
+    "opulent-rlm-unrestricted-v5.md": "17335c7db1e079a30cd160920f84f0c6767303f174ec249d503056b49d251a54",
+    "opulent-rlm-v4.md": "e014ae55314abf0756a98ea2fa147ced2a5eb9a0214d6f347a2a95e1506ad2af",
+    "prepared-v2.md": "13e5bcfa1f12717a673c4080c0b3578da070b5637e935afcaf386f13c621c5c5"
+  }
+}

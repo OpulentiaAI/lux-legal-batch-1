@@ -27,7 +27,7 @@ import { normalizeOverflowRead, persistToolResultOverflow } from './tool-result-
 import { createScriptExecutions } from './script-execution.mjs';
 import { browserDefinitions, createBrowserTools, validateBrowserOrigins } from './browser-tools.mjs';
 import { definitions as waitDefinitions, createTools as waitTools, tickOperationWaits, cancelOperationWaits, isSessionTerminal } from './operation-waits.mjs';
-import { rlmDefinitionsFor, createRlmTools } from './rlm.mjs';
+import { rlmDefinitionsFor, createRlmTools, validateRlmHandoffPolicy } from './rlm.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -58,9 +58,9 @@ export function createRuntime(options = {}) {
   if (config.eagerChildSandbox !== undefined && typeof config.eagerChildSandbox !== 'boolean') throw new TypeError('eagerChildSandbox must be a boolean');
   if (config.reportRlmState !== undefined && typeof config.reportRlmState !== 'boolean') throw new TypeError('reportRlmState must be a boolean');
   if (config.scriptTopLevelAwait !== undefined && typeof config.scriptTopLevelAwait !== 'boolean') throw new TypeError('scriptTopLevelAwait must be a boolean');
-  if (config.rlmHandoffPolicy !== undefined && config.rlmHandoffPolicy !== 'rlm-handoff-v1') throw new TypeError('Unknown RLM handoff policy');
+  validateRlmHandoffPolicy(config.rlmHandoffPolicy);
   const unrestricted = config.unrestrictedTools === true;
-  const structuredOutputRepair = ['opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile);
+  const structuredOutputRepair = ['opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile);
   const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
   if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1', 'rlm-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
@@ -128,6 +128,7 @@ export function createRuntime(options = {}) {
   function context(id) {
     if (contexts.has(id)) return contexts.get(id);
     if (!store.get('sessions', id)) throw new Error('Unknown session');
+    validateRlmHandoffPolicy(config.rlmHandoffPolicy, store.get('rlm_handoff_states', id));
     const controller = new AbortController();
     const ctx = {
       sessionId: id, workspace: config.workspace, store, storage, model, signal: controller.signal, controller, secrets: new Map(), evidence: new Map(),
@@ -360,7 +361,7 @@ export function createRuntime(options = {}) {
     ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile) && row.parent_session_id
+    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile) && row.parent_session_id
       ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
       : '';
     let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
@@ -445,7 +446,7 @@ export function createRuntime(options = {}) {
             continue;
           }
           if (typeof message.content !== 'string' || !message.content.trim()) {
-            if (config.instructionProfile !== 'opulent-delivery-v11' || (message.content !== null && typeof message.content !== 'string')) throw new Error('Model provider returned an empty final response');
+            if (!['opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile) || (message.content !== null && typeof message.content !== 'string')) throw new Error('Model provider returned an empty final response');
             event(id, 'empty_final_response_rejected', { response });
             messages.push({ role: 'user', content: 'The previous final response was empty and was not accepted. Continue in this same session using the preserved conversation, completed tool results and resident state; do not restart work or repeat completed tool actions. Resolve any remaining requirements, including the existing handoff and requested-file verification, then return a real nonempty final response. If a final JSON schema was supplied, return one complete matching JSON value. Existing budgets and validation still apply; files alone are not completion.' });
             checkpoint();

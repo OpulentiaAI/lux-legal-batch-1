@@ -19,6 +19,7 @@ const denied = new Set(['ipython', 'scripted_tools', 'message_user', 'stop', 're
 export const rlmGenericBlocked = new Set([...denied, 'opulent_session_create', 'opulent_session_interact', 'opulent_session_search', 'opulent_session_events', 'read_subagent', 'testing_agent']);
 
 export const RLM_HANDOFF_POLICY = 'rlm-handoff-v1';
+export const RLM_HANDOFF_PACKED_POLICY = 'rlm-handoff-packed-v1';
 export const RLM_HANDOFF_LIMITS = Object.freeze({ stdoutPageBytes: 8192, toolEnvelopeBytes: 60000 });
 export const RLM_HANDOFF_DESCRIPTION = 'Opt-in rlm-handoff-v1: await rlm.handoff.capture(*, child_id=None, value=<omitted>, name=None) retains a complete immutable snapshot and returns its ref; rlm.handoff.values[ref] contains its complete resident value. await rlm.handoff.read(ref, *, view="raw", cursor=None) emits one protected stdout page per cell. Views: raw, findings, limitations, sources, accepted. await rlm.handoff.decide(ref, *, decisions, acknowledge_limitations=()) records {finding_id, disposition: accept|reject|defer, reason}. await rlm.handoff.exclude(child_id=None, *, ref=None, reason) explicitly excludes exactly one unused child or parent snapshot; child-owned snapshots must be excluded by child ID. await rlm.handoff.finish() emits a completion seal after required readback. Use separate cells for read, decide, exclude and finish. Ordinary stdout/result/stderr are bounded previews with cell-output descriptors in returned stdout; read a needed stream with await rlm.handoff.read(stream["snapshot_id"], view="raw") in a separate cell. Only finally model-visible successful stdout receipts earn read credit; Python returns and host calls do not. await rlm.spawn(prompt, *, name, model=None, report_schema="rlm-report-v1") requests this fixed JSON report: {"version":"rlm-report-v1","complete":true,"findings":[{"id":"finding-1","text":"analysis","source_refs":["source-1"],"limitation_refs":["limit-1"]}],"limitations":[{"id":"limit-1","text":"uncertainty"}],"sources":[{"ref":"source-1","id":"canonical-chunk-id","text":"exact supplied quotation"}]}. All fields are required, extra fields are rejected, IDs/refs must be unique, and every reference must resolve within the report; empty arrays and complete:false are allowed but incomplete reports cannot finish. Source text remains exact supplied quoted fragments; delivery proves neither authenticity nor understanding.';
 export const RLM_REPORT_SCHEMA = {
@@ -38,12 +39,22 @@ export const RLM_REPORT_SCHEMA = {
   },
 };
 
+export function validateRlmHandoffPolicy(policy, state) {
+  if (policy !== undefined && policy !== RLM_HANDOFF_POLICY && policy !== RLM_HANDOFF_PACKED_POLICY) throw new TypeError('Unknown RLM handoff policy');
+  if (state && state.version !== policy) throw new Error('Cannot resume across RLM handoff policy changes');
+}
+
 export function rlmDefinitionsFor(config = {}) {
-  if (config.rlmHandoffPolicy === RLM_HANDOFF_POLICY && ['opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile)) {
-    return { ipython: { ...rlmDefinitions.ipython, description: 'Execute a Python cell in this session’s resident E2B kernel. Imports, variables, functions and prompt survive later cells in this running session; top-level await works. Preloaded asynchronous methods require await: rlm.spawn(prompt, name=...), rlm.list_subagents(), rlm.result(id), rlm.message(id, text), rlm.cancel(id), tools.call(name, args), bash(command, workdir=None, timeout=None). rlm.result is a nonblocking status/output read; a null response is not a report. Use the directly defined wait_for_operations outside the kernel facade after useful independent work to await owned children. Python exceptions do not reset the kernel; a transport failure or timeout does. Ordinary outputs expose bounded stream previews and exact snapshot_id readback, not an invented overflow_path. A blocked finish exposes handoff_status diagnostics without granting receipts. Prime daemon, heartbeat, refine, Python skill installation and namespace revival are not supported. ' + RLM_HANDOFF_DESCRIPTION } };
+  validateRlmHandoffPolicy(config.rlmHandoffPolicy);
+  const enabled = config.rlmHandoffPolicy !== undefined, packed = config.rlmHandoffPolicy === RLM_HANDOFF_PACKED_POLICY;
+  const description = packed
+    ? RLM_HANDOFF_DESCRIPTION.replace('Opt-in rlm-handoff-v1:', `Opt-in ${RLM_HANDOFF_PACKED_POLICY}:`) + ' Each read packs consecutive records from the same snapshot/view/revision into one protected receipt within the unchanged 8192-byte page and 60000-byte envelope. Its records array gives each record_index, record_id (for structured records), range, record_complete and exact items or payload; concatenate fragments per record, not across record identities. Sources retain exact {ref,id,text} items and quote-relative quoted_fragment ranges. Follow next_cursor in separate cells only after finally visible successful receipt confirmation; a failed or unconfirmed page cannot authorize a continuation. For unconfirmed_review, follow next_action: reissue await rlm.handoff.decide(ref, decisions=[], acknowledge_limitations=[]) in a separate cell to confirm unchanged state at the same revision. Do not reread unchanged views or invent a review view.'
+    : RLM_HANDOFF_DESCRIPTION;
+  if (enabled && ['opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile)) {
+    return { ipython: { ...rlmDefinitions.ipython, description: 'Execute a Python cell in this session’s resident E2B kernel. Imports, variables, functions and prompt survive later cells in this running session; top-level await works. Preloaded asynchronous methods require await: rlm.spawn(prompt, name=...), rlm.list_subagents(), rlm.result(id), rlm.message(id, text), rlm.cancel(id), tools.call(name, args), bash(command, workdir=None, timeout=None). rlm.result is a nonblocking status/output read; a null response is not a report. Use the directly defined wait_for_operations outside the kernel facade after useful independent work to await owned children. Python exceptions do not reset the kernel; a transport failure or timeout does. Ordinary outputs expose bounded stream previews and exact snapshot_id readback, not an invented overflow_path. A blocked finish exposes handoff_status diagnostics without granting receipts. Prime daemon, heartbeat, refine, Python skill installation and namespace revival are not supported. ' + description } };
   }
-  return config.rlmHandoffPolicy === RLM_HANDOFF_POLICY
-    ? { ipython: { ...rlmDefinitions.ipython, description: `${rlmDefinitions.ipython.description} ${RLM_HANDOFF_DESCRIPTION}` } }
+  return enabled
+    ? { ipython: { ...rlmDefinitions.ipython, description: `${packed ? rlmDefinitions.ipython.description.replace('Long output is saved to the returned overflow_path in the sandbox.', 'Ordinary outputs expose bounded stream previews and exact snapshot_id readback, not an invented overflow_path; a blocked finish exposes bounded handoff_status diagnostics without granting receipts.') : rlmDefinitions.ipython.description} ${description}` } }
     : rlmDefinitions;
 }
 
@@ -52,9 +63,12 @@ const validateReport = new Ajv({ strict: false, allErrors: true }).compile(RLM_R
 
 function createHandoff(ctx, child) {
   const { store, sessionId } = ctx;
+  const policy = ctx.config.rlmHandoffPolicy, packed = policy === RLM_HANDOFF_PACKED_POLICY;
+  const previousState = store.get('rlm_handoff_states', sessionId);
   const snapshots = new Map(), children = new Map(), exclusions = new Map(), receipts = new Map();
+  const diagnosticCursors = new Set();
   const directory = `${ctx.workspace}/.rlm-handoffs/${sessionId}`;
-  let finishReceipt = store.get('rlm_handoff_states', sessionId)?.finish_receipt ?? null;
+  let finishReceipt = previousState?.finish_receipt ?? null;
   const scrub = (value, cell) => {
     const secrets = [ctx.config.scriptToken, cell?.execution.token, ...(ctx.secrets?.values() ?? [])].filter(Boolean);
     const keys = item => {
@@ -64,7 +78,7 @@ function createHandoff(ctx, child) {
     };
     return keys(redact(value, secrets));
   };
-  const persistState = () => store.put('rlm_handoff_states', sessionId, { session_id: sessionId, version: RLM_HANDOFF_POLICY,
+  const persistState = () => store.put('rlm_handoff_states', sessionId, { session_id: sessionId, version: policy,
     limits: RLM_HANDOFF_LIMITS, report_schema_sha256: digest(JSON.stringify(RLM_REPORT_SCHEMA)), finish_receipt: finishReceipt });
   const dirty = () => { finishReceipt = null; persistState(); };
   const persist = snapshot => store.put('rlm_handoff_snapshots', snapshot.id, { ...snapshot,
@@ -79,13 +93,17 @@ function createHandoff(ctx, child) {
     return snapshot;
   };
   for (const row of store.list('rlm_handoff_snapshots').filter(row => row.session_id === sessionId)) {
+    if (row.version !== policy) throw new Error('Cannot resume across RLM handoff policy changes');
     row.decisions = new Map(row.decisions.map(item => [item.finding_id, item]));
     row.acknowledgements = new Set(row.acknowledgements);
     snapshots.set(row.id, row);
     if (row.origin.kind === 'child') children.set(row.origin.child_id, row.id);
   }
   for (const row of store.list('rlm_handoff_exclusions').filter(row => row.session_id === sessionId)) exclusions.set(row.ref ?? row.child_id, row);
-  for (const row of store.list('rlm_handoff_receipts').filter(row => row.session_id === sessionId)) receipts.set(row.id, row);
+  for (const row of store.list('rlm_handoff_receipts').filter(row => row.session_id === sessionId)) {
+    if (row.body.version !== policy) throw new Error('Cannot resume across RLM handoff policy changes');
+    receipts.set(row.id, row);
+  }
   persistState();
 
   function capture(value, origin, name, required, cell) {
@@ -107,7 +125,7 @@ function createHandoff(ctx, child) {
         for (const finding of report.findings) if (finding.source_refs.some(ref => !sources.has(ref)) || finding.limitation_refs.some(ref => !limitations.has(ref))) issues.push(`Unknown references in finding ${finding.id}`);
       }
     }
-    const snapshot = { id: randomUUID(), session_id: sessionId, version: RLM_HANDOFF_POLICY, name: name ?? null,
+    const snapshot = { id: randomUUID(), session_id: sessionId, version: policy, name: name ?? null,
       origin, raw, sha256: digest(raw), required, report: structured && !issues.length ? report : null,
       validation: structured ? { status: issues.length ? 'invalid' : 'valid', issues } : { status: 'unstructured', issues: [] },
       decisions: new Map(), acknowledgements: new Set(), revision: 0, review_receipt: null };
@@ -134,7 +152,7 @@ function createHandoff(ctx, child) {
 
   function issue(cell, body, coverage = null) {
     if (cell.handoffReceipt) throw new Error('Only one protected handoff receipt may be emitted per cell; use a separate cell');
-    const receipt = { version: RLM_HANDOFF_POLICY, receipt_id: randomUUID(), cell_id: cell.id, ...body };
+    const receipt = { version: policy, receipt_id: randomUUID(), cell_id: cell.id, ...body };
     receipt.page_sha256 = digest(JSON.stringify(receipt));
     const line = JSON.stringify(receipt);
     if (Buffer.byteLength(line) + 1 > RLM_HANDOFF_LIMITS.stdoutPageBytes) throw new Error('Handoff receipt exceeds its fixed stdout page budget');
@@ -145,12 +163,61 @@ function createHandoff(ctx, child) {
     return receipt;
   }
   function covered(snapshot, view, record) {
-    const intervals = [...receipts.values()].filter(row => row.confirmed && row.coverage?.snapshot === snapshot.id &&
-      row.coverage.view === view && row.coverage.revision === revisionFor(snapshot, view) && row.coverage.record === record)
-      .map(row => row.coverage).sort((a, b) => a.start - b.start);
+    const intervals = [...receipts.values()].filter(row => row.confirmed)
+      .flatMap(row => row.coverage ? Array.isArray(row.coverage) ? row.coverage : [row.coverage] : [])
+      .filter(interval => interval.snapshot === snapshot.id && interval.view === view &&
+        interval.revision === revisionFor(snapshot, view) && interval.record === record).sort((a, b) => a.start - b.start);
     let end = 0;
     for (const interval of intervals) { if (interval.start > end) break; end = Math.max(end, interval.end); }
     return { end, empty: intervals.some(interval => interval.empty) };
+  }
+  function readPacked(cell, snapshot, view, records, record, offset, viewHash) {
+    const revision = revisionFor(snapshot, view), entries = [], coverage = [];
+    const bodyFor = entries => {
+      const last = entries.at(-1);
+      const next = !last.record_complete ? cursorFor(snapshot, view, last.record_index, last.range.end)
+        : last.record_index + 1 < records.length ? cursorFor(snapshot, view, last.record_index + 1, 0) : null;
+      return { kind: 'page', snapshot_id: snapshot.id, snapshot_sha256: snapshot.sha256, view,
+        view_sha256: viewHash, revision,
+        origin: { kind: snapshot.origin.kind, ...(snapshot.origin.child_id ? { child_id: snapshot.origin.child_id } : {}) },
+        producer_status: snapshot.origin.status ?? null, producer_error: snapshot.origin.error != null,
+        validation_status: snapshot.validation.status, page_complete: true, record_count: records.length,
+        records: entries, end_of_view: next === null, next_cursor: next };
+    };
+    const fits = entries => Buffer.byteLength(JSON.stringify({ version: policy, receipt_id: 'x'.repeat(36), cell_id: cell.id,
+      ...bodyFor(entries), page_sha256: 'x'.repeat(64) })) + 1 <= RLM_HANDOFF_LIMITS.stdoutPageBytes;
+    while (record < Math.max(records.length, 1)) {
+      const item = records[record], text = records.length ? representation(item, view) : '', points = Array.from(text);
+      const entryFor = end => {
+        const complete = end === points.length;
+        const entry = { record_index: record, ...(view !== 'raw' && records.length ? { record_id: view === 'sources' ? item.ref : item.id } : {}),
+          range: { unit: 'unicode-codepoints', start: offset, end, total: points.length }, record_complete: complete };
+        if (!records.length) entry.items = [];
+        else if (view !== 'raw' && offset === 0 && complete) entry.items = [item];
+        else if (view === 'sources') entry.items = [{ ...item, text: points.slice(offset, end).join(''),
+          quoted_fragment: { sha256: digest(text), unit: 'unicode-codepoints', start: offset, end, total: points.length } }];
+        else entry.payload = { encoding: view === 'raw' ? 'text' : 'json-text-fragment', text: points.slice(offset, end).join('') };
+        return entry;
+      };
+      let end = points.length;
+      if (!fits([...entries, entryFor(end)])) {
+        let lower = offset, upper = points.length - 1;
+        while (lower < upper) {
+          const middle = Math.ceil((lower + upper) / 2);
+          if (fits([...entries, entryFor(middle)])) lower = middle; else upper = middle - 1;
+        }
+        end = lower;
+        if (end <= offset) {
+          if (entries.length) break;
+          throw new Error('Handoff record metadata exceeds its fixed page budget');
+        }
+      }
+      entries.push(entryFor(end));
+      coverage.push({ snapshot: snapshot.id, view, revision, record, start: offset, end, total: points.length, empty: !points.length });
+      if (end < points.length) break;
+      record++; offset = 0;
+    }
+    return issue(cell, bodyFor(entries), coverage);
   }
   function read(cell, snapshot, view, cursor) {
     if (cell.handoffReceipt) throw new Error('Only one protected handoff receipt may be emitted per cell; use a separate cell');
@@ -163,11 +230,16 @@ function createHandoff(ctx, child) {
       if (decoded.snapshot !== snapshot.id || decoded.sha256 !== snapshot.sha256 || decoded.view !== view || decoded.revision !== revisionFor(snapshot, view) ||
           !Number.isSafeInteger(decoded.record) || decoded.record < 0 || !Number.isSafeInteger(decoded.offset) || decoded.offset < 0) throw new Error('Stale or mismatched handoff cursor');
       ({ record, offset } = decoded);
+      if (packed && (cursor !== cursorFor(snapshot, view, record, offset) || offset !== covered(snapshot, view, record).end ||
+          !diagnosticCursors.has(cursor) && ![...receipts.values()].some(row => row.confirmed && row.body.next_cursor === cursor))) {
+        throw new Error('Unconfirmed or out-of-order handoff cursor; use a confirmed page or current diagnostics');
+      }
     }
     if (record >= Math.max(records.length, 1)) throw new Error('Handoff cursor is past the end of the view');
     const item = records[record], text = records.length ? representation(item, view) : '', points = Array.from(text);
     const viewHash = view === 'raw' ? snapshot.sha256 : digest(JSON.stringify(records));
     if (offset > points.length || offset === points.length && points.length) throw new Error('Handoff cursor is past the end of the record');
+    if (packed) return readPacked(cell, snapshot, view, records, record, offset, viewHash);
     const bodyFor = end => {
       const recordComplete = end === points.length;
       const next = !recordComplete ? cursorFor(snapshot, view, record, end) : record + 1 < records.length ? cursorFor(snapshot, view, record + 1, 0) : null;
@@ -244,7 +316,10 @@ function createHandoff(ctx, child) {
         else if (decision.disposition === 'accept') finding.source_refs.forEach(ref => sourceRefs.add(ref));
       }
       for (const limitation of snapshot.report.limitations) if (!snapshot.acknowledgements.has(limitation.id)) add('unacknowledged_limitation', { snapshot_id: snapshot.id, limitation_id: limitation.id });
-      if ((snapshot.report.findings.length || snapshot.report.limitations.length) && !receipts.get(snapshot.review_receipt)?.confirmed) add('unconfirmed_review', { snapshot_id: snapshot.id });
+      if ((snapshot.report.findings.length || snapshot.report.limitations.length) && !receipts.get(snapshot.review_receipt)?.confirmed) add('unconfirmed_review', { snapshot_id: snapshot.id,
+        ...(packed ? { revision: snapshot.revision, next_action: { tool: 'ipython', args: {
+          code: `await rlm.handoff.decide(${JSON.stringify(snapshot.id)}, decisions=[], acknowledge_limitations=[])` }, separate_cell: true,
+          instruction: 'Confirm unchanged review state at the same revision; do not reread unchanged views or invent a review view.' } } : {}) });
       requireView('sources', snapshot.report.sources.map((source, index) => sourceRefs.has(source.ref) ? index : -1).filter(index => index >= 0));
       requireView('accepted');
     }
@@ -254,11 +329,13 @@ function createHandoff(ctx, child) {
     if (required && !withoutFinish && (!finishReceipt || !receipts.get(finishReceipt)?.confirmed || receipts.get(finishReceipt).body.binding_sha256 !== bindingHash)) add('visible_finish_required', {});
     const counts = {};
     for (const item of outstanding) counts[item.kind] = (counts[item.kind] ?? 0) + 1;
-    return { enabled: true, version: RLM_HANDOFF_POLICY, required, ready: !outstanding.length,
+    const status = { enabled: true, version: policy, required, ready: !outstanding.length,
       receipt_id: !withoutFinish && !outstanding.length ? finishReceipt : null, binding_sha256: bindingHash,
       outstanding_counts: counts, next_read: outstanding.find(item => item.kind === 'unread_page') ?? null,
       diagnostics: outstanding.slice(cursor, cursor + 8), diagnostics_cursor: cursor + 8 < outstanding.length ? cursor + 8 : null,
       diagnostic_count: outstanding.length, source_policy: 'exact supplied quoted fragments; authenticity and understanding are not asserted' };
+    if (packed) for (const item of [status.next_read, ...status.diagnostics]) if (item?.kind === 'unread_page') diagnosticCursors.add(item.next_cursor);
+    return status;
   }
   return { directory,
     async request(cell, args) {
@@ -339,7 +416,7 @@ function createHandoff(ctx, child) {
       if (args.action === 'finish') {
         const status = check(false, true);
         if (!status.ready) {
-          if (['opulent-delivery-v10', 'opulent-delivery-v11'].includes(ctx.config.instructionProfile)) cell.handoffStatus = scrub(status, cell);
+          if (packed || ['opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(ctx.config.instructionProfile)) cell.handoffStatus = scrub(status, cell);
           throw new Error(`Handoff is incomplete: ${JSON.stringify(status)}`);
         }
         const receipt = issue(cell, { kind: 'finish', binding_sha256: status.binding_sha256, required: status.required, source_policy: status.source_policy });
@@ -360,7 +437,7 @@ function createHandoff(ctx, child) {
       const receipt = receipts.get(cell.handoffReceipt);
       let previewLimit = 256, result;
       do {
-        const metadata = { version: RLM_HANDOFF_POLICY, kind: 'cell-output', cell_id: cell.id, cell_ok: packet.ok,
+        const metadata = { version: policy, kind: 'cell-output', cell_id: cell.id, cell_ok: packet.ok,
           streams: Object.fromEntries(Object.entries(streams).map(([name, snapshot]) => [name, { ...descriptor(snapshot),
             preview: Array.from(snapshot.raw).slice(0, previewLimit).join(''), preview_complete: Array.from(snapshot.raw).length <= previewLimit }])) };
         result = { stdout: `${receipt ? `${receipt.line}\n` : ''}${JSON.stringify(metadata)}\n`,
@@ -384,6 +461,7 @@ function createHandoff(ctx, child) {
       if (typeof toolCallId !== 'string' || !toolCallId || typeof content !== 'string') return { enabled: true, confirmed: 0, reason: 'invalid_confirmation' };
       let output;
       try { output = JSON.parse(content); } catch { return { enabled: true, confirmed: 0, reason: 'invalid_envelope' }; }
+      if (packed && (Buffer.byteLength(content) > RLM_HANDOFF_LIMITS.toolEnvelopeBytes || output?.visibility === 'child-only')) return { enabled: true, confirmed: 0, reason: 'invisible_or_oversized_envelope' };
       if (output?.ok !== true || output.truncated === true || output.error != null && output.error !== false || typeof output.stdout !== 'string') return { enabled: true, confirmed: 0, reason: 'unsuccessful_or_truncated_envelope' };
       let parsed;
       try { parsed = JSON.parse(output.stdout.split('\n', 1)[0]); } catch { return { enabled: true, confirmed: 0 }; }
@@ -403,7 +481,7 @@ function createHandoff(ctx, child) {
 
 export function createRlmTools(ctx) {
   const { store, sessionId } = ctx;
-  if (ctx.config.rlmHandoffPolicy !== undefined && ctx.config.rlmHandoffPolicy !== RLM_HANDOFF_POLICY) throw new Error('Unknown RLM handoff policy');
+  validateRlmHandoffPolicy(ctx.config.rlmHandoffPolicy, store?.get('rlm_handoff_states', sessionId));
   let kernel, launch, invalidated = !!store.get('rlm_kernels', sessionId), serial = Promise.resolve(), admission = Promise.resolve();
   let active = null, buffer = '';
   const pending = new Map();
@@ -412,7 +490,7 @@ export function createRlmTools(ctx) {
     if (!row || row.parent_session_id !== sessionId) throw new Error('Child not found in this parent session');
     return row;
   };
-  const handoff = ctx.config.rlmHandoffPolicy === RLM_HANDOFF_POLICY ? createHandoff(ctx, child) : null;
+  const handoff = ctx.config.rlmHandoffPolicy !== undefined ? createHandoff(ctx, child) : null;
   const descendants = id => {
     const ids = [id];
     for (let index = 0; index < ids.length; index++) ids.push(...store.list('sessions').filter(row => row.parent_session_id === ids[index]).map(row => row.id));
@@ -556,7 +634,7 @@ export function createRlmTools(ctx) {
         if (ctx.signal.aborted) onAbort(); else ctx.signal.addEventListener('abort', onAbort, { once: true });
       });
       await send({ type: 'execute', id, code, prompt: store.get('sessions', sessionId).prompt, overflow_dir: `${ctx.workspace}/.rlm-overflows`,
-        ...(reportState ? { report_state: true } : {}), ...(handoff ? { handoff_policy: RLM_HANDOFF_POLICY, handoff_dir: handoff.directory } : {}) });
+        ...(reportState ? { report_state: true } : {}), ...(handoff ? { handoff_policy: ctx.config.rlmHandoffPolicy, handoff_dir: handoff.directory } : {}) });
       const packet = await Promise.race([response, expired]);
       const overflow = packet.stdout_chars > 12000 || packet.stderr_chars > 12000 || packet.result?.includes('[full repr in stdout overflow file]');
       execution.finish(packet.ok ? 'completed' : 'failed');

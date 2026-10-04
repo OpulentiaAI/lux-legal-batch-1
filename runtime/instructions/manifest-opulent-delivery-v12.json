@@ -1,0 +1,29 @@
+{
+  "version": "opulent-delivery-v12",
+  "profile": "opulent-delivery-v12",
+  "composition": "complete-professional-foundation-plus-versioned-operational-layers-v1",
+  "foundationProfile": "opulent-professional-v1",
+  "foundationManifestSha256": "711e7256c39c7cbf2f4bcc8dea6183a730002c3e33ad17d2b9d462c7fef5e16b",
+  "foundationEffectivePromptSha256": "e997a78fabac3132feae1819c245c2db4a31c2775dbe20a47a0ba77c227721b4",
+  "operationalLayers": [
+    {
+      "file": "opulent-delivery-v9.md",
+      "sha256": "e045b26dca63ed3706047c81d385aa78cff8514d9215bf6cdf21b814347cad54"
+    },
+    {
+      "file": "opulent-delivery-v10.md",
+      "sha256": "ccedea60ba821dc7058f48cd09addbbd6d09bd64eace2298f49c5eef8e981123"
+    },
+    {
+      "file": "opulent-delivery-v11.md",
+      "sha256": "1733a7054aed5e985c16239314b75788b5febf3a163f78477435d25093e87ec8"
+    },
+    {
+      "file": "opulent-delivery-v12.md",
+      "sha256": "386623f326a00d9275cd20651b1768b6bf73445cf518f4b4e5f4252f2f79eb9e"
+    }
+  ],
+  "handoffPolicy": "rlm-handoff-packed-v1",
+  "scriptPolicy": "python-top-level-await-v1",
+  "effectivePromptSha256": "b90b86c8799b03fe5e699f96e4e927055c5e4e943ed0241794f15d6a7c209863"
+}

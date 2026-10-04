@@ -1,0 +1,3584 @@
+{
+  "version": "opulent-professional-v1",
+  "profile": "opulent-professional-v1",
+  "composition": "source-spans-with-explicit-compatibility-v1",
+  "compatibilityPath": "compatibility.md",
+  "compatibilitySha256": "5ecca695152d1c6e18af90938c1d6ce987d8416db543dae80e613b27d41bf0fc",
+  "compatibilityBytes": 13222,
+  "compatibilityIds": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+  ],
+  "sourceInventoryPath": "source-inventory.json",
+  "sourceInventorySha256": "280c99c140a250581a6372d2efa2175e83ab211368f85b631833fb8f8539a81f",
+  "licensePath": "LICENSE-prime-agent",
+  "licenseSha256": "e0d1bf8d137e6d56e98ee968402b0b7f324c5c85ea505e4fd7b6b78615bc4e7a",
+  "effectivePromptSha256": "e997a78fabac3132feae1819c245c2db4a31c2775dbe20a47a0ba77c227721b4",
+  "effectivePromptBytes": 190888,
+  "sources": [
+    {
+      "id": "capy-initial",
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/system-prompt.md"
+      },
+      "rawSha256": "13ceffa41effb92389dd0921da4669047f03b09808b685ec41ada26bec979655",
+      "rawLines": 517,
+      "modulePath": "modules/capy-initial.md",
+      "moduleBytes": 49054,
+      "moduleSha256": "892f7a8a69673139a29abd765ce073ee215604a5801df8b6165adf6896c69962",
+      "effectiveSha256": "d8a9900c91f444a7e214edfebf342cda36a8519c0aed39c79aa15b22e894d3f3",
+      "rawBytes": 74574,
+      "retainedBytes": 48760,
+      "replacedOriginalBytes": 294,
+      "referenceOnlyBytes": 25520,
+      "replacementBytes": 306,
+      "effectiveBytes": 49066,
+      "segments": [
+        {
+          "id": "capy-initial:001",
+          "label": "Opening instructions",
+          "startByte": 0,
+          "endByte": 121,
+          "lineStart": 1,
+          "lineEnd": 1,
+          "sha256": "05fce01ff763f896dcc8f941205578b6df833ded033e92c6e2feba5ef6e29638",
+          "action": "replace",
+          "reason": "Retune only the foreign identity and coding-only opening persona to truthful general-purpose Opulent.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 121,
+          "replacement": "You are Opulent, a general-purpose professional AI agent for research, analysis, writing, data, software, and operations.",
+          "replacementCategory": "persona",
+          "replacementBytes": 121,
+          "replacementSha256": "8248deaab3c2f5956cc09165ddc70fac5a34978b0b3113eb212f43fad39bd777"
+        },
+        {
+          "id": "capy-initial:002",
+          "label": "Opening instructions",
+          "startByte": 121,
+          "endByte": 445,
+          "lineStart": 1,
+          "lineEnd": 10,
+          "sha256": "a75365f8b16014fe73e4b9713de259601b5c44a009c3d11e585c3653df38fe7a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 121,
+          "moduleEndByte": 445
+        },
+        {
+          "id": "capy-initial:003",
+          "label": "# How you work",
+          "startByte": 445,
+          "endByte": 746,
+          "lineStart": 11,
+          "lineEnd": 14,
+          "sha256": "640a8a6e53441a7fd4ae973fd4ab7a875840e5847d0407713994327f92d9417a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 445,
+          "moduleEndByte": 746
+        },
+        {
+          "id": "capy-initial:004",
+          "label": "## Communication style",
+          "startByte": 746,
+          "endByte": 770,
+          "lineStart": 15,
+          "lineEnd": 16,
+          "sha256": "98919168a5130ada0cd8e5db333d05478e933bfd4d4512769f440c2848175013",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 746,
+          "moduleEndByte": 770
+        },
+        {
+          "id": "capy-initial:005",
+          "label": "## Communication style",
+          "startByte": 770,
+          "endByte": 823,
+          "lineStart": 17,
+          "lineEnd": 17,
+          "sha256": "1844ad17a954966224811af371fd0d7e8be1d43b91661e91479d0c06c4d9c04a",
+          "action": "replace",
+          "reason": "Small persona-only tone adjustment for non-software professional work.",
+          "compatibility": [
+            "C1"
+          ],
+          "moduleStartByte": 770,
+          "moduleEndByte": 823,
+          "replacement": "Your default tone is that of a sharp senior professional:",
+          "replacementCategory": "persona",
+          "replacementBytes": 57,
+          "replacementSha256": "3468759b5b096b273bc568acbe66bb992f0302139d208ec0725e287f988695cb"
+        },
+        {
+          "id": "capy-initial:006",
+          "label": "## Communication style",
+          "startByte": 823,
+          "endByte": 1294,
+          "lineStart": 17,
+          "lineEnd": 18,
+          "sha256": "7c8a093cc046161cb29c668138fb9accf66c56b2d35c6c3d29521b90b491de11",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 823,
+          "moduleEndByte": 1294
+        },
+        {
+          "id": "capy-initial:007",
+          "label": "## Turns and messaging",
+          "startByte": 1294,
+          "endByte": 6880,
+          "lineStart": 19,
+          "lineEnd": 38,
+          "sha256": "2463b50d5d129cbcafc950e418b4af099d10fd673c9f1a01bd0ad563284e1b9e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 1294,
+          "moduleEndByte": 6880
+        },
+        {
+          "id": "capy-initial:008",
+          "label": "### Examples",
+          "startByte": 6880,
+          "endByte": 7833,
+          "lineStart": 39,
+          "lineEnd": 64,
+          "sha256": "5964fd9325fa52ebfbe98de810e1b87acf9734a175abcace05e74f6e82efc1db",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 6880,
+          "moduleEndByte": 7833
+        },
+        {
+          "id": "capy-initial:009",
+          "label": "## Planning",
+          "startByte": 7833,
+          "endByte": 8581,
+          "lineStart": 65,
+          "lineEnd": 70,
+          "sha256": "e3e30a1944ed0e129e585432b4c8df390c340dd5ceb3b2f0c30f752cb6366144",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 7833,
+          "moduleEndByte": 8581
+        },
+        {
+          "id": "capy-initial:010",
+          "label": "## Task execution",
+          "startByte": 8581,
+          "endByte": 8600,
+          "lineStart": 71,
+          "lineEnd": 72,
+          "sha256": "07e9925da125fd79c89796ad63d537c80cba3380cb82b3f02770ae5b5354e407",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 8581,
+          "moduleEndByte": 8600
+        },
+        {
+          "id": "capy-initial:011",
+          "label": "## Task execution",
+          "startByte": 8600,
+          "endByte": 8641,
+          "lineStart": 73,
+          "lineEnd": 73,
+          "sha256": "d28361c437940e5a0cf0a80d7cc5ca638fddbe6c70afabc445e519c4f82a22bf",
+          "action": "replace",
+          "reason": "Broaden only the task-execution persona; preserve the rest of the completion instructions.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 8600,
+          "moduleEndByte": 8641,
+          "replacement": "You are a general-purpose professional agent.",
+          "replacementCategory": "persona",
+          "replacementBytes": 45,
+          "replacementSha256": "678e320b817d5d21b4a04fbe470d77be2d0a83b075b320a3c64bc6f1889afdf4"
+        },
+        {
+          "id": "capy-initial:012",
+          "label": "## Task execution",
+          "startByte": 8641,
+          "endByte": 13301,
+          "lineStart": 73,
+          "lineEnd": 99,
+          "sha256": "bd710aeef61fc134a566e382060b8b8afcc460381773376d223ca1bdec0f10e0",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 8641,
+          "moduleEndByte": 13301
+        },
+        {
+          "id": "capy-initial:013",
+          "label": "## Validating your work",
+          "startByte": 13301,
+          "endByte": 14301,
+          "lineStart": 100,
+          "lineEnd": 107,
+          "sha256": "e4b3373a0b985cf1baf38b170b6ca96576ce204e33dfddf54317e5f91529d6f1",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 13301,
+          "moduleEndByte": 14301
+        },
+        {
+          "id": "capy-initial:014",
+          "label": "## Ambition vs. precision",
+          "startByte": 14301,
+          "endByte": 15547,
+          "lineStart": 108,
+          "lineEnd": 115,
+          "sha256": "f9e4588c5e382aea3df6fec14f0b79b6becdc37ef4b19447e4baa43ae1756d29",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 14301,
+          "moduleEndByte": 15547
+        },
+        {
+          "id": "capy-initial:015",
+          "label": "## Sharing progress updates",
+          "startByte": 15547,
+          "endByte": 15843,
+          "lineStart": 116,
+          "lineEnd": 119,
+          "sha256": "9525bdecbc74ad5ae9fdbe2546a41f164957febccb91f0983a3f89be65eadf77",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 15547,
+          "moduleEndByte": 15843
+        },
+        {
+          "id": "capy-initial:016",
+          "label": "## Presenting your work",
+          "startByte": 15843,
+          "endByte": 15868,
+          "lineStart": 120,
+          "lineEnd": 121,
+          "sha256": "6056d4cc96acdffa26b59039dd42e4ecb0618fd95584ea0671c446a420cf79b7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 15843,
+          "moduleEndByte": 15868
+        },
+        {
+          "id": "capy-initial:017",
+          "label": "## Presenting your work",
+          "startByte": 15868,
+          "endByte": 15947,
+          "lineStart": 122,
+          "lineEnd": 122,
+          "sha256": "d76da954d70be2fab16773a0b0cd541fbf2bd4510b819e10b6b9a7a650db819b",
+          "action": "replace",
+          "reason": "Small persona-only presentation adjustment; all nine style rules remain verbatim.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 15868,
+          "moduleEndByte": 15947,
+          "replacement": "Write in flowing technical prose, the way a sharp senior professional talks in chat",
+          "replacementCategory": "persona",
+          "replacementBytes": 83,
+          "replacementSha256": "9bbb4b898e77ea27d0f0a6249f70f5e320ce98e45691951cf973ebb6e8071b0e"
+        },
+        {
+          "id": "capy-initial:018",
+          "label": "## Presenting your work",
+          "startByte": 15947,
+          "endByte": 19999,
+          "lineStart": 122,
+          "lineEnd": 137,
+          "sha256": "700e5e275257e491a6cb77659f1bff5035e5913add33d34d9f474d71dd15b08a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 15947,
+          "moduleEndByte": 19999
+        },
+        {
+          "id": "capy-initial:019",
+          "label": "### Examples",
+          "startByte": 19999,
+          "endByte": 20872,
+          "lineStart": 138,
+          "lineEnd": 145,
+          "sha256": "973ccc6414207d50b06a0787484192ed60090f0c169e1d36452fe29de118b219",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 19999,
+          "moduleEndByte": 20872
+        },
+        {
+          "id": "capy-initial:020",
+          "label": "# Platform",
+          "startByte": 20872,
+          "endByte": 21167,
+          "lineStart": 146,
+          "lineEnd": 149,
+          "sha256": "907cb27764d465d5daa23bc461fddce8632f3c7fd3afbc9f0580910d3dd73e18",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 20872,
+          "moduleEndByte": 21167
+        },
+        {
+          "id": "capy-initial:021",
+          "label": "## Machines",
+          "startByte": 21167,
+          "endByte": 23945,
+          "lineStart": 150,
+          "lineEnd": 160,
+          "sha256": "eab9e499a9632e7e341c929f99edb1c296589f08a0dd331331bfee4983ec59f7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 21167,
+          "moduleEndByte": 23945
+        },
+        {
+          "id": "capy-initial:022",
+          "label": "## Tasks",
+          "startByte": 23945,
+          "endByte": 28769,
+          "lineStart": 161,
+          "lineEnd": 174,
+          "sha256": "94deec431e1fc76ea1d43afa9a31d1a77dbda34ea8b5f40cb5f8ab04d5649119",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 23945,
+          "moduleEndByte": 28769
+        },
+        {
+          "id": "capy-initial:023",
+          "label": "## Threads",
+          "startByte": 28769,
+          "endByte": 30147,
+          "lineStart": 175,
+          "lineEnd": 184,
+          "sha256": "2431c606bc4afcbe75e520f79a5d2edb0959fe4067c6f5d9ba673aafbae9b029",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 28769,
+          "moduleEndByte": 30147
+        },
+        {
+          "id": "capy-initial:024",
+          "label": "## App navigation",
+          "startByte": 30147,
+          "endByte": 31218,
+          "lineStart": 185,
+          "lineEnd": 198,
+          "sha256": "205a5467ca755736885855499e3ba5ab2135aaf4ad78e61962f4617ffc1ee421",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 30147,
+          "moduleEndByte": 31218
+        },
+        {
+          "id": "capy-initial:025",
+          "label": "## Git and PRs",
+          "startByte": 31218,
+          "endByte": 39905,
+          "lineStart": 199,
+          "lineEnd": 225,
+          "sha256": "8b4eaa078918dfff2817c6c72f273aae16fdf594e41e61844652ce546f03c5ed",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 31218,
+          "moduleEndByte": 39905
+        },
+        {
+          "id": "capy-initial:026",
+          "label": "### Automatic review policy",
+          "startByte": 39905,
+          "endByte": 40428,
+          "lineStart": 226,
+          "lineEnd": 231,
+          "sha256": "17a7edd1bbe9fd82792daeb774640ac0b9d6964a30e3fc746947ca35b874bd7d",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 39905,
+          "moduleEndByte": 40428
+        },
+        {
+          "id": "capy-initial:027",
+          "label": "### Automatic review policy",
+          "startByte": 40428,
+          "endByte": 40543,
+          "lineStart": 232,
+          "lineEnd": 235,
+          "sha256": "4428a1ee0d82b84873b4d7dffa9127e989277f1a74e550ac3ad263ca0679b5f4",
+          "action": "reference-only",
+          "reason": "Private reference only: frozen source-session repository review configuration is not the current configuration.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-initial:028",
+          "label": "## Automations",
+          "startByte": 40543,
+          "endByte": 41358,
+          "lineStart": 236,
+          "lineEnd": 243,
+          "sha256": "dd4cccb0263c946aa718540ca46f4c42d3644c19101806d0e674ff46e1b65881",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 40428,
+          "moduleEndByte": 41243
+        },
+        {
+          "id": "capy-initial:029",
+          "label": "## Dev environment",
+          "startByte": 41358,
+          "endByte": 43122,
+          "lineStart": 244,
+          "lineEnd": 252,
+          "sha256": "4ccc8cb92aace9d6e5683e03623c167c696220c7093dd5a0b61cef19991341a8",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 41243,
+          "moduleEndByte": 43007
+        },
+        {
+          "id": "capy-initial:030",
+          "label": "## Desktop and images",
+          "startByte": 43122,
+          "endByte": 44613,
+          "lineStart": 253,
+          "lineEnd": 259,
+          "sha256": "a7b9ed3164e56caa6955462a7c55485c7e6fcffd8aa05cd322c5e678953cbdb0",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 43007,
+          "moduleEndByte": 44498
+        },
+        {
+          "id": "capy-initial:031",
+          "label": "## Reporting issues",
+          "startByte": 44613,
+          "endByte": 45005,
+          "lineStart": 260,
+          "lineEnd": 264,
+          "sha256": "6362cbf207acfb0ffdf180838a2e20f772c5a9592c9f434b4b4e6a056d9f6fcf",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 44498,
+          "moduleEndByte": 44890
+        },
+        {
+          "id": "capy-initial:032",
+          "label": "## Web output",
+          "startByte": 45005,
+          "endByte": 45579,
+          "lineStart": 265,
+          "lineEnd": 272,
+          "sha256": "bea26075e3a6c7f0897a74681af6d507450c8e3b8ed2b97e34ab6730127aba41",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 44890,
+          "moduleEndByte": 45464
+        },
+        {
+          "id": "capy-initial:033",
+          "label": "## Web output",
+          "startByte": 45579,
+          "endByte": 46505,
+          "lineStart": 273,
+          "lineEnd": 288,
+          "sha256": "86908e3942d10b8cddef676341a6c016b275929041d4678f0ccbdc01f0448387",
+          "action": "reference-only",
+          "reason": "Private reference only: original date, machine identity, workspace, runtimes, and environment capture are not this session.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-initial:034",
+          "label": "## Web output",
+          "startByte": 46505,
+          "endByte": 47288,
+          "lineStart": 289,
+          "lineEnd": 290,
+          "sha256": "0962b222e12ccd50db19682ee3b5f5862446c573bad64cfe61726b2dab880e74",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 45464,
+          "moduleEndByte": 46247
+        },
+        {
+          "id": "capy-initial:035",
+          "label": "## Web output",
+          "startByte": 47288,
+          "endByte": 55245,
+          "lineStart": 291,
+          "lineEnd": 360,
+          "sha256": "8007a348a721785d6a53b3eec6d2ff31c6e148d82ef517b5063a2211424bc207",
+          "action": "reference-only",
+          "reason": "Private reference only: historical model/billing route table, not configured Opulent routes.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-initial:036",
+          "label": "## Web output",
+          "startByte": 55245,
+          "endByte": 55246,
+          "lineStart": 361,
+          "lineEnd": 361,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 46247,
+          "moduleEndByte": 46248
+        },
+        {
+          "id": "capy-initial:037",
+          "label": "## Web output",
+          "startByte": 55246,
+          "endByte": 56257,
+          "lineStart": 362,
+          "lineEnd": 371,
+          "sha256": "3d46fdc67292c2aa475e0db5393a2c0fa662f4aaa761557e5f1e147b4039144c",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C3",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 46248,
+          "moduleEndByte": 47259
+        },
+        {
+          "id": "capy-initial:038",
+          "label": "## Web output",
+          "startByte": 56257,
+          "endByte": 57670,
+          "lineStart": 372,
+          "lineEnd": 389,
+          "sha256": "927452d92e91bc47584ae7b974f98ce08e4172864027b1509ada292b9ede92db",
+          "action": "reference-only",
+          "reason": "Private reference only: original hosted skill paths/inventory; actual installed skills must be discovered.",
+          "compatibility": [
+            "C3",
+            "C5",
+            "C9"
+          ]
+        },
+        {
+          "id": "capy-initial:039",
+          "label": "## Web output",
+          "startByte": 57670,
+          "endByte": 59134,
+          "lineStart": 390,
+          "lineEnd": 393,
+          "sha256": "59993942713ded79af198ac8a819394b79ba5ef97f93889476fb29b1b3e469b5",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C3",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 47259,
+          "moduleEndByte": 48723
+        },
+        {
+          "id": "capy-initial:040",
+          "label": "## Web output",
+          "startByte": 59134,
+          "endByte": 59631,
+          "lineStart": 394,
+          "lineEnd": 397,
+          "sha256": "27d7904db355465f924c7d8b5497f0358268fd94b26b2e52a18a5ea2749a74da",
+          "action": "reference-only",
+          "reason": "Private reference only: original user/project Drive locations, not current session storage.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-initial:041",
+          "label": "## Web output",
+          "startByte": 59631,
+          "endByte": 59640,
+          "lineStart": 398,
+          "lineEnd": 398,
+          "sha256": "6b38a03697390c38371e26a8df97246baa60563eea511cdd14937a2a049cbc72",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 48723,
+          "moduleEndByte": 48732
+        },
+        {
+          "id": "capy-initial:042",
+          "label": "## Web output",
+          "startByte": 59640,
+          "endByte": 74252,
+          "lineStart": 399,
+          "lineEnd": 515,
+          "sha256": "9a3f2c224a91f84733a190c2fa5ccb140b57ff530d1138afeed1f72a2b7efb4f",
+          "action": "reference-only",
+          "reason": "Private reference only: complete foreign raw codemode schemas/tool listings, not native runtime grants.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ]
+        },
+        {
+          "id": "capy-initial:043",
+          "label": "## Web output",
+          "startByte": 74252,
+          "endByte": 74574,
+          "lineStart": 516,
+          "lineEnd": 517,
+          "sha256": "db06b14476b28b90002d7592f37cad3ebeed66ee69e6361f69f4451ac2fe9d23",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 48732,
+          "moduleEndByte": 49054
+        }
+      ],
+      "label": "Capy supplied original (2026-09-24)"
+    },
+    {
+      "id": "capy-oct1",
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/system-instructions/system-prompt-full.md"
+      },
+      "rawSha256": "ffaba69b6a550c5802013fdb6ead32a8adcef04129bedbeaf9f40f61c5acfdab",
+      "rawLines": 436,
+      "modulePath": "modules/capy-oct1.md",
+      "moduleBytes": 58229,
+      "moduleSha256": "54cf276c80297f3d95901277cba280295185ee4ac72a590c8a4510d05ac26de7",
+      "effectiveSha256": "20ab78291131a1dda76e489cb99aa9e42c20e80a132d4f72664ba51c1a78d7b5",
+      "rawBytes": 76210,
+      "retainedBytes": 57935,
+      "replacedOriginalBytes": 555,
+      "referenceOnlyBytes": 17720,
+      "replacementBytes": 375,
+      "effectiveBytes": 58310,
+      "segments": [
+        {
+          "id": "capy-oct1:001",
+          "label": "# The complete system prompt — verbatim (live boot context, 2026-10-01)",
+          "startByte": 0,
+          "endByte": 75,
+          "lineStart": 1,
+          "lineEnd": 2,
+          "sha256": "87b1e91a8edf01ea1c6bec8815fd4e6edcf2c63462ff3c14c7c9e62629d08c87",
+          "action": "reference-only",
+          "reason": "Private reference only: archival transcription heading, not agent policy.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-oct1:002",
+          "label": "# The complete system prompt — verbatim (live boot context, 2026-10-01)",
+          "startByte": 75,
+          "endByte": 196,
+          "lineStart": 3,
+          "lineEnd": 3,
+          "sha256": "05fce01ff763f896dcc8f941205578b6df833ded033e92c6e2feba5ef6e29638",
+          "action": "replace",
+          "reason": "Retune only the foreign identity and coding-only opening persona to truthful general-purpose Opulent.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 121,
+          "replacement": "You are Opulent, a general-purpose professional AI agent for research, analysis, writing, data, software, and operations.",
+          "replacementCategory": "persona",
+          "replacementBytes": 121,
+          "replacementSha256": "8248deaab3c2f5956cc09165ddc70fac5a34978b0b3113eb212f43fad39bd777"
+        },
+        {
+          "id": "capy-oct1:003",
+          "label": "# The complete system prompt — verbatim (live boot context, 2026-10-01)",
+          "startByte": 196,
+          "endByte": 520,
+          "lineStart": 3,
+          "lineEnd": 12,
+          "sha256": "a75365f8b16014fe73e4b9713de259601b5c44a009c3d11e585c3653df38fe7a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 121,
+          "moduleEndByte": 445
+        },
+        {
+          "id": "capy-oct1:004",
+          "label": "# How you work",
+          "startByte": 520,
+          "endByte": 821,
+          "lineStart": 13,
+          "lineEnd": 16,
+          "sha256": "640a8a6e53441a7fd4ae973fd4ab7a875840e5847d0407713994327f92d9417a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 445,
+          "moduleEndByte": 746
+        },
+        {
+          "id": "capy-oct1:005",
+          "label": "## Communication style",
+          "startByte": 821,
+          "endByte": 845,
+          "lineStart": 17,
+          "lineEnd": 18,
+          "sha256": "98919168a5130ada0cd8e5db333d05478e933bfd4d4512769f440c2848175013",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 746,
+          "moduleEndByte": 770
+        },
+        {
+          "id": "capy-oct1:006",
+          "label": "## Communication style",
+          "startByte": 845,
+          "endByte": 898,
+          "lineStart": 19,
+          "lineEnd": 19,
+          "sha256": "1844ad17a954966224811af371fd0d7e8be1d43b91661e91479d0c06c4d9c04a",
+          "action": "replace",
+          "reason": "Small persona-only tone adjustment for non-software professional work.",
+          "compatibility": [
+            "C1"
+          ],
+          "moduleStartByte": 770,
+          "moduleEndByte": 823,
+          "replacement": "Your default tone is that of a sharp senior professional:",
+          "replacementCategory": "persona",
+          "replacementBytes": 57,
+          "replacementSha256": "3468759b5b096b273bc568acbe66bb992f0302139d208ec0725e287f988695cb"
+        },
+        {
+          "id": "capy-oct1:007",
+          "label": "## Communication style",
+          "startByte": 898,
+          "endByte": 1642,
+          "lineStart": 19,
+          "lineEnd": 20,
+          "sha256": "14a1d7ed402219f5a78f41beef14a36600c54c3bd60bd57cfd01fdace3277c4d",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 823,
+          "moduleEndByte": 1567
+        },
+        {
+          "id": "capy-oct1:008",
+          "label": "## Turns and messaging",
+          "startByte": 1642,
+          "endByte": 8908,
+          "lineStart": 21,
+          "lineEnd": 44,
+          "sha256": "fd49254bc56811bb2d1a0bff8463c0709e385dfdad4a9410c43a23a27828b33b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 1567,
+          "moduleEndByte": 8833
+        },
+        {
+          "id": "capy-oct1:009",
+          "label": "### Examples",
+          "startByte": 8908,
+          "endByte": 9872,
+          "lineStart": 45,
+          "lineEnd": 70,
+          "sha256": "b8205fe591be617db487f3d9d1ff5d9e2b278bad36e72e83466ac826d95a583e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 8833,
+          "moduleEndByte": 9797
+        },
+        {
+          "id": "capy-oct1:010",
+          "label": "## Planning",
+          "startByte": 9872,
+          "endByte": 10620,
+          "lineStart": 71,
+          "lineEnd": 76,
+          "sha256": "e3e30a1944ed0e129e585432b4c8df390c340dd5ceb3b2f0c30f752cb6366144",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 9797,
+          "moduleEndByte": 10545
+        },
+        {
+          "id": "capy-oct1:011",
+          "label": "## Task execution",
+          "startByte": 10620,
+          "endByte": 10639,
+          "lineStart": 77,
+          "lineEnd": 78,
+          "sha256": "07e9925da125fd79c89796ad63d537c80cba3380cb82b3f02770ae5b5354e407",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 10545,
+          "moduleEndByte": 10564
+        },
+        {
+          "id": "capy-oct1:012",
+          "label": "## Task execution",
+          "startByte": 10639,
+          "endByte": 10680,
+          "lineStart": 79,
+          "lineEnd": 79,
+          "sha256": "d28361c437940e5a0cf0a80d7cc5ca638fddbe6c70afabc445e519c4f82a22bf",
+          "action": "replace",
+          "reason": "Broaden only the task-execution persona; preserve the rest of the completion instructions.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 10564,
+          "moduleEndByte": 10605,
+          "replacement": "You are a general-purpose professional agent.",
+          "replacementCategory": "persona",
+          "replacementBytes": 45,
+          "replacementSha256": "678e320b817d5d21b4a04fbe470d77be2d0a83b075b320a3c64bc6f1889afdf4"
+        },
+        {
+          "id": "capy-oct1:013",
+          "label": "## Task execution",
+          "startByte": 10680,
+          "endByte": 16255,
+          "lineStart": 79,
+          "lineEnd": 105,
+          "sha256": "162ae8de94c4a4e2ef960ff4285961b7ea0625b57156607babb548c6ffeb1de8",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 10605,
+          "moduleEndByte": 16180
+        },
+        {
+          "id": "capy-oct1:014",
+          "label": "## Task execution",
+          "startByte": 16255,
+          "endByte": 16441,
+          "lineStart": 105,
+          "lineEnd": 105,
+          "sha256": "2ed202d40ccffa218d6d23e67b004841190f06f9e50644b48602fde5989507df",
+          "action": "replace",
+          "reason": "Remove the source-session personal git identity claim; retain every surrounding secret and attribution prohibition.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "replacement": "",
+          "replacementCategory": "identity",
+          "replacementBytes": 0,
+          "replacementSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "id": "capy-oct1:015",
+          "label": "## Task execution",
+          "startByte": 16441,
+          "endByte": 16559,
+          "lineStart": 105,
+          "lineEnd": 106,
+          "sha256": "29a9e1e246d4d5456736f2dc82da3977f9d2912e4cdd92f59823b041c9a36cd5",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C7",
+            "C8"
+          ],
+          "moduleStartByte": 16180,
+          "moduleEndByte": 16298
+        },
+        {
+          "id": "capy-oct1:016",
+          "label": "## Validating your work",
+          "startByte": 16559,
+          "endByte": 17559,
+          "lineStart": 107,
+          "lineEnd": 114,
+          "sha256": "e4b3373a0b985cf1baf38b170b6ca96576ce204e33dfddf54317e5f91529d6f1",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 16298,
+          "moduleEndByte": 17298
+        },
+        {
+          "id": "capy-oct1:017",
+          "label": "## Ambition vs. precision",
+          "startByte": 17559,
+          "endByte": 18805,
+          "lineStart": 115,
+          "lineEnd": 122,
+          "sha256": "f9e4588c5e382aea3df6fec14f0b79b6becdc37ef4b19447e4baa43ae1756d29",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 17298,
+          "moduleEndByte": 18544
+        },
+        {
+          "id": "capy-oct1:018",
+          "label": "## Sharing progress updates",
+          "startByte": 18805,
+          "endByte": 19101,
+          "lineStart": 123,
+          "lineEnd": 126,
+          "sha256": "9525bdecbc74ad5ae9fdbe2546a41f164957febccb91f0983a3f89be65eadf77",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 18544,
+          "moduleEndByte": 18840
+        },
+        {
+          "id": "capy-oct1:019",
+          "label": "## Presenting your work",
+          "startByte": 19101,
+          "endByte": 19126,
+          "lineStart": 127,
+          "lineEnd": 128,
+          "sha256": "6056d4cc96acdffa26b59039dd42e4ecb0618fd95584ea0671c446a420cf79b7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 18840,
+          "moduleEndByte": 18865
+        },
+        {
+          "id": "capy-oct1:020",
+          "label": "## Presenting your work",
+          "startByte": 19126,
+          "endByte": 19205,
+          "lineStart": 129,
+          "lineEnd": 129,
+          "sha256": "d76da954d70be2fab16773a0b0cd541fbf2bd4510b819e10b6b9a7a650db819b",
+          "action": "replace",
+          "reason": "Small persona-only presentation adjustment; all nine style rules remain verbatim.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 18865,
+          "moduleEndByte": 18944,
+          "replacement": "Write in flowing technical prose, the way a sharp senior professional talks in chat",
+          "replacementCategory": "persona",
+          "replacementBytes": 83,
+          "replacementSha256": "9bbb4b898e77ea27d0f0a6249f70f5e320ce98e45691951cf973ebb6e8071b0e"
+        },
+        {
+          "id": "capy-oct1:021",
+          "label": "## Presenting your work",
+          "startByte": 19205,
+          "endByte": 23017,
+          "lineStart": 129,
+          "lineEnd": 144,
+          "sha256": "e40c9b04fd4504bc283a386612d3911478f4991d06315f4db41f77c1b626ea4a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 18944,
+          "moduleEndByte": 22756
+        },
+        {
+          "id": "capy-oct1:022",
+          "label": "### Examples",
+          "startByte": 23017,
+          "endByte": 23877,
+          "lineStart": 145,
+          "lineEnd": 152,
+          "sha256": "b9af3cd22f5bba73d0885e62b00fb0335c63a5ca227068b18c927fca767f7f14",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 22756,
+          "moduleEndByte": 23616
+        },
+        {
+          "id": "capy-oct1:023",
+          "label": "# Platform",
+          "startByte": 23877,
+          "endByte": 24172,
+          "lineStart": 153,
+          "lineEnd": 156,
+          "sha256": "907cb27764d465d5daa23bc461fddce8632f3c7fd3afbc9f0580910d3dd73e18",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 23616,
+          "moduleEndByte": 23911
+        },
+        {
+          "id": "capy-oct1:024",
+          "label": "## Machines",
+          "startByte": 24172,
+          "endByte": 26481,
+          "lineStart": 157,
+          "lineEnd": 167,
+          "sha256": "188e462ab5cb85ffaf2170901e4f50784316fd44ab4dab517b44a9d019f1ec3f",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 23911,
+          "moduleEndByte": 26220
+        },
+        {
+          "id": "capy-oct1:025",
+          "label": "## Tasks",
+          "startByte": 26481,
+          "endByte": 31101,
+          "lineStart": 168,
+          "lineEnd": 180,
+          "sha256": "332e6fc537f69f155c0aa3836c06389797b2e3ddb7a691842a8f9688ca63e99b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 26220,
+          "moduleEndByte": 30840
+        },
+        {
+          "id": "capy-oct1:026",
+          "label": "## Threads",
+          "startByte": 31101,
+          "endByte": 32451,
+          "lineStart": 181,
+          "lineEnd": 190,
+          "sha256": "6d9e5ea4b7686bba0a53504fafb242cafd0aa6a2ce04ce5694ffd3a302180f96",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 30840,
+          "moduleEndByte": 32190
+        },
+        {
+          "id": "capy-oct1:027",
+          "label": "## App navigation",
+          "startByte": 32451,
+          "endByte": 33526,
+          "lineStart": 191,
+          "lineEnd": 204,
+          "sha256": "78fbef51bd78ea6b151414077a3e7742bf223820b2c59b48b645048afb4c78ca",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 32190,
+          "moduleEndByte": 33265
+        },
+        {
+          "id": "capy-oct1:028",
+          "label": "## Git and PRs",
+          "startByte": 33526,
+          "endByte": 35391,
+          "lineStart": 205,
+          "lineEnd": 211,
+          "sha256": "5963b0540a430f646c574815d7d056133015cfcc7592cea50f0b0ef52c796493",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 33265,
+          "moduleEndByte": 35130
+        },
+        {
+          "id": "capy-oct1:029",
+          "label": "## Git and PRs",
+          "startByte": 35391,
+          "endByte": 35466,
+          "lineStart": 211,
+          "lineEnd": 211,
+          "sha256": "8fa7336fc7c87e9e422281b3a22d0efa010bc86b60d44ecbbec46fb7f99da62b",
+          "action": "replace",
+          "reason": "Replace only the source personal PR-author claim with current authorization; no account identity is assumed.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8",
+            "C9"
+          ],
+          "replacement": "Neither is forbidden when authorized by current project instructions,",
+          "replacementCategory": "identity",
+          "replacementBytes": 69,
+          "replacementSha256": "6537d4de0567165ec55d348e960b64ecc7ec96c5abf1d18f7cbba0fcb8408ccf"
+        },
+        {
+          "id": "capy-oct1:030",
+          "label": "## Git and PRs",
+          "startByte": 35466,
+          "endByte": 42963,
+          "lineStart": 211,
+          "lineEnd": 232,
+          "sha256": "d872cb3dff5747f4ff8cbf599507fae83b67dda3a7fa1e7b7a6cd627023e39b1",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 35130,
+          "moduleEndByte": 42627
+        },
+        {
+          "id": "capy-oct1:031",
+          "label": "### Automatic review policy",
+          "startByte": 42963,
+          "endByte": 43486,
+          "lineStart": 233,
+          "lineEnd": 238,
+          "sha256": "17a7edd1bbe9fd82792daeb774640ac0b9d6964a30e3fc746947ca35b874bd7d",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 42627,
+          "moduleEndByte": 43150
+        },
+        {
+          "id": "capy-oct1:032",
+          "label": "### Automatic review policy",
+          "startByte": 43486,
+          "endByte": 43601,
+          "lineStart": 239,
+          "lineEnd": 242,
+          "sha256": "4428a1ee0d82b84873b4d7dffa9127e989277f1a74e550ac3ad263ca0679b5f4",
+          "action": "reference-only",
+          "reason": "Private reference only: frozen source-session repository review configuration is not current.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-oct1:033",
+          "label": "## Review context",
+          "startByte": 43601,
+          "endByte": 44067,
+          "lineStart": 243,
+          "lineEnd": 246,
+          "sha256": "aa2e403a203aa09c578ff5ad86d5311c67c5b2853835c9f955e0e40fc22c3151",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 43150,
+          "moduleEndByte": 43616
+        },
+        {
+          "id": "capy-oct1:034",
+          "label": "## Automations",
+          "startByte": 44067,
+          "endByte": 46017,
+          "lineStart": 247,
+          "lineEnd": 255,
+          "sha256": "c3d17b91d2cc62a020292cb4fe08b9f60bf1137c641c146f8de1edd643da5211",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 43616,
+          "moduleEndByte": 45566
+        },
+        {
+          "id": "capy-oct1:035",
+          "label": "## Dev environment",
+          "startByte": 46017,
+          "endByte": 47725,
+          "lineStart": 256,
+          "lineEnd": 264,
+          "sha256": "3e990424ef9bc5cc2386a4a7f6af72a18b629c493313d9f1c2f4be2c768b4905",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 45566,
+          "moduleEndByte": 47274
+        },
+        {
+          "id": "capy-oct1:036",
+          "label": "## Desktop and images",
+          "startByte": 47725,
+          "endByte": 49309,
+          "lineStart": 265,
+          "lineEnd": 271,
+          "sha256": "9fac8a03d761b81c47630c144690329d8d42b7279a7e562915c36e05045f74c3",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 47274,
+          "moduleEndByte": 48858
+        },
+        {
+          "id": "capy-oct1:037",
+          "label": "## Reporting issues",
+          "startByte": 49309,
+          "endByte": 49701,
+          "lineStart": 272,
+          "lineEnd": 276,
+          "sha256": "6362cbf207acfb0ffdf180838a2e20f772c5a9592c9f434b4b4e6a056d9f6fcf",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 48858,
+          "moduleEndByte": 49250
+        },
+        {
+          "id": "capy-oct1:038",
+          "label": "## Web output",
+          "startByte": 49701,
+          "endByte": 50275,
+          "lineStart": 277,
+          "lineEnd": 284,
+          "sha256": "bea26075e3a6c7f0897a74681af6d507450c8e3b8ed2b97e34ab6730127aba41",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 49250,
+          "moduleEndByte": 49824
+        },
+        {
+          "id": "capy-oct1:039",
+          "label": "# Capy Memory",
+          "startByte": 50275,
+          "endByte": 50290,
+          "lineStart": 285,
+          "lineEnd": 286,
+          "sha256": "ea8a092212f6f5dd6afb7f3d19623993e333fcc9ff265eedd7f4332c07fcacbb",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 49824,
+          "moduleEndByte": 49839
+        },
+        {
+          "id": "capy-oct1:040",
+          "label": "# Capy Memory",
+          "startByte": 50290,
+          "endByte": 50516,
+          "lineStart": 287,
+          "lineEnd": 291,
+          "sha256": "6e37d4650f749a89df788c895dc29183062cef8a91513e57ec555885120701c3",
+          "action": "reference-only",
+          "reason": "Private reference only: original personal memory directory identities; generic memory discipline is retained conditionally.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C9"
+          ]
+        },
+        {
+          "id": "capy-oct1:041",
+          "label": "# Capy Memory",
+          "startByte": 50516,
+          "endByte": 56488,
+          "lineStart": 292,
+          "lineEnd": 309,
+          "sha256": "8e4442e1c5898540557b59741294f39d54af230ca721cf0660d23b6acb7ef0cf",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 49839,
+          "moduleEndByte": 55811
+        },
+        {
+          "id": "capy-oct1:042",
+          "label": "# Capy Memory",
+          "startByte": 56488,
+          "endByte": 58829,
+          "lineStart": 310,
+          "lineEnd": 339,
+          "sha256": "42d1cf6267ce060e0237340f1edf70eb500e6e02bf1238760e9a3ca23038ab23",
+          "action": "reference-only",
+          "reason": "Private reference only: original hosted skill paths and inventory are not an installed Opulent registry.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-oct1:043",
+          "label": "# Capy Memory",
+          "startByte": 58829,
+          "endByte": 58850,
+          "lineStart": 340,
+          "lineEnd": 341,
+          "sha256": "16e6969d23cf5d3b97c3285e4fde4a8f02ec2634855891610995e96872345cd0",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C5"
+          ],
+          "moduleStartByte": 55811,
+          "moduleEndByte": 55832
+        },
+        {
+          "id": "capy-oct1:044",
+          "label": "# Capy Memory",
+          "startByte": 58850,
+          "endByte": 73813,
+          "lineStart": 342,
+          "lineEnd": 428,
+          "sha256": "ea298cd354f4185f57fd2c0509c345ec8abbac7bc09e2abee2a133a023dbce5f",
+          "action": "reference-only",
+          "reason": "Private reference only: foreign raw codemode tool schemas and provider listings, not native runtime grants.",
+          "compatibility": []
+        },
+        {
+          "id": "capy-oct1:045",
+          "label": "# Capy Memory",
+          "startByte": 73813,
+          "endByte": 76210,
+          "lineStart": 429,
+          "lineEnd": 436,
+          "sha256": "325b05fba0d09e66d4918e33f2e1888688a7eb442d22087797f12e5b5349cd4e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 55832,
+          "moduleEndByte": 58229
+        }
+      ],
+      "label": "Capy supplied complete boot policy (2026-10-01)"
+    },
+    {
+      "id": "devin-initial",
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/system-prompt.md"
+      },
+      "rawSha256": "147f3d7a0cc7ff08b446fe7be62cbc61a0a3a76d89f4465de253a82a4c15bee4",
+      "rawLines": 511,
+      "modulePath": "modules/devin-initial.md",
+      "moduleBytes": 57923,
+      "moduleSha256": "c551ce8f21c8b3df4c175061d03138d37cedb9a6cdf400f74b85608461bdd032",
+      "effectiveSha256": "3c964f8cb801a9dbe1235c519230b724cc4a4cfa811e5329fb39da69f6ccfe96",
+      "rawBytes": 64555,
+      "retainedBytes": 57540,
+      "replacedOriginalBytes": 383,
+      "referenceOnlyBytes": 6632,
+      "replacementBytes": 408,
+      "effectiveBytes": 57948,
+      "segments": [
+        {
+          "id": "devin-initial:001",
+          "label": "Opening instructions",
+          "startByte": 0,
+          "endByte": 353,
+          "lineStart": 1,
+          "lineEnd": 6,
+          "sha256": "0b33824429a7935421597b44faeeb2d88610f883256b6311ec3e317e4d11fb32",
+          "action": "reference-only",
+          "reason": "Private reference only: original session identity and transcription provenance wrapper.",
+          "compatibility": []
+        },
+        {
+          "id": "devin-initial:002",
+          "label": "Opening instructions",
+          "startByte": 353,
+          "endByte": 597,
+          "lineStart": 7,
+          "lineEnd": 7,
+          "sha256": "3ea35b43ee7a2c29705f51953e6df29b990f79b2b6ec5c7f07ce7a7ec2ae6982",
+          "action": "replace",
+          "reason": "Replace only the foreign identity/coding-first persona and false model identity instruction with truthful general-purpose Opulent.",
+          "compatibility": [
+            "C1",
+            "C3"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 244,
+          "replacement": "You are Opulent, a general-purpose professional AI agent for research, analysis, writing, data, software, and operations. Use only the machine and tools actually provided to this session. If asked which model you are, identify Opulent and report only the configured model identity you can verify.",
+          "replacementCategory": "persona",
+          "replacementBytes": 296,
+          "replacementSha256": "3d2eba7e1eb477a9bcc6b81798cef97dd4f9d8108f78eaba67e100b93aa24b87"
+        },
+        {
+          "id": "devin-initial:003",
+          "label": "Opening instructions",
+          "startByte": 597,
+          "endByte": 727,
+          "lineStart": 7,
+          "lineEnd": 10,
+          "sha256": "f22d4f2bbef2547db9fc2830e2f8f34cdc42c0bbe4d4defac118d716105fecac",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C3"
+          ],
+          "moduleStartByte": 244,
+          "moduleEndByte": 374
+        },
+        {
+          "id": "devin-initial:004",
+          "label": "## Core Principles",
+          "startByte": 727,
+          "endByte": 747,
+          "lineStart": 11,
+          "lineEnd": 12,
+          "sha256": "afc2850924395cf7954e1cb41afe084e6adedf37bd3e666041ce572eacfcaf71",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 374,
+          "moduleEndByte": 394
+        },
+        {
+          "id": "devin-initial:005",
+          "label": "### Persistence, Thoroughness, & Independence",
+          "startByte": 747,
+          "endByte": 1970,
+          "lineStart": 13,
+          "lineEnd": 17,
+          "sha256": "68f0bb5ef11e206df35719b357fc0667331767c2f0d9618f6b98fa0fa4bb46d2",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 394,
+          "moduleEndByte": 1617
+        },
+        {
+          "id": "devin-initial:006",
+          "label": "### Escalate When User-Stated Preconditions Are False",
+          "startByte": 1970,
+          "endByte": 2332,
+          "lineStart": 18,
+          "lineEnd": 20,
+          "sha256": "841f4093163b0d418f96f3b85e484cc4a80ff77b3cfc7de3b1736a49460a5120",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 1617,
+          "moduleEndByte": 1979
+        },
+        {
+          "id": "devin-initial:007",
+          "label": "### Helpfulness and User Interaction",
+          "startByte": 2332,
+          "endByte": 2730,
+          "lineStart": 21,
+          "lineEnd": 23,
+          "sha256": "631841dbdf5d8f097cd222bd6274cb3ec17e4262693276df5a501179ef9103f7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 1979,
+          "moduleEndByte": 2377
+        },
+        {
+          "id": "devin-initial:008",
+          "label": "### Authentication",
+          "startByte": 2730,
+          "endByte": 2906,
+          "lineStart": 24,
+          "lineEnd": 26,
+          "sha256": "dd7f267dbd526e72762734437ab5a5c7fbb74452e1ea1e21cc4acd21a8914fa7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 2377,
+          "moduleEndByte": 2553
+        },
+        {
+          "id": "devin-initial:009",
+          "label": "## Offer Multiple Options for Secrets",
+          "startByte": 2906,
+          "endByte": 4005,
+          "lineStart": 27,
+          "lineEnd": 36,
+          "sha256": "9801d901a64a4fe24dc451e63d79bfbcdf81cf838de2800fa283757463a9b1b0",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C4",
+            "C9"
+          ],
+          "moduleStartByte": 2553,
+          "moduleEndByte": 3652
+        },
+        {
+          "id": "devin-initial:010",
+          "label": "### Parallel Tool Calling",
+          "startByte": 4005,
+          "endByte": 4732,
+          "lineStart": 37,
+          "lineEnd": 39,
+          "sha256": "a66793ad331a5202ff7c6c304b77492060eaaf971bfc8e501f25549c7c742952",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 3652,
+          "moduleEndByte": 4379
+        },
+        {
+          "id": "devin-initial:011",
+          "label": "### Communication Style (also see example in message_user tool)",
+          "startByte": 4732,
+          "endByte": 7008,
+          "lineStart": 40,
+          "lineEnd": 54,
+          "sha256": "1a4bcac830e49cd5139a0eecaf6b6828ea93c5d463bf6681aa77c6904b328adb",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 4379,
+          "moduleEndByte": 6655
+        },
+        {
+          "id": "devin-initial:012",
+          "label": "### Reporting Operational Blockers",
+          "startByte": 7008,
+          "endByte": 8485,
+          "lineStart": 55,
+          "lineEnd": 62,
+          "sha256": "b2605dec3826c3cf7c2887b67b31c78c68703db77f5262bfbf7793e232a0310a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 6655,
+          "moduleEndByte": 8132
+        },
+        {
+          "id": "devin-initial:013",
+          "label": "# Task Management",
+          "startByte": 8485,
+          "endByte": 9197,
+          "lineStart": 63,
+          "lineEnd": 67,
+          "sha256": "b14a139b0ba9da11fe5f87ba705e99547bd72e1d4034bf86d6096f496b859935",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "moduleStartByte": 8132,
+          "moduleEndByte": 8844
+        },
+        {
+          "id": "devin-initial:014",
+          "label": "### Skills",
+          "startByte": 9197,
+          "endByte": 10351,
+          "lineStart": 68,
+          "lineEnd": 75,
+          "sha256": "fbf9ebcb770f14697769bdc008f3093180fc16c8b46b068c60d57ca1b93afbeb",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 8844,
+          "moduleEndByte": 9998
+        },
+        {
+          "id": "devin-initial:015",
+          "label": "### Plugins",
+          "startByte": 10351,
+          "endByte": 10797,
+          "lineStart": 76,
+          "lineEnd": 78,
+          "sha256": "ca760e86c475c0de13270f598e63323ee01116109e7c6b3001ff84922f663808",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 9998,
+          "moduleEndByte": 10444
+        },
+        {
+          "id": "devin-initial:016",
+          "label": "### Rules",
+          "startByte": 10797,
+          "endByte": 11000,
+          "lineStart": 79,
+          "lineEnd": 81,
+          "sha256": "b1a85b35bfe5ae3385edf6ef794d8b097edb1587e045dab5058d269386e46c8b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 10444,
+          "moduleEndByte": 10647
+        },
+        {
+          "id": "devin-initial:017",
+          "label": "### Repo Setup",
+          "startByte": 11000,
+          "endByte": 12368,
+          "lineStart": 82,
+          "lineEnd": 91,
+          "sha256": "cff0285faad9ee871de713a41571a51e4d4c74f6e44f797ea7cec4e8db9b27de",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8"
+          ],
+          "moduleStartByte": 10647,
+          "moduleEndByte": 12015
+        },
+        {
+          "id": "devin-initial:018",
+          "label": "### Doing tasks",
+          "startByte": 12368,
+          "endByte": 12384,
+          "lineStart": 92,
+          "lineEnd": 92,
+          "sha256": "09d4c45a8e94f0808aee57e8983f8274a321e3d69c4015345f46a07b9a7c5e84",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8"
+          ],
+          "moduleStartByte": 12015,
+          "moduleEndByte": 12031
+        },
+        {
+          "id": "devin-initial:019",
+          "label": "### Doing tasks",
+          "startByte": 12384,
+          "endByte": 12523,
+          "lineStart": 93,
+          "lineEnd": 93,
+          "sha256": "4a54ac6b299cdac5cc9e87eaf39d2b39ef16ca19d0392f2e7f5cfb4b1f6d43e4",
+          "action": "replace",
+          "reason": "Broaden only the task-section persona; all recommended steps remain verbatim and C8 explicitly resolves the testing conflict.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8"
+          ],
+          "moduleStartByte": 12031,
+          "moduleEndByte": 12170,
+          "replacement": "The user may request research, analysis, writing, data, software engineering, and operations. Recommended steps:",
+          "replacementCategory": "persona",
+          "replacementBytes": 112,
+          "replacementSha256": "41dd9a797d3403e6219e61eb28f43f2f86ea99ca175c1d50b7d7e7f62284eede"
+        },
+        {
+          "id": "devin-initial:020",
+          "label": "### Doing tasks",
+          "startByte": 12523,
+          "endByte": 13761,
+          "lineStart": 93,
+          "lineEnd": 101,
+          "sha256": "b1cae93a91f0cbe45e2a6ae4c5685f0177852e5291d2202d6414b6bc5557f024",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C6",
+            "C8"
+          ],
+          "moduleStartByte": 12170,
+          "moduleEndByte": 13408
+        },
+        {
+          "id": "devin-initial:021",
+          "label": "#### Task Types",
+          "startByte": 13761,
+          "endByte": 14078,
+          "lineStart": 102,
+          "lineEnd": 106,
+          "sha256": "570ab6c5597b5479ab12c08d6b26a69c348d23a17830432ecca3d72d2aeafc6c",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 13408,
+          "moduleEndByte": 13725
+        },
+        {
+          "id": "devin-initial:022",
+          "label": "## PR Creation",
+          "startByte": 14078,
+          "endByte": 18542,
+          "lineStart": 107,
+          "lineEnd": 129,
+          "sha256": "f948df070e7f0f5db6904dd953e8e7e68f1cc32d70a21456ce99d05f49fcc920",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 13725,
+          "moduleEndByte": 18189
+        },
+        {
+          "id": "devin-initial:023",
+          "label": "### Code Quality",
+          "startByte": 18542,
+          "endByte": 20299,
+          "lineStart": 130,
+          "lineEnd": 141,
+          "sha256": "0418b65102188657dd98daef5833569c7f4bbe3b229fbf1a49f7c17ddb04d8da",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 18189,
+          "moduleEndByte": 19946
+        },
+        {
+          "id": "devin-initial:024",
+          "label": "### Code Comments",
+          "startByte": 20299,
+          "endByte": 21101,
+          "lineStart": 142,
+          "lineEnd": 147,
+          "sha256": "269af32be4f76e4bd21cbf5708f245b5f2aaa7f373e0bd31cac3b604be91186a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 19946,
+          "moduleEndByte": 20748
+        },
+        {
+          "id": "devin-initial:025",
+          "label": "### Long-Horizon Task Management",
+          "startByte": 21101,
+          "endByte": 21288,
+          "lineStart": 148,
+          "lineEnd": 150,
+          "sha256": "828f835de54537c0af30945ae43e9002b15999a8bb8bfbfa814c8c548e2da8cc",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 20748,
+          "moduleEndByte": 20935
+        },
+        {
+          "id": "devin-initial:026",
+          "label": "### Effort & Time Estimates",
+          "startByte": 21288,
+          "endByte": 21701,
+          "lineStart": 151,
+          "lineEnd": 153,
+          "sha256": "a9bc1db1778225037fd4087c0b984ffc6e96a4b913b3f6532365053f3ae3d779",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 20935,
+          "moduleEndByte": 21348
+        },
+        {
+          "id": "devin-initial:027",
+          "label": "### Professional Standards",
+          "startByte": 21701,
+          "endByte": 21952,
+          "lineStart": 154,
+          "lineEnd": 156,
+          "sha256": "43cecb845cd9e02067e190d3f124668419782d2ada538927ad4cd282e2c17124",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 21348,
+          "moduleEndByte": 21599
+        },
+        {
+          "id": "devin-initial:028",
+          "label": "### Calibrated Claims (Provenance)",
+          "startByte": 21952,
+          "endByte": 22407,
+          "lineStart": 157,
+          "lineEnd": 159,
+          "sha256": "1351ccc72f1df6da919eaae304db8bbb94e1c695f3d3e2c6d312f20c82b0f57f",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 21599,
+          "moduleEndByte": 22054
+        },
+        {
+          "id": "devin-initial:029",
+          "label": "### Coding Practices",
+          "startByte": 22407,
+          "endByte": 22908,
+          "lineStart": 160,
+          "lineEnd": 166,
+          "sha256": "055aa2a90c62969fe5f5ae13e4a841a03afa333f867221ee2f093c7ba7667d0e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 22054,
+          "moduleEndByte": 22555
+        },
+        {
+          "id": "devin-initial:030",
+          "label": "### Git guidelines",
+          "startByte": 22908,
+          "endByte": 24884,
+          "lineStart": 167,
+          "lineEnd": 177,
+          "sha256": "9897cbda35fe82c663f06ac1a1602456bc3b3b33f9fe0c3dc454efc633fa41ce",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 22555,
+          "moduleEndByte": 24531
+        },
+        {
+          "id": "devin-initial:031",
+          "label": "## Important Guidelines",
+          "startByte": 24884,
+          "endByte": 24909,
+          "lineStart": 178,
+          "lineEnd": 179,
+          "sha256": "72411ca5d8accc79d8f091b9d1e196699b5e3d9f0a9f3f4428f3a038cfb0606e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 24531,
+          "moduleEndByte": 24556
+        },
+        {
+          "id": "devin-initial:032",
+          "label": "### File References",
+          "startByte": 24909,
+          "endByte": 25627,
+          "lineStart": 180,
+          "lineEnd": 182,
+          "sha256": "cac8c1361a6a0408bdbc63ed1b0707045206e70867b5920c23b47d9fb8a9e901",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 24556,
+          "moduleEndByte": 25274
+        },
+        {
+          "id": "devin-initial:033",
+          "label": "### Repository Locations",
+          "startByte": 25627,
+          "endByte": 25915,
+          "lineStart": 183,
+          "lineEnd": 185,
+          "sha256": "508c6a556fe82d3bf5ab33a6704c14116183b836aa060f8250368e899ff47c4e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 25274,
+          "moduleEndByte": 25562
+        },
+        {
+          "id": "devin-initial:034",
+          "label": "### Filesystem persistence",
+          "startByte": 25915,
+          "endByte": 26231,
+          "lineStart": 186,
+          "lineEnd": 188,
+          "sha256": "f94fde6b6a2b46bc0a061dc7884f023100c162d56e2174a2d0be30c8a1c8f8ed",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 25562,
+          "moduleEndByte": 25878
+        },
+        {
+          "id": "devin-initial:035",
+          "label": "### Git Authentication",
+          "startByte": 26231,
+          "endByte": 27133,
+          "lineStart": 189,
+          "lineEnd": 195,
+          "sha256": "2a67cb3a8eac83a5aec667600c4ea6f2ede4eb017cf9e4e469dc67dabd283fef",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 25878,
+          "moduleEndByte": 26780
+        },
+        {
+          "id": "devin-initial:036",
+          "label": "### Help Requests",
+          "startByte": 27133,
+          "endByte": 27644,
+          "lineStart": 196,
+          "lineEnd": 200,
+          "sha256": "8b742953411831a7f3646f5fc4a2509bc4f4c78a8c9b26a7f05d4440e8a7509e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "moduleStartByte": 26780,
+          "moduleEndByte": 27291
+        },
+        {
+          "id": "devin-initial:037",
+          "label": "### Security Policy",
+          "startByte": 27644,
+          "endByte": 28010,
+          "lineStart": 201,
+          "lineEnd": 207,
+          "sha256": "09da3f9bb22c37bc19d0dca9aa5a852e47a27cc323d12fc340be34f4a1e6a35d",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 27291,
+          "moduleEndByte": 27657
+        },
+        {
+          "id": "devin-initial:038",
+          "label": "## Tool Usage",
+          "startByte": 28010,
+          "endByte": 28463,
+          "lineStart": 208,
+          "lineEnd": 212,
+          "sha256": "83ce9afb8748dbb83460a1924ace7cf275acdf7dfcca5e9031c1ee60e2aa51b9",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 27657,
+          "moduleEndByte": 28110
+        },
+        {
+          "id": "devin-initial:039",
+          "label": "### exec Tool Use",
+          "startByte": 28463,
+          "endByte": 29400,
+          "lineStart": 213,
+          "lineEnd": 218,
+          "sha256": "1ef500014b1550e2e73fcac58c1f84ad6efae6fc48961ba255a927983445b399",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 28110,
+          "moduleEndByte": 29047
+        },
+        {
+          "id": "devin-initial:040",
+          "label": "## File tool tips",
+          "startByte": 29400,
+          "endByte": 29887,
+          "lineStart": 219,
+          "lineEnd": 225,
+          "sha256": "8ecd256dbf0b36a3ec97b77bc82b221708674dfa91b42e7d13639379a2a0c9a7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 29047,
+          "moduleEndByte": 29534
+        },
+        {
+          "id": "devin-initial:041",
+          "label": "## System Messages",
+          "startByte": 29887,
+          "endByte": 30650,
+          "lineStart": 226,
+          "lineEnd": 231,
+          "sha256": "a84d061ea3966f3e9d520cf6b48d49f1626a25fc7ca7d00f91da5b18fd7d581b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 29534,
+          "moduleEndByte": 30297
+        },
+        {
+          "id": "devin-initial:042",
+          "label": "## Pop Quizzes",
+          "startByte": 30650,
+          "endByte": 31000,
+          "lineStart": 232,
+          "lineEnd": 234,
+          "sha256": "89798ccaef60f8776c0d4eabef22ee5de231a4c183771876fc99d7f02f48cb21",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 30297,
+          "moduleEndByte": 30647
+        },
+        {
+          "id": "devin-initial:043",
+          "label": "## Pop Quizzes",
+          "startByte": 31000,
+          "endByte": 31073,
+          "lineStart": 235,
+          "lineEnd": 236,
+          "sha256": "cfaabb29a3e4d7d0f489e3a3a2bfb4321d9f6e97165a171866f75d11c978ccab",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 30647,
+          "moduleEndByte": 30720
+        },
+        {
+          "id": "devin-initial:044",
+          "label": "## Session-Specific Context",
+          "startByte": 31073,
+          "endByte": 31102,
+          "lineStart": 237,
+          "lineEnd": 238,
+          "sha256": "f786ce99fa88814afff6c69f788f9f21a498e83396b7e99bb5414a48afbde5fe",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 30720,
+          "moduleEndByte": 30749
+        },
+        {
+          "id": "devin-initial:045",
+          "label": "### Communication Mode",
+          "startByte": 31102,
+          "endByte": 34662,
+          "lineStart": 239,
+          "lineEnd": 250,
+          "sha256": "912346934abcc4d168bc2d46e95def68aa65f5dce8d04cdb84f81c5a322b3779",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C8"
+          ],
+          "moduleStartByte": 30749,
+          "moduleEndByte": 34309
+        },
+        {
+          "id": "devin-initial:046",
+          "label": "### Communication Mode",
+          "startByte": 34662,
+          "endByte": 34663,
+          "lineStart": 251,
+          "lineEnd": 251,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 34309,
+          "moduleEndByte": 34310
+        },
+        {
+          "id": "devin-initial:047",
+          "label": "### Testing",
+          "startByte": 34663,
+          "endByte": 35659,
+          "lineStart": 252,
+          "lineEnd": 256,
+          "sha256": "cb38963efb3cb1474afa7ff903d788e579b9efbae626942a6e8e3dcac2974d90",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 34310,
+          "moduleEndByte": 35306
+        },
+        {
+          "id": "devin-initial:048",
+          "label": "### Knowledge",
+          "startByte": 35659,
+          "endByte": 36034,
+          "lineStart": 257,
+          "lineEnd": 262,
+          "sha256": "ddfb23cd06d34fa92a212f8b4317f2778cb6716a1c0acca13ccc8fa5cca88f86",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 35306,
+          "moduleEndByte": 35681
+        },
+        {
+          "id": "devin-initial:049",
+          "label": "### Repo-Scoped Secrets",
+          "startByte": 36034,
+          "endByte": 36440,
+          "lineStart": 263,
+          "lineEnd": 265,
+          "sha256": "be429e370dc5ea7c01cb338d445a5ba2f11d4f1986b415be83828d0308c6d171",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 35681,
+          "moduleEndByte": 36087
+        },
+        {
+          "id": "devin-initial:050",
+          "label": "### Environment Configuration",
+          "startByte": 36440,
+          "endByte": 38552,
+          "lineStart": 266,
+          "lineEnd": 272,
+          "sha256": "f8f7d306b10d493dcc2a2ef0a6323d24c3c2992bfcd642f604a7cd252e4ea4b0",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C6",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 36087,
+          "moduleEndByte": 38199
+        },
+        {
+          "id": "devin-initial:051",
+          "label": "### Computer Use",
+          "startByte": 38552,
+          "endByte": 42384,
+          "lineStart": 273,
+          "lineEnd": 296,
+          "sha256": "c7750347d1a8bc7d1fba5efd15f4d7cd4558b734e1731dcf8fa3f0ed750f3930",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 38199,
+          "moduleEndByte": 42031
+        },
+        {
+          "id": "devin-initial:052",
+          "label": "### Screenshots for Users",
+          "startByte": 42384,
+          "endByte": 42931,
+          "lineStart": 297,
+          "lineEnd": 300,
+          "sha256": "e59f9b9bfc86967158cdb51a15b5b59eda8679522d1465435af10602449141ad",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 42031,
+          "moduleEndByte": 42578
+        },
+        {
+          "id": "devin-initial:053",
+          "label": "### Screen Recording",
+          "startByte": 42931,
+          "endByte": 45969,
+          "lineStart": 301,
+          "lineEnd": 317,
+          "sha256": "e8b1b2ab34216fd815b23d5e54dd74767d4f2a96082bc39f9155939aec36b0f4",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 42578,
+          "moduleEndByte": 45616
+        },
+        {
+          "id": "devin-initial:054",
+          "label": "### Live Desktop",
+          "startByte": 45969,
+          "endByte": 46688,
+          "lineStart": 318,
+          "lineEnd": 320,
+          "sha256": "8da9c890d009bb6026f5d3e2a80df05977a8cb8ff8e1aeea163eb4a7879fa473",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 45616,
+          "moduleEndByte": 46335
+        },
+        {
+          "id": "devin-initial:055",
+          "label": "### Scripted Browser Use via Playwright",
+          "startByte": 46688,
+          "endByte": 47303,
+          "lineStart": 321,
+          "lineEnd": 324,
+          "sha256": "0fa02cbf38885b64c632bcd96b515fded9fcfd76e78ac35d539914230bac1603",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 46335,
+          "moduleEndByte": 46950
+        },
+        {
+          "id": "devin-initial:056",
+          "label": "### MCP Integrations",
+          "startByte": 47303,
+          "endByte": 47325,
+          "lineStart": 325,
+          "lineEnd": 326,
+          "sha256": "5fafc748a089b935fc683695725f1ed3cd264e16b4a6e7d8a2168dfe9c2ba543",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 46950,
+          "moduleEndByte": 46972
+        },
+        {
+          "id": "devin-initial:057",
+          "label": "### MCP Integrations",
+          "startByte": 47325,
+          "endByte": 47789,
+          "lineStart": 327,
+          "lineEnd": 331,
+          "sha256": "526d512c30ee38bc4bb52f1b76a37be339b8139d5a287e5a3ad25926ce976ad8",
+          "action": "reference-only",
+          "reason": "Private reference only: original connected-provider inventory and descriptions, not working Opulent connections.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ]
+        },
+        {
+          "id": "devin-initial:058",
+          "label": "### MCP Integrations",
+          "startByte": 47789,
+          "endByte": 48181,
+          "lineStart": 332,
+          "lineEnd": 336,
+          "sha256": "134e6e68b81f61e896aa8c09dd65b3c8f2bfbb25b3167101d150a3925a03e103",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 46972,
+          "moduleEndByte": 47364
+        },
+        {
+          "id": "devin-initial:059",
+          "label": "### Using MCP Integrations for Debugging",
+          "startByte": 48181,
+          "endByte": 48446,
+          "lineStart": 337,
+          "lineEnd": 339,
+          "sha256": "e4509077dec4f846e249603894c2f58577d86ef74f8a976b6eb0dda8736171de",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 47364,
+          "moduleEndByte": 47629
+        },
+        {
+          "id": "devin-initial:060",
+          "label": "### Prefer CLI and MCP Tools Over the Browser",
+          "startByte": 48446,
+          "endByte": 49149,
+          "lineStart": 340,
+          "lineEnd": 343,
+          "sha256": "58cbe2f6580b0dd3f93039f979b5cdd7e99d7658e42c4c216620956354770ffe",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 47629,
+          "moduleEndByte": 48332
+        },
+        {
+          "id": "devin-initial:061",
+          "label": "### Devin MCP",
+          "startByte": 49149,
+          "endByte": 51670,
+          "lineStart": 344,
+          "lineEnd": 362,
+          "sha256": "5e3dc8142fdeb89b0834d93f018b6f702b611b89c5d29ed8d9128929b298aad6",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 48332,
+          "moduleEndByte": 50853
+        },
+        {
+          "id": "devin-initial:062",
+          "label": "### Devin Documentation",
+          "startByte": 51670,
+          "endByte": 52030,
+          "lineStart": 363,
+          "lineEnd": 366,
+          "sha256": "b297964be867185dafcc4f2d7193f2c7cf64fc209f2b54fcb5bffac10c3aa152",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 50853,
+          "moduleEndByte": 51213
+        },
+        {
+          "id": "devin-initial:063",
+          "label": "### Linear Integration",
+          "startByte": 52030,
+          "endByte": 52505,
+          "lineStart": 367,
+          "lineEnd": 373,
+          "sha256": "d73626b73060f2ad9919de31e7d16a49c7f91efacd9366cd4c80638e33c0cae7",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 51213,
+          "moduleEndByte": 51688
+        },
+        {
+          "id": "devin-initial:064",
+          "label": "### Important Notes",
+          "startByte": 52505,
+          "endByte": 52696,
+          "lineStart": 374,
+          "lineEnd": 375,
+          "sha256": "26c22b782516e63f37036f9a26a959b4542d7d41d393d11743e5e231e98bbb12",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 51688,
+          "moduleEndByte": 51879
+        },
+        {
+          "id": "devin-initial:065",
+          "label": "### Important Notes",
+          "startByte": 52696,
+          "endByte": 52861,
+          "lineStart": 376,
+          "lineEnd": 376,
+          "sha256": "db8cb5b3f97b34015452a28f23c858af3c9f0b570afa744c284194e1716fe1c5",
+          "action": "reference-only",
+          "reason": "Private reference only: original personal Linear identity, not the current requester.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ]
+        },
+        {
+          "id": "devin-initial:066",
+          "label": "### Important Notes",
+          "startByte": 52861,
+          "endByte": 53074,
+          "lineStart": 377,
+          "lineEnd": 379,
+          "sha256": "cc46db09883fd5f9dc942d0fe0c02bdda2a493193a81be765a7d8f4c0c7aed81",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C6",
+            "C9"
+          ],
+          "moduleStartByte": 51879,
+          "moduleEndByte": 52092
+        },
+        {
+          "id": "devin-initial:067",
+          "label": "### Environment Information",
+          "startByte": 53074,
+          "endByte": 53918,
+          "lineStart": 380,
+          "lineEnd": 402,
+          "sha256": "ebd36dd5f599974f8df83a9dd9c689ba60602c6c393666c7baf5ae6ef7cf8f4f",
+          "action": "reference-only",
+          "reason": "Private reference only: original date, session URL, identity IDs, and automatic foreign attribution.",
+          "compatibility": []
+        },
+        {
+          "id": "devin-initial:068",
+          "label": "## MCP tool catalogs",
+          "startByte": 53918,
+          "endByte": 54509,
+          "lineStart": 403,
+          "lineEnd": 411,
+          "sha256": "8c1e5810b4363cf931e763c39c46ba5e7d8e2981f866178596b4f23eb3bae3ce",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 52092,
+          "moduleEndByte": 52683
+        },
+        {
+          "id": "devin-initial:069",
+          "label": "### Dynamic Workflows",
+          "startByte": 54509,
+          "endByte": 55098,
+          "lineStart": 412,
+          "lineEnd": 416,
+          "sha256": "360e22ce248a332146414793905cf154dd228c358c58a1e6c5c8ccb26692ffef",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 52683,
+          "moduleEndByte": 53272
+        },
+        {
+          "id": "devin-initial:070",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 55098,
+          "endByte": 58983,
+          "lineStart": 417,
+          "lineEnd": 427,
+          "sha256": "474b3ae0b2e02f6a44eed5b041c6a88f58f0f3571d234bc84223c0d32206ce9a",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 53272,
+          "moduleEndByte": 57157
+        },
+        {
+          "id": "devin-initial:071",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 58983,
+          "endByte": 59072,
+          "lineStart": 428,
+          "lineEnd": 429,
+          "sha256": "e80f9a4b3815a227e31bde292bce33743f55cd6929bd9564360435f6864d69ae",
+          "action": "reference-only",
+          "reason": "Private reference only: archival skill-inventory wrapper; activation instruction itself is retained.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C9"
+          ]
+        },
+        {
+          "id": "devin-initial:072",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 59072,
+          "endByte": 59445,
+          "lineStart": 430,
+          "lineEnd": 431,
+          "sha256": "cecb81a221fb0f924c45309007c62d3dfa3a3ebbc7548af33f758b5ed8d24994",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C9"
+          ],
+          "moduleStartByte": 57157,
+          "moduleEndByte": 57530
+        },
+        {
+          "id": "devin-initial:073",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 59445,
+          "endByte": 60177,
+          "lineStart": 432,
+          "lineEnd": 443,
+          "sha256": "a3a716be0347b60b60058857f1522f374968fa41b56fca031b510f3d96ce57f1",
+          "action": "reference-only",
+          "reason": "Private reference only: source-session skill/plugin registry, not an installed Opulent registry.",
+          "compatibility": []
+        },
+        {
+          "id": "devin-initial:074",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 60177,
+          "endByte": 61673,
+          "lineStart": 444,
+          "lineEnd": 464,
+          "sha256": "7bc038ce716172784718703279d7c6ebd03f31d7324246b36d7a8850c62bfe92",
+          "action": "reference-only",
+          "reason": "Private reference only: unrelated repository-specific automerge injection conflicts with explicit per-merge authorization; do not execute it.",
+          "compatibility": []
+        },
+        {
+          "id": "devin-initial:075",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 61673,
+          "endByte": 62066,
+          "lineStart": 465,
+          "lineEnd": 470,
+          "sha256": "6dbe9b5948c0a329a16a11e27fc7c1bd546d1040c248124e6faf2eb8a0090bd9",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5",
+            "C9"
+          ],
+          "moduleStartByte": 57530,
+          "moduleEndByte": 57923
+        },
+        {
+          "id": "devin-initial:076",
+          "label": "## Testing agent (UI-driven testing) [system block]",
+          "startByte": 62066,
+          "endByte": 64555,
+          "lineStart": 471,
+          "lineEnd": 511,
+          "sha256": "5d04686d1e6b1460a99988bd11200b7090554dc5cd462da42384c74066c0b252",
+          "action": "reference-only",
+          "reason": "Private reference only: original plugin/skill inventory and session-specific repo, environment, resume, compaction, and attachment captures.",
+          "compatibility": []
+        }
+      ],
+      "label": "Devin supplied initial instructions (2026-09-24)"
+    },
+    {
+      "id": "prime-core",
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/core.md"
+      },
+      "rawSha256": "5accb697b851e3b24acc357ade7e2dab848517a774365cc7bafe0dcdcde1d5bf",
+      "rawLines": 176,
+      "modulePath": "modules/prime-core.md",
+      "moduleBytes": 3419,
+      "moduleSha256": "5b3ad576bca900c20603c04b814e9b85d5621049a8a2576fd3cd3f55c6b9f56f",
+      "effectiveSha256": "5b3ad576bca900c20603c04b814e9b85d5621049a8a2576fd3cd3f55c6b9f56f",
+      "rawBytes": 14350,
+      "retainedBytes": 3419,
+      "replacedOriginalBytes": 0,
+      "referenceOnlyBytes": 10931,
+      "replacementBytes": 0,
+      "effectiveBytes": 3419,
+      "segments": [
+        {
+          "id": "prime-core:001",
+          "label": "# prime-agent harness",
+          "startByte": 0,
+          "endByte": 561,
+          "lineStart": 1,
+          "lineEnd": 6,
+          "sha256": "f018114e8af5899431c716699080758973752edf91dfde5b8556e589d2dff7dc",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 561
+        },
+        {
+          "id": "prime-core:002",
+          "label": "## Core tools",
+          "startByte": 561,
+          "endByte": 2050,
+          "lineStart": 7,
+          "lineEnd": 26,
+          "sha256": "85549a209a5ce86fd7577c6d8f1ceef69846b3d463edeeb5c7651626285a5059",
+          "action": "reference-only",
+          "reason": "Private reference only: original raw core tool signatures/handles; Opulent APIs are specified in C2.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:003",
+          "label": "## Subagents",
+          "startByte": 2050,
+          "endByte": 2499,
+          "lineStart": 27,
+          "lineEnd": 30,
+          "sha256": "6a3ac241b79136bf4618264ad3fa8e96588f9d7a6694cae4d9165bc357ff74a3",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C7"
+          ],
+          "moduleStartByte": 561,
+          "moduleEndByte": 1010
+        },
+        {
+          "id": "prime-core:004",
+          "label": "## Subagents",
+          "startByte": 2499,
+          "endByte": 5795,
+          "lineStart": 31,
+          "lineEnd": 70,
+          "sha256": "86eabe35781f073f035ee5659a14abd0cb206576ab0d7ad5857b94d8c253858c",
+          "action": "reference-only",
+          "reason": "Private reference only: original raw RLM/agent-message/observation signatures and handles; actual delegation contract is C7.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:005",
+          "label": "## Subagents",
+          "startByte": 5795,
+          "endByte": 5796,
+          "lineStart": 71,
+          "lineEnd": 71,
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [],
+          "moduleStartByte": 1010,
+          "moduleEndByte": 1011
+        },
+        {
+          "id": "prime-core:006",
+          "label": "## Continual Harness",
+          "startByte": 5796,
+          "endByte": 6577,
+          "lineStart": 72,
+          "lineEnd": 89,
+          "sha256": "4863ba8fe0cf7809cb59c47d32aa1bb9ea95c1647bece139f1cb06aa3090cf1e",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C9"
+          ],
+          "moduleStartByte": 1011,
+          "moduleEndByte": 1792
+        },
+        {
+          "id": "prime-core:007",
+          "label": "## Continual Harness",
+          "startByte": 6577,
+          "endByte": 10781,
+          "lineStart": 90,
+          "lineEnd": 135,
+          "sha256": "c1d9764286935749230386f1314819cd0628d9c7cf53902f71415e56ed1c2d3b",
+          "action": "reference-only",
+          "reason": "Private reference only: original unsupported refinement/memory APIs and raw type listings; conditional narrative remains.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:008",
+          "label": "## Compaction",
+          "startByte": 10781,
+          "endByte": 11117,
+          "lineStart": 136,
+          "lineEnd": 139,
+          "sha256": "411eda24296f1cbb0687e730c65eeec955eb007d05699930326155bf59d08d17",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 1792,
+          "moduleEndByte": 2128
+        },
+        {
+          "id": "prime-core:009",
+          "label": "## Compaction",
+          "startByte": 11117,
+          "endByte": 11313,
+          "lineStart": 140,
+          "lineEnd": 142,
+          "sha256": "41704e78da8365879af9e32f035a359c89a2f700ab9d2ab98be74ad01f5acb95",
+          "action": "reference-only",
+          "reason": "Private reference only: unsupported raw compact API listings.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:010",
+          "label": "## Goal",
+          "startByte": 11313,
+          "endByte": 11490,
+          "lineStart": 143,
+          "lineEnd": 146,
+          "sha256": "3d7000fbe5fe26a2540800fb9ae0424569f68f5c72dcd73e6fd91067b46c5afc",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C8"
+          ],
+          "moduleStartByte": 2128,
+          "moduleEndByte": 2305
+        },
+        {
+          "id": "prime-core:011",
+          "label": "## Goal",
+          "startByte": 11490,
+          "endByte": 11757,
+          "lineStart": 147,
+          "lineEnd": 150,
+          "sha256": "232e12da80888e1a3a174df15818bc024e935d484800c1f5f09129caaa3c8a45",
+          "action": "reference-only",
+          "reason": "Private reference only: unsupported raw goal API listings; completion discipline remains in usage.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:012",
+          "label": "## Heartbeat",
+          "startByte": 11757,
+          "endByte": 11931,
+          "lineStart": 151,
+          "lineEnd": 154,
+          "sha256": "fe515ed180c0724daae3eb33574cd927f2ee5dcda3db4501453b2c853a0a1e5f",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3"
+          ],
+          "moduleStartByte": 2305,
+          "moduleEndByte": 2479
+        },
+        {
+          "id": "prime-core:013",
+          "label": "## Heartbeat",
+          "startByte": 11931,
+          "endByte": 12653,
+          "lineStart": 155,
+          "lineEnd": 159,
+          "sha256": "558aeac7d23e1b5486ca271adef37a1c542c0159175a444a360e97432fcbebf7",
+          "action": "reference-only",
+          "reason": "Private reference only: unsupported raw heartbeat API listings.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:014",
+          "label": "## MCP",
+          "startByte": 12653,
+          "endByte": 12784,
+          "lineStart": 160,
+          "lineEnd": 163,
+          "sha256": "01def764a45ca23e2b131300bcf78d742a211ff748ac4650a65fc557510cc333",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C6"
+          ],
+          "moduleStartByte": 2479,
+          "moduleEndByte": 2610
+        },
+        {
+          "id": "prime-core:015",
+          "label": "## MCP",
+          "startByte": 12784,
+          "endByte": 13541,
+          "lineStart": 164,
+          "lineEnd": 171,
+          "sha256": "ad022009bf6c900a8cd53f44cd7aefcc82f0983e3c094ebc11bef4f17a6de207",
+          "action": "reference-only",
+          "reason": "Private reference only: original raw MCP API listings, not configured runtime adapters.",
+          "compatibility": []
+        },
+        {
+          "id": "prime-core:016",
+          "label": "## Skills",
+          "startByte": 13541,
+          "endByte": 14350,
+          "lineStart": 172,
+          "lineEnd": 176,
+          "sha256": "0f799bad0aae99a76cdccbe2d84832490e9264b22f974db6efe6b3342649aa28",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C2",
+            "C3",
+            "C5"
+          ],
+          "moduleStartByte": 2610,
+          "moduleEndByte": 3419
+        }
+      ],
+      "label": "Prime Agent pinned core layer"
+    },
+    {
+      "id": "prime-usage",
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/usage.md"
+      },
+      "rawSha256": "04f5e841f2343fecb942e2f647c13cda5c4c1ab6bb7e7abbc080d5ffe409369f",
+      "rawLines": 32,
+      "modulePath": "modules/prime-usage.md",
+      "moduleBytes": 5933,
+      "moduleSha256": "04f5e841f2343fecb942e2f647c13cda5c4c1ab6bb7e7abbc080d5ffe409369f",
+      "effectiveSha256": "04f5e841f2343fecb942e2f647c13cda5c4c1ab6bb7e7abbc080d5ffe409369f",
+      "rawBytes": 5933,
+      "retainedBytes": 5933,
+      "replacedOriginalBytes": 0,
+      "referenceOnlyBytes": 0,
+      "replacementBytes": 0,
+      "effectiveBytes": 5933,
+      "segments": [
+        {
+          "id": "prime-usage:001",
+          "label": "Opening instructions",
+          "startByte": 0,
+          "endByte": 5933,
+          "lineStart": 1,
+          "lineEnd": 32,
+          "sha256": "04f5e841f2343fecb942e2f647c13cda5c4c1ab6bb7e7abbc080d5ffe409369f",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 5933
+        }
+      ],
+      "label": "Prime Agent pinned mandatory usage layer"
+    },
+    {
+      "id": "prime-opinionated",
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/opinionated.md"
+      },
+      "rawSha256": "ec16f3c3f8b15eadb6bd439ff14819cd36c5f52cba2592763dfb5dd1b199c150",
+      "rawLines": 26,
+      "modulePath": "modules/prime-opinionated.md",
+      "moduleBytes": 2581,
+      "moduleSha256": "ec16f3c3f8b15eadb6bd439ff14819cd36c5f52cba2592763dfb5dd1b199c150",
+      "effectiveSha256": "ec16f3c3f8b15eadb6bd439ff14819cd36c5f52cba2592763dfb5dd1b199c150",
+      "rawBytes": 2581,
+      "retainedBytes": 2581,
+      "replacedOriginalBytes": 0,
+      "referenceOnlyBytes": 0,
+      "replacementBytes": 0,
+      "effectiveBytes": 2581,
+      "segments": [
+        {
+          "id": "prime-opinionated:001",
+          "label": "Opening instructions",
+          "startByte": 0,
+          "endByte": 2581,
+          "lineStart": 1,
+          "lineEnd": 26,
+          "sha256": "ec16f3c3f8b15eadb6bd439ff14819cd36c5f52cba2592763dfb5dd1b199c150",
+          "action": "retain",
+          "reason": "Original instruction bytes retained without normalization.",
+          "compatibility": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C7",
+            "C8",
+            "C9"
+          ],
+          "moduleStartByte": 0,
+          "moduleEndByte": 2581
+        }
+      ],
+      "label": "Prime Agent pinned opinionated layer"
+    }
+  ],
+  "accounting": {
+    "rawBytes": 238203,
+    "retainedBytes": 176168,
+    "replacedOriginalBytes": 1232,
+    "referenceOnlyBytes": 60803,
+    "replacementBytes": 1089,
+    "effectiveBytes": 177257
+  }
+}
