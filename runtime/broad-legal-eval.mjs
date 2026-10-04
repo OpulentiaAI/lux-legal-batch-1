@@ -23,6 +23,7 @@ import { parseOpulent2Handoff, serializeOpulent2Handoff } from './opulent2-hando
 import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
+import { LUNA_EXPERIMENT, LUNA_BUDGETS, LUNA_BUDGET_DISCLOSURE } from './opulent2-luna-policy.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
 import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
@@ -390,12 +391,17 @@ function capyChildDeliveries(store, rootId, preparedInputs) {
 export function createBroadHarness({ workspace, corpus, provision, artifactsDir, maxSteps, workProduct,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
-  toolSurface, instructionProfile,
+  toolSurface, instructionProfile, experiment, budgetDisclosure,
   opulent2Handoff, onPreparedModelRequest,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly, inferenceProvider)
   const opulent2 = instructionProfile === OPULENT2_PROFILE
+  const luna = experiment === LUNA_EXPERIMENT
+  if (experiment !== undefined && !luna) throw new Error('Unknown Opulent2 experiment')
+  if (luna && (!opulent2 || model !== LUNA_MODEL || inferenceProvider !== 'gateway' || providerModel != null || providerOnly != null || reasoningEffort !== 'max' ||
+      maxSteps !== LUNA_BUDGETS.maxSteps || workProduct?.maxCompletionTokens !== LUNA_BUDGETS.maxCompletionTokens || budgetDisclosure !== LUNA_BUDGET_DISCLOSURE)) throw new Error('Luna experiment requires the exact disclosed model and runaway-loop policy')
+  if (!luna && budgetDisclosure !== undefined) throw new Error('Budget disclosure requires the separate Luna experiment')
   const capy = opulent2 || instructionProfile === 'opulent-capy-v1'
   const capyPolicy = opulent2 ? OPULENT2_TOOL_POLICY : CAPY_TOOL_POLICY
   const capyDefinitions = opulent2 ? OPULENT2_TOOL_DEFINITIONS : CAPY_TOOL_DEFINITIONS
@@ -408,7 +414,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     ? parseOpulent2Handoff(typeof opulent2Handoff.previousSnapshot === 'object' && !(opulent2Handoff.previousSnapshot instanceof Uint8Array)
       ? JSON.stringify(opulent2Handoff.previousSnapshot) : opulent2Handoff.previousSnapshot,
     { chainId: opulent2Handoff.chainId, expectedSha256: opulent2Handoff.expectedPreviousSha256 }) : null
-  if (capy && (inferenceProvider !== 'runanywhere' || model !== MIMO_MODEL)) throw new Error('Capy comparison requires native RunAnywhere MiMo v2.6 Pro')
+  if (capy && !luna && (inferenceProvider !== 'runanywhere' || model !== MIMO_MODEL)) throw new Error('Capy comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (capy && RETRIEVAL_PROFILE !== 'voyage') throw new Error('Capy comparison requires LX_RETRIEVAL_PROFILE=voyage; legacy Jina retrieval is not substituted')
   const transport = modelTransport({ inferenceProvider, providerModel, providerOnly, reasoningEffort })
   if (workProduct !== undefined) {
@@ -466,13 +472,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const initialAppendix = capy ? capyEnvironment(opulent2) : unrestricted
     ? `${appendix}\nLes outils lx_search, lx_chunk, lx_documents, browser, wait_for_operations et ipython sont visibles directement.${nativeMcp ? ` Le serveur MCP natif approuvé est "${mcp.server}" ; découvre ses schémas avant les appels.` : ' La recherche sémantique native est fournie par la toolbox corpus configurée ; utilise directement lx_search, lx_chunk et lx_documents.'} Les outils de stockage sont visibles mais le fournisseur de stockage n’est pas configuré. Les agents enfants disposent de bacs à sable E2B séparés ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.`
     : initialTools ? `${appendix}\nLes noms mcp_list_tools et mcp_call_tool ne sont pas des outils directs dans ce profil. Utilise l’outil initial mcp_tool (command="list_tools" ou "call_tool", server="${mcp.server}") ou scripted_tools avec les fonctions correspondantes de opulent_tools${rlm ? `, ou ipython avec await tools.call("mcp_list_tools", {"server": "${mcp.server}"}) puis await tools.call("mcp_call_tool", {"server": "${mcp.server}", "name": "...", "arguments": {...}})` : ''}. Découvre les schémas avant les appels. Les agents enfants disposent de bacs à sable E2B séparés et héritent de cette politique ; seul le contenu effectivement retourné et lu par le parent constitue sa preuve.` : appendix
-  const instructions = renderInstructions({ appendix: initialAppendix,
+  const instructions = renderInstructions({ appendix: luna ? `${initialAppendix}\n\n${budgetDisclosure}` : initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
     variant: opulent2 ? OPULENT2_PROFILE : capy ? 'broad-legal-native-capy-v1' : deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const capyRuntimeSources = capy ? Object.fromEntries(['core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
     'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', '../package-lock.json',
-    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'instructions/opulent2-reference-update-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : [])]
+    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'instructions/opulent2-reference-update-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : []),
+    ...(luna ? ['opulent2-luna-policy.mjs'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,
@@ -480,6 +487,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
+    ...(luna ? { experiment, modelBudget: LUNA_BUDGETS, budgetDisclosureSha256: sha256(budgetDisclosure) } : {}),
     policy: opulent2 ? OPULENT2_PROFILE : capy ? 'broad-legal-native-capy-v1' : deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(capy ? { capy: { version: capyPolicy.version, ...capyPolicy.provenance,
       definitionsSha256: sha256(JSON.stringify(capyDefinitions)), initialDefinitionsSha256: sha256(JSON.stringify(initialDefinitions())),
@@ -619,6 +627,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         inferenceProvider, ...(providerModel ? { providerModel } : {}),
+        ...(luna ? { experiment, modelBudget: LUNA_BUDGETS, reasoningEffort } : {}),
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(capy ? { runtimeCapabilities: [...capyPolicy.runtimeCapabilities], contextCompaction,
           capyMemory: { organizationId: 'complex-v1-evaluation', userId: opulent2 ? OPULENT2_PROFILE : 'opulent-capy-v1', projectId: opulent2 ? opulent2Handoff.chainId : basename(stateDir),
@@ -663,11 +672,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const record = Object.fromEntries(Object.entries(usage)
             .filter(([key, value]) => ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'gateway_cost', 'market_cost'].includes(key) && typeof value === 'number' && Number.isFinite(value)))
           record.finishReason = typeof raw.choices?.[0]?.finish_reason === 'string' ? raw.choices[0].finish_reason : null
-          if (transport.provider === 'runanywhere') {
+          if (transport.provider === 'runanywhere' || luna) {
             if (capy && typeof options.capy_request_record_id === 'string') record.capyRequestRecordId = options.capy_request_record_id
             if (capy && ['answerer', 'context_compaction'].includes(options.phase)) record.phase = options.phase
             record.inferenceProvider = transport.provider
-            record.requestedModel = transport.providerModel
+            record.requestedModel = transport.providerModel ?? evalModel
             record.responseModel = typeof raw.model === 'string' ? raw.model : null
             record.requestId = typeof raw.id === 'string' ? raw.id : null
             record.requestAttempts = raw.inferenceAttempts ?? []
@@ -871,6 +880,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const model = modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
+          ...(luna ? { experiment } : {}),
           ...(reasoningEffort ? { reasoningEffort } : {}),
           ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
         runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors,

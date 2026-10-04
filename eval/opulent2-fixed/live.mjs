@@ -11,6 +11,9 @@ import { aggregateNative, attemptContext, createNativeCapture, readCapture, sani
 import { runExperiment, seedCheckpoint } from './runner.mjs'
 import { loadPublicPacket } from './tasks.mjs'
 import { nativeTransmissions, validateInitialAssembly, validatePreparedReceipt, verifyTaskExecution } from './validate.mjs'
+import { LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { verifyModelBudget } from './budget-verification.mjs'
+import { verifyToolCoverage } from './coverage-verification.mjs'
 
 const safe = value => JSON.parse(sanitize(Buffer.from(JSON.stringify(value))))
 
@@ -44,12 +47,14 @@ function runPython(python, worker, document, environment, cwd) {
 }
 
 export function reconcileHarvey({ transmissions, providerRecords, trajectory, release }) {
+  const luna = release.experiment === LUNA_EXPERIMENT
   const completed = transmissions.filter(item => !item.row.usageUnknown && item.row.status >= 200 && item.row.status < 300)
   assert.equal(new Set(completed.map(item => item.row.responseBodyId)).size, completed.length)
   const records = providerRecords ?? trajectory.filter(event => event.event === 'assistant' && event.providerUsage).map(event => event.providerUsage)
   for (const item of transmissions) {
     assert.equal(item.request.model, release.providerModel)
-    assert.equal(item.request.max_tokens, release.budgets.maxCompletionTokens)
+    assert.equal(luna ? item.request.max_completion_tokens : item.request.max_tokens, release.budgets.maxCompletionTokens)
+    if (luna) assert.equal(item.request.reasoning_effort, 'max')
     assert.equal(digest(item.request.messages.filter(message => message.role === 'system')), release.harvey.systemMessagesSha256)
     assert.equal(digest(item.request.tools ?? []), release.harvey.toolDefinitionsSha256)
     if (item.response) {
@@ -62,7 +67,7 @@ export function reconcileHarvey({ transmissions, providerRecords, trajectory, re
     const matched = records.filter(record => !record.failed && record.requestId === item.row.responseBodyId)
     assert.equal(matched.length, 1, 'Harvey accounting must join actual native response-body IDs')
     const record = matched[0]
-    assert.equal(record.inferenceProvider, 'runanywhere')
+    assert.equal(record.inferenceProvider, release.inferenceProvider)
     assert.equal(record.requestedModel, release.providerModel)
     assert.equal(record.responseModel, release.providerModel)
     for (const key of ['prompt_tokens', 'completion_tokens', 'total_tokens']) assert.equal(record[key], item.row.usage[key])
@@ -86,8 +91,9 @@ export async function loadRuntimeModules(release) {
 }
 
 export async function launch({ release, file, authorization, source }) {
+  const luna = release.experiment === LUNA_EXPERIMENT
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, release.retrievalProfile, 'Select Voyage before runtime imports')
-  for (const name of ['RUNA_CLOUD_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']) assert(process.env[name], `Missing credential: ${name}`)
+  for (const name of [...(luna ? [] : ['RUNA_CLOUD_KEY']), 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']) assert(process.env[name], `Missing credential: ${name}`)
   const [broadModule, modelModule, coreModule, providerModule, e2bModule, corpusModule, instructionModule, handoffModule, sdk] = await loadRuntimeModules(release)
   assert.equal(instructionModule.OPULENT2_TASK_APPENDIX, release.prompts.appendix)
   assert.equal(handoffModule.OPULENT2_HANDOFF_VERSION, release.stateContract.version)
@@ -111,7 +117,7 @@ export async function launch({ release, file, authorization, source }) {
     } })
   const initialSnapshot = release.initialSnapshot ? handoffModule.parseOpulent2Handoff(JSON.stringify(json(proof(release.initialSnapshot.path, release.initialSnapshot.sha256).path)),
     { chainId: release.chainId, expectedSha256: release.initialSnapshot.contentSha256 }) : null
-  const provenance = { version: 'opulent2-fixed-native-experiment-v1', release, releaseFile: file, authorization, source,
+  const provenance = { version: luna ? 'opulent2-fixed-gateway-experiment-v1' : 'opulent2-fixed-native-experiment-v1', release, releaseFile: file, authorization, source,
     initialSnapshotSha256: initialSnapshot?.sha256 ?? null, taskSetSha256: digest(release.tasks),
     name: 'Opulent2 fixed', sourceLineage: 'capy-v1 engine; copied/pinned native-capy-v1 capture and ownership infrastructure',
     attemptPolicy: 'Unfinished-only resume; failed attempts cannot advance the successful memory/Drive chain; preserve failures without semantic score penalties',
@@ -137,9 +143,11 @@ export async function launch({ release, file, authorization, source }) {
     const handoff = { chainId: release.chainId, taskId: context.taskId, attemptId: context.attemptId,
       inlineByteLimit: release.stateContract.inlineByteLimit, ...(previousSnapshot ? { previousSnapshot, expectedPreviousSha256: previousSnapshot.sha256 } : {}) }
     return broadModule.createBroadHarness({ ...release.harnessOptions, workspace: release.workspace, corpus,
+      ...(luna ? { experiment: release.experiment, budgetDisclosure: release.prompts.budgetDisclosure } : {}),
       instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: release.semanticSurface, nativeMcp: false,
-      maxSteps: release.budgets.maxSteps, model: MODEL, inferenceProvider: 'runanywhere', providerModel: release.providerModel,
-      providerOnly: null, reasoningEffort: null, artifactsDir: artifactDirectory,
+      maxSteps: release.budgets.maxSteps, model: release.model, inferenceProvider: release.inferenceProvider,
+      ...(luna ? {} : { providerModel: release.providerModel }),
+      providerOnly: null, reasoningEffort: luna ? release.reasoningEffort : null, artifactsDir: artifactDirectory,
       workProduct: { maxCompletionTokens: release.budgets.maxCompletionTokens }, opulent2Handoff: handoff,
       sandboxFactory, sandboxConnect, modelFactory: captures.modelFactory(modelModule.createModel),
       runtimeFactory: options => {
@@ -147,9 +155,13 @@ export async function launch({ release, file, authorization, source }) {
         const config = options.config
         assert.equal(config.instructionProfile, PROFILE)
         assert.equal(config.systemPrompt && sha(config.systemPrompt), release.prompts.runtimePromptSha256)
-        assert.equal(config.model, MODEL)
-        assert.equal(config.inferenceProvider, 'runanywhere')
-        assert.equal(config.providerModel, release.providerModel)
+        assert.equal(config.model, release.model)
+        assert.equal(config.inferenceProvider, release.inferenceProvider)
+        if (luna) {
+          assert(config.providerModel == null)
+          assert.deepEqual(config.modelBudget, release.budgets)
+          assert.equal(config.reasoningEffort, release.reasoningEffort)
+        } else assert.equal(config.providerModel, release.providerModel)
         assert.equal(config.maxSteps, release.budgets.maxSteps)
         assert.equal(config.secureSandboxFileAccess, true)
         assert.equal(config.requireWorkflowApproval, true)
@@ -181,7 +193,7 @@ export async function launch({ release, file, authorization, source }) {
             }
             const expected = validateInitialAssembly({ receipt, session, configuredPrompt: runtime.config.systemPrompt,
               childInstructions: session.parent_session_id ? instructionModule.opulent2ChildInstructions(session.depth) : '', memoryIndexes: indexes, expectedUser,
-              skillsRegistry: release.prompts.skillsRegistry })
+              skillsRegistry: release.prompts.skillsRegistry, budgetDisclosure: release.prompts.budgetDisclosure })
             systems.set(session.id, expected)
           }
           assert.deepEqual(actualSystems, systems.get(session.id), 'A session system assembly changed after its initial pinned preparation')
@@ -218,12 +230,15 @@ export async function launch({ release, file, authorization, source }) {
       const cleanup = await verifyOwnedAbsence(owned, sdk.Sandbox, sdk.SandboxNotFoundError)
       const rows = captures.rows.filter(row => row.arm === 'opulent2' && row.taskId === context.taskId && row.attempt === context.attempt)
       const records = captures.records.filter(row => row.arm === 'opulent2' && row.taskId === context.taskId && row.attempt === context.attempt)
+      const budgetLedger = luna ? captures.budgets.get(`opulent2:${context.taskId}:${context.attempt}`)?.ledger.snapshot() : null
+      if (luna) atomic(join(directory, 'model-budget.json'), { experiment: release.experiment, budgets: release.budgets, ledger: budgetLedger })
       atomic(join(directory, 'owned-absence.json'), cleanup)
       atomic(join(directory, 'failed-or-completed-accounting.json'), aggregateNative(rows))
       if (snapshot) {
         const { reconcileNative } = await import('./native.mjs')
         const reconciliation = reconcileNative({ directory: join(release.output, 'native-captures'), rows, records,
-          modelRequests: snapshot.capy_model_requests, events: snapshot.events, reportedRecords: details.metrics?.providerUsageRecords, allowIncomplete: !!failure })
+          modelRequests: snapshot.capy_model_requests, events: snapshot.events, reportedRecords: details.metrics?.providerUsageRecords,
+          allowIncomplete: !!failure, experiment: release.experiment })
         atomic(join(directory, 'native-reconciliation.json'), reconciliation)
       }
       if (failure) throw failure
@@ -231,6 +246,11 @@ export async function launch({ release, file, authorization, source }) {
       const validation = verifyTaskExecution({ release, result, snapshot, directory: join(release.output, 'native-captures'), rows, records, owned, cleanup,
         previousSnapshot: context.previousSnapshot, handoff,
         expectedPrompt: carriedContext => instructionModule.opulent2TaskPrompt({ question: packet.task.instructions, taskPath: '/tmp/broad-legal-workspace/task', outputPath: '/tmp/broad-legal-workspace/output', carriedContext }) })
+      if (luna) validation.modelBudget = verifyModelBudget({ release, ledger: budgetLedger, rows })
+      if (release.stage === 'coverage') {
+        validation.toolCoverage = verifyToolCoverage({ release, snapshot, transmissions: nativeTransmissions(join(release.output, 'native-captures'), rows) })
+        atomic(join(directory, 'tool-coverage.json'), validation.toolCoverage)
+      }
       const output = immutable(join(directory, 'result.json'), safe(result))
       const handoffFile = immutable(join(directory, 'accepted-snapshot.json'), JSON.parse(handoffModule.serializeOpulent2Handoff(handoff)))
       const receipt = immutable(join(directory, 'execution-success.json'), { version: 'opulent2-fixed-execution-success-v1', ...context, previousSnapshot: undefined,
@@ -244,7 +264,14 @@ export async function launch({ release, file, authorization, source }) {
         details: safe((result ?? failure)?.audit ?? {}), candidateOutput, snapshotAvailable: !!snapshot, chainAdvanced: false, grading: 'ungraded; execution/wiring repair required' })
       error.audit = audit
       throw error
-    } finally { atomic(modelRecordsPath, safe(captures.records)) }
+    } finally {
+      atomic(modelRecordsPath, safe(captures.records))
+      if (luna) {
+        const budget = captures.budgets.get(`opulent2:${context.taskId}:${context.attempt}`)
+        atomic(join(directory, 'model-budget.json'), { experiment: release.experiment, budgets: release.budgets,
+          ledger: budget?.ledger.snapshot() ?? null, noAdmittedModelCalls: !budget })
+      }
+    }
   })
 
   const executeHarvey = context => attemptContext.run({ taskId: context.taskId, attempt: context.attempt, attemptId: context.attemptId, arm: 'harvey', phase: 'answerer' }, async () => {
@@ -252,18 +279,24 @@ export async function launch({ release, file, authorization, source }) {
     privateDirectory(directory)
     const packet = loadPublicPacket(release.workspace, release.tasks.find(task => task.id === context.taskId))
     const request = { harvey_root: release.harvey.root, documents: corpus.directory, corpus_hash: corpus.hash, artifacts: join(directory, 'artifacts'),
+      ...(luna ? { experiment: release.experiment, budget_disclosure: release.prompts.budgetDisclosure,
+        max_input_tokens: release.budgets.maxInputTokens, max_context_tokens: release.budgets.maxContextTokens } : {}),
       question: packet.task.instructions, max_steps: release.budgets.maxSteps, max_completion_tokens: release.budgets.maxCompletionTokens,
-      model: MODEL, inference_provider: 'runanywhere', provider_model: release.providerModel, provider_only: null, reasoning_effort: null,
+      model: release.model, inference_provider: release.inferenceProvider, provider_model: luna ? null : release.providerModel,
+      provider_only: null, reasoning_effort: luna ? release.reasoningEffort : null,
       e2b_template: release.harvey.sandboxTemplate, work_product_prompt_policy: release.harvey.promptPolicy, work_product: packet }
     const captureDirectory = join(directory, 'native-captures')
     const ownedRegistry = join(directory, 'owned-vms.json')
     const document = immutable(join(directory, 'worker-request.json'), { workspace: release.workspace, request, captureDirectory, ownedRegistry,
+      ...(luna ? { config: { experiment: release.experiment, model: release.model, inferenceProvider: release.inferenceProvider,
+        providerModel: release.providerModel, reasoningEffort: release.reasoningEffort, endpoint: release.endpoint,
+        budgets: release.budgets, prompts: { budgetDisclosure: release.prompts.budgetDisclosure } } } : {}),
       context: { ...context, previousSnapshot: undefined, arm: 'harvey' }, bindingSha256: digest(release),
       expectedSystemMessagesSha256: release.harvey.systemMessagesSha256, expectedToolDefinitionsSha256: release.harvey.toolDefinitionsSha256 })
     let result, failure
     try {
       result = await runPython(release.harvey.python, join(release.workspace, 'eval/opulent2-fixed/harvey-worker.py'), document.path,
-        { ...process.env, OPENAI_BASE_URL: release.endpoint, OPENAI_API_KEY: process.env.RUNA_CLOUD_KEY }, release.harvey.root)
+        { ...process.env, OPENAI_BASE_URL: release.endpoint, OPENAI_API_KEY: process.env[luna ? 'AI_GATEWAY_API_KEY' : 'RUNA_CLOUD_KEY'] }, release.harvey.root)
     } catch (error) { failure = error }
     const rows = existsSync(join(captureDirectory, 'index.json')) ? json(join(captureDirectory, 'index.json')) : []
     for (const row of rows) {
@@ -283,7 +316,7 @@ export async function launch({ release, file, authorization, source }) {
       if (failure) throw failure
       assert.equal(cleanup.allOwnedAbsent, true)
       assert.equal(result.finished_cleanly, true, 'Fresh Harvey did not finish its actual loop')
-      assert.equal(result.inference_provider, 'runanywhere')
+      assert.equal(result.inference_provider, release.inferenceProvider)
       assert.equal(result.provider_model, release.providerModel)
       assert.equal(result.template_id, release.harvey.sandboxTemplate)
       assert.deepEqual(result.tool_names.slice().sort(), ['bash', 'read', 'write', 'edit', 'glob', 'grep'].sort())
@@ -303,6 +336,13 @@ export async function launch({ release, file, authorization, source }) {
       }
       const accounting = reconcileHarvey({ transmissions, providerRecords: result.provider_usage_records, trajectory, release })
       const validation = { executionValid: true, instructions: { exactPreparedAndWireEquality: true, appendix: 'none; intended Harvey instructions unchanged' }, accounting, cleanup, grading: 'ungraded' }
+      if (luna) {
+        const budget = json(join(captureDirectory, 'model-budget.json'))
+        assert.equal(budget.experiment, release.experiment)
+        assert.deepEqual(budget.budgets, release.budgets)
+        assert.deepEqual(budget.ledger, result.model_budget)
+        validation.modelBudget = verifyModelBudget({ release, ledger: budget.ledger, rows })
+      }
       const output = immutable(join(directory, 'result.json'), safe(result))
       const receipt = immutable(join(directory, 'execution-success.json'), { ...context, output, validation })
       return { inputSnapshotSha256: null, handoff: null, output, receipt, validation }
@@ -318,9 +358,22 @@ export async function launch({ release, file, authorization, source }) {
     const priorAbsence = await verifyOwnedAbsence(registry, sdk.Sandbox, sdk.SandboxNotFoundError)
     atomic(join(release.output, 'resume-owned-absence.json'), priorAbsence)
     assert(priorAbsence.allOwnedAbsent, 'Unresolved owned VM cleanup blocks new attempts')
-    const native = await attemptContext.run({ phase: 'provider_preflight' }, () => providerModule.resolveRunAnywhereMiMo(captures.fetch))
-    assert.equal(native.providerModel, release.providerModel)
-    assert.equal(native.catalogue.sha256, release.nativeCatalogueSha256)
+    let native
+    if (luna) {
+      const response = await attemptContext.run({ phase: 'provider_preflight' }, () => captures.fetch(`${release.endpoint}/models`, {
+        headers: { Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}` }, redirect: 'error', signal: AbortSignal.timeout(30000) }))
+      assert(response.ok, 'Live Gateway catalogue failed; no provider substitution')
+      const catalogue = await response.json()
+      const selected = catalogue.data?.find(model => model.id === LUNA_MODEL)
+      assert(selected, 'Requested Luna model absent from live Gateway catalogue')
+      const frozen = json(proof(release.gatewayCatalogue.path, release.gatewayCatalogue.sha256).path).selected.find(model => model.id === LUNA_MODEL)
+      assert.equal(digest(selected), digest(frozen), 'Live Luna catalogue changed from the source-bound experiment')
+      native = { inferenceProvider: 'gateway', model: LUNA_MODEL, selected, catalogueSha256: digest(catalogue) }
+    } else {
+      native = await attemptContext.run({ phase: 'provider_preflight' }, () => providerModule.resolveRunAnywhereMiMo(captures.fetch))
+      assert.equal(native.providerModel, release.providerModel)
+      assert.equal(native.catalogue.sha256, release.nativeCatalogueSha256)
+    }
     const context = { phase: 'preflight', arm: 'opulent2', taskId: release.tasks[0].id, attempt: 0, attemptId: `preflight-${randomUUID()}` }
     const preflightDirectory = join(release.output, 'preflight', context.attemptId)
     privateDirectory(preflightDirectory)
@@ -347,5 +400,6 @@ export async function launch({ release, file, authorization, source }) {
     }
   }
   return { status: checkpoint.status, name: 'Opulent2 fixed', checkpoint: proof(checkpointPath),
-    next: release.stage === 'proving' ? 'Parent reviews actual task work and capabilities; only then authorize fresh holdout selection/freezing' : 'Parent independently grades this fresh matched comparison' }
+    next: release.stage === 'coverage' ? 'Parent verifies actual all-tool native coverage before launching the separate empty proving chain'
+      : release.stage === 'proving' ? 'Parent reviews actual task work and capabilities; only then authorize fresh holdout selection/freezing' : 'Parent independently grades this fresh matched comparison' }
 }

@@ -1,0 +1,21 @@
+# Real approved-tool coverage
+
+The lead owns the coverage report. This task requests actual calls to these 40 approved tools, across the lead and its owned descendants:
+
+`bash`, `read`, `write`, `edit`, `apply_patch`, `execute`, `wait`, `todo_write`, `message_agent`, `message_user`, `task_create`, `task_update`, `task_get`, `task_list`, `subagent_create`, `subagent_start`, `subagent_get`, `subagent_list`, `subagent_message`, `subagent_stop`, `subagent_events`, `session_get`, `session_events`, `session_stop`, `operation_get`, `operation_list`, `operation_cancel`, `skill_list`, `skill_read`, `memory_save`, `browser`, `computer`, `lx_search`, `lx_chunk`, `lx_documents`, `agrep`, `drive_list`, `drive_read`, `drive_write`, `drive_delete`.
+
+Discover the actual callable schemas before using noninitial tools. Tools invoked inside a model-authored `execute` program count when their real outcomes are returned and observed; merely naming a tool or writing an unexecuted program does not. Return the results rather than just their lengths or a claimed success.
+
+Use these small, connected workflows rather than 40 unrelated claims:
+
+- Track the work with a todo and task records. Create, update, get and list task records with actual IDs.
+- Read the installed runtime skills, including the child-session and computer guides. Use ordinary scratch files to demonstrate write, read, edit and apply_patch, preserving and rereading the actual final content.
+- Draft a useful audit child, then explicitly start it on a fresh VM. Have that child obtain a useful completed grandchild review of the corpus source or scratch-file check, receive its actual findings and return a completed audit to you. Inspect owned sessions and their events and send a bounded clarifying message using both message_agent and subagent_message. Never propagate the whole coverage mandate into every descendant; divide the work.
+- Separately ask a disposable descendant to call session_stop in its own session. This ends its current turn and leaves it sleeping; observe that actual state from the surviving parent, then use subagent_stop to explicitly park the disposable branch and observe its stopped state. A sleeping or stopped test branch is not the useful completed delegation chain.
+- Start a short background process, inspect its operation by ID, and use a real durable wait for it to finish. Start a distinct disposable long-running process, inspect/list it, cancel it, and confirm its terminal outcome. Do not terminate unrelated processes or stop the lead.
+- Run lx_documents, genuine lx_search and lx_chunk against a returned source ID. Run real agrep with a one-character misspelling from the corpus and inspect returned file/line text. A genuine no-match is a completed search, not source consultation. Do not change the corpus or invent source IDs.
+- Create a small local HTML document under analysis from the actual source text, serve it at the approved local origin http://127.0.0.1:8765, and inspect it through both browser DOM and computer. Make the computer observation relevant to the displayed source; observe the actual screenshot and DOM. Do not replace desktop inspection with a textual claim.
+- Save a concise infrastructure note with memory_save and fully read its actual saved topic. Save/read/list a matching intentional project Drive note. To test drive_delete, create, read and delete a separate clearly disposable test note, then list to confirm deletion; keep the intentional note and read its full contents back.
+- Send a nonterminal user progress report with message_user. Use message_agent for an actual owned-agent message or completed child report rather than sending to a nonexistent external person. Complete the lead normally after writing and rereading coverage.md, updating its task/todo, and receiving the useful completed delegation findings.
+
+The final report must distinguish successful observed outcomes, genuine no-matches, intentional terminal effects and unresolved failures. The host will independently verify the model-generated calls, real returned records, native wire observations, budget ledger and owned-VM cleanup. Your report alone is not proof of coverage, grading or improvement.

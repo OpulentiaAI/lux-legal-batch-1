@@ -1,5 +1,15 @@
 # Opulent2 fixed runner
 
+## Separate Gateway Luna experiment
+
+Use `experiment:"gateway-luna-runaway-v1"` in a new preparation spec for the user-approved GPT-6 Luna max-reasoning AI Gateway experiment. Bind `gatewayCatalogue:{path,sha256}` to the actual successful catalogue record, and keep the prior native checkpoint solely as the unchanged corpus identity. Historical native releases, prompts and scores remain separate; [LUNA_PROTOCOL.md](LUNA_PROTOCOL.md) defines the new policy.
+
+The same model-visible disclosure gives each arm 250 shared model requests and 2,000,000 cumulative full provider input tokens per fresh task attempt. Opulent2's descendants and compaction use its common ledger, while its existing compaction remains enabled. Conservative admission reservations enforce both the task budget and Luna's 1,050,000-token input-plus-output context. Actual request IDs and metered usage settle each ticket; unknown consumption blocks further inference rather than becoming zero.
+
+Run `stage:"coverage"` first with a new isolated chain; its singleton infrastructure fixture requires all 40 approved tools to have native model-generated calls and actual observed outcomes. This stage is ungraded and cannot seed proving or comparison state. Then use a distinct empty `stage:"proving"` chain. Both substantive proving acceptances still precede legal holdout selection.
+
+For Luna comparisons, each launch completes at most one fresh pair. A clean completed arm is retained while its counterpart is recovered. A completed pair waits at `awaiting-independent-pair-grading`; a parent-owned `opulent2-fixed-pair-grade-v1` receipt bound to both completed record hashes, the frozen rubric hash and actual judgment artifacts unlocks the next pair. Scores, criteria and reviewer feedback never enter answerer input.
+
 New source lives here; all releases, captures, checkpoints and snapshots belong under `/home/user/.capy/work/opulent2-fixed-launch`. Historical launchers, runs, task02–06 Harvey output and baselines are read-only. The parent owns source commits, approvals, live preflight/inference and grading. No live run has been authorized by these files.
 
 ## Prepare and verify, without inference or VMs

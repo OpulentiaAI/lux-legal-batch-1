@@ -6,6 +6,8 @@ import { join } from 'node:path'
 import { gzipSync, gunzipSync } from 'node:zlib'
 import { ENDPOINT, MODEL, NATIVE_MODEL } from './contract.mjs'
 import { atomic, digest, json, ordinary, privateDirectory, proof, sha, within } from './io.mjs'
+import { LUNA_EXPERIMENT, LUNA_MODEL, LUNA_ENDPOINT } from '../../runtime/opulent2-luna-policy.mjs'
+import { createTaskModelBudget } from './model-budget.mjs'
 
 const tokenKeys = ['prompt_tokens', 'completion_tokens', 'total_tokens']
 const metered = usage => tokenKeys.every(key => Number.isSafeInteger(usage?.[key]) && usage[key] >= 0)
@@ -39,6 +41,10 @@ export function wireMeasurements(body) {
 
 export function createNativeCapture({ directory, binding, baseSystemPrompt, expectedInstructions, priorRecords = [], fetchImpl = fetch }) {
   privateDirectory(directory)
+  const luna = binding.experiment === LUNA_EXPERIMENT
+  const endpointBase = luna ? LUNA_ENDPOINT : ENDPOINT
+  const requestedModel = luna ? LUNA_MODEL : NATIVE_MODEL
+  const budgets = new Map()
   const modelContext = new AsyncLocalStorage()
   const pending = new Set()
   const rows = readdirSync(directory).filter(name => name.endsWith('-metadata.json')).sort().map(name => json(join(directory, name)))
@@ -54,7 +60,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
   }
   const persist = row => atomic(join(directory, `${row.id}-metadata.json`), JSON.parse(sanitize(Buffer.from(JSON.stringify(row))).toString('utf8')))
   const api = {
-    rows, records, contractFailures: [],
+    rows, records, budgets, contractFailures: [],
     setBaseSystemPrompt(prompt) {
       assert.equal(sha(prompt), binding.prompts.runtimePromptSha256)
       baseSystemPrompt = prompt
@@ -63,7 +69,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
       try {
         const endpoint = new URL(url)
         assert(!endpoint.username && !endpoint.password && !endpoint.search && !endpoint.hash)
-        assert.equal(endpoint.origin, new URL(ENDPOINT).origin, 'No inference endpoint substitution')
+        assert.equal(endpoint.origin, new URL(endpointBase).origin, 'No inference endpoint substitution')
         assert(['/v1/models', '/v1/chat/completions'].includes(endpoint.pathname), 'Unapproved native endpoint')
         assert.equal(options.redirect, 'error', 'Native redirects must remain disabled')
         assert(options.body == null || typeof options.body === 'string' || options.body instanceof Uint8Array, 'Uncapturable native body type')
@@ -74,10 +80,14 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
         if (body) {
           assert.equal(endpoint.pathname, '/v1/chat/completions')
           assert.equal(options.method, 'POST')
-          assert.equal(body.model, NATIVE_MODEL)
-          assert(!('providerOptions' in body) && !('reasoning_effort' in body) && !body.stream)
+          assert.equal(body.model, requestedModel)
+          assert(!('providerOptions' in body) && !body.stream)
+          if (luna) {
+            assert.equal(body.reasoning_effort, 'max')
+            assert(!('max_tokens' in body))
+          } else assert(!('reasoning_effort' in body))
           assert(['answerer', 'context_compaction', 'provider_preflight'].includes(context.phase))
-          assert.equal(body.max_tokens, context.phase === 'context_compaction' ? 8192 : 32768, 'Preserve the actual per-call budget; never rewrite it')
+          assert.equal(luna ? body.max_completion_tokens : body.max_tokens, context.phase === 'context_compaction' ? 8192 : 32768, 'Preserve the actual per-call budget; never rewrite it')
           if (context.phase === 'context_compaction') assert(!body.tools?.length, 'Summary calls must not expose tools')
           if (binding.surface && context.phase === 'answerer') {
             assert.equal(wireMeasurements(body).schemaSha256, binding.surface.answererSchemaSha256)
@@ -99,7 +109,8 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
         } else assert.equal(endpoint.pathname, '/v1/models')
         const row = { id: `${String(rows.length + 1).padStart(6, '0')}-${randomUUID()}`, bindingSha256: digest(binding), ...context,
           endpoint: endpoint.href, method: options.method ?? 'GET', startedAt: new Date().toISOString(), model: body?.model ?? null,
-          maxTokens: body?.max_tokens ?? null, measurements: body ? wireMeasurements(body) : null,
+          maxTokens: body?.max_completion_tokens ?? body?.max_tokens ?? null, measurements: body ? wireMeasurements(body) : null,
+          ...(luna && body ? { experiment: binding.experiment, budgetConfig: binding.budgets, budgetTicketId: context.budgetTicketId } : {}),
           status: null, responseBodyId: null, responseModel: null, usage: null, usageUnknown: true, response: null }
         row.request = captureBytes(row.id, 'request', raw)
         rows.push(row)
@@ -157,10 +168,14 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
     },
     modelFactory(createModel) {
       return config => {
-        if (config.model !== MODEL || config.inferenceProvider !== 'runanywhere' || config.providerModel !== NATIVE_MODEL || config.modelRequestTimeoutMs !== 600000) api.contractFailures.push({ ...attemptContext.getStore(), stage: 'native-model-config', errorClass: 'InvalidNativeConfig' })
-        assert.equal(config.model, MODEL)
-        assert.equal(config.inferenceProvider, 'runanywhere')
-        assert.equal(config.providerModel, NATIVE_MODEL)
+        if (config.model !== (luna ? LUNA_MODEL : MODEL) || (config.inferenceProvider ?? 'gateway') !== (luna ? 'gateway' : 'runanywhere') ||
+          (luna ? config.providerModel != null || config.reasoningEffort !== 'max' || config.providerOnly != null : config.providerModel !== NATIVE_MODEL) || config.modelRequestTimeoutMs !== 600000) api.contractFailures.push({ ...attemptContext.getStore(), stage: 'native-model-config', errorClass: 'InvalidNativeConfig' })
+        assert.equal(config.model, luna ? LUNA_MODEL : MODEL)
+        assert.equal(config.inferenceProvider ?? 'gateway', luna ? 'gateway' : 'runanywhere')
+        if (luna) {
+          assert(config.providerModel == null && config.providerOnly == null)
+          assert.equal(config.reasoningEffort, 'max')
+        } else assert.equal(config.providerModel, NATIVE_MODEL)
         assert.equal(config.modelRequestTimeoutMs, 600000)
         const model = createModel(config, api.fetch)
         return async (messages, options = {}) => {
@@ -170,21 +185,35 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
           if (!['answerer', 'context_compaction'].includes(phase) || options.max_tokens !== (phase === 'context_compaction' ? 8192 : 32768)) api.contractFailures.push({ ...attempt, phase, stage: 'native-model-options', maxTokens: options.max_tokens ?? null, errorClass: 'InvalidNativeOptions' })
           assert(['answerer', 'context_compaction'].includes(phase))
           assert.equal(options.max_tokens, phase === 'context_compaction' ? 8192 : 32768, 'Native adapter must preserve summary and answerer budgets')
+          let ticket
+          if (luna) {
+            const key = `${attempt.arm}:${attempt.taskId}:${attempt.attempt}`
+            if (!budgets.has(key)) budgets.set(key, createTaskModelBudget({ maxSteps: binding.budgets.maxSteps,
+              maxInputTokens: binding.budgets.maxInputTokens, maxContextTokens: binding.budgets.maxContextTokens }))
+            const expected = await expectedInstructions({ ...attempt, phase, capyRequestRecordId: options.capy_request_record_id ?? options.capyRequestRecordId ?? null })
+            ticket = budgets.get(key).admit({ messages, tools: options.tools ?? [], maxCompletionTokens: options.max_tokens,
+              sessionId: expected.sessionId, phase })
+          }
           const callId = randomUUID()
-          const record = { callId, ...attempt, phase, model: NATIVE_MODEL, maxTokens: options.max_tokens,
+          const record = { callId, ...attempt, phase, model: requestedModel, maxTokens: options.max_tokens,
+            ...(luna ? { experiment: binding.experiment, budgetConfig: binding.budgets, budgetTicketId: ticket.id } : {}),
             capyRequestRecordId: options.capy_request_record_id ?? options.capyRequestRecordId ?? null,
             messagesSha256: digest(messages), startedAt: new Date().toISOString(), requestId: null, usage: null, failed: false }
           records.push(record)
-          return modelContext.run({ ...attempt, phase, modelCallId: callId, capyRequestRecordId: record.capyRequestRecordId }, async () => {
+          return modelContext.run({ ...attempt, phase, modelCallId: callId, capyRequestRecordId: record.capyRequestRecordId,
+            ...(ticket ? { budgetTicketId: ticket.id } : {}) }, async () => {
             try {
               const result = await model(messages, options)
               await api.flush()
               Object.assign(record, { requestId: result.id ?? null, responseModel: result.model ?? null, usage: result.usage ?? null,
-                requestAttempts: result.inferenceAttempts ?? [] })
-              assert.equal(result.model, NATIVE_MODEL)
+                requestAttempts: result.inferenceAttempts ?? (luna ? rows.filter(row => row.modelCallId === callId).map(row => ({ status: row.status, elapsedMs: row.elapsedMs })) : []) })
+              assert.equal(result.model, requestedModel)
               assert(typeof result.id === 'string' && result.id && metered(result.usage), 'Native model returned no actual ID/metered usage')
+              ticket?.settle({ usage: result.usage, requestId: result.id })
+              if (luna) result.inferenceAttempts = record.requestAttempts
               return result
             } catch (error) {
+              if (ticket?.status === 'pending') ticket.fail()
               await api.flush()
               const calls = rows.filter(row => row.modelCallId === callId)
               const attempts = error.inferenceAttempts ?? record.requestAttempts
@@ -213,7 +242,8 @@ export function readCapture(directory, capture) {
   return bytes
 }
 
-export function reconcileNative({ directory, rows, records, modelRequests, events = [], reportedRecords, allowIncomplete = false }) {
+export function reconcileNative({ directory, rows, records, modelRequests, events = [], reportedRecords, allowIncomplete = false, experiment }) {
+  const luna = experiment === LUNA_EXPERIMENT
   assert(Array.isArray(modelRequests), 'Actual capy_model_requests ledger required; saved tool outputs are not proof of transmission')
   const chats = rows.filter(row => row.endpoint.endsWith('/chat/completions'))
   const success = chats.filter(row => !row.usageUnknown && row.status >= 200 && row.status < 300 && !row.callFailed)
@@ -222,8 +252,8 @@ export function reconcileNative({ directory, rows, records, modelRequests, event
   const byPhase = {}
   for (const row of chats) {
     const request = JSON.parse(readCapture(directory, row.request))
-    assert.equal(request.model, NATIVE_MODEL)
-    assert.equal(request.max_tokens, row.maxTokens)
+    assert.equal(request.model, luna ? LUNA_MODEL : NATIVE_MODEL)
+    assert.equal(luna ? request.max_completion_tokens : request.max_tokens, row.maxTokens)
     assert.equal(row.maxTokens, row.phase === 'context_compaction' ? 8192 : 32768)
     if (row.request.originalTransmittedSha256 === row.request.sanitizedSha256) assert.deepEqual(wireMeasurements(request), row.measurements)
     if (row.response) {
