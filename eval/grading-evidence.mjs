@@ -9,6 +9,8 @@ const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(va
 const printsHead = command => /\bhead\s+(?:-c\s+\d+|-(?:n\s+)?\d+)\b/.test(command ?? '')
 export const PARENT_VISIBLE_EVIDENCE_VERSION = 'parent-visible-outputs-v2'
 export const PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION = 'parent-visible-findings-v3'
+export const PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION = 'parent-visible-findings-v4'
+export const EVIDENCE_REPLAY_OVERRIDES = Object.freeze([PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION, PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION])
 
 function printedValue(text, start, end = text.length) {
   let position = start, count = 0
@@ -250,7 +252,7 @@ function inside(path, root) {
 }
 
 export function evidenceV4({ workspace, artifacts, argumentCaptures, captureModel, captureProviderOnly, replayVersionOverride }) {
-  if (replayVersionOverride !== undefined && replayVersionOverride !== PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION) throw new Error('Invalid evidence replay override')
+  if (replayVersionOverride !== undefined && !EVIDENCE_REPLAY_OVERRIDES.includes(replayVersionOverride)) throw new Error('Invalid evidence replay override')
   const workspaceRoot = realpathSync(workspace)
   const manifest = loadChunks(workspace)
   const corpusRoot = realpathSync(resolve(workspace, 'corpus/chunks'))
@@ -635,17 +637,17 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       }
     }
   }
-  function native(found, metadata, value, origin, depth = 0) {
+  function native(found, metadata, value, origin, depth = 0, rejectedSourceCandidates) {
     if (depth > 8) return
     if (typeof value === 'string') {
       if (value.length > 1_000_000) return
-      try { native(found, metadata, JSON.parse(value), origin, depth + 1) } catch (error) {
+      try { native(found, metadata, JSON.parse(value), origin, depth + 1, rejectedSourceCandidates) } catch (error) {
         if (error?.message?.startsWith('Invalid evidence')) throw error
       }
       return
     }
     if (!value || typeof value !== 'object') return
-    if (Array.isArray(value)) { for (const child of value) native(found, metadata, child, origin, depth + 1); return }
+    if (Array.isArray(value)) { for (const child of value) native(found, metadata, child, origin, depth + 1, rejectedSourceCandidates); return }
     if (typeof value.chunk_id === 'string' && typeof value.doc === 'string') {
       const meta = manifest.get(value.chunk_id)
       if (!meta || !value.chunk_id.startsWith(`${meta.doc_id}:`)) throw new Error('Invalid evidence chunk ID')
@@ -669,6 +671,14 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       for (const field of ['text', 'preview']) {
         if (typeof value[field] === 'string' && value[field].trim()) {
           const source = sourceFor(value.chunk_id)
+          if (rejectedSourceCandidates && origin.tool === 'ipython' && ['stdout', 'result'].includes(origin.channel) &&
+              !Object.hasOwn(value, 'start') && !Object.hasOwn(value, 'end') && source.text.indexOf(value[field]) === -1) {
+            rejectedSourceCandidates.push({ id: source.id, status: 'rejected', reason: 'noncanonical-exact-text',
+              candidateSha256: hash(value[field]), candidateChars: value[field].length,
+              canonicalSha256: hash(source.text), canonicalChars: source.text.length,
+              origin: { ...origin, field, fieldPath: [...(origin.fieldPath ?? []), field] } })
+            continue
+          }
           attach(found, source.id, value[field], { ...origin, field }, value[field] === source.text ? 'full' : 'excerpt')
         }
       }
@@ -687,8 +697,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       return
     }
     for (const [key, child] of Object.entries(value)) {
-      if (key === 'content' || key === 'results') native(found, metadata, child, origin, depth + 1)
-      else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, metadata, child, origin, depth + 1)
+      if (key === 'content' || key === 'results') native(found, metadata, child, origin, depth + 1, rejectedSourceCandidates)
+      else if (key === 'text' && typeof child === 'string' && value.type === 'text') native(found, metadata, child, origin, depth + 1, rejectedSourceCandidates)
     }
   }
   function visibleFileText(found, text, origin, command) {
@@ -933,7 +943,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
     records.forEach((record, index) => visible(record, { ...origin, channel: 'stdout', stdoutSha256: hash(envelope.stdout), stdoutRecord: index }))
   }
-  function parentVisible(found, metadata, value, origin, depth = 0) {
+  function parentVisible(found, metadata, value, origin, depth = 0, rejectedSourceCandidates) {
     if (depth > 8 || value == null) return
     if (typeof value === 'string') {
       if (!value.trim() || value.length > 1_000_000 || value.includes('\n... truncated ...\n')) return
@@ -942,7 +952,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (origin.channel === 'result' || origin.channel === 'stdout') decoded = pythonLiteral(value)
       }
       if (decoded !== undefined) {
-        parentVisible(found, metadata, decoded, origin, depth + 1)
+        parentVisible(found, metadata, decoded, origin, depth + 1, rejectedSourceCandidates)
         return
       }
       const lines = value.split(/\r?\n/)
@@ -968,7 +978,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         }
       }
       records.forEach(({ value: record, index }) => parentVisible(found, metadata, record,
-        { ...origin, visibleRecord: index }, depth + 1))
+        { ...origin, visibleRecord: index }, depth + 1, rejectedSourceCandidates))
       for (const [index, header] of identityHeaders.entries()) {
         const block = lines.slice(header.index + 1, identityHeaders[index + 1]?.index ?? lines.length).join('\n')
           .split(/\n(?:={10,}|-{10,})(?:\n|$)/, 1)[0]
@@ -982,16 +992,19 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       return
     }
     if (Array.isArray(value)) {
-      for (const child of value) parentVisible(found, metadata, child, origin, depth + 1)
+      for (const [index, child] of value.entries()) parentVisible(found, metadata, child,
+        rejectedSourceCandidates ? { ...origin, fieldPath: [...(origin.fieldPath ?? []), index] } : origin,
+        depth + 1, rejectedSourceCandidates)
       return
     }
     if (typeof value !== 'object' || value.truncated === true || value.ok === false ||
-        value.error != null && value.error !== false || value.exit_code != null && value.exit_code !== 0) return
+        value.error != null && value.error !== false || value.exit_code != null && value.exit_code !== 0 ||
+        rejectedSourceCandidates && value.visibility === 'child-only') return
     const childId = value.rlm_child_id ?? value.agent_id ?? value.session_id
     if (childId != null && Object.hasOwn(value, 'status')) {
       if (value.status !== 'completed') return
       for (const channel of ['response', 'output']) parentVisible(found, metadata, value[channel],
-        { ...origin, channel, childSessionId: childId }, depth + 1)
+        { ...origin, channel, childSessionId: childId }, depth + 1, rejectedSourceCandidates)
       return
     }
     const id = value.chunk_id ?? value.id
@@ -1003,24 +1016,28 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           throw new Error('Invalid evidence coordinates')
         }
       }
-      native(found, metadata, { ...value, chunk_id: id, doc: value.doc ?? sourceFor(id).doc }, origin)
+      native(found, metadata, { ...value, chunk_id: id, doc: value.doc ?? sourceFor(id).doc }, origin, 0, rejectedSourceCandidates)
       return
     }
     if (typeof value.chunk_id === 'string' && typeof value.doc === 'string') {
-      native(found, metadata, value, origin)
+      native(found, metadata, value, origin, 0, rejectedSourceCandidates)
       return
     }
     if (Array.isArray(value.matches)) opulentGrep(found, value, origin)
     if (Object.hasOwn(value, 'stdout')) {
       parentVisible(found, metadata, value.stdout, { ...origin, channel: 'stdout',
-        ...(typeof value.stdout === 'string' ? { stdoutSha256: hash(value.stdout) } : {}) }, depth + 1)
-      parentVisible(found, metadata, value.result, { ...origin, channel: 'result' }, depth + 1)
+        ...(rejectedSourceCandidates ? { fieldPath: [...(origin.fieldPath ?? []), 'stdout'] } : {}),
+        ...(typeof value.stdout === 'string' ? { stdoutSha256: hash(value.stdout) } : {}) }, depth + 1, rejectedSourceCandidates)
+      parentVisible(found, metadata, value.result, { ...origin, channel: 'result',
+        ...(rejectedSourceCandidates ? { fieldPath: [...(origin.fieldPath ?? []), 'result'] } : {}) }, depth + 1, rejectedSourceCandidates)
       return
     }
     for (const [key, child] of Object.entries(value)) {
       if (['scriptCalls', 'script_calls', 'scriptRuns', 'script_runs', 'trajectory', 'sessions', 'childSessions',
         'conversation', 'conversations', 'messages', 'orchestrationMessages', 'timeline', 'events', 'stderr'].includes(key)) continue
-      parentVisible(found, metadata, child, origin, depth + 1)
+      parentVisible(found, metadata, child,
+        rejectedSourceCandidates ? { ...origin, fieldPath: [...(origin.fieldPath ?? []), key] } : origin,
+        depth + 1, rejectedSourceCandidates)
     }
   }
   function overflowKey(path) {
@@ -1122,6 +1139,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     const argumentHashUnverifiable = []
     const diagnostics = []
     const quoteAudit = []
+    const rejectionPolicy = replayVersionOverride === PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION
+    const rejectedSourceCandidates = rejectionPolicy ? [] : undefined
     let parentVisiblePolicy = false
     let findingsPolicy = false, originalArtifactSha256
     if (row.mode === 'broad') {
@@ -1138,7 +1157,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       if (version !== undefined && version !== PARENT_VISIBLE_EVIDENCE_VERSION) throw new Error('Invalid evidence replay version')
       parentVisiblePolicy = version === PARENT_VISIBLE_EVIDENCE_VERSION
       if (replayVersionOverride !== undefined && !parentVisiblePolicy) throw new Error('Invalid evidence incompatible replay override')
-      findingsPolicy = replayVersionOverride === PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION
+      findingsPolicy = EVIDENCE_REPLAY_OVERRIDES.includes(replayVersionOverride)
       if (findingsPolicy) originalArtifactSha256 = artifactHashes.get(relative(root, realpathSync(join(broadRoot, name))))
       const overflows = new Map()
       artifact.calls.forEach((call, index) => {
@@ -1166,6 +1185,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         }
         if (parentVisiblePolicy) {
           const origin = { artifact: name, call: index, tool: call.tool,
+            ...(rejectionPolicy ? { artifactSha256: originalArtifactSha256, ...(call.toolCallId ? { toolCallId: call.toolCallId } : {}) } : {}),
             outputSha256: audit.result.sha256, argumentHashVerified: argsVerified }
           let output
           try { output = JSON.parse(call.output) } catch {}
@@ -1180,7 +1200,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           if (findingsPolicy) findingReceipts(found, quoteAudit, call.output, { ...origin,
             artifactSha256: originalArtifactSha256, ...(call.toolCallId ? { toolCallId: call.toolCallId } : {}) }, call.args)
           if (call.tool === 'ipython') {
-            if (output?.ok === true) parentVisible(found, modelVisibleMetadata, output, origin)
+            if (output?.ok === true) parentVisible(found, modelVisibleMetadata, output, origin, 0, rejectedSourceCandidates)
             return
           }
           if (call.tool === 'scripted_tools') {
@@ -1239,13 +1259,16 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     return { answer: row.answer, sources: [...found.values()], modelVisibleMetadata, trace: row.trace,
       ...(parentVisiblePolicy ? { diagnostics } : {}),
       ...(findingsPolicy ? { quoteAudit } : {}),
+      ...(parentVisiblePolicy && rejectionPolicy ? { rejectedSourceCandidates } : {}),
       proof: { binding_strength: row.mode === 'broad' ? 'recorded-output-sha256' : 'legacy-artifact-snapshot-arguments-canonical',
         argument_hash_unverifiable: argumentHashUnverifiable, historical_result_hash_missing: row.mode === 'harvey',
-        ...(parentVisiblePolicy ? { evidenceReplayVersion: findingsPolicy ? PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION : PARENT_VISIBLE_EVIDENCE_VERSION } : {}),
+        ...(parentVisiblePolicy ? { evidenceReplayVersion: findingsPolicy ? replayVersionOverride : PARENT_VISIBLE_EVIDENCE_VERSION } : {}),
         ...(findingsPolicy ? { recordedEvidenceReplayVersion: PARENT_VISIBLE_EVIDENCE_VERSION, replayOverride: true,
           originalArtifactSha256, replayImplementationSha256: hash(readFileSync(new URL(import.meta.url))),
           findingMatchingPolicy: 'exact-fragments-whitespace-hyphen-v2',
           analysisMatchingPolicy: 'one-sentence-one-complete-quotation-one-citation-unique-word-boundary-quote-end-suffix-min64-min8words-v2',
+          ...(rejectionPolicy ? { sourceCandidatePolicy: 'ipython-unpositioned-noncanonical-body-rejected-v1',
+            rejectedSourceCandidatesSha256: hash(JSON.stringify(rejectedSourceCandidates)) } : {}),
           coordinateUnit: 'utf16',
           quoteAuditSha256: hash(JSON.stringify(quoteAudit)), visibleSourceInventorySha256: hash(JSON.stringify([...found.values()])) } : {}) },
       metrics: { errors: row.degraded ? Math.max(1, row.metrics?.errors ?? 0) : 0, replay: true, sourceCount: found.size } }
