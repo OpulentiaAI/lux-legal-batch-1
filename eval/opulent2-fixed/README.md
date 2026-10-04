@@ -54,6 +54,8 @@ When the adapter returns a result, `unvalidated-result.json` preserves its sanit
 
 The Opulent2 lead checks acknowledged Drive readbacks before accepting either a plain final answer or a final report. A read inside codemode followed by a head/tail, length or hash return is not a full-content observation. Missing observations produce a source-pinned, metadata-only correction in the same session so the model can return and inspect the actual content without restarting the task. This transport check is not a legal-quality judgment and does not replace post-run verification or substantive parent acceptance.
 
+Opulent2 summary repair keeps the same complete input, two-attempt limit and native token budget, but requests and validates a shorter summary after the first rejection. Truncated or otherwise invalid repairs still fail explicitly. The summary contract preserves alternatives, conditions and uncertainty; the lead must still reopen decisive sources after compaction. Mandatory nesting stops at the grandchild even if an assignment repeats it, and the post-draft delegated review belongs only to the lead rather than recursively to every reviewer.
+
 ## Only after both proving tasks pass
 
 The parent reviews the actual assignments/findings, desktop images, search, memory/Drive readback and saved deliverables. A separate `opulent2-fixed-proving-acceptance-v1` document has `issuer:"parent"`, an actual `reference`, `checkpointSha256` (file bytes), `resultsSha256=SHA256(JSON.stringify(checkpoint.rows.map(row=>row.opulent2.completed)))`, and `executionAndMeaningfulWorkPassed:true`.
