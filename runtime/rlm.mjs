@@ -39,7 +39,7 @@ export const RLM_REPORT_SCHEMA = {
 };
 
 export function rlmDefinitionsFor(config = {}) {
-  if (config.rlmHandoffPolicy === RLM_HANDOFF_POLICY && config.instructionProfile === 'opulent-delivery-v10') {
+  if (config.rlmHandoffPolicy === RLM_HANDOFF_POLICY && ['opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile)) {
     return { ipython: { ...rlmDefinitions.ipython, description: 'Execute a Python cell in this session’s resident E2B kernel. Imports, variables, functions and prompt survive later cells in this running session; top-level await works. Preloaded asynchronous methods require await: rlm.spawn(prompt, name=...), rlm.list_subagents(), rlm.result(id), rlm.message(id, text), rlm.cancel(id), tools.call(name, args), bash(command, workdir=None, timeout=None). rlm.result is a nonblocking status/output read; a null response is not a report. Use the directly defined wait_for_operations outside the kernel facade after useful independent work to await owned children. Python exceptions do not reset the kernel; a transport failure or timeout does. Ordinary outputs expose bounded stream previews and exact snapshot_id readback, not an invented overflow_path. A blocked finish exposes handoff_status diagnostics without granting receipts. Prime daemon, heartbeat, refine, Python skill installation and namespace revival are not supported. ' + RLM_HANDOFF_DESCRIPTION } };
   }
   return config.rlmHandoffPolicy === RLM_HANDOFF_POLICY
@@ -339,7 +339,7 @@ function createHandoff(ctx, child) {
       if (args.action === 'finish') {
         const status = check(false, true);
         if (!status.ready) {
-          if (ctx.config.instructionProfile === 'opulent-delivery-v10') cell.handoffStatus = scrub(status, cell);
+          if (['opulent-delivery-v10', 'opulent-delivery-v11'].includes(ctx.config.instructionProfile)) cell.handoffStatus = scrub(status, cell);
           throw new Error(`Handoff is incomplete: ${JSON.stringify(status)}`);
         }
         const receipt = issue(cell, { kind: 'finish', binding_sha256: status.binding_sha256, required: status.required, source_policy: status.source_policy });

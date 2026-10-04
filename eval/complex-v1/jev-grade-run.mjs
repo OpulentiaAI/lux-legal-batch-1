@@ -154,8 +154,8 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' ||
     !Number.isSafeInteger(provenance.maxSteps) || provenance.maxSteps < 1 ||
     provenance.instructionProfile === 'opulent-context-v6' && provenance.maxSteps !== 250 ||
-    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
-  if (['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(provenance.instructionProfile)) {
+    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+  if (['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(provenance.instructionProfile)) {
     const retrieval = provenance.broadPolicy?.retrieval
     if (retrieval?.profile !== 'voyage' || retrieval.embeddingModel !== 'voyage/voyage-4-large' ||
       retrieval.rerankModel !== 'voyage/rerank-2.5' || retrieval.dimensions !== 1024 || retrieval.searchBackend !== 'turbopuffer' ||

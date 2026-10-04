@@ -1,0 +1,14 @@
+{
+  "version": "opulent-delivery-v11",
+  "profile": "opulent-delivery-v11",
+  "inheritedVersion": "opulent-delivery-v10",
+  "inheritedManifestSha256": "aadc4f05dfa5aaa0a86a9db3c328bcd7e56eaa90a503f03a19c647764137cab9",
+  "inheritedEffectivePromptSha256": "ea9db2bf9210dc180669ff035acd6c70e3ecf07f198f2e6e9511b1fca23e0e3f",
+  "composition": "unchanged-delivery-v10-with-same-session-empty-final-recovery-layer",
+  "addendumSha256": "1733a7054aed5e985c16239314b75788b5febf3a163f78477435d25093e87ec8",
+  "provenance": {
+    "source": "Current generic runtime and deterministic tests; no frozen rubric, hidden reference or saved legal memo used",
+    "behavioralSupplement": true,
+    "note": "Separate opt-in repair experiment, not a live pass or measured improvement. Historical behavior, outputs, grading and source credit remain unchanged; existing budgets, schema/file validation, handoff and security contracts retained."
+  }
+}
