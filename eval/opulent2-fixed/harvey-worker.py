@@ -109,6 +109,7 @@ def install_capture(document, expected):
     import httpx
     from e2b import Sandbox
 
+    expected = json.loads(json.dumps(expected))
     directory = private_directory(document['captureDirectory'])
     registry_path = Path(document['ownedRegistry'])
     rows, owned = [], []
