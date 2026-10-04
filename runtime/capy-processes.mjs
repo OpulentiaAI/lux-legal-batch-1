@@ -103,7 +103,8 @@ print('cancelled')`;
   async function bash({ command, description, timeout, execution = 'foreground' }) {
     if (execution === 'foreground' && (timeout ?? 120) > 3600) throw new Error('Foreground bash timeout cannot exceed 3600 seconds');
     const seconds = timeout ?? (execution === 'foreground' ? 120 : 1800);
-    const availableMs = ctx.sandboxDeadlineAt === undefined ? ctx.config.sandboxTimeoutMs : ctx.sandboxDeadlineAt - Date.now();
+    if (ctx.sandboxLease) await ctx.sandboxLease.ensure();
+    const availableMs = ctx.sandboxLease ? seconds * 1000 : ctx.sandboxDeadlineAt === undefined ? ctx.config.sandboxTimeoutMs : ctx.sandboxDeadlineAt - Date.now();
     if (availableMs <= 0) throw new Error('Sandbox lifecycle deadline exceeded');
     const effectiveMs = Math.min(seconds * 1000, availableMs);
     const id = randomUUID();
