@@ -116,7 +116,7 @@ async function ensureWorker(ctx) {
     if (!live) {
       const node = await sandbox.commands.run('node --version', { timeoutMs: 10000 });
       if (!/^v\d+/.test(node.stdout.trim())) throw new Error('Node runtime unavailable');
-      const bundle = await exec('tar', ['-C', fileURLToPath(new URL('../node_modules/', import.meta.url)), '-czf', '-', 'playwright-core'], { encoding: 'buffer', maxBuffer: 15_000_000 });
+      const bundle = await exec('tar', ['--dereference', '-C', fileURLToPath(new URL('../node_modules/', import.meta.url)), '-czf', '-', 'playwright-core'], { encoding: 'buffer', maxBuffer: 15_000_000 });
       await sandbox.files.makeDir('/tmp/computer-use/browser-worker');
       await sandbox.files.write('/tmp/computer-use/browser-worker/playwright.tar.gz', bundle.stdout);
       await sandbox.files.write(workerPath, await readFile(new URL('./browser/worker.cjs', import.meta.url)));
