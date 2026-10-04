@@ -69,9 +69,10 @@ export function parseOptions(args) {
   options.semanticSurface ??= 'mcp'
   if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
   if (options.instructionProfile === 'opulent-capability-v8' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-delivery-v9' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Delivery v9 comparison requires native RunAnywhere MiMo v2.6 Pro')
+  if (options.instructionProfile === 'opulent-delivery-v10' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Delivery v10 comparison requires native RunAnywhere MiMo v2.6 Pro')
   options.maxSteps = options.maxSteps === undefined ? defaultMaxSteps :
     validMaxSteps(/^[1-9]\d*$/.test(options.maxSteps) ? Number(options.maxSteps) : NaN)
   options.concurrency = options.concurrency === undefined ? defaultConcurrency :
@@ -232,8 +233,8 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
-  const deliveryV9 = options.instructionProfile === 'opulent-delivery-v9'
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10'].includes(options.instructionProfile)
   const capabilityV8 = options.instructionProfile === 'opulent-capability-v8' || deliveryV9
   if (capabilityV8 && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-knowledge-v3' && maxSteps !== 160) throw new Error('Knowledge comparison requires 160 steps for both arms')
@@ -272,7 +273,7 @@ export async function run(options, dependencies = {}) {
       inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common,
-        ...(['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
+        ...(['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
         harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
       broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
@@ -291,7 +292,7 @@ export async function run(options, dependencies = {}) {
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
       ...(capabilityV8 ? { capabilityProtocol: {
-        version: deliveryV9 ? 'opulent-delivery-v9' : 'opulent-capability-v8', protocolSha256: fileHash(join(suiteRoot, deliveryV9 ? 'DELIVERY-V9-PROTOCOL.md' : 'CAPABILITY-V8-PROTOCOL.md')),
+        version: deliveryV9 ? options.instructionProfile : 'opulent-capability-v8', protocolSha256: fileHash(join(suiteRoot, deliveryV9 ? options.instructionProfile === 'opulent-delivery-v10' ? 'DELIVERY-V10-PROTOCOL.md' : 'DELIVERY-V9-PROTOCOL.md' : 'CAPABILITY-V8-PROTOCOL.md')),
         profileInstructions: renderInstructions({ profile: options.instructionProfile }).provenance,
         requiredRuntime: { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true, descendantModelPolicy: 'inherit-native-runanywhere-mimo-v2.6-pro',
           evidenceReplayVersion: 'parent-visible-outputs-v2', canonicalCorpusPath: '/tmp/broad-legal-workspace/corpus',

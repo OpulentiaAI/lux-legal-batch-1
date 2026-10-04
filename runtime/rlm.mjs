@@ -39,6 +39,9 @@ export const RLM_REPORT_SCHEMA = {
 };
 
 export function rlmDefinitionsFor(config = {}) {
+  if (config.rlmHandoffPolicy === RLM_HANDOFF_POLICY && config.instructionProfile === 'opulent-delivery-v10') {
+    return { ipython: { ...rlmDefinitions.ipython, description: 'Execute a Python cell in this session’s resident E2B kernel. Imports, variables, functions and prompt survive later cells in this running session; top-level await works. Preloaded asynchronous methods require await: rlm.spawn(prompt, name=...), rlm.list_subagents(), rlm.result(id), rlm.message(id, text), rlm.cancel(id), tools.call(name, args), bash(command, workdir=None, timeout=None). rlm.result is a nonblocking status/output read; a null response is not a report. Use the directly defined wait_for_operations outside the kernel facade after useful independent work to await owned children. Python exceptions do not reset the kernel; a transport failure or timeout does. Ordinary outputs expose bounded stream previews and exact snapshot_id readback, not an invented overflow_path. A blocked finish exposes handoff_status diagnostics without granting receipts. Prime daemon, heartbeat, refine, Python skill installation and namespace revival are not supported. ' + RLM_HANDOFF_DESCRIPTION } };
+  }
   return config.rlmHandoffPolicy === RLM_HANDOFF_POLICY
     ? { ipython: { ...rlmDefinitions.ipython, description: `${rlmDefinitions.ipython.description} ${RLM_HANDOFF_DESCRIPTION}` } }
     : rlmDefinitions;
@@ -335,7 +338,10 @@ function createHandoff(ctx, child) {
       }
       if (args.action === 'finish') {
         const status = check(false, true);
-        if (!status.ready) throw new Error(`Handoff is incomplete: ${JSON.stringify(status)}`);
+        if (!status.ready) {
+          if (ctx.config.instructionProfile === 'opulent-delivery-v10') cell.handoffStatus = scrub(status, cell);
+          throw new Error(`Handoff is incomplete: ${JSON.stringify(status)}`);
+        }
         const receipt = issue(cell, { kind: 'finish', binding_sha256: status.binding_sha256, required: status.required, source_policy: status.source_policy });
         finishReceipt = receipt.receipt_id; persistState();
         return receipt;
@@ -360,7 +366,7 @@ function createHandoff(ctx, child) {
         result = { stdout: `${receipt ? `${receipt.line}\n` : ''}${JSON.stringify(metadata)}\n`,
           stderr: streams.stderr ? Array.from(streams.stderr.raw).slice(0, previewLimit).join('') : '',
           result: packet.result === null ? null : streams.result ? Array.from(streams.result.raw).slice(0, previewLimit).join('') : packet.result,
-          ok: packet.ok, ...state };
+          ok: packet.ok, ...state, ...(cell.handoffStatus ? { handoff_status: cell.handoffStatus } : {}) };
         if (Buffer.byteLength(JSON.stringify(result)) <= RLM_HANDOFF_LIMITS.toolEnvelopeBytes) break;
         if (!previewLimit) throw new Error('RLM handoff envelope exceeds its fixed output budget');
         previewLimit = Math.floor(previewLimit / 2);

@@ -57,6 +57,23 @@ export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
+  if (profile === 'opulent-delivery-v10') {
+    const manifestText = readFileSync(new URL('./manifest-opulent-delivery-v10.json', import.meta.url), 'utf8')
+    const manifest = JSON.parse(manifestText)
+    const addendum = readFileSync(new URL('./opulent-delivery-v10.md', import.meta.url), 'utf8').trimEnd()
+    const inherited = renderInstructions({ profile: 'opulent-delivery-v9' })
+    if (manifest.version !== profile || manifest.profile !== profile || manifest.inheritedVersion !== inherited.provenance.version ||
+        manifest.inheritedManifestSha256 !== inherited.provenance.manifestSha256 ||
+        manifest.inheritedEffectivePromptSha256 !== inherited.provenance.effectivePromptSha256 ||
+        manifest.addendumSha256 !== sha256(addendum)) throw new Error('Delivery v10 instructions differ from the audited manifest')
+    variant ??= profile
+    const prompt = `${inherited.systemPrompt}\n\n${addendum}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: { ...inherited.provenance, variant, version: profile, profile,
+      inheritedVersion: manifest.inheritedVersion, inheritedV9ManifestSha256: manifest.inheritedManifestSha256,
+      inheritedV9EffectivePromptSha256: manifest.inheritedEffectivePromptSha256, composition: manifest.composition,
+      addendumSha256: manifest.addendumSha256, manifestSha256: sha256(manifestText), effectivePromptSha256: sha256(systemPrompt) } }
+  }
   if (profile === 'opulent-delivery-v9') {
     const manifestText = readFileSync(new URL('./manifest-opulent-delivery-v9.json', import.meta.url), 'utf8')
     const manifest = JSON.parse(manifestText)
