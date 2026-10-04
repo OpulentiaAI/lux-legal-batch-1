@@ -75,7 +75,7 @@ are operator provenance, not permission to open another scope.
 
 ## Bounded context and evidence
 
-The Capy-only `capy-coherent-context-v1` projection uses a 300,000-character input
+The Capy-only `capy-coherent-context-v2` projection uses a 300,000-character input
 bound, 160,000-character summary batches, 24,000 summary characters, 8,192 summary
 tokens, three recent coherent groups and at most eight summary batches. Three
 groups, rather than six, leave room for the prompt and 60,000-character returned
@@ -90,6 +90,21 @@ summary-input window and batch count can differ. Boundary tests use this exact
 evaluation configuration with parallel 60,000-character results, the three most
 recent coherent groups, and an eight-batch exhaustion that fails without
 silently truncating history.
+
+Version 2 reuses a validated summary and its complete unsummarized suffix until
+the prepared request itself crosses the input bound. Compatibility binds the
+policy version, configured source fingerprint, model, permissions, source
+configuration and exact coherent prefix. Incremental compaction never bills an
+already summarized group again under compatible unchanged history. Each batch
+permits one repair after an empty, malformed, oversized, tool-call or
+length-truncated summary, retaining each invocation's original response ID and
+observed usage. Repairs use the same transcript and completion budget, target
+half the summary character ceiling and reserve their instructions inside the
+summary-input bound. Exhausted repairs fail without slicing history or saving a
+partial checkpoint; transport failures retain unknown usage. The historical
+generic compactor and earlier version-1 run remain unchanged. A version-2 run
+requires fresh release, authorization and output bindings, never a resume of a
+version-1 checkpoint.
 
 Before an owned VM pauses or terminates, its process backing files (`stdout`,
 `stderr`, `identity` and `exit_code`) are copied to private 0600 host files under

@@ -104,7 +104,7 @@ test('Capy evaluation preserves the actual 8192-token compactor request and 3276
   assert.equal(captured.options.config.requireWorkflowApproval, true)
   assert.deepEqual(captured.options.config.allowedRepos, [])
   assert(!captured.options.config.systemPrompt.includes('opulent-delivery-v12'))
-  assert.equal(harness.provenance.capy.contextPolicyVersion, 'capy-coherent-context-v1')
+  assert.equal(harness.provenance.capy.contextPolicyVersion, 'capy-coherent-context-v2')
   assert.equal(harness.provenance.capy.observationPolicy, 'completed-answerer-inputs-v1')
 })
 
