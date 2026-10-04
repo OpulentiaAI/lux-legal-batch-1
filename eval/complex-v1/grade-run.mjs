@@ -6,7 +6,7 @@ import { sha256, validateSuite, safeName } from './validate.mjs'
 import { buildManifest } from './freeze.mjs'
 import { JUDGE_RESPONSE_CONTRACT, prepareJudgeRequest, validateJudgeResponse, reconcileJudges } from './judge.mjs'
 import { gatewayChat } from '../compose.mjs'
-import { evidenceV4 } from '../grading-evidence.mjs'
+import { evidenceV4, EVIDENCE_REPLAY_OVERRIDES } from '../grading-evidence.mjs'
 import { MODAL_DEEPSEEK_MODEL, MODAL_ONLY } from '../../runtime/eval-model-profile.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
@@ -117,7 +117,7 @@ function verifyArtifact(record) {
 // Only bodies of recorded successful tool responses count. The row's source inventory and
 // canonical corpus supply identity checks, never visibility or missing-answer inference.
 export function extractVisibleSourceEvidence(row, { replayVersionOverride } = {}) {
-  if (replayVersionOverride !== undefined && replayVersionOverride !== 'parent-visible-findings-v3') throw new Error('Unknown evidence replay override')
+  if (replayVersionOverride !== undefined && !EVIDENCE_REPLAY_OVERRIDES.includes(replayVersionOverride)) throw new Error('Unknown evidence replay override')
   if (!row.bundle || !['harvey', 'broad'].includes(row.mode) ||
       !Array.isArray(row.artifactPaths) || !row.artifactPaths.length ||
       !Array.isArray(row.audit?.originalArtifacts) || !row.audit.originalArtifacts.length) {
@@ -172,6 +172,7 @@ export function extractVisibleSourceEvidence(row, { replayVersionOverride } = {}
     mode: row.mode, answer: row.answer, audit: row.audit, sources: inventory, metrics: row.metrics })
   return { sources: replay.sources.map(item => ({ id: item.id, role: 'visible', text: item.text, sha256: sha256(item.text) })),
     proof: replay.proof, ...(replay.quoteAudit ? { quoteAudit: replay.quoteAudit } : {}),
+    ...(replay.rejectedSourceCandidates ? { rejectedSourceCandidates: replay.rejectedSourceCandidates } : {}),
     ...(replayVersionOverride ? { sourceOrigins: replay.sources.map(item => ({ id: item.id, sha256: sha256(item.text), origin: item.origin })) } : {}) }
 }
 

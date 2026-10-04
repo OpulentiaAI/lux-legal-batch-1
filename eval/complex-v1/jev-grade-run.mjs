@@ -8,6 +8,7 @@ import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareJudgeRequest, JUDGE_POLICY } from './judge.mjs'
 import { extractVisibleSourceEvidence } from './grade-run.mjs'
+import { EVIDENCE_REPLAY_OVERRIDES } from '../grading-evidence.mjs'
 import { redact } from '../../runtime/security.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
@@ -137,7 +138,7 @@ function save(path, value) {
 
 export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurrency = 4, metricsProfile = 'semantic-core-v5', replayVersionOverride }) {
   const policy = gradingPolicy(metricsProfile)
-  if (replayVersionOverride !== undefined && replayVersionOverride !== 'parent-visible-findings-v3') throw new Error('Unknown evidence replay override')
+  if (replayVersionOverride !== undefined && !EVIDENCE_REPLAY_OVERRIDES.includes(replayVersionOverride)) throw new Error('Unknown evidence replay override')
   if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new Error('Invalid grading concurrency')
   input = realpathSync(input)
   output = resolve(output)
