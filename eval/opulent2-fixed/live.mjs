@@ -197,9 +197,10 @@ export async function launch({ release, file, authorization, source }) {
     const directory = join(release.output, 'attempts', context.attemptId)
     privateDirectory(directory)
     const broad = makeBroad(context, context.previousSnapshot, join(directory, 'artifacts'))
-    let result, failure, snapshot, handoff
+    let result, failure, snapshot, handoff, candidateOutput = null
     try { result = await broad.run({ question: packet.task.instructions, mode: 'broad', workProduct: packet }) } catch (error) { failure = error }
     try {
+      if (result) candidateOutput = immutable(join(directory, 'unvalidated-result.json'), safe(result))
       await captures.flush()
       const details = result ?? failure
       if (details.audit?.opulent2SnapshotArtifact) {
@@ -238,7 +239,7 @@ export async function launch({ release, file, authorization, source }) {
     } catch (error) {
       const audit = immutable(join(directory, 'execution-failure.json'), { version: 'opulent2-fixed-execution-failure-v1', errorClass: error.name,
         nativeAccounting: aggregateNative(captures.rows.filter(row => row.taskId === context.taskId && row.attempt === context.attempt)),
-        details: safe((result ?? failure)?.audit ?? {}), snapshotAvailable: !!snapshot, chainAdvanced: false, grading: 'ungraded; execution/wiring repair required' })
+        details: safe((result ?? failure)?.audit ?? {}), candidateOutput, snapshotAvailable: !!snapshot, chainAdvanced: false, grading: 'ungraded; execution/wiring repair required' })
       error.audit = audit
       throw error
     } finally { atomic(modelRecordsPath, safe(captures.records)) }
