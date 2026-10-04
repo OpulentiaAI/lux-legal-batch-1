@@ -24,7 +24,7 @@ test('Opulent2 pins its exact addendum while preserving the historical instructi
   const historical = renderInstructions({ profile: 'opulent-capy-v1' })
   const rendered = renderInstructions({ profile: OPULENT2_PROFILE })
   assert.equal(hash(historical.systemPrompt), '797b5c0de8fff9f570340a601f11e67707c263cffc8ccc72bfa6d51292cdfd54')
-  assert.equal(hash(OPULENT2_TASK_APPENDIX), 'cefadb53fb4aec0a6b62f4ed5d0bb2f0202315e75f8cde58c65c9ed342c1ff64')
+  assert.equal(hash(OPULENT2_TASK_APPENDIX), '3731b84e4eafa9e9199097805d3a9d21a9ea9fcc8679424b5a6cb8752efd4721')
   assert.equal(rendered.systemPrompt, `${historical.systemPrompt.replace('You are Opulent,', 'You are Opulent2,')}\n\n${OPULENT2_TASK_APPENDIX}`)
   assert.equal(rendered.provenance.effectivePromptSha256, hash(rendered.systemPrompt))
   assert.equal(rendered.provenance.foundation.effectivePromptSha256, hash(historical.systemPrompt))
@@ -42,6 +42,8 @@ test('Opulent2 delivers contradiction checking and source-supported persistence 
   for (const prompt of [system, task]) {
     assert.match(prompt, /challenge the draft's decisive claims/)
     assert.match(prompt, /After drafting, send the actual draft or its exact decisive claims to a child for review/)
+    assert.match(prompt, /This post-draft delegation requirement belongs only to the lead/)
+    assert.match(prompt, /Do not propagate mandatory-spawning language into a grandchild assignment or repeat completed nesting/)
     assert.match(prompt, /Resolve legal classification from the complete operative statutory definition, including each alternative and condition/)
     assert.match(prompt, /After context compaction, reopen the primary sources and task materials supporting decisive classifications, timing rules and negative factual claims/)
     assert.match(prompt, /Missing facts remain unknown, not established negatives/)
@@ -69,6 +71,8 @@ test('Opulent2 records exact prepared inputs, effective grants and finite child 
       if (assignment === 'LEAF_ASSIGNMENT') {
         assert.match(messages[0].content, /at depth 2/)
         assert.match(messages[0].content, /There is no requirement to spawn another child/)
+        assert.match(messages[0].content, /even if the parent copied a spawning mandate into your assignment/)
+        assert.match(messages[0].content, /The post-draft delegated-review requirement belongs only to the lead/)
         await new Promise(resolve => setTimeout(resolve, 150))
         return completion('Actual offline leaf result')
       }
