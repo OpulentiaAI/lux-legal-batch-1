@@ -24,7 +24,7 @@ test('Opulent2 pins its exact addendum while preserving the historical instructi
   const historical = renderInstructions({ profile: 'opulent-capy-v1' })
   const rendered = renderInstructions({ profile: OPULENT2_PROFILE })
   assert.equal(hash(historical.systemPrompt), '797b5c0de8fff9f570340a601f11e67707c263cffc8ccc72bfa6d51292cdfd54')
-  assert.equal(hash(OPULENT2_TASK_APPENDIX), '3ee79a14064c61ca01996b7bb7b93c7d840dc5181e0e7a2586fe3bf8060af651')
+  assert.equal(hash(OPULENT2_TASK_APPENDIX), 'a2bd76c92f7dfd3d9201a20d62e44e1af451b30b3b20505209c3769eb251bd37')
   assert.equal(rendered.systemPrompt, `${historical.systemPrompt.replace('You are Opulent,', 'You are Opulent2,')}\n\n${OPULENT2_TASK_APPENDIX}`)
   assert.equal(rendered.provenance.effectivePromptSha256, hash(rendered.systemPrompt))
   assert.equal(rendered.provenance.foundation.effectivePromptSha256, hash(historical.systemPrompt))
@@ -34,6 +34,21 @@ test('Opulent2 pins its exact addendum while preserving the historical instructi
   for (const tool of ['web_search', 'web_fetch', 'generate_image', 'search', 'fetch']) assert(!OPULENT2_TOOL_POLICY.allowedTools.includes(tool))
   assert.deepEqual(CAPY_TOOL_POLICY.initialTools, ['bash', 'read', 'write', 'edit', 'apply_patch', 'execute', 'wait', 'todo_write', 'message_agent', 'message_user'])
   assert.match(capyCodemodeListing(OPULENT2_TOOL_DEFINITIONS, OPULENT2_TOOL_POLICY.initialTools), /drive\.read\(/)
+})
+
+test('Opulent2 delivers contradiction checking and source-supported persistence without task answers', () => {
+  const system = renderInstructions({ profile: OPULENT2_PROFILE }).systemPrompt
+  const task = opulent2TaskPrompt({ question: 'Independent public request.', taskPath: '/task', outputPath: '/output' })
+  for (const prompt of [system, task]) {
+    assert.match(prompt, /challenge the draft's decisive claims/)
+    assert.match(prompt, /contradictory text, exceptions and scope limits, with exact source quotations/)
+    assert.match(prompt, /read the complete provision and its surrounding paragraphs/)
+    assert.match(prompt, /distinguish absence of a rule from uncertainty about its application/)
+    assert.match(prompt, /For each legal proposition retained in memory or Drive, include its source identity, a short supporting quotation and its applicability limits/)
+    assert.match(prompt, /read back the entire final saved file, paging when necessary; a header or preview is insufficient/)
+    assert.match(prompt, /do not treat an unfinished assignment as evidence/)
+    assert.doesNotMatch(prompt, /1031-1|Orion|Vega|doc-06:s0158/)
+  }
 })
 
 test('Opulent2 records exact prepared inputs, effective grants and finite child roles across a completed mock hierarchy', async t => {

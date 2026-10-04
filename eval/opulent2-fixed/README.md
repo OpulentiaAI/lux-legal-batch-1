@@ -50,6 +50,8 @@ The launch command first authenticates the pinned native catalogue and runs the 
 
 On failure, repair the actual defect and rerun the same launch command only if source/policy are unchanged. It preserves successful outputs and retries only unfinished work from the same predecessor snapshot; it does not spin on broken capabilities. A code, instruction, task, grant, state-policy or snapshot change needs a new release/run/output. No failed attempt advances the chain or gets a legal penalty. Inspect `attempts/*/execution-failure.json`, captured requests/responses and the actual snapshot, not merely aggregate tool counts.
 
+When the adapter returns a result, `unvalidated-result.json` preserves its sanitized output before post-run verification. A failure receipt references that candidate for diagnosis; it is not an execution-success receipt, cannot advance the chain and is not eligible for comparison grading.
+
 ## Only after both proving tasks pass
 
 The parent reviews the actual assignments/findings, desktop images, search, memory/Drive readback and saved deliverables. A separate `opulent2-fixed-proving-acceptance-v1` document has `issuer:"parent"`, an actual `reference`, `checkpointSha256` (file bytes), `resultsSha256=SHA256(JSON.stringify(checkpoint.rows.map(row=>row.opulent2.completed)))`, and `executionAndMeaningfulWorkPassed:true`.
