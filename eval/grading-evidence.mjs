@@ -1294,7 +1294,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const version = artifact.provenance?.evidenceReplayVersion
       if (version !== undefined && ![PARENT_VISIBLE_EVIDENCE_VERSION, CAPY_VISIBLE_EVIDENCE_VERSION].includes(version)) throw new Error('Invalid evidence replay version')
       capyPolicy = version === CAPY_VISIBLE_EVIDENCE_VERSION
-      if (capyPolicy && (artifact.provenance.instructions?.profile !== 'opulent-capy-v1' || replayVersionOverride !== undefined)) throw new Error('Invalid evidence Capy profile or replay override')
+      if (capyPolicy && (!['opulent-capy-v1', 'opulent2-fixed-v1'].includes(artifact.provenance.instructions?.profile) || replayVersionOverride !== undefined)) throw new Error('Invalid evidence Capy profile or replay override')
       if (capyPolicy && (artifact.observationPolicy !== 'completed-answerer-inputs-v1' || !Array.isArray(artifact.modelInputs) ||
           artifact.modelInputs.some(input => typeof input.id !== 'string' || !input.id ||
             typeof input.sessionId !== 'string' || input.sessionId !== artifact.rootSessionId || !['answerer', 'context_compaction'].includes(input.phase) ||
