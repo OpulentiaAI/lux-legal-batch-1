@@ -5,17 +5,19 @@ import { renderCapyInstructions } from './capy.mjs'
 const hash = value => createHash('sha256').update(value).digest('hex')
 export const OPULENT2_PROFILE = 'opulent2-fixed-v1'
 export const OPULENT2_TASK_APPENDIX = readFileSync(new URL('./opulent2-fixed-v1.md', import.meta.url), 'utf8').trimEnd()
+export const OPULENT2_REFERENCE_UPDATE = readFileSync(new URL('./opulent2-reference-update-v1.md', import.meta.url), 'utf8').trimEnd()
 
 export function renderOpulent2Instructions({ appendix = '', variant = OPULENT2_PROFILE } = {}) {
   if (typeof appendix !== 'string' || typeof variant !== 'string' || !/^[a-z0-9-]+$/.test(variant)) throw new Error('Invalid Opulent2 task environment')
   const foundation = renderCapyInstructions()
   const original = 'You are Opulent, a professional AI agent running in an isolated workspace.'
   if (!foundation.systemPrompt.startsWith(`${original}\n`)) throw new Error('Opulent2 instruction foundation persona changed')
-  const systemPrompt = `You are Opulent2, a professional AI agent running in an isolated workspace.${foundation.systemPrompt.slice(original.length)}\n\n${OPULENT2_TASK_APPENDIX}${appendix ? `\n\n## Task environment (${variant})\n${appendix.trim()}` : ''}`
+  const systemPrompt = `You are Opulent2, a professional AI agent running in an isolated workspace.${foundation.systemPrompt.slice(original.length)}\n\n${OPULENT2_TASK_APPENDIX}\n\n${OPULENT2_REFERENCE_UPDATE}${appendix ? `\n\n## Task environment (${variant})\n${appendix.trim()}` : ''}`
   return { systemPrompt, provenance: { version: OPULENT2_PROFILE, profile: OPULENT2_PROFILE, variant,
     composition: 'source-faithful-opulent2-with-explicit-capability-addendum-v1',
     foundation: foundation.provenance, inheritedProfiles: [foundation.provenance.profile],
     taskAppendixSha256: hash(OPULENT2_TASK_APPENDIX), taskAppendixBytes: Buffer.byteLength(OPULENT2_TASK_APPENDIX),
+    referenceUpdateSha256: hash(OPULENT2_REFERENCE_UPDATE), referenceUpdateBytes: Buffer.byteLength(OPULENT2_REFERENCE_UPDATE),
     environmentAppendixSha256: appendix ? hash(appendix.trim()) : null,
     effectivePromptSha256: hash(systemPrompt), effectivePromptBytes: Buffer.byteLength(systemPrompt) } }
 }

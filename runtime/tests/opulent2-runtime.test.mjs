@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { capyFixture, callsResponse, completion } from './capy-runtime-fixture.mjs'
 import { renderInstructions } from '../instructions/render.mjs'
-import { OPULENT2_PROFILE, OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../instructions/opulent2.mjs'
+import { OPULENT2_PROFILE, OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE, opulent2TaskPrompt } from '../instructions/opulent2.mjs'
 import { OPULENT2_TOOL_POLICY, OPULENT2_TOOL_DEFINITIONS } from '../opulent2-policy.mjs'
 import { CAPY_TOOL_POLICY, capyCodemodeListing } from '../capy-policy.mjs'
 
@@ -25,7 +25,9 @@ test('Opulent2 pins its exact addendum while preserving the historical instructi
   const rendered = renderInstructions({ profile: OPULENT2_PROFILE })
   assert.equal(hash(historical.systemPrompt), '797b5c0de8fff9f570340a601f11e67707c263cffc8ccc72bfa6d51292cdfd54')
   assert.equal(hash(OPULENT2_TASK_APPENDIX), '3731b84e4eafa9e9199097805d3a9d21a9ea9fcc8679424b5a6cb8752efd4721')
-  assert.equal(rendered.systemPrompt, `${historical.systemPrompt.replace('You are Opulent,', 'You are Opulent2,')}\n\n${OPULENT2_TASK_APPENDIX}`)
+  assert.equal(rendered.systemPrompt, `${historical.systemPrompt.replace('You are Opulent,', 'You are Opulent2,')}\n\n${OPULENT2_TASK_APPENDIX}\n\n${OPULENT2_REFERENCE_UPDATE}`)
+  assert.equal(rendered.provenance.referenceUpdateSha256, hash(OPULENT2_REFERENCE_UPDATE))
+  assert.equal(rendered.provenance.referenceUpdateBytes, Buffer.byteLength(OPULENT2_REFERENCE_UPDATE))
   assert.equal(rendered.provenance.effectivePromptSha256, hash(rendered.systemPrompt))
   assert.equal(rendered.provenance.foundation.effectivePromptSha256, hash(historical.systemPrompt))
   const prompt = opulent2TaskPrompt({ question: 'Public request.', taskPath: '/task', outputPath: '/output' })

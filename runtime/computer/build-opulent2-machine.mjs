@@ -17,7 +17,7 @@ export async function buildOpulent2Machine({ alias, outputDirectory, apiKey = pr
   const skillsUrl = new URL('../skills/opulent2-manifest-v1.json', import.meta.url);
   const skillsBytes = await readFile(skillsUrl);
   const skillsManifest = JSON.parse(skillsBytes);
-  const names = ['data-analysis', 'opulent2-child-sessions', 'opulent2-computer-use'];
+  const names = ['opulent2-data-analysis', 'opulent2-child-sessions', 'opulent2-computer-use'];
   if (skillsManifest.destinationRoot !== '/opt/opulent/skills' || !Array.isArray(skillsManifest.skills) ||
     skillsManifest.skills.length !== names.length || new Set(skillsManifest.skills.map(skill => skill.name)).size !== names.length ||
     skillsManifest.skills.some(skill => !names.includes(skill.name) || !/^[a-f0-9]{64}$/.test(skill.artifactSha256))) throw new Error('Invalid Opulent2 skill inventory');
@@ -59,9 +59,6 @@ for skill in p['skills']:
  directory=root/skill['name']
  body=base64.b64decode(skill['body'])
  if hashlib.sha256(body).hexdigest()!=skill['sha256']:raise RuntimeError('Skill hash mismatch')
- if skill['name']=='data-analysis':
-  if hashlib.sha256((directory/'SKILL.md').read_bytes()).hexdigest()!=skill['sha256']:raise RuntimeError('Historical data-analysis differs')
-  continue
  if directory.exists() or directory.is_symlink():raise RuntimeError('New skill path already exists')
  directory.mkdir(mode=0o755)
  (directory/'SKILL.md').write_bytes(body)
