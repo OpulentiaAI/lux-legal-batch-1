@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, join } from 'node:path';
 import test from 'node:test';
 import '../../eval/opulent2-fixed/offline-guard.mjs';
 import { CAPY_CONTEXT_POLICY_VERSION, prepareCapyModelContext } from '../capy-context.mjs';
 import { createStore } from '../store.mjs';
+import { persistCapyResult } from '../capy-results.mjs';
 
 const policy = Object.freeze({ enabled: true, maxInputChars: 300000, maxSummaryInputChars: 300000, maxSummaryChars: 24000,
   maxSummaryTokens: 8192, recentGroups: 3, maxBatches: 32 });
@@ -18,7 +22,7 @@ function fixture(t, overrides = {}, count = 5) {
   const store = createStore(':memory:');
   t.after(() => store.close());
   const requests = [];
-  const ctx = { store, sessionId: 'summary-test', persistCapyResult: () => { throw new Error('Unexpected projection or VM operation'); }, emit: () => {} };
+  const ctx = { store, sessionId: 'summary-test', workspace: '/vm/workspace', persistCapyResult: () => { throw new Error('Unexpected projection or VM operation'); }, emit: () => {} };
   const config = { model: 'same-native-model', allowedTools: ['read'], initialTools: ['read'], contextCompaction: policy,
     instructionProfile: 'opulent2-fixed-v1', ...overrides };
   const messages = [{ role: 'system', content: 'Fixed summary system instructions.' },
@@ -38,6 +42,22 @@ function fixture(t, overrides = {}, count = 5) {
   };
   return { ctx, config, messages, requests, model };
 }
+
+async function backedFixture(t, overrides = {}, count = 5) {
+  const f = fixture(t, overrides, count), root = await mkdtemp(join(tmpdir(), 'opulent2-summary-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const writes = [], file = outputPath => join(root, basename(outputPath));
+  f.ctx.scrub = value => value;
+  f.ctx.ensureSandbox = async () => {};
+  f.ctx.sandbox = { files: {
+    write: async (outputPath, value) => { await writeFile(file(outputPath), value, { mode: 0o600 }); writes.push(outputPath); },
+    read: (outputPath, options) => { assert.equal(options.format, 'bytes'); return readFile(file(outputPath)); },
+  } };
+  f.ctx.persistCapyResult = (value, bound) => persistCapyResult(f.ctx, value, bound);
+  return { ...f, writes, file };
+}
+
+const fallbackNotice = prepared => prepared.messages.find(message => typeof message.content === 'string' && message.content.startsWith('[Untrusted externalized history'));
 
 test('Opulent2 requests a preferred-size repair with the original hard limit and full unchanged input', async t => {
   const f = fixture(t), before = JSON.stringify(f.messages), configBefore = JSON.stringify(f.config);
@@ -76,7 +96,7 @@ test('Opulent2 requests a preferred-size repair with the original hard limit and
   assert.equal(f.ctx.store.list('capy_context_groups').length, 0);
 });
 
-test('Opulent2 still fails closed after exactly two attempts when the repair violates original safety bounds', async t => {
+test('Opulent2 externalizes actual history after exactly two invalid summaries without accepting the rejected output', async t => {
   for (const [reason, invalid] of [
     ['truncated', response('A short but still truncated repair', 'length')],
     ['oversized', response('x'.repeat(24001))],
@@ -86,13 +106,15 @@ test('Opulent2 still fails closed after exactly two attempts when the repair vio
     ['forbidden_tool_call', { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Unsafe', tool_calls: [{ id: 'unsafe' }] } }], usage: repairUsage }],
     ['forbidden_tool_call', { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Unsafe', function_call: { name: 'read' } } }], usage: repairUsage }],
   ]) await t.test(reason, async t => {
-    const f = fixture(t), before = JSON.stringify(f.messages);
+    const f = await backedFixture(t), before = JSON.stringify(f.messages);
     const checkpoint = Object.freeze({ summary: 'Untouched invalid prior checkpoint' });
-    await assert.rejects(prepareCapyModelContext({ ...f, checkpoint, model: f.model(call => call === 1 ? truncated() : invalid) }), error => {
-      assert.match(error.message, new RegExp(`repair exhausted after 2 attempts \\(${reason}\\)`));
-      assert.deepEqual(error.compactionUsage, totalUsage);
-      return true;
-    });
+    const prepared = await prepareCapyModelContext({ ...f, checkpoint, model: f.model(call => call === 1 ? truncated() : invalid) });
+    assert.equal(prepared.externalized, true);
+    assert.equal(prepared.checkpoint.reason, reason);
+    assert.equal(Object.hasOwn(prepared.checkpoint, 'summary'), false);
+    assert.deepEqual(prepared.usage, totalUsage);
+    const retained = JSON.parse(await readFile(f.file(prepared.checkpoint.reference.output_path), 'utf8'));
+    assert.deepEqual(retained.original_conversation, f.messages.slice(0, prepared.checkpoint.prefixLength));
     assert.equal(f.requests.length, 2);
     assert.equal(JSON.stringify(f.messages), before);
     assert.deepEqual(checkpoint, { summary: 'Untouched invalid prior checkpoint' });
@@ -141,15 +163,14 @@ test('the first completed Opulent2 attempt retains its original full summary bou
   assert.deepEqual(prepared.usage, repairUsage);
 });
 
-test('Opulent2 keeps all earlier and rejected usage while resetting first-attempt bounds for each complete batch', async t => {
-  const f = fixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } }, 7);
+test('Opulent2 preserves all actual prior and rejected usage when a later complete batch needs externalization', async t => {
+  const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } }, 7);
   const before = JSON.stringify(f.messages);
-  await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(call => response(call === 2 ? 'Valid intermediate summary.' : 'Truncated',
-    call === 2 ? 'stop' : 'length', { prompt_tokens: call, completion_tokens: 2 * call, total_tokens: 3 * call })) }), error => {
-    assert.match(error.message, /repair exhausted after 2 attempts \(truncated\)/);
-    assert.deepEqual(error.compactionUsage, { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 });
-    return true;
-  });
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(call => response(call === 2 ? 'Valid intermediate summary.' : 'Truncated',
+    call === 2 ? 'stop' : 'length', { prompt_tokens: call, completion_tokens: 2 * call, total_tokens: 3 * call })) });
+  assert.deepEqual(prepared.usage, { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 });
+  assert.equal(prepared.externalized, true);
+  assert(!JSON.stringify(prepared.messages).includes('Valid intermediate summary.'));
   assert.equal(f.requests.length, 4);
   const inputs = f.requests.map(request => JSON.parse(request.messages[1].content));
   const contracts = inputs.map(input => input.capySummaryContract);
@@ -217,5 +238,189 @@ test('transport failure on Opulent2 repair preserves observed usage and the actu
     assert.deepEqual(error.inferenceAttempts, [{ outcome: 'connection_lost', usage: null }]);
     return true;
   });
+  assert.equal(f.requests.length, 2);
+});
+
+test('real filesystem persistence retains exact complete parallel tool groups and only metadata appears in bounded continuation', async t => {
+  const f = await backedFixture(t);
+  f.messages[3].content = 'FIRST_HISTORY_SENTINEL é🙂\r\n' + f.messages[3].content;
+  f.messages[2].tool_calls.push({ id: 'parallel-extra', type: 'function', function: { name: 'read', arguments: '{"path":"corpus/extra.md"}' } });
+  f.messages.splice(4, 0, { role: 'tool', tool_call_id: 'parallel-extra', content: 'PARALLEL_RETURN_SENTINEL' });
+  const before = JSON.stringify(f.messages);
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(() => truncated()) });
+  const checkpoint = prepared.checkpoint, reference = checkpoint.reference;
+  const serialized = await readFile(f.file(reference.output_path), 'utf8'), retained = JSON.parse(serialized);
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 1);
+  assert.equal(checkpoint.version, 'opulent2-file-backed-context-v1');
+  assert.equal(checkpoint.kind, 'file_backed_context');
+  assert.equal(checkpoint.sessionId, f.ctx.sessionId);
+  assert.equal(checkpoint.prefixDigest, hash(f.messages.slice(0, checkpoint.prefixLength)));
+  assert.deepEqual(retained.original_conversation, f.messages.slice(0, checkpoint.prefixLength));
+  assert.equal(retained.session_id, f.ctx.sessionId);
+  assert.equal(retained.policy_digest, checkpoint.provenanceDigest);
+  assert.equal(reference.sha256, createHash('sha256').update(serialized).digest('hex'));
+  assert.equal(reference.characters, serialized.length);
+  assert.equal(f.ctx.store.get('capy_results', reference.result_id).status, 'available');
+  assert.deepEqual(Object.keys(reference).sort(), ['characters', 'kind', 'output_path', 'result_id', 'sha256']);
+  assert.strictEqual(prepared.messages[0], f.messages[0]);
+  assert.strictEqual(prepared.messages[2], f.messages[1]);
+  assert.deepEqual(prepared.messages.slice(3), f.messages.slice(checkpoint.prefixLength));
+  for (let index = 3; index < prepared.messages.length; index++) assert.strictEqual(prepared.messages[index], f.messages[checkpoint.prefixLength + index - 3]);
+  const notice = fallbackNotice(prepared).content;
+  assert.match(notice, /not a summary/);
+  assert.match(notice, /Summary validation failed after 2 attempts/);
+  assert.match(notice, /Only metadata is delivered here, not file consultation/);
+  assert.match(notice, /Re-read needed sources\/history/);
+  assert.match(notice, /no conclusions are inferred/);
+  assert(!notice.includes('FIRST_HISTORY_SENTINEL'));
+  assert(!notice.includes('PARALLEL_RETURN_SENTINEL'));
+  assert(!notice.includes('Native truncation'));
+  assert(!JSON.stringify(checkpoint).includes('FIRST_HISTORY_SENTINEL'));
+  assert(JSON.stringify(prepared.messages).length <= policy.maxInputChars);
+  assert.equal(f.ctx.store.list('capy_model_requests').length, 0);
+  assert.equal(JSON.stringify(f.messages), before);
+  assert.deepEqual(prepared.usage, { prompt_tokens: 34, completion_tokens: 16384, total_tokens: 16418 });
+});
+
+test('a validated file-backed prefix is reused and extended as flat exact original history without more rejected-summary calls', async t => {
+  const f = await backedFixture(t), model = f.model(() => truncated());
+  const first = await prepareCapyModelContext({ ...f, model });
+  const cached = await prepareCapyModelContext({ ...f, model, checkpoint: first.checkpoint });
+  assert.strictEqual(cached.checkpoint, first.checkpoint);
+  assert.equal(cached.compacted, false);
+  assert.deepEqual(cached.usage, {});
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 1);
+  const extended = fixture(t, {}, 8).messages;
+  const next = await prepareCapyModelContext({ ...f, messages: extended, model, checkpoint: first.checkpoint });
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 2);
+  assert.equal(next.compacted, true);
+  assert.deepEqual(next.usage, {});
+  assert(next.checkpoint.prefixLength > first.checkpoint.prefixLength);
+  const retained = JSON.parse(await readFile(f.file(next.checkpoint.reference.output_path), 'utf8'));
+  assert.deepEqual(retained.original_conversation, extended.slice(0, next.checkpoint.prefixLength));
+  assert(!JSON.stringify(retained).includes(first.checkpoint.reference.output_path));
+  assert(JSON.stringify(next.messages).length <= policy.maxInputChars);
+  const latestUser = { role: 'user', content: 'A new exact assignment, with unresolved questions.' };
+  const later = await prepareCapyModelContext({ ...f, messages: [...extended, latestUser], model, checkpoint: next.checkpoint });
+  assert.strictEqual(later.messages.at(-1), latestUser);
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 2);
+});
+
+test('fallback preserves original oversized groups rather than nesting their projected snapshot references', async t => {
+  const f = await backedFixture(t, { contextCompaction: { ...policy, maxInputChars: 250000 } });
+  f.messages[3].content = 'OVERSIZED_ORIGINAL_SENTINEL'.padEnd(300000, '.');
+  const before = JSON.stringify(f.messages);
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(() => truncated()) });
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 2);
+  const retained = JSON.parse(await readFile(f.file(prepared.checkpoint.reference.output_path), 'utf8'));
+  assert.deepEqual(retained.original_conversation, f.messages.slice(0, prepared.checkpoint.prefixLength));
+  assert(!JSON.stringify(retained).includes(f.writes[0]));
+  assert(!fallbackNotice(prepared).content.includes('OVERSIZED_ORIGINAL_SENTINEL'));
+  assert.equal(JSON.stringify(f.messages), before);
+  assert(JSON.stringify(prepared.messages).length <= 250000);
+});
+
+test('fallback fails closed when the original latest user and newest complete group cannot form a bounded continuation', async t => {
+  const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } });
+  f.messages[1].content = 'EXACT_LATEST_USER'.padEnd(120000, '.');
+  f.messages.at(-1).content = 'EXACT_NEWEST_TOOL_RETURN'.padEnd(250000, '.');
+  const before = JSON.stringify(f.messages);
+  await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => truncated()) }), error => {
+    assert.match(error.message, /newest complete group within maxInputChars; no history was dropped/);
+    assert.deepEqual(error.compactionUsage, { prompt_tokens: 34, completion_tokens: 16384, total_tokens: 16418 });
+    return true;
+  });
+  assert.equal(f.requests.length, 2);
+  assert.equal(JSON.stringify(f.messages), before);
+});
+
+test('changed policy, foreign ownership, stale content, partial group boundaries and preview-bearing cache entries are not reused', async t => {
+  for (const change of ['policy', 'source-policy', 'foreign', 'prefix', 'boundary', 'preview']) await t.test(change, async t => {
+    const f = await backedFixture(t), model = f.model(() => truncated());
+    const first = await prepareCapyModelContext({ ...f, model });
+    let checkpoint = structuredClone(first.checkpoint), messages = f.messages, config = f.config;
+    if (change === 'policy') config = { ...config, contextCompaction: { ...policy, policyFingerprint: 'changed-source-policy' } };
+    if (change === 'source-policy') config = { ...config, corpusWorkspace: '/different-approved-corpus' };
+    if (change === 'foreign') checkpoint.sessionId = 'another-session';
+    if (change === 'prefix') { messages = structuredClone(messages); messages[3].content = 'Changed actual source bytes.'.padEnd(60000, '.'); }
+    if (change === 'boundary') { checkpoint.prefixLength--; checkpoint.prefixDigest = hash(messages.slice(0, checkpoint.prefixLength)); }
+    if (change === 'preview') checkpoint.reference.preview = 'UNTRUSTED_CACHE_BODY';
+    const next = await prepareCapyModelContext({ ...f, messages, config, checkpoint, model });
+    assert.equal(f.requests.length, 4);
+    assert.equal(f.writes.length, 2);
+    assert.notEqual(next.checkpoint.reference.result_id, first.checkpoint.reference.result_id);
+    assert(!JSON.stringify(next.messages).includes('UNTRUSTED_CACHE_BODY'));
+    assert(!JSON.stringify(next.checkpoint).includes('UNTRUSTED_CACHE_BODY'));
+  });
+});
+
+test('missing, unowned, unavailable or physically inconsistent persistence fails closed with all actual rejected usage', async t => {
+  for (const failure of ['missing-handler', 'not-file-backed', 'write-failed', 'foreign-row', 'unavailable-row', 'corrupt-bytes']) await t.test(failure, async t => {
+    const f = await backedFixture(t), persist = f.ctx.persistCapyResult;
+    if (failure === 'missing-handler') delete f.ctx.persistCapyResult;
+    if (failure === 'not-file-backed') f.ctx.persistCapyResult = async () => ({ kind: 'not_a_backing' });
+    if (failure === 'write-failed') f.ctx.sandbox.files.write = async () => { throw new Error('Offline filesystem write failed'); };
+    if (['foreign-row', 'unavailable-row', 'corrupt-bytes'].includes(failure)) f.ctx.persistCapyResult = async (value, bound) => {
+      const reference = await persist(value, bound), row = f.ctx.store.get('capy_results', reference.result_id);
+      if (failure === 'foreign-row') f.ctx.store.put('capy_results', row.id, { ...row, session_id: 'foreign' });
+      if (failure === 'unavailable-row') f.ctx.store.put('capy_results', row.id, { ...row, status: 'persisted' });
+      if (failure === 'corrupt-bytes') await writeFile(f.file(reference.output_path), 'Not the exact saved history');
+      return reference;
+    };
+    await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => truncated()) }), error => {
+      assert.match(error.message, /Opulent2 preserved history/);
+      assert.deepEqual(error.compactionUsage, { prompt_tokens: 34, completion_tokens: 16384, total_tokens: 16418 });
+      return true;
+    });
+    assert.equal(f.requests.length, 2);
+  });
+});
+
+test('a cached reference requires current owned backing and cannot bypass a missing or corrupted physical file', async t => {
+  for (const failure of ['foreign-row', 'missing-file', 'corrupt-file']) await t.test(failure, async t => {
+    const f = await backedFixture(t), model = f.model(() => truncated());
+    const first = await prepareCapyModelContext({ ...f, model });
+    const reference = first.checkpoint.reference, row = f.ctx.store.get('capy_results', reference.result_id);
+    if (failure === 'foreign-row') f.ctx.store.put('capy_results', row.id, { ...row, session_id: 'foreign' });
+    if (failure === 'missing-file') await rm(f.file(reference.output_path));
+    if (failure === 'corrupt-file') await writeFile(f.file(reference.output_path), 'Corrupted cached history');
+    await assert.rejects(prepareCapyModelContext({ ...f, model, checkpoint: first.checkpoint }));
+    assert.equal(f.requests.length, 2);
+    assert.equal(f.writes.length, 1);
+  });
+});
+
+test('provider-shaped exhaustion errors and aborts do not activate file-backed recovery', async t => {
+  for (const failure of ['provider', 'abort']) await t.test(failure, async t => {
+    const f = await backedFixture(t), controller = new AbortController();
+    const actual = new Error(failure === 'provider' ? 'Capy context summary repair exhausted after 2 attempts (truncated); no history was truncated' : 'Offline abort');
+    await assert.rejects(prepareCapyModelContext({ ...f, signal: controller.signal, model: f.model(call => {
+      if (call === 2 && failure === 'provider') throw actual;
+      if (call === 2) controller.abort(actual);
+      return truncated();
+    }) }), error => {
+      assert.strictEqual(error, actual);
+      assert.deepEqual(error.compactionUsage, failure === 'provider' ? originalUsage : { prompt_tokens: 34, completion_tokens: 16384, total_tokens: 16418 });
+      return true;
+    });
+    assert.equal(f.requests.length, 2);
+    assert.equal(f.writes.length, 0);
+  });
+});
+
+test('historical profiles still fail after two invalid summaries without externalizing history', async t => {
+  const f = await backedFixture(t, { instructionProfile: 'opulent-capy-v1' });
+  await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => truncated()) }), error => {
+    assert.match(error.message, /repair exhausted after 2 attempts \(truncated\)/);
+    assert.deepEqual(error.compactionUsage, { prompt_tokens: 34, completion_tokens: 16384, total_tokens: 16418 });
+    assert.equal(Object.hasOwn(error, 'summaryFailure'), false);
+    return true;
+  });
+  assert.equal(f.writes.length, 0);
   assert.equal(f.requests.length, 2);
 });
