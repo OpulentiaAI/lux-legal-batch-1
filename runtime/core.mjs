@@ -283,7 +283,8 @@ export function createRuntime(options = {}) {
     if (capyEnabled) {
       tools.bash = args => ctx.capyProcesses.bash(args);
       tools.execute = async args => {
-        ctx.capyExecutor ??= (await import('./capy-execute.mjs')).createCapyExecutor(ctx);
+        const { createCapyExecutor } = await import('./capy-execute.mjs');
+        ctx.capyExecutor ??= createCapyExecutor(ctx);
         return ctx.capyExecutor.execute(args);
       };
       if (!config.capyMemory) tools.memory_save = async () => { throw new Error('Trusted capyMemory configuration is required; no memory backing is available'); };

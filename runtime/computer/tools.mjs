@@ -112,7 +112,10 @@ export function createTools(ctx) {
           const failed = await flush();
           if (failed) return failed;
           try {
-            const dom = await computer.browser.console('document.documentElement.outerHTML.slice(0, 1000000)');
+            const observed = await computer.browser.console('(() => { const html = document.documentElement.outerHTML; const content = html.slice(0, 1000000); return { content, truncated: html.length > content.length, coverage: { scope: "document-element-outer-html", source_chars: html.length, returned_chars: content.length, limit_chars: 1000000, unit: "utf16-code-units" } }; })()');
+            const value = observed?.result;
+            const dom = value && typeof value.content === 'string' && typeof value.truncated === 'boolean' && value.coverage && typeof value.coverage === 'object'
+              ? { ...observed, result: value.content, truncated: value.truncated, coverage: value.coverage } : observed;
             results.push({ dom });
             action_records.push({ index: item.index, action: item.action, ok: true, result: { dom } });
           } catch (error) {
