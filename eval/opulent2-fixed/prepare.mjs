@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url'
 import { createBroadHarness } from '../../runtime/broad-legal-eval.mjs'
 import { createRuntime } from '../../runtime/core.mjs'
 import { prepareModelContext } from '../../runtime/context-compaction.mjs'
-import { OPULENT2_TASK_APPENDIX } from '../../runtime/instructions/opulent2.mjs'
+import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime/instructions/opulent2.mjs'
+import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_HANDOFF_VERSION } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TOOL_POLICY } from '../../runtime/opulent2-policy.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
@@ -92,10 +93,12 @@ export async function draftRelease(spec) {
   const stateDir = join(inspection, 'empty-schema-runtime')
   privateDirectory(stateDir)
   const runtime = createRuntime({ config: { ...capturedConfig, stateDir }, model: () => { throw stopped }, provision: () => { throw stopped } })
-  let definitions, assembledRuntimePromptSha256
+  let definitions, assembledRuntimePromptSha256, skillsRegistry
   try {
     definitions = runtime.tools().map(tool => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: tool.inputSchema } }))
     assembledRuntimePromptSha256 = sha(runtime.config.systemPrompt)
+    skillsRegistry = opulent2SkillRegistry(runtime.config.capySkills).block
+    assert.equal(runtime.config.systemPrompt.split(skillsRegistry).length, 2, 'The actual configured skill registry must be delivered once')
   }
   finally { await runtime.close() }
   const extraFiles = ['package.json', 'package-lock.json', 'eval/harvey-bridge.py', 'eval/harvey-modal-adapter.py', 'eval/comparison-corpus.mjs',
@@ -115,6 +118,7 @@ export async function draftRelease(spec) {
       codemodeToolName: 'execute', answererSchemaSha256: digest(definitions), requiredCompletions: ['nested-native-return', 'computer', 'agrep', 'memory_save'] },
     prompts: { runtimePromptSha256: sha(capturedConfig.systemPrompt), assembledRuntimePromptSha256, profileManifestSha256: harness.provenance.instructions.foundation.manifestSha256,
       summarySystemMessagesSha256: await summarySystemHash(), appendix: OPULENT2_TASK_APPENDIX, appendixSha256: sha(OPULENT2_TASK_APPENDIX),
+      referenceUpdateSha256: sha(OPULENT2_REFERENCE_UPDATE), skillsRegistry, skillsRegistrySha256: sha(skillsRegistry),
       appendixReference: 'Parent-supplied runtime/instructions/opulent2-fixed-v1.md, trimmed-end exact bytes' },
     stateContract: { module: 'runtime/opulent2-handoff.mjs', sha256: bindings['runtime/opulent2-handoff.mjs'], version: OPULENT2_HANDOFF_VERSION,
       driveBacking: 'local-export-not-cloud', inlineByteLimit: 33554432 },

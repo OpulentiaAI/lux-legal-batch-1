@@ -51,6 +51,11 @@ export function validateRelease(release) {
   assert(text(release.prompts.appendix) && hex(release.prompts.appendixSha256))
   assert.equal(sha(release.prompts.appendix), release.prompts.appendixSha256, 'Exact parent-supplied appendix required')
   assert(text(release.prompts.appendixReference), 'Parent appendix source reference required')
+  if (release.prompts.skillsRegistry !== undefined) {
+    assert(text(release.prompts.skillsRegistry) && hex(release.prompts.skillsRegistrySha256))
+    assert.equal(sha(release.prompts.skillsRegistry), release.prompts.skillsRegistrySha256, 'Skill registry hash must bind exact delivered bytes')
+    assert(hex(release.prompts.referenceUpdateSha256), 'Reference-update instructions must be source-bound')
+  }
   assert.equal(release.evidencePolicy, 'exact-native-wire-prepared-instructions-returned-observations-v1')
   assert.equal(release.gradingPolicy, 'separate-parent-jev-capy-no-answerer-feedback-v1')
   assert(text(release.stateContract?.module) && relativeFile(release.stateContract.module) && hex(release.stateContract.sha256) && text(release.stateContract.version))

@@ -1,19 +1,66 @@
 {
   "version": "opulent2-skills-v1",
-  "source": "Opulent2 runtime-specific desktop and child-session procedures; retained data-analysis reference",
+  "source": "Runtime-specific adaptations checked against supplied October 4 crew/skills behavior and the actual Opulent2 tool policy; not a verbatim replacement system prompt or the entire host skill volume.",
   "destinationRoot": "/opt/opulent/skills",
   "skills": [
     {
       "name": "opulent2-computer-use",
-      "artifactSha256": "bc06fac9b6ff00cd2666ede03ba309bb2eba23dbee19ca3c596c9f087541839e"
+      "description": "Inspect real local sources and deliverables through the Opulent2 Linux desktop.",
+      "artifactSha256": "0aff952a1842268adc94fe77fbf58b8300df8ae07bc40cb625ad8ad070791674",
+      "source": {
+        "kind": "adapted-runtime-procedure",
+        "archive": "capy-instructions-crew-and-skills-latest.zip",
+        "archiveSha256": "407458243ee82d5f2fb77fa7e7a38e0369a01b86dfb3f1e338c43cf86dad2999",
+        "member": "skills/computer-use/SKILL.md",
+        "memberSha256": "aaf5e32b74bf7fe0c4f24ce74e8110c31accba6117ab316a350a99eedc439525",
+        "disposition": "Adapt observation, bounded polling, batching, recovery and approvals to the actual local action-array API; host app/tree/until handles are not provided."
+      }
     },
     {
       "name": "opulent2-child-sessions",
-      "artifactSha256": "d74612c2c748c60aa5a1df74eaf43e14f0f26230d6d461468f57e70236d38c5b"
+      "description": "Delegate bounded legal work to actual VM-backed children and consume completed native returns.",
+      "artifactSha256": "86e87dd4c593c19f6f9f959a4e3bcaf94ce5cf006e61d2dcc186ef01a43c5562",
+      "source": {
+        "kind": "adapted-behavioral-reference",
+        "archive": "capy-instructions-crew-and-skills-latest.zip",
+        "archiveSha256": "407458243ee82d5f2fb77fa7e7a38e0369a01b86dfb3f1e338c43cf86dad2999",
+        "member": "docs/00-THE-CREW-AND-CAPTAIN-SURFACE.md",
+        "memberSha256": "1ef1491c6fd0023e601e30a3548af13095b637efba1fb930ed732ab0a6f07ef9",
+        "disposition": "Adapt owned relative routing, separate reporting audiences, settled completion and parked branches; retain explicit direct-child start resumption and do not add hosted peer/PR services or a slot cap."
+      }
     },
     {
-      "name": "data-analysis",
-      "artifactSha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3"
+      "name": "opulent2-data-analysis",
+      "description": "Analyze supplied local tables and corpus data with reproducible calculations and verified source-backed outputs.",
+      "artifactSha256": "0c0ef128aea55a6b0c7b99f55fe84abd853040d7d6c490133fa427788e0ee0fd",
+      "source": {
+        "kind": "local-data-adaptation",
+        "path": "runtime/skills/data-analysis/SKILL.md",
+        "sha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3",
+        "disposition": "Preserve the historical artifact; adapt supplied-file analysis and persistence to approved local file/corpus/shell/memory/Drive tools without enabling its excluded hosted APIs."
+      }
+    }
+  ],
+  "excludedReferences": [
+    {
+      "name": "capy-setup",
+      "reason": "The evaluated task profile does not expose host project Setup or snapshot APIs."
+    },
+    {
+      "name": "gh-stack",
+      "reason": "The evaluated legal tasks do not authorize hosted GitHub stack operations."
+    },
+    {
+      "name": "greptile-migrate",
+      "reason": "Review-context migration and external provider APIs remain outside the approved task scope."
+    },
+    {
+      "name": "paper",
+      "reason": "No connected Paper provider is configured or approved for the local evaluation."
+    },
+    {
+      "name": "computer-use host app/AX handles",
+      "reason": "The runtime uses its actual Linux action-array API; preserve the complete source reference externally rather than advertise unsupported handles."
     }
   ]
 }

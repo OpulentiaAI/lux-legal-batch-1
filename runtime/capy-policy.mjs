@@ -87,7 +87,7 @@ function compactType(schema) {
 export function capyCodemodeListing(definitions = CAPY_TOOL_DEFINITIONS, initial = initialTools) {
   const entries = capyCodemodeDefinitions(definitions).map(definition => {
     const { properties, required = [] } = definition.inputSchema;
-    const keys = Object.entries(properties ?? {}).map(([key, schema]) => `${key}${required.includes(key) ? '' : '?'}: ${compactType(schema)}`).join(', ');
+    const keys = Object.entries(properties ?? {}).map(([key, schema]) => `${key}${required.includes(key) ? '' : '?'}: ${compactType(schema)}${Object.hasOwn(schema, 'default') ? ` = ${JSON.stringify(schema.default)}` : ''}`).join(', ');
     return `  ${definition.codemodePath}({${keys}})${initial.includes(definition.name) ? ` — function tool ${definition.name}, same input` : ''}`;
   });
   return `<codemode>\nOnly these paths are callable inside execute as await tools.<namespace>.<name>(input). Inputs are strict. await describe("namespace.name", "key"?) returns the exact current definition/schema; await search({query?, namespace?, limit?}) discovers only this allowlist. {} means an object whose full shape is available on demand. Function mirrors use identical input. No provider connectors are registered by this profile.\n${entries.join('\n')}\n</codemode>`;

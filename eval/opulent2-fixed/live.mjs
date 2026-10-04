@@ -180,7 +180,8 @@ export async function launch({ release, file, authorization, source }) {
                 taskPath: '/tmp/broad-legal-workspace/task', outputPath: '/tmp/broad-legal-workspace/output', carriedContext: runtime.context(session.id).opulent2Task.carryForward })
             }
             const expected = validateInitialAssembly({ receipt, session, configuredPrompt: runtime.config.systemPrompt,
-              childInstructions: session.parent_session_id ? instructionModule.opulent2ChildInstructions(session.depth) : '', memoryIndexes: indexes, expectedUser })
+              childInstructions: session.parent_session_id ? instructionModule.opulent2ChildInstructions(session.depth) : '', memoryIndexes: indexes, expectedUser,
+              skillsRegistry: release.prompts.skillsRegistry })
             systems.set(session.id, expected)
           }
           assert.deepEqual(actualSystems, systems.get(session.id), 'A session system assembly changed after its initial pinned preparation')
