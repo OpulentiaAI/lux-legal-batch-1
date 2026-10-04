@@ -60,6 +60,7 @@ export function createRuntime(options = {}) {
   if (config.scriptTopLevelAwait !== undefined && typeof config.scriptTopLevelAwait !== 'boolean') throw new TypeError('scriptTopLevelAwait must be a boolean');
   if (config.rlmHandoffPolicy !== undefined && config.rlmHandoffPolicy !== 'rlm-handoff-v1') throw new TypeError('Unknown RLM handoff policy');
   const unrestricted = config.unrestrictedTools === true;
+  const structuredOutputRepair = ['opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile);
   const nestedBlocked = unrestricted ? new Set(['ipython', 'scripted_tools']) : scriptBlocked;
   const capabilities = config.runtimeCapabilities ?? [];
   if (!Array.isArray(capabilities) || capabilities.some(value => !['browser-v1', 'operation-waits-v1', 'rlm-v1'].includes(value)) || new Set(capabilities).size !== capabilities.length) throw new Error('Unknown or duplicate runtime capability');
@@ -359,7 +360,7 @@ export function createRuntime(options = {}) {
     ctx.waitRequested = null;
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(config.instructionProfile) && row.parent_session_id
+    const childInstructions = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(config.instructionProfile) && row.parent_session_id
       ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
       : '';
     let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
@@ -437,13 +438,19 @@ export function createRuntime(options = {}) {
         checkpoint();
         if (!message.tool_calls?.length) {
           if (response.choices[0].finish_reason === 'length') {
-            if (config.instructionProfile !== 'opulent-delivery-v10' || !row.schema) throw new Error('Model response exhausted its completion token budget before finishing');
+            if (!structuredOutputRepair || !row.schema) throw new Error('Model response exhausted its completion token budget before finishing');
             event(id, 'structured_output_rejected', { reason: 'completion_token_budget_exhausted' });
             messages.push({ role: 'user', content: 'The previous final response exhausted its existing completion-token budget and was not accepted. Return one complete JSON value matching the supplied schema, without prose or code fences. Reuse the existing researched facts and exact source text; reference source records rather than repeating quotations. Preserve consequential exceptions and limitations. Do not restart research or replace the assigned report with a file path.' });
             checkpoint();
             continue;
           }
-          if (typeof message.content !== 'string' || !message.content.trim()) throw new Error('Model provider returned an empty final response');
+          if (typeof message.content !== 'string' || !message.content.trim()) {
+            if (config.instructionProfile !== 'opulent-delivery-v11' || (message.content !== null && typeof message.content !== 'string')) throw new Error('Model provider returned an empty final response');
+            event(id, 'empty_final_response_rejected', { response });
+            messages.push({ role: 'user', content: 'The previous final response was empty and was not accepted. Continue in this same session using the preserved conversation, completed tool results and resident state; do not restart work or repeat completed tool actions. Resolve any remaining requirements, including the existing handoff and requested-file verification, then return a real nonempty final response. If a final JSON schema was supplied, return one complete matching JSON value. Existing budgets and validation still apply; files alone are not completion.' });
+            checkpoint();
+            continue;
+          }
           if (config.rlmHandoffPolicy) {
             const handoff = ctx.rlm.completionCheck();
             if (!handoff.ready) {
@@ -461,7 +468,7 @@ export function createRuntime(options = {}) {
               output = JSON.parse(output);
               if (!validate(output)) throw new Error('Agent output does not match requested schema');
             } catch (error) {
-              if (config.instructionProfile !== 'opulent-delivery-v10') throw error;
+              if (!structuredOutputRepair) throw error;
               const reason = validate.errors ? 'schema_mismatch' : 'invalid_json';
               const errors = scrub(id, (validate.errors ?? []).slice(0, 8));
               event(id, 'structured_output_rejected', { reason, errors });

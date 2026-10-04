@@ -330,12 +330,12 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10'].includes(instructionProfile)
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
   if (deliveryV9 && inferenceProvider !== 'runanywhere') throw new Error('Delivery v9 requires native RunAnywhere MiMo inference')
-  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(instructionProfile)
-  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(instructionProfile)
-  const capabilityV8 = ['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10'].includes(instructionProfile)
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
+  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
+  const capabilityV8 = ['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
   const desktopConfig = deliveryV9 ? { computerPreparedImage: true, computerImageSha256,
     browserAllowedOrigins: ['http://127.0.0.1:8765'], browserUploadRoots: [`${BROAD_SANDBOX_WORKSPACE}/analysis`, OUTPUT_PATH] } : null
   if (deliveryV9 && (!sandboxTemplate || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Delivery v9 requires the approved prepared desktop template and image SHA-256')
@@ -381,6 +381,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const provenance = {
     policy: deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(deliveryV9 ? { delivery: { version: instructionProfile, rlmHandoffPolicy: 'rlm-handoff-v1', scriptTopLevelAwait: true,
+      ...(instructionProfile === 'opulent-delivery-v11' ? { emptyFinalRecovery: 'same-session-empty-final-v1' } : {}),
       scriptPolicy: 'python-top-level-await-v1', handoff: { reportSchemaVersion: 'rlm-report-v1',
         reportSchemaSha256: sha256(JSON.stringify(RLM_REPORT_SCHEMA)), limits: RLM_HANDOFF_LIMITS },
       computer: { ...desktopConfig, readiness: 'validated after corpus/skill hardening in every provisioned VM', nativeModelVision: 'requires separate live inference verification' } } } : {}),

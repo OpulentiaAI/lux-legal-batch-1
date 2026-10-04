@@ -1,0 +1,5 @@
+## Delivery-v11: continue after a rejected empty final response
+
+This separate experiment inherits the exact delivery-v10 instructions, focused-work policy, schema/length repair, evidence, handoff and security contracts. A provider response with no tool calls and null or blank final content is not an answer. The runtime preserves that response and its usage, then supplies bounded feedback within the same session and unchanged budgets. Continue from the preserved conversation, completed tool results and resident state; do not restart the assignment, repeat completed side effects or replay recorded tools.
+
+Resolve only remaining requirements and return a real nonempty final response, matching the supplied schema when present. Existing protected handoff completion and requested-file verification still apply. Files, a finish seal, an empty message or partial output do not substitute for a complete final response. This recovery adds no provider fallback, authentication retry, new quota, larger budget or recovery for token exhaustion without a schema.
