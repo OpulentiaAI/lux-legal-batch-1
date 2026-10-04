@@ -39,7 +39,7 @@ function fixture(t, overrides = {}, count = 5) {
   return { ctx, config, messages, requests, model };
 }
 
-test('Opulent2 repairs a truncated summary with a genuinely completed half-bound response and the full unchanged input', async t => {
+test('Opulent2 requests a preferred-size repair with the original hard limit and full unchanged input', async t => {
   const f = fixture(t), before = JSON.stringify(f.messages), configBefore = JSON.stringify(f.config);
   const completed = 'Alternatives depend on unknown approval; conflicting sources remain unresolved, see corpus/source-0.md.'.padEnd(12000, '.');
   const prepared = await prepareCapyModelContext({ ...f, model: f.model(call => call === 1 ? truncated() : response(completed)) });
@@ -47,10 +47,14 @@ test('Opulent2 repairs a truncated summary with a genuinely completed half-bound
   const first = JSON.parse(f.requests[0].messages[1].content), repair = JSON.parse(f.requests[1].messages[1].content);
   assert.equal(first.capySummaryContract.maximumCharacters, 24000);
   assert.equal(first.capySummaryContract.targetCharacters, 12000);
+  assert.equal(first.capySummaryContract.preferredMaximumCharacters, undefined);
   assert.equal(first.capySummaryContract.repair, null);
-  assert.equal(repair.capySummaryContract.maximumCharacters, 12000);
+  assert.equal(repair.capySummaryContract.maximumCharacters, 24000);
+  assert.equal(repair.capySummaryContract.preferredMaximumCharacters, 12000);
   assert.equal(repair.capySummaryContract.targetCharacters, 6000);
   assert.equal(repair.capySummaryContract.repair.reason, 'truncated');
+  assert.match(repair.capySummaryContract.repair.instruction, /preferences, not hard limits/);
+  assert.match(repair.capySummaryContract.repair.instruction, /maximumCharacters remains the hard limit/);
   for (const request of f.requests) {
     const contract = JSON.parse(request.messages[1].content).capySummaryContract;
     assert.equal(contract.maximumOutputTokens, 8192);
@@ -72,10 +76,10 @@ test('Opulent2 repairs a truncated summary with a genuinely completed half-bound
   assert.equal(f.ctx.store.list('capy_context_groups').length, 0);
 });
 
-test('Opulent2 still fails closed after exactly two attempts when the tighter repair is invalid', async t => {
+test('Opulent2 still fails closed after exactly two attempts when the repair violates original safety bounds', async t => {
   for (const [reason, invalid] of [
     ['truncated', response('A short but still truncated repair', 'length')],
-    ['oversized', response('x'.repeat(12001))],
+    ['oversized', response('x'.repeat(24001))],
     ['empty', response('  ')],
     ['invalid_message', response(null)],
     ['invalid_message', { choices: [{ finish_reason: 'stop', message: { role: 'user', content: 'Wrong role' } }], usage: repairUsage }],
@@ -95,7 +99,7 @@ test('Opulent2 still fails closed after exactly two attempts when the tighter re
   });
 });
 
-test('every rejected first-attempt shape selects the tighter Opulent2 repair contract', async t => {
+test('every rejected first-attempt shape selects the preferred Opulent2 repair contract', async t => {
   for (const [reason, invalid] of [
     ['empty', response('')], ['oversized', response('x'.repeat(24001))], ['invalid_message', response(null)],
     ['forbidden_tool_call', { choices: [{ message: { role: 'assistant', content: 'Unsafe', tool_calls: [{ id: 'unsafe' }] } }], usage: repairUsage }],
@@ -103,11 +107,29 @@ test('every rejected first-attempt shape selects the tighter Opulent2 repair con
     const f = fixture(t);
     const prepared = await prepareCapyModelContext({ ...f, model: f.model(call => call === 1 ? invalid : response('Complete concise summary.')) });
     const contract = JSON.parse(f.requests[1].messages[1].content).capySummaryContract;
-    assert.equal(contract.maximumCharacters, 12000);
+    assert.equal(contract.maximumCharacters, 24000);
+    assert.equal(contract.preferredMaximumCharacters, 12000);
     assert.equal(contract.targetCharacters, 6000);
     assert.equal(contract.repair.reason, reason);
     assert.equal(f.requests.length, 2);
     assert.equal(prepared.checkpoint.summary, 'Complete concise summary.');
+  });
+});
+
+test('completed Opulent2 repairs above the preferred maximum remain valid through the original hard limit', async t => {
+  for (const length of [12001, 16911, 24000]) await t.test(String(length), async t => {
+    const f = fixture(t), completed = 'Complete conditional summary with source references and unresolved conflicts.'.padEnd(length, '.');
+    const prepared = await prepareCapyModelContext({ ...f, model: f.model(call => call === 1 ? truncated() : response(completed)) });
+    assert.equal(f.requests.length, 2);
+    assert.equal(prepared.checkpoint.summary, completed);
+    assert.equal(prepared.checkpoint.summary.length, length);
+    assert.deepEqual(prepared.usage, totalUsage);
+    const cached = await prepareCapyModelContext({ ...f, checkpoint: prepared.checkpoint, model: f.model(() => {
+      throw new Error('A valid complete summary above the preference must remain reusable');
+    }) });
+    assert.equal(f.requests.length, 2);
+    assert.strictEqual(cached.checkpoint, prepared.checkpoint);
+    assert.deepEqual(cached.usage, {});
   });
 });
 
@@ -131,7 +153,8 @@ test('Opulent2 keeps all earlier and rejected usage while resetting first-attemp
   assert.equal(f.requests.length, 4);
   const inputs = f.requests.map(request => JSON.parse(request.messages[1].content));
   const contracts = inputs.map(input => input.capySummaryContract);
-  assert.deepEqual(contracts.map(contract => contract.maximumCharacters), [24000, 12000, 24000, 12000]);
+  assert.deepEqual(contracts.map(contract => contract.maximumCharacters), [24000, 24000, 24000, 24000]);
+  assert.deepEqual(contracts.map(contract => contract.preferredMaximumCharacters), [undefined, 12000, undefined, 12000]);
   assert.deepEqual(contracts.map(contract => contract.targetCharacters), [12000, 6000, 12000, 6000]);
   assert.deepEqual(contracts.map(contract => contract.repair?.reason ?? null), [null, 'truncated', null, 'truncated']);
   assert.deepEqual(inputs[1].transcript, inputs[0].transcript);
@@ -154,6 +177,7 @@ test('historical and nonexact profiles retain their proved pre-change request by
     for (const request of f.requests) {
       const contract = JSON.parse(request.messages[1].content).capySummaryContract;
       assert.equal(contract.maximumCharacters, 24000);
+      assert.equal(contract.preferredMaximumCharacters, undefined);
       assert.equal(contract.targetCharacters, 12000);
       assert.doesNotMatch(contract.instruction, /decisive alternatives|negative facts/);
     }
@@ -174,7 +198,7 @@ test('Opulent2 cache provenance includes its chosen repair policy and cannot reu
   assert.notEqual(current.checkpoint.capyPolicyDigest, historical.checkpoint.capyPolicyDigest);
   assert.equal(current.checkpoint.capyPolicyDigest, hash({ version: CAPY_CONTEXT_POLICY_VERSION, policy, allowedTools: config.allowedTools,
     initialTools: config.initialTools, model: config.model, providerOnly: config.providerOnly, corpusWorkspace: config.corpusWorkspace,
-    systemPrompt: config.systemPrompt, summaryRepairPolicy: { version: 'opulent2-summary-repair-v1', attempts: 2, maximumCharacters: 12000,
+    systemPrompt: config.systemPrompt, summaryRepairPolicy: { version: 'opulent2-summary-repair-v2', attempts: 2, preferredMaximumCharacters: 12000,
       targetCharacters: 6000, instruction: 'Preserve decisive alternatives, conditions, explicit conflicts and uncertainty. Unknown facts must remain unknown, not become negative facts. Prefer evidence references and unresolved source questions to invented resolutions.' } }));
   const cached = await prepareCapyModelContext({ ...f, config, model, checkpoint: current.checkpoint });
   assert.equal(f.requests.length, count + 1);
