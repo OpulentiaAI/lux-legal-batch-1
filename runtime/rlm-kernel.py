@@ -381,7 +381,7 @@ async def execute(message):
     global namespace, namespace_initialized, handoff_directory
     ident = message['id']
     report_state = message.get('report_state') is True
-    handoff = message.get('handoff_policy') == 'rlm-handoff-v1'
+    handoff = message.get('handoff_policy') in ('rlm-handoff-v1', 'rlm-handoff-packed-v1')
     if handoff:
         handoff_directory = message['handoff_dir']
     if not namespace_initialized:

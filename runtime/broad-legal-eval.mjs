@@ -105,7 +105,7 @@ function savedTrajectory(store, rootId, terminal, runProvenance) {
     .map(row => ({ ...row, visibility: row.session_id === rootId ? 'script-only' : 'child-only' }))
   return redactAudit({ version: 'broad-trajectory-v1', provenance: runProvenance, rootSessionId: rootId,
     visibility: 'Only root conversation tool responses are answerer-visible; child session contents and events are child-only.',
-    ...(runProvenance.delivery ? { handoffLedger: { version: 'rlm-handoff-v1',
+    ...(runProvenance.delivery ? { handoffLedger: { version: runProvenance.delivery.rlmHandoffPolicy,
       visibility: 'host-only; complete snapshots and ledger entries do not establish model visibility; use confirmed receipts and actual session tool messages',
       collections: Object.fromEntries(['rlm_handoff_states', 'rlm_handoff_snapshots', 'rlm_handoff_receipts', 'rlm_handoff_exclusions']
         .map(name => [name, store.list(name).filter(row => descendants.has(row.session_id))])) } } : {}),
@@ -330,12 +330,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   }
   maxSteps ??= workProduct ? 80 : BROAD_MAX_STEPS
   if (!['full-catalog-v1', 'initial-scripted-v1'].includes(toolSurface)) throw new Error('Unknown broad tool surface')
-  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
-  const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
+  if (instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile)) throw new Error('Unknown broad instruction profile')
+  const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile)
+  const rlmHandoffPolicy = instructionProfile === 'opulent-delivery-v12' ? 'rlm-handoff-packed-v1' : 'rlm-handoff-v1'
   if (deliveryV9 && inferenceProvider !== 'runanywhere') throw new Error('Delivery v9 requires native RunAnywhere MiMo inference')
-  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
-  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
-  const capabilityV8 = ['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11'].includes(instructionProfile)
+  const unrestricted = ['opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile)
+  const capabilityV7 = ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile)
+  const capabilityV8 = ['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile)
   const desktopConfig = deliveryV9 ? { computerPreparedImage: true, computerImageSha256,
     browserAllowedOrigins: ['http://127.0.0.1:8765'], browserUploadRoots: [`${BROAD_SANDBOX_WORKSPACE}/analysis`, OUTPUT_PATH] } : null
   if (deliveryV9 && (!sandboxTemplate || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Delivery v9 requires the approved prepared desktop template and image SHA-256')
@@ -358,7 +359,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     const path = relative(resolve(workspace), resolve(artifactsDir))
     if (!path || path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path)) throw new Error('Evidence artifacts must stay outside the source repository')
   }
-  const rlmDefinitions = rlmDefinitionsFor(deliveryV9 ? { rlmHandoffPolicy: 'rlm-handoff-v1', instructionProfile } : {})
+  const rlmDefinitions = rlmDefinitionsFor(deliveryV9 ? { rlmHandoffPolicy, instructionProfile } : {})
   const effectiveDefinitions = unrestricted ? { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...legalDefinitions, ...browserDefinitions, ...waitDefinitions, ...rlmDefinitions } : null
   if (deliveryV9) effectiveDefinitions.scripted_tools = { ...effectiveDefinitions.scripted_tools,
     description: `${effectiveDefinitions.scripted_tools.description}${SCRIPT_TOP_LEVEL_AWAIT_DESCRIPTION}` }
@@ -380,8 +381,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
     policy: deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
-    ...(deliveryV9 ? { delivery: { version: instructionProfile, rlmHandoffPolicy: 'rlm-handoff-v1', scriptTopLevelAwait: true,
-      ...(instructionProfile === 'opulent-delivery-v11' ? { emptyFinalRecovery: 'same-session-empty-final-v1' } : {}),
+    ...(deliveryV9 ? { delivery: { version: instructionProfile, rlmHandoffPolicy, scriptTopLevelAwait: true,
+      ...(['opulent-delivery-v11', 'opulent-delivery-v12'].includes(instructionProfile) ? { emptyFinalRecovery: 'same-session-empty-final-v1' } : {}),
       scriptPolicy: 'python-top-level-await-v1', handoff: { reportSchemaVersion: 'rlm-report-v1',
         reportSchemaSha256: sha256(JSON.stringify(RLM_REPORT_SCHEMA)), limits: RLM_HANDOFF_LIMITS },
       computer: { ...desktopConfig, readiness: 'validated after corpus/skill hardening in every provisioned VM', nativeModelVision: 'requires separate live inference verification' } } } : {}),
@@ -500,7 +501,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         maxSteps, ...(workProduct ? { sandboxTimeoutMs: 3_600_000 } : {}), systemPrompt: instructions.systemPrompt, allowedRepos: [], network,
         ...(capabilityV7 ? { instructionProfile } : {}),
         ...(capabilityV8 ? { eagerChildSandbox: true, reportRlmState: true, secureSandboxFileAccess: true } : {}),
-        ...(deliveryV9 ? { ...desktopConfig, rlmHandoffPolicy: 'rlm-handoff-v1', scriptTopLevelAwait: true } : {}),
+        ...(deliveryV9 ? { ...desktopConfig, rlmHandoffPolicy, scriptTopLevelAwait: true } : {}),
         ...(sandboxTemplate ? { sandboxTemplate, computerPreparedImage: true, computerImageSha256 } : {}),
         ...(broker ? { runtimeUrl: broker.origin } : {}),
         ...(mcp ? { allowedMcpUrls: mcp.allowedMcpUrls ?? [], allowedMcpCommands: mcp.allowedMcpCommands ?? [] } : {}),

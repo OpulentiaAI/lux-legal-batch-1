@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { renderProfessionalInstructions } from './professional.mjs'
 
 const sha256 = text => createHash('sha256').update(text).digest('hex')
 const manifestText = readFileSync(new URL('./manifest-v1.json', import.meta.url), 'utf8')
@@ -57,6 +58,34 @@ export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
+  if (profile === 'opulent-professional-v1') return renderProfessionalInstructions({ appendix, variant })
+  if (profile === 'opulent-delivery-v12') {
+    const manifestText = readFileSync(new URL(`./manifest-${profile}.json`, import.meta.url), 'utf8')
+    const manifest = JSON.parse(manifestText)
+    const foundation = renderProfessionalInstructions()
+    const files = ['opulent-delivery-v9.md', 'opulent-delivery-v10.md', 'opulent-delivery-v11.md', 'opulent-delivery-v12.md']
+    if (manifest.version !== profile || manifest.profile !== profile ||
+        manifest.foundationProfile !== foundation.provenance.profile ||
+        manifest.foundationManifestSha256 !== foundation.provenance.manifestSha256 ||
+        manifest.foundationEffectivePromptSha256 !== foundation.provenance.effectivePromptSha256 ||
+        manifest.handoffPolicy !== 'rlm-handoff-packed-v1' ||
+        JSON.stringify(manifest.operationalLayers?.map(layer => layer.file)) !== JSON.stringify(files)) throw new Error('Delivery v12 foundation differs from the audited manifest')
+    const layers = manifest.operationalLayers.map(layer => {
+      const text = readFileSync(new URL(`./${layer.file}`, import.meta.url), 'utf8').trimEnd()
+      if (sha256(text) !== layer.sha256) throw new Error('Delivery v12 operational layer differs from the audited manifest')
+      return text
+    })
+    const prompt = [foundation.systemPrompt, ...layers].join('\n\n')
+    if (sha256(prompt) !== manifest.effectivePromptSha256) throw new Error('Delivery v12 composition differs from the audited manifest')
+    variant ??= profile
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: { ...foundation.provenance, variant, version: profile, profile,
+      composition: manifest.composition, foundationProfile: manifest.foundationProfile,
+      foundationManifestSha256: manifest.foundationManifestSha256,
+      foundationEffectivePromptSha256: manifest.foundationEffectivePromptSha256,
+      operationalLayers: manifest.operationalLayers, handoffPolicy: manifest.handoffPolicy, scriptPolicy: manifest.scriptPolicy,
+      manifestSha256: sha256(manifestText), effectivePromptSha256: sha256(systemPrompt), effectivePromptBytes: Buffer.byteLength(systemPrompt) } }
+  }
   if (profile === 'opulent-delivery-v10' || profile === 'opulent-delivery-v11') {
     const inheritedProfile = profile === 'opulent-delivery-v11' ? 'opulent-delivery-v10' : 'opulent-delivery-v9'
     const inheritedLabel = profile === 'opulent-delivery-v11' ? 'V10' : 'V9'

@@ -1,0 +1,4406 @@
+{
+  "version": "professional-source-inventory-v1",
+  "archives": [
+    {
+      "kind": "attachment",
+      "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+      "archive": "capy-initial-instructions.zip",
+      "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+      "archiveBytes": 41562,
+      "fileCount": 5,
+      "uncompressedBytes": 118330
+    },
+    {
+      "kind": "attachment",
+      "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+      "archive": "capy-schemas-instructions-handles-roles.zip",
+      "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+      "archiveBytes": 184362,
+      "fileCount": 99,
+      "uncompressedBytes": 419520
+    },
+    {
+      "kind": "attachment",
+      "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+      "archive": "devin-initial-instructions.zip",
+      "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+      "archiveBytes": 105778,
+      "fileCount": 5,
+      "uncompressedBytes": 439418
+    },
+    {
+      "kind": "attachment",
+      "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+      "archive": "capy-builtin-skills.zip",
+      "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+      "archiveBytes": 45100,
+      "fileCount": 19,
+      "uncompressedBytes": 87864
+    },
+    {
+      "kind": "attachment",
+      "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+      "archive": "devin-limits.zip",
+      "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+      "archiveBytes": 471189,
+      "fileCount": 78,
+      "uncompressedBytes": 1342548
+    }
+  ],
+  "prime": {
+    "kind": "git",
+    "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+    "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+    "license": "MIT",
+    "licensePath": "LICENSE"
+  },
+  "webReferences": [
+    {
+      "url": "https://docs.e2b.dev/agents/prime",
+      "retrievedUrl": "https://docs.e2b.dev/agents/prime.md",
+      "bundlePath": "e2b-prime-guide.md",
+      "rawBytes": 11111,
+      "rawSha256": "d2fe8e27aecbcd9f3e09cec9d42c2ce4d77841a352ab96dff2c212d9a347f9d6",
+      "disposition": "reference",
+      "reason": "Public Prime/E2B integration guide, preserved as a reference; not executed or evidence of available Opulent infrastructure."
+    }
+  ],
+  "files": [
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/README.md"
+      },
+      "rawBytes": 4393,
+      "rawSha256": "4500b91e99c0943430ddd88de84a379b87cabf9840eda81c73fa9c8062ac7863",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source package notes/context/delta provenance, not current session identities or capability grants.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4393,
+        "lineStart": 1,
+        "lineEnd": 68,
+        "sha256": "4500b91e99c0943430ddd88de84a379b87cabf9840eda81c73fa9c8062ac7863"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/function-tool-definitions.md"
+      },
+      "rawBytes": 28028,
+      "rawSha256": "1f128749441bbb5fee08eee12456c63e8172f5c07dd923e4f4b9abae8e1412e1",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 28028,
+        "lineStart": 1,
+        "lineEnd": 313,
+        "sha256": "1f128749441bbb5fee08eee12456c63e8172f5c07dd923e4f4b9abae8e1412e1"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/probes/README.md"
+      },
+      "rawBytes": 658,
+      "rawSha256": "6a41c5100125e74472be4b458acf91dfeba84cb4f0cab6710c7dd9c76edd7ce2",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 658,
+        "lineStart": 1,
+        "lineEnd": 10,
+        "sha256": "6a41c5100125e74472be4b458acf91dfeba84cb4f0cab6710c7dd9c76edd7ce2"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/probes/describe-catalog-twins.json"
+      },
+      "rawBytes": 10677,
+      "rawSha256": "62c3c8e86ced4c1e6268362ece84ce34259e4179eb1fa05595830c9e0fe4540a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 10677,
+        "lineStart": 1,
+        "lineEnd": 49,
+        "sha256": "62c3c8e86ced4c1e6268362ece84ce34259e4179eb1fa05595830c9e0fe4540a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DE1G6D7T14EHA3EP4F7AH",
+        "archive": "capy-initial-instructions.zip",
+        "archiveSha256": "d7d369429ecc35407b9d696fddf2f637b93eab4d96692bcf29ca123618ec1d44",
+        "member": "capy-initial-instructions/system-prompt.md"
+      },
+      "rawBytes": 74574,
+      "rawSha256": "13ceffa41effb92389dd0921da4669047f03b09808b685ec41ada26bec979655",
+      "disposition": "composed",
+      "reason": "Composed instruction source; every original byte is accounted for in its span ledger.",
+      "sourceId": "capy-initial"
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/README.md"
+      },
+      "rawBytes": 1940,
+      "rawSha256": "3473cd1cf5ca03e0d3412d63c60c4179abe8365529418ab95e77f287ec1c7f4c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1940,
+        "lineStart": 1,
+        "lineEnd": 36,
+        "sha256": "3473cd1cf5ca03e0d3412d63c60c4179abe8365529418ab95e77f287ec1c7f4c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/hidden-injections/00-hidden-injections.md"
+      },
+      "rawBytes": 7239,
+      "rawSha256": "01676c79a432608442f9c0e8e8dbf2c8b030e38870308e6dd80bb9b84dd6cac9",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 7239,
+        "lineStart": 1,
+        "lineEnd": 151,
+        "sha256": "01676c79a432608442f9c0e8e8dbf2c8b030e38870308e6dd80bb9b84dd6cac9"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/roles/00-roles-reference.md"
+      },
+      "rawBytes": 3360,
+      "rawSha256": "ffa9ace764218c0779df185208085268e1daa242d1f9f5b4c8934feb7553a809",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3360,
+        "lineStart": 1,
+        "lineEnd": 73,
+        "sha256": "ffa9ace764218c0779df185208085268e1daa242d1f9f5b4c8934feb7553a809"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/roles/01-role-assignments.md"
+      },
+      "rawBytes": 4265,
+      "rawSha256": "62e4f3b219a69c1b6aea2d391396c2caafcb9f52981b5824e43348c08c4c7aea",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4265,
+        "lineStart": 1,
+        "lineEnd": 89,
+        "sha256": "62e4f3b219a69c1b6aea2d391396c2caafcb9f52981b5824e43348c08c4c7aea"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/roles/schema-subagent.get-alias.json"
+      },
+      "rawBytes": 1112,
+      "rawSha256": "9487bd8b0b013b96ed6d96e768f6deb1dda1c01aef4a64d9a48d00b164643fb1",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1112,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "9487bd8b0b013b96ed6d96e768f6deb1dda1c01aef4a64d9a48d00b164643fb1"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/roles/schema-thread.get.json"
+      },
+      "rawBytes": 2709,
+      "rawSha256": "0b08e501f28c0979e1aa93c5e9a4dbc1cc8099168f913213326a4b9566ececab",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2709,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "0b08e501f28c0979e1aa93c5e9a4dbc1cc8099168f913213326a4b9566ececab"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/00-src-handles.md"
+      },
+      "rawBytes": 4299,
+      "rawSha256": "c7f7eb977edbb14e5d909b1f5194cbbced25432d9da9f94635bf9d92e50c5000",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4299,
+        "lineStart": 1,
+        "lineEnd": 87,
+        "sha256": "c7f7eb977edbb14e5d909b1f5194cbbced25432d9da9f94635bf9d92e50c5000"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/handler.ts"
+      },
+      "rawBytes": 12708,
+      "rawSha256": "1cb8105ebba9387e352309d14831d1de35f5df21233b1f234e080779819257bc",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 12708,
+        "lineStart": 1,
+        "lineEnd": 417,
+        "sha256": "1cb8105ebba9387e352309d14831d1de35f5df21233b1f234e080779819257bc"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/handlers-index.ts"
+      },
+      "rawBytes": 6373,
+      "rawSha256": "818af534ea5d12e7ae7f60dc57f408a453b4ccf4116d670e7f7a42cecad881e3",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6373,
+        "lineStart": 1,
+        "lineEnd": 109,
+        "sha256": "818af534ea5d12e7ae7f60dc57f408a453b4ccf4116d670e7f7a42cecad881e3"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/invocations.ts"
+      },
+      "rawBytes": 12954,
+      "rawSha256": "5956f1e79b94059ac8f192a98e35eabac54f76883b8c43b1bfb113e499d13d00",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 12954,
+        "lineStart": 1,
+        "lineEnd": 339,
+        "sha256": "5956f1e79b94059ac8f192a98e35eabac54f76883b8c43b1bfb113e499d13d00"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/process-tree.ts"
+      },
+      "rawBytes": 17181,
+      "rawSha256": "e6a051588606c38661c9adfcd1fbd3c6c98299a31046e693782a28e05fb16d8e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 17181,
+        "lineStart": 1,
+        "lineEnd": 466,
+        "sha256": "e6a051588606c38661c9adfcd1fbd3c6c98299a31046e693782a28e05fb16d8e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/src-handles/wire.ts"
+      },
+      "rawBytes": 7059,
+      "rawSha256": "0a7408e32d9e1734b992959d784b245c119640f516bf4642d649665d92a10da1",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 7059,
+        "lineStart": 1,
+        "lineEnd": 165,
+        "sha256": "0a7408e32d9e1734b992959d784b245c119640f516bf4642d649665d92a10da1"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/system-instructions/00-read-order-and-deltas.md"
+      },
+      "rawBytes": 3159,
+      "rawSha256": "c2a224f14c81e9cf033fc2d0e2b6d44302bf73169430fc7591963307e1fdb3c6",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3159,
+        "lineStart": 1,
+        "lineEnd": 59,
+        "sha256": "c2a224f14c81e9cf033fc2d0e2b6d44302bf73169430fc7591963307e1fdb3c6"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/system-instructions/context-blocks-2026-10-01.md"
+      },
+      "rawBytes": 8282,
+      "rawSha256": "4d56f6cf4a96161d069492adb8cf752829cb1c4ecf95f071ef646a4ca34f827b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 8282,
+        "lineStart": 1,
+        "lineEnd": 126,
+        "sha256": "4d56f6cf4a96161d069492adb8cf752829cb1c4ecf95f071ef646a4ca34f827b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/system-instructions/function-tool-definitions-2026-10-01.md"
+      },
+      "rawBytes": 36663,
+      "rawSha256": "386e56e37469333d022f8823d40f711abf326bc833aa792888ff832cbc32ed2e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 36663,
+        "lineStart": 1,
+        "lineEnd": 286,
+        "sha256": "386e56e37469333d022f8823d40f711abf326bc833aa792888ff832cbc32ed2e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/system-instructions/system-prompt-full.md"
+      },
+      "rawBytes": 76210,
+      "rawSha256": "ffaba69b6a550c5802013fdb6ead32a8adcef04129bedbeaf9f40f61c5acfdab",
+      "disposition": "composed",
+      "reason": "Composed instruction source; every original byte is accounted for in its span ledger.",
+      "sourceId": "capy-oct1"
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/_NOTES.md"
+      },
+      "rawBytes": 967,
+      "rawSha256": "1411d4b4ad5fc85b355d72c3c671681e3c62bd459e30c5ef3ddcfb856f60741a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 967,
+        "lineStart": 1,
+        "lineEnd": 19,
+        "sha256": "1411d4b4ad5fc85b355d72c3c671681e3c62bd459e30c5ef3ddcfb856f60741a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/bash.json"
+      },
+      "rawBytes": 2431,
+      "rawSha256": "69be68d3f01c9baf1f48c9e5c87988017da8be2b7b0302b992275a4a53eae941",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2431,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "69be68d3f01c9baf1f48c9e5c87988017da8be2b7b0302b992275a4a53eae941"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/edit.json"
+      },
+      "rawBytes": 846,
+      "rawSha256": "ffd47a8719240bed6d914eeb3618165ab61296986d4a4a7a1cbf2469e7743e24",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 846,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "ffd47a8719240bed6d914eeb3618165ab61296986d4a4a7a1cbf2469e7743e24"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/function-only-tools-verbatim.md"
+      },
+      "rawBytes": 20413,
+      "rawSha256": "49afa66213c553e97b3fd43beaed6e406ff46460d68d4ca59edef2b9803b89fa",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 20413,
+        "lineStart": 1,
+        "lineEnd": 136,
+        "sha256": "49afa66213c553e97b3fd43beaed6e406ff46460d68d4ca59edef2b9803b89fa"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/message_agent.json"
+      },
+      "rawBytes": 3752,
+      "rawSha256": "ea4c00aa791e78843f45f6e366102970fba636fad99f7f989bf0cef1e2ac1d90",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3752,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "ea4c00aa791e78843f45f6e366102970fba636fad99f7f989bf0cef1e2ac1d90"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/pr_comment.json"
+      },
+      "rawBytes": 1297,
+      "rawSha256": "d66acf4b222fb2f088bb1395e096e6929cdbb42e15942602762fa0a105b0eb70",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1297,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "d66acf4b222fb2f088bb1395e096e6929cdbb42e15942602762fa0a105b0eb70"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/pr_create.json"
+      },
+      "rawBytes": 4208,
+      "rawSha256": "ce46aa2a6b68d4ab3daf537a9ebd459c1273776271a5462b73194b2b5abb3951",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4208,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "ce46aa2a6b68d4ab3daf537a9ebd459c1273776271a5462b73194b2b5abb3951"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/read.json"
+      },
+      "rawBytes": 1717,
+      "rawSha256": "b63d4b3bfe0c938918c47dd2ae58b94bf300460844b754b35e597cfd0d213a2a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1717,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "b63d4b3bfe0c938918c47dd2ae58b94bf300460844b754b35e597cfd0d213a2a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/report_issue.json"
+      },
+      "rawBytes": 1370,
+      "rawSha256": "66f805507a9f4fc8cf63486984cf8c69e5a980deb3de126bb633f29c1ea2823b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1370,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "66f805507a9f4fc8cf63486984cf8c69e5a980deb3de126bb633f29c1ea2823b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/subscribe.json"
+      },
+      "rawBytes": 6100,
+      "rawSha256": "0e1585a8f3186e95b5813e696050a2af3776add3d29c5ee4b616c1a8c42f278c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6100,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "0e1585a8f3186e95b5813e696050a2af3776add3d29c5ee4b616c1a8c42f278c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/todo_write.json"
+      },
+      "rawBytes": 1345,
+      "rawSha256": "91f1dea096a7d37eb8ba7c6afc6a96460477757785001995540e44d6f792ca6c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1345,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "91f1dea096a7d37eb8ba7c6afc6a96460477757785001995540e44d6f792ca6c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/transfer_files.json"
+      },
+      "rawBytes": 2907,
+      "rawSha256": "6de0b2dbbf169dfcd774a205aaea152d2907247875745d0822eea701a09792f8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2907,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "6de0b2dbbf169dfcd774a205aaea152d2907247875745d0822eea701a09792f8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/web_fetch.json"
+      },
+      "rawBytes": 362,
+      "rawSha256": "1697ce68e589dede9acd4619dbe5581c57002e2a02cbf601f851b8acb8b77645",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 362,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "1697ce68e589dede9acd4619dbe5581c57002e2a02cbf601f851b8acb8b77645"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/web_search.json"
+      },
+      "rawBytes": 561,
+      "rawSha256": "131d6a39944323312448fb89a1f772aa62c8c6be0970a39df98ee145ce9e8ae6",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 561,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "131d6a39944323312448fb89a1f772aa62c8c6be0970a39df98ee145ce9e8ae6"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas-function/write.json"
+      },
+      "rawBytes": 648,
+      "rawSha256": "003c29305fa719873a623d4e1620a2ee52634bfd4f442e67bcfede9bb90d38a5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 648,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "003c29305fa719873a623d4e1620a2ee52634bfd4f442e67bcfede9bb90d38a5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/automation.batches.json"
+      },
+      "rawBytes": 1604,
+      "rawSha256": "d9436f3654b32ca2a83d212b80d3d563dadf0ede1ccfca00b70480d687495a3a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1604,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "d9436f3654b32ca2a83d212b80d3d563dadf0ede1ccfca00b70480d687495a3a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/automation.create.json"
+      },
+      "rawBytes": 15421,
+      "rawSha256": "70eca42f1a68cefe99d3b1d162f23a4c6b17740d45b37a47ec5be38476d63bfd",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 15421,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "70eca42f1a68cefe99d3b1d162f23a4c6b17740d45b37a47ec5be38476d63bfd"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/automation.list.json"
+      },
+      "rawBytes": 1753,
+      "rawSha256": "602f1c7f241c320b15f2c5fb5e60c9128e79876372d3e6afe76dd012c0632cb2",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1753,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "602f1c7f241c320b15f2c5fb5e60c9128e79876372d3e6afe76dd012c0632cb2"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/automation.trigger.json"
+      },
+      "rawBytes": 748,
+      "rawSha256": "757c9d22bc6a8cf7d4459043b0f9c84b18096805920ddf2c1d014719a974575f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 748,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "757c9d22bc6a8cf7d4459043b0f9c84b18096805920ddf2c1d014719a974575f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/automation.update.json"
+      },
+      "rawBytes": 15149,
+      "rawSha256": "5a613192c63546e2f3272feeabaa129ce2269b7e17c84099febd132a0e4e2bd4",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 15149,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "5a613192c63546e2f3272feeabaa129ce2269b7e17c84099febd132a0e4e2bd4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.bash.json"
+      },
+      "rawBytes": 2405,
+      "rawSha256": "eff550d1c7f6848cb971f505c64a5f970f6dc9151ae9bad16e8ca2a2727c81d2",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2405,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "eff550d1c7f6848cb971f505c64a5f970f6dc9151ae9bad16e8ca2a2727c81d2"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.browser.json"
+      },
+      "rawBytes": 13649,
+      "rawSha256": "48f04d4224cf4bd33c2adae43e45fbcd733708f9a836ce847ce8b8ddc302ab3f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 13649,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "48f04d4224cf4bd33c2adae43e45fbcd733708f9a836ce847ce8b8ddc302ab3f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.edit.json"
+      },
+      "rawBytes": 820,
+      "rawSha256": "5ac409352ab7e6084bae9a8f0000d9873f56b4b5f961c2fe87358fa299cc4a5b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 820,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "5ac409352ab7e6084bae9a8f0000d9873f56b4b5f961c2fe87358fa299cc4a5b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.read.json"
+      },
+      "rawBytes": 1691,
+      "rawSha256": "3cbaa50663f902e1af4d428a17c040df19d35ed5e03b766196963c747f347279",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1691,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "3cbaa50663f902e1af4d428a17c040df19d35ed5e03b766196963c747f347279"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.subscribe.json"
+      },
+      "rawBytes": 6074,
+      "rawSha256": "44ce1ff103f770f3201b80ab3941810992cfc5ac385ca2a6980d87a33ab3033b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6074,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "44ce1ff103f770f3201b80ab3941810992cfc5ac385ca2a6980d87a33ab3033b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/capy.write.json"
+      },
+      "rawBytes": 622,
+      "rawSha256": "e4233d911971ad87a95e3863cfa1e94ab58d72d32ea63d6dfae38e38fdc67e75",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 622,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "e4233d911971ad87a95e3863cfa1e94ab58d72d32ea63d6dfae38e38fdc67e75"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/desktop.info.json"
+      },
+      "rawBytes": 905,
+      "rawSha256": "e35b77fdea7b7313314d737f1e8e7f5682f8e526c985cdfd3d5317934c4fe3e8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 905,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "e35b77fdea7b7313314d737f1e8e7f5682f8e526c985cdfd3d5317934c4fe3e8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/desktop.recording.json"
+      },
+      "rawBytes": 659,
+      "rawSha256": "36582c1c6f199ad5862cc139488e79f57a0742b69c162a04dd532f4a8c41dc9a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 659,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "36582c1c6f199ad5862cc139488e79f57a0742b69c162a04dd532f4a8c41dc9a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/drive.checkout.json"
+      },
+      "rawBytes": 864,
+      "rawSha256": "eadbe9f30d1e0717e034a3e02c76a0cafbcdf210f19137cc729678d74f2b1830",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 864,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "eadbe9f30d1e0717e034a3e02c76a0cafbcdf210f19137cc729678d74f2b1830"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/drive.history.json"
+      },
+      "rawBytes": 801,
+      "rawSha256": "ca601dd1cb4385a6d8f4c8161c70727b4610064d352165a6f3fdfc4312a2c1a7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 801,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "ca601dd1cb4385a6d8f4c8161c70727b4610064d352165a6f3fdfc4312a2c1a7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/environment.applySetup.json"
+      },
+      "rawBytes": 1419,
+      "rawSha256": "f812adc020322e4b4e6a8940a757045a20d2346ae1eff993d85314ebe4af0a39",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1419,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "f812adc020322e4b4e6a8940a757045a20d2346ae1eff993d85314ebe4af0a39"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/environment.buildSnapshot.json"
+      },
+      "rawBytes": 1771,
+      "rawSha256": "602db6660c4d4409b3c904ce15d1b6dc9951bb99de9f5098278e4ec378df6db5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1771,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "602db6660c4d4409b3c904ce15d1b6dc9951bb99de9f5098278e4ec378df6db5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/environment.configureSnapshots.json"
+      },
+      "rawBytes": 1464,
+      "rawSha256": "fd172ed4dbc029ea7535fb1666d38a2f3824c4bf59afe6b3fc1ec035a7c18603",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1464,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "fd172ed4dbc029ea7535fb1666d38a2f3824c4bf59afe6b3fc1ec035a7c18603"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/environment.getSetup.json"
+      },
+      "rawBytes": 6661,
+      "rawSha256": "c024d74829d7e956800a92ee1a055bf49322fcba99fa0153ed58cac4c1317a6d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6661,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "c024d74829d7e956800a92ee1a055bf49322fcba99fa0153ed58cac4c1317a6d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/environment.getSnapshots.json"
+      },
+      "rawBytes": 3067,
+      "rawSha256": "857f4bc462d3415594cbb42eed75d14b16c167fad1c118e60c46a64801b95690",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3067,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "857f4bc462d3415594cbb42eed75d14b16c167fad1c118e60c46a64801b95690"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/expose.port.json"
+      },
+      "rawBytes": 1126,
+      "rawSha256": "75d3f7bc62904f85219e096ab99105f87acee762406d776dd7ca7933223416fe",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1126,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "75d3f7bc62904f85219e096ab99105f87acee762406d776dd7ca7933223416fe"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/image.edit.json"
+      },
+      "rawBytes": 913,
+      "rawSha256": "48ce650a6a52be3578ec81b911aa4d0bcfa11cecd6f420491d276f81518fed64",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 913,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "48ce650a6a52be3578ec81b911aa4d0bcfa11cecd6f420491d276f81518fed64"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/image.generate.json"
+      },
+      "rawBytes": 1208,
+      "rawSha256": "39d6b752bb869e1bc914ea0b7fab417eb2219b2869e2a3816f60ee016310f4e5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1208,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "39d6b752bb869e1bc914ea0b7fab417eb2219b2869e2a3816f60ee016310f4e5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/machine.list.json"
+      },
+      "rawBytes": 1912,
+      "rawSha256": "c771d90d1a5e81dc3f346d7d91c8ebe867ccbf2023a6cbfd86d3a52142fe2550",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1912,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "c771d90d1a5e81dc3f346d7d91c8ebe867ccbf2023a6cbfd86d3a52142fe2550"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/message.agent.json"
+      },
+      "rawBytes": 3721,
+      "rawSha256": "b5936870c813321176d723a35f08740332ede0899a04c461bd4d6abcad991e76",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3721,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "b5936870c813321176d723a35f08740332ede0899a04c461bd4d6abcad991e76"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/mobile.build.json"
+      },
+      "rawBytes": 3131,
+      "rawSha256": "29684722b05b7ad280985a486c78daaa582ad67d4c18fe9e08fed1068e5ebd0c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3131,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "29684722b05b7ad280985a486c78daaa582ad67d4c18fe9e08fed1068e5ebd0c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/mobile.device.json"
+      },
+      "rawBytes": 9760,
+      "rawSha256": "16e70df8cfc7f35d0fd4fd11679ac4bf3036e357b8b28609f40af5bf067fd360",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 9760,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "16e70df8cfc7f35d0fd4fd11679ac4bf3036e357b8b28609f40af5bf067fd360"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/operation.cancel.json"
+      },
+      "rawBytes": 1171,
+      "rawSha256": "888e23da008ff6e427e86a921b6bf4d19b70596e4ea37bc72436e52cafbd4577",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1171,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "888e23da008ff6e427e86a921b6bf4d19b70596e4ea37bc72436e52cafbd4577"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/operation.get.json"
+      },
+      "rawBytes": 1002,
+      "rawSha256": "35f702443cacf7b3c45e460030408c3a5086676d4ffb2a0a03bfc18dcec150b5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1002,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "35f702443cacf7b3c45e460030408c3a5086676d4ffb2a0a03bfc18dcec150b5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/operation.list.json"
+      },
+      "rawBytes": 1401,
+      "rawSha256": "a4f414870135b4b9b6861f36ca86e4aadd3b8049d2dd511a0ca86c1451969b60",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1401,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "a4f414870135b4b9b6861f36ca86e4aadd3b8049d2dd511a0ca86c1451969b60"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/port.list.json"
+      },
+      "rawBytes": 721,
+      "rawSha256": "a029af1f3f1833e71f1c9ed212d5e2d363f4edae1be8159ba77e6efd35968db8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 721,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "a029af1f3f1833e71f1c9ed212d5e2d363f4edae1be8159ba77e6efd35968db8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.comment.json"
+      },
+      "rawBytes": 1266,
+      "rawSha256": "639f7db4b4c5e47d549b6484f0592869738adfec0a4bddf5306bbf8361b5cc12",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1266,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "639f7db4b4c5e47d549b6484f0592869738adfec0a4bddf5306bbf8361b5cc12"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.create.json"
+      },
+      "rawBytes": 4177,
+      "rawSha256": "efa5a5166762bc954d180c1456f8cffc59d9450d3820de27432b273d3d33505e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4177,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "efa5a5166762bc954d180c1456f8cffc59d9450d3820de27432b273d3d33505e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.edit.json"
+      },
+      "rawBytes": 1196,
+      "rawSha256": "920f0ee531eb6c11792fcce6889a11acef8b722507e04f080cfb9b3982974bc4",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1196,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "920f0ee531eb6c11792fcce6889a11acef8b722507e04f080cfb9b3982974bc4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.getChecks.json"
+      },
+      "rawBytes": 1543,
+      "rawSha256": "c09c7033a4c561d629d43ad6820be5fa89e6083fe6ee3ec53570cd838a1fdcc7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1543,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "c09c7033a4c561d629d43ad6820be5fa89e6083fe6ee3ec53570cd838a1fdcc7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.getComments.json"
+      },
+      "rawBytes": 1740,
+      "rawSha256": "05bd1f51f9e61b0883b57bf9db57bc984d45718a41c5555691fc765d4adf957f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1740,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "05bd1f51f9e61b0883b57bf9db57bc984d45718a41c5555691fc765d4adf957f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.getFindings.json"
+      },
+      "rawBytes": 2842,
+      "rawSha256": "ee2a23129ceaed98e397ed94ad6e886a104ef79d74c7a2dc56a18871b30d1763",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2842,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "ee2a23129ceaed98e397ed94ad6e886a104ef79d74c7a2dc56a18871b30d1763"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.getOverview.json"
+      },
+      "rawBytes": 2365,
+      "rawSha256": "5616f4a3d40bb5e4a6bc12883457ac72ba77af57e75a242eea884b4996c7e975",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2365,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "5616f4a3d40bb5e4a6bc12883457ac72ba77af57e75a242eea884b4996c7e975"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.updateFindings.json"
+      },
+      "rawBytes": 1547,
+      "rawSha256": "cc73f9e132f2fb1bfc97c3f087cc3dad634672dd3be00aa40fe4d1072f1277c1",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1547,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "cc73f9e132f2fb1bfc97c3f087cc3dad634672dd3be00aa40fe4d1072f1277c1"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.updateReviewThread.json"
+      },
+      "rawBytes": 1087,
+      "rawSha256": "3222c75ea6168189e021f80ef80b5daed789bd2f2349171887dea515a4560c0b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1087,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "3222c75ea6168189e021f80ef80b5daed789bd2f2349171887dea515a4560c0b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/pr.uploadAsset.json"
+      },
+      "rawBytes": 1563,
+      "rawSha256": "22e3b1253c86ca39ffba73af697c8aabfee84632a1cee270d0a52d7f7b2967ea",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1563,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "22e3b1253c86ca39ffba73af697c8aabfee84632a1cee270d0a52d7f7b2967ea"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/report.issue.json"
+      },
+      "rawBytes": 1339,
+      "rawSha256": "70e565f5ab55331007af29abffa65519b660061e3485276255e8b424cfe3e703",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1339,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "70e565f5ab55331007af29abffa65519b660061e3485276255e8b424cfe3e703"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/review.ruleCreate.json"
+      },
+      "rawBytes": 2080,
+      "rawSha256": "7905b3ba6f4be6fd9ce745cd97721229f07f5408a864bf77e43f089aea11c6c8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2080,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "7905b3ba6f4be6fd9ce745cd97721229f07f5408a864bf77e43f089aea11c6c8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/review.ruleList.json"
+      },
+      "rawBytes": 1448,
+      "rawSha256": "b0a6d6f127c26f2bc4126beae63c8421cbd068e99d20ff438d3c48323d896eff",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1448,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "b0a6d6f127c26f2bc4126beae63c8421cbd068e99d20ff438d3c48323d896eff"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/review.ruleUpdate.json"
+      },
+      "rawBytes": 2196,
+      "rawSha256": "9f8a0b8271455144b29d6fa27eaebb761d94823231de3f1f876968a585bdea5b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2196,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "9f8a0b8271455144b29d6fa27eaebb761d94823231de3f1f876968a585bdea5b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.create.json"
+      },
+      "rawBytes": 3475,
+      "rawSha256": "ce63110909f3aebc048dff43868dc1749e17b667adb989605d5f4f8ec7677100",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3475,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "ce63110909f3aebc048dff43868dc1749e17b667adb989605d5f4f8ec7677100"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.edit.json"
+      },
+      "rawBytes": 1227,
+      "rawSha256": "5083e37f995b926455efd5ee9a4dbfc5a8f05ce8c3e5c48d28c541d13eefee51",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1227,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "5083e37f995b926455efd5ee9a4dbfc5a8f05ce8c3e5c48d28c541d13eefee51"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.get.json"
+      },
+      "rawBytes": 1157,
+      "rawSha256": "ec7fe4c73a4c2df6276d13bcffed5a1f7c26c174892b07425caf20d4afa9221c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1157,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "ec7fe4c73a4c2df6276d13bcffed5a1f7c26c174892b07425caf20d4afa9221c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.list.json"
+      },
+      "rawBytes": 1346,
+      "rawSha256": "63238460591dae22a5591e9de7f97776469037d6a12457a1817cddd80a85efeb",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1346,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "63238460591dae22a5591e9de7f97776469037d6a12457a1817cddd80a85efeb"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.start.json"
+      },
+      "rawBytes": 2573,
+      "rawSha256": "f6af947648a31901e3a299bb126e88718aa9ad21fb3ef3fc7ad2f65e60a96fcf",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2573,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "f6af947648a31901e3a299bb126e88718aa9ad21fb3ef3fc7ad2f65e60a96fcf"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/subagent.stop.json"
+      },
+      "rawBytes": 1069,
+      "rawSha256": "88b158c0a222883851ab0d5af7fb5741edbf53315ac4ee9836c4d8bda0ee245d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1069,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "88b158c0a222883851ab0d5af7fb5741edbf53315ac4ee9836c4d8bda0ee245d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.create.json"
+      },
+      "rawBytes": 3471,
+      "rawSha256": "e72cc7f29437b2bd2f4e6cbcbc60444df0b31e3be81fa3a6cf573a8de6e247ac",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3471,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "e72cc7f29437b2bd2f4e6cbcbc60444df0b31e3be81fa3a6cf573a8de6e247ac"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.edit.json"
+      },
+      "rawBytes": 1223,
+      "rawSha256": "a8e0a2091abcd0c4b485e572da1b63400a5f7d50ad5dedba427f3785cee356df",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1223,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "a8e0a2091abcd0c4b485e572da1b63400a5f7d50ad5dedba427f3785cee356df"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.get.json"
+      },
+      "rawBytes": 1153,
+      "rawSha256": "d96b791cc3913b88552ac4a2351668a3f7599481cd9f9a301862ac34bbe8c24c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1153,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "d96b791cc3913b88552ac4a2351668a3f7599481cd9f9a301862ac34bbe8c24c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.list.json"
+      },
+      "rawBytes": 1342,
+      "rawSha256": "badf45a48008701b9da757df45c2feb6cbbc0cb8d5f4010cf8870718aff8931a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1342,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "badf45a48008701b9da757df45c2feb6cbbc0cb8d5f4010cf8870718aff8931a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.start.json"
+      },
+      "rawBytes": 2569,
+      "rawSha256": "d6c8250cc603b5e7578021bbb820a65d92e482a395a457dec4cccec9887f85ef",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2569,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "d6c8250cc603b5e7578021bbb820a65d92e482a395a457dec4cccec9887f85ef"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/task.stop.json"
+      },
+      "rawBytes": 1065,
+      "rawSha256": "c75c12635bbe4e66c90c7a182add13e0d4410e7c97f3e790ec852d7c52beab0b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1065,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "c75c12635bbe4e66c90c7a182add13e0d4410e7c97f3e790ec852d7c52beab0b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.archive.json"
+      },
+      "rawBytes": 589,
+      "rawSha256": "29dc8f1c98f6e5748bae1c6619141cf8fc6c0a317c358b61dcf554b543fbb6fe",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 589,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "29dc8f1c98f6e5748bae1c6619141cf8fc6c0a317c358b61dcf554b543fbb6fe"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.create.json"
+      },
+      "rawBytes": 1897,
+      "rawSha256": "c868e471f1aa5d08f57c4354fd12f629823e455c1830585ca0cbbac95554c613",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1897,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "c868e471f1aa5d08f57c4354fd12f629823e455c1830585ca0cbbac95554c613"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.get.json"
+      },
+      "rawBytes": 2714,
+      "rawSha256": "a4a0c378d471a670b10def9781920cd97de4a9f704182a8a663bde74992127e5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2714,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "a4a0c378d471a670b10def9781920cd97de4a9f704182a8a663bde74992127e5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.list.json"
+      },
+      "rawBytes": 962,
+      "rawSha256": "6c1cf3551a643906a13bfafc67d8fb58a916147ba5cc8af52af74fcc06db9e62",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 962,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "6c1cf3551a643906a13bfafc67d8fb58a916147ba5cc8af52af74fcc06db9e62"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.organize.json"
+      },
+      "rawBytes": 1000,
+      "rawSha256": "cbb2a60452bec30d124e3c87cd00c57d147dcc1f8257f25d480f50e37e840292",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1000,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "cbb2a60452bec30d124e3c87cd00c57d147dcc1f8257f25d480f50e37e840292"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/thread.rename.json"
+      },
+      "rawBytes": 531,
+      "rawSha256": "4046b6206a5f7d52b4c1f78d2538fc4e285062545f7d2e97669c7b61a27376b9",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 531,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "4046b6206a5f7d52b4c1f78d2538fc4e285062545f7d2e97669c7b61a27376b9"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/todo.write.json"
+      },
+      "rawBytes": 1314,
+      "rawSha256": "8b488f8df908d29b26146668bdba772994a2576fd19fea52e800ef6dec67829e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1314,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "8b488f8df908d29b26146668bdba772994a2576fd19fea52e800ef6dec67829e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/transfer.files.json"
+      },
+      "rawBytes": 2876,
+      "rawSha256": "1be533338992a05fa36f0f7763744a8ee44cd5fb6d5147fdbdedb9bc29d3ca4a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2876,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "1be533338992a05fa36f0f7763744a8ee44cd5fb6d5147fdbdedb9bc29d3ca4a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/user.lookup.json"
+      },
+      "rawBytes": 667,
+      "rawSha256": "7f09a494ccecc4043c1d95d7669290b33fa691b5f73b4fdc48f1971a9351b629",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 667,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "7f09a494ccecc4043c1d95d7669290b33fa691b5f73b4fdc48f1971a9351b629"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/web.fetch.json"
+      },
+      "rawBytes": 331,
+      "rawSha256": "066ba410fe91ee6f745dade1cb54004808fd4cc0b07f22d259af87eaf9ffd4b8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 331,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "066ba410fe91ee6f745dade1cb54004808fd4cc0b07f22d259af87eaf9ffd4b8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DCVCNKK43NDPXX8FQAZHX",
+        "archive": "capy-schemas-instructions-handles-roles.zip",
+        "archiveSha256": "5e60c8308fb1231cf4381051a565fb67a074ccd32b1a5934c49d87fc64d5fa24",
+        "member": "capy-schemas-instructions-handles-roles/tool-schemas/web.search.json"
+      },
+      "rawBytes": 530,
+      "rawSha256": "f1667ae3d6c1d3e8c7e42ad8e8d657741e1aa06a7ffed366ddb2d3e68b69eaf4",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 530,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "f1667ae3d6c1d3e8c7e42ad8e8d657741e1aa06a7ffed366ddb2d3e68b69eaf4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/README.md"
+      },
+      "rawBytes": 3324,
+      "rawSha256": "ce0ff5729052af4ef02c936708d95203a9e88e2a454aacafb1a334393e03c801",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source package notes/context/delta provenance, not current session identities or capability grants.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3324,
+        "lineStart": 1,
+        "lineEnd": 53,
+        "sha256": "ce0ff5729052af4ef02c936708d95203a9e88e2a454aacafb1a334393e03c801"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/function-tool-definitions.md"
+      },
+      "rawBytes": 369402,
+      "rawSha256": "be0e0824b792c7350ebcb966d3bd8468066d8992558f1aa99279dd5770406a29",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 369402,
+        "lineStart": 1,
+        "lineEnd": 9136,
+        "sha256": "be0e0824b792c7350ebcb966d3bd8468066d8992558f1aa99279dd5770406a29"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/probes/README.md"
+      },
+      "rawBytes": 1101,
+      "rawSha256": "62057ccf2d13182ee6b179322bdf31db57636eee1d1e25ee57e34ce0efc76a9e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1101,
+        "lineStart": 1,
+        "lineEnd": 19,
+        "sha256": "62057ccf2d13182ee6b179322bdf31db57636eee1d1e25ee57e34ce0efc76a9e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/probes/describe-catalog-twins.json"
+      },
+      "rawBytes": 1036,
+      "rawSha256": "96cac3fe98c3cf49a5e60945c85cf03eddde13a26989c22ddfa6fa408aeee40d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1036,
+        "lineStart": 1,
+        "lineEnd": 13,
+        "sha256": "96cac3fe98c3cf49a5e60945c85cf03eddde13a26989c22ddfa6fa408aeee40d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DBVSHZR8F58ZQ8BFMJZNQ",
+        "archive": "devin-initial-instructions.zip",
+        "archiveSha256": "74c567c996973b62b55369b75618fd6a7055182503429debc042dce1496f429a",
+        "member": "devin-initial-instructions/system-prompt.md"
+      },
+      "rawBytes": 64555,
+      "rawSha256": "147f3d7a0cc7ff08b446fe7be62cbc61a0a3a76d89f4465de253a82a4c15bee4",
+      "disposition": "composed",
+      "reason": "Composed instruction source; every original byte is accounted for in its span ledger.",
+      "sourceId": "devin-initial"
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/MANIFEST.md"
+      },
+      "rawBytes": 2013,
+      "rawSha256": "9133ff4d76f4c0571a47a6a1abbf67f691c25ce22fba9a3ec2b315da9ebd63bf",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2013,
+        "lineStart": 1,
+        "lineEnd": 21,
+        "sha256": "9133ff4d76f4c0571a47a6a1abbf67f691c25ce22fba9a3ec2b315da9ebd63bf"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/README.md"
+      },
+      "rawBytes": 5108,
+      "rawSha256": "f1699fbf1116062144477cba8d957bd072459af7e3a96eb9aeede9d7b594244d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 5108,
+        "lineStart": 1,
+        "lineEnd": 101,
+        "sha256": "f1699fbf1116062144477cba8d957bd072459af7e3a96eb9aeede9d7b594244d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/capy-setup/SKILL.md"
+      },
+      "rawBytes": 17201,
+      "rawSha256": "e6db825155b4bf5a5c134ff2c3cc10672a6bb797c6da5a9a724b1c328209783f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 17201,
+        "lineStart": 1,
+        "lineEnd": 102,
+        "sha256": "e6db825155b4bf5a5c134ff2c3cc10672a6bb797c6da5a9a724b1c328209783f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/capy-setup/references/import.md"
+      },
+      "rawBytes": 4941,
+      "rawSha256": "449e7f9e930733624e3f6841559f851b68184030ecb4c22f89a15bb76816704a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4941,
+        "lineStart": 1,
+        "lineEnd": 57,
+        "sha256": "449e7f9e930733624e3f6841559f851b68184030ecb4c22f89a15bb76816704a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/capy-setup/references/machine.md"
+      },
+      "rawBytes": 5901,
+      "rawSha256": "1b3856dc5a65610f421875e3243af80e82aa8a90b6fefbbd6d2aef6553711921",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 5901,
+        "lineStart": 1,
+        "lineEnd": 51,
+        "sha256": "1b3856dc5a65610f421875e3243af80e82aa8a90b6fefbbd6d2aef6553711921"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/capy-setup/references/recipe.md"
+      },
+      "rawBytes": 3322,
+      "rawSha256": "bf8cfe1fd2acc33873ebe2fce2e0d583c773d63c621c0e8c168cc29c7547f7e8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3322,
+        "lineStart": 1,
+        "lineEnd": 69,
+        "sha256": "bf8cfe1fd2acc33873ebe2fce2e0d583c773d63c621c0e8c168cc29c7547f7e8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/SKILL.md"
+      },
+      "rawBytes": 4821,
+      "rawSha256": "19af811848e916b0ad359a19be1686ea290eb60ed0c20289ef7bb14cb66a3c46",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4821,
+        "lineStart": 1,
+        "lineEnd": 49,
+        "sha256": "19af811848e916b0ad359a19be1686ea290eb60ed0c20289ef7bb14cb66a3c46"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/apps/browsers.md"
+      },
+      "rawBytes": 826,
+      "rawSha256": "019fc23a3e53dd3a85c9f0a0077f365bcb746b33a342071f55a0b4e293121811",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 826,
+        "lineStart": 1,
+        "lineEnd": 8,
+        "sha256": "019fc23a3e53dd3a85c9f0a0077f365bcb746b33a342071f55a0b4e293121811"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/apps/finder.md"
+      },
+      "rawBytes": 358,
+      "rawSha256": "0ae2f783555d42b96757fda1fbbcb491c588698c2d6062fb62f01127a39acb93",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 358,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "0ae2f783555d42b96757fda1fbbcb491c588698c2d6062fb62f01127a39acb93"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/apps/notes.md"
+      },
+      "rawBytes": 313,
+      "rawSha256": "cc9bb3ee1f368b8210e2ea79f7b34d6b29e02243f273af7ddfb2f0b0d6be3de8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 313,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "cc9bb3ee1f368b8210e2ea79f7b34d6b29e02243f273af7ddfb2f0b0d6be3de8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/apps/reminders.md"
+      },
+      "rawBytes": 263,
+      "rawSha256": "a0eb7af24706e163b49a2e794d00b22d6019ab5aea612abdb90efe432b0ce081",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 263,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "a0eb7af24706e163b49a2e794d00b22d6019ab5aea612abdb90efe432b0ce081"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/apps/textedit.md"
+      },
+      "rawBytes": 622,
+      "rawSha256": "1ae69153311ecb4aec2d01cb734b7dd1d9f1a9c41d1889e824e6f13c8ac2d2ed",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 622,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "1ae69153311ecb4aec2d01cb734b7dd1d9f1a9c41d1889e824e6f13c8ac2d2ed"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/linux.md"
+      },
+      "rawBytes": 938,
+      "rawSha256": "d09d9ab21508a12e487ee3aa053fb709791c3b3d3f73ed49f07b45385e1a183d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 938,
+        "lineStart": 1,
+        "lineEnd": 8,
+        "sha256": "d09d9ab21508a12e487ee3aa053fb709791c3b3d3f73ed49f07b45385e1a183d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/computer-use/references/macos.md"
+      },
+      "rawBytes": 1642,
+      "rawSha256": "c8848ac6ce8c4653f12a16df0fb77ee443043a1f8e0e950145973dd2968b8dd7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1642,
+        "lineStart": 1,
+        "lineEnd": 9,
+        "sha256": "c8848ac6ce8c4653f12a16df0fb77ee443043a1f8e0e950145973dd2968b8dd7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/gh-stack/SKILL.md"
+      },
+      "rawBytes": 8199,
+      "rawSha256": "5d966fc1ff92014db49d6689f41f70ddf1af40879f9dc8a12bb75b82d7850c25",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 8199,
+        "lineStart": 1,
+        "lineEnd": 181,
+        "sha256": "5d966fc1ff92014db49d6689f41f70ddf1af40879f9dc8a12bb75b82d7850c25"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/gh-stack/references/commands.md"
+      },
+      "rawBytes": 9104,
+      "rawSha256": "31049425b8db652e80fa6994d5289f20169f57d7af0a0651fa72c3f25e8fe7c7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 9104,
+        "lineStart": 1,
+        "lineEnd": 177,
+        "sha256": "31049425b8db652e80fa6994d5289f20169f57d7af0a0651fa72c3f25e8fe7c7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/gh-stack/references/stack-design.md"
+      },
+      "rawBytes": 4209,
+      "rawSha256": "4a61e3065ce61a5d129a30f5dcbebe73bfde250e34c382277facdc31d2c4e5ce",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4209,
+        "lineStart": 1,
+        "lineEnd": 97,
+        "sha256": "4a61e3065ce61a5d129a30f5dcbebe73bfde250e34c382277facdc31d2c4e5ce"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/gh-stack/references/troubleshooting.md"
+      },
+      "rawBytes": 6712,
+      "rawSha256": "fe1958036e663c7471a0d3efdf1fefe47ee65e06713b13a96e3db95becccdc47",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6712,
+        "lineStart": 1,
+        "lineEnd": 159,
+        "sha256": "fe1958036e663c7471a0d3efdf1fefe47ee65e06713b13a96e3db95becccdc47"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDSFTJ04JGZ904CQ10F4G",
+        "archive": "capy-builtin-skills.zip",
+        "archiveSha256": "93de2dd1b2dc2681afc39daf7e9c1ae6decbc3fe937520114c2719c029f74474",
+        "member": "capy-builtin-skills/skills/greptile-migrate/SKILL.md"
+      },
+      "rawBytes": 11371,
+      "rawSha256": "94b16a31c3f80959df5a95b46ab51e14f46218b0407129fbef6f450de36993bf",
+      "disposition": "private-reference",
+      "reason": "Private reference only: source skill procedures/references are not installed or executable Opulent skills; C5 preserves activation/completion discipline with the actual registry.",
+      "span": {
+        "startByte": 0,
+        "endByte": 11371,
+        "lineStart": 1,
+        "lineEnd": 76,
+        "sha256": "94b16a31c3f80959df5a95b46ab51e14f46218b0407129fbef6f450de36993bf"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "LIMITS.md"
+      },
+      "rawBytes": 7822,
+      "rawSha256": "d77f348c3a0afe95ba224fc8ab3997c5ad20367f570e56434c0851cb267d7eff",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 7822,
+        "lineStart": 1,
+        "lineEnd": 137,
+        "sha256": "d77f348c3a0afe95ba224fc8ab3997c5ad20367f570e56434c0851cb267d7eff"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "README.md"
+      },
+      "rawBytes": 252,
+      "rawSha256": "eade6274bea0adfc0a643841105c0610c7e377d0e100608b669a3a60737b52d0",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 252,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "eade6274bea0adfc0a643841105c0610c7e377d0e100608b669a3a60737b52d0"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/ax-elision-verbatim-20460.txt"
+      },
+      "rawBytes": 46646,
+      "rawSha256": "5af00945931fa0c95a54fee7131d9cab87c27d9e72e592a6f44e4818d56f0061",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 46646,
+        "lineStart": 1,
+        "lineEnd": 80,
+        "sha256": "5af00945931fa0c95a54fee7131d9cab87c27d9e72e592a6f44e4818d56f0061"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/dom-annotation-js-13500.txt"
+      },
+      "rawBytes": 3426,
+      "rawSha256": "de2c2e7e5b20d5dcc7aca8dc220ac98977bfa9b9fb6c9b3944667231a199ac29",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3426,
+        "lineStart": 1,
+        "lineEnd": 60,
+        "sha256": "de2c2e7e5b20d5dcc7aca8dc220ac98977bfa9b9fb6c9b3944667231a199ac29"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/elision.txt"
+      },
+      "rawBytes": 2311,
+      "rawSha256": "1cf42163031c1cf09cb9f33a30f1ac92f9263cd1c560794421f8ff0db30c393f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2311,
+        "lineStart": 1,
+        "lineEnd": 31,
+        "sha256": "1cf42163031c1cf09cb9f33a30f1ac92f9263cd1c560794421f8ff0db30c393f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/limits-fields.txt"
+      },
+      "rawBytes": 1047,
+      "rawSha256": "dbc9c61f8652431cc07c7725bf0fdd4f383cfed1ce53ed50173b5a03764575af",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1047,
+        "lineStart": 1,
+        "lineEnd": 7,
+        "sha256": "dbc9c61f8652431cc07c7725bf0fdd4f383cfed1ce53ed50173b5a03764575af"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/overflow.txt"
+      },
+      "rawBytes": 22958,
+      "rawSha256": "e7d01de604e040c50e562f91eaf446d384ace1d6ae48dfe451e60bb7d378d7f7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 22958,
+        "lineStart": 1,
+        "lineEnd": 158,
+        "sha256": "e7d01de604e040c50e562f91eaf446d384ace1d6ae48dfe451e60bb7d378d7f7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/pointers.txt"
+      },
+      "rawBytes": 16827,
+      "rawSha256": "da0ce8b5a3e00101ee923415a11ac58008d2ec413ff399c74a285fa4a16391bc",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 16827,
+        "lineStart": 1,
+        "lineEnd": 200,
+        "sha256": "da0ce8b5a3e00101ee923415a11ac58008d2ec413ff399c74a285fa4a16391bc"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "evidence/truncation.txt"
+      },
+      "rawBytes": 16584,
+      "rawSha256": "41e94c1b8e5a79b5626c48c9df08b7ca7159f9950896500aadbe8530d87e9524",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 16584,
+        "lineStart": 1,
+        "lineEnd": 200,
+        "sha256": "41e94c1b8e5a79b5626c48c9df08b7ca7159f9950896500aadbe8530d87e9524"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "live-schema/tool-limits-verbatim.md"
+      },
+      "rawBytes": 4797,
+      "rawSha256": "c548d3dab46b1f3e74914c65cef3f33a229b46330eddb4870db1ca3bf75fcb71",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4797,
+        "lineStart": 1,
+        "lineEnd": 85,
+        "sha256": "c548d3dab46b1f3e74914c65cef3f33a229b46330eddb4870db1ca3bf75fcb71"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/README.md"
+      },
+      "rawBytes": 135,
+      "rawSha256": "8ca3b6efaf4e70f088c3ad3021a6bfe78c0e3c09579f459265d6cfaa4f8911cd",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 135,
+        "lineStart": 1,
+        "lineEnd": 3,
+        "sha256": "8ca3b6efaf4e70f088c3ad3021a6bfe78c0e3c09579f459265d6cfaa4f8911cd"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/SPEED.md"
+      },
+      "rawBytes": 6760,
+      "rawSha256": "2e23eb29eec503fa2cfab7a43b38bf845253dbf3b3263358bfb5ef161ca71e11",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6760,
+        "lineStart": 1,
+        "lineEnd": 120,
+        "sha256": "2e23eb29eec503fa2cfab7a43b38bf845253dbf3b3263358bfb5ef161ca71e11"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/anchors.txt"
+      },
+      "rawBytes": 6628,
+      "rawSha256": "6c28879df5174e3bccf512f302a89817c294a6eba28b05fc1e104ddd6ad72679",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6628,
+        "lineStart": 1,
+        "lineEnd": 83,
+        "sha256": "6c28879df5174e3bccf512f302a89817c294a6eba28b05fc1e104ddd6ad72679"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/ax-diff-verbatim.txt"
+      },
+      "rawBytes": 1558,
+      "rawSha256": "65fa6c773bd70525e406d1dffcaec2788324b0f2b9b7cffa440ca1321720c2bd",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1558,
+        "lineStart": 1,
+        "lineEnd": 7,
+        "sha256": "65fa6c773bd70525e406d1dffcaec2788324b0f2b9b7cffa440ca1321720c2bd"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/buffers.txt"
+      },
+      "rawBytes": 16370,
+      "rawSha256": "ed309799816364f63da72d97c6c8a076f8c6192b9197c30fdcf3f15dca155ba3",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 16370,
+        "lineStart": 1,
+        "lineEnd": 150,
+        "sha256": "ed309799816364f63da72d97c6c8a076f8c6192b9197c30fdcf3f15dca155ba3"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/cache-fields.txt"
+      },
+      "rawBytes": 158,
+      "rawSha256": "a434588da9af1e5f41ca57911132a8d9c39684607226a9955a5de7e0260ea603",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 158,
+        "lineStart": 1,
+        "lineEnd": 2,
+        "sha256": "a434588da9af1e5f41ca57911132a8d9c39684607226a9955a5de7e0260ea603"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/content-keys.txt"
+      },
+      "rawBytes": 61,
+      "rawSha256": "401887aa2fd3fe9faeec4b40e9e5bdbd34a92b86b91b2b2312e0fb67b6cd28c9",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 61,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "401887aa2fd3fe9faeec4b40e9e5bdbd34a92b86b91b2b2312e0fb67b6cd28c9"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/early-exit.txt"
+      },
+      "rawBytes": 14348,
+      "rawSha256": "d362c199f69e8d592aa2a24535baa01ecc9453f71301baaaa9c09d9a614252aa",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 14348,
+        "lineStart": 1,
+        "lineEnd": 121,
+        "sha256": "d362c199f69e8d592aa2a24535baa01ecc9453f71301baaaa9c09d9a614252aa"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/incremental.txt"
+      },
+      "rawBytes": 1219,
+      "rawSha256": "4574c0fa8df2c08f7d96807ce1d11558740bcb33b5ea451097038a5c30b3d2b7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1219,
+        "lineStart": 1,
+        "lineEnd": 10,
+        "sha256": "4574c0fa8df2c08f7d96807ce1d11558740bcb33b5ea451097038a5c30b3d2b7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/parallel.txt"
+      },
+      "rawBytes": 12377,
+      "rawSha256": "da0bdb4703c664e5ed79374a102ea0fc003a6dd7b88a5829c177b4e2a8fe2e3c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 12377,
+        "lineStart": 1,
+        "lineEnd": 102,
+        "sha256": "da0bdb4703c664e5ed79374a102ea0fc003a6dd7b88a5829c177b4e2a8fe2e3c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/pty-stream-verbatim.txt"
+      },
+      "rawBytes": 2700,
+      "rawSha256": "e14fe839708f96fc760cd5809576c33a913a69a7a691219571f5097e4cd7354e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2700,
+        "lineStart": 1,
+        "lineEnd": 3,
+        "sha256": "e14fe839708f96fc760cd5809576c33a913a69a7a691219571f5097e4cd7354e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/quality.txt"
+      },
+      "rawBytes": 1316,
+      "rawSha256": "3d864fb68590cd51d2733e0c4f9fc5086adebf9388b30f147c54370ae6c20a2b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1316,
+        "lineStart": 1,
+        "lineEnd": 14,
+        "sha256": "3d864fb68590cd51d2733e0c4f9fc5086adebf9388b30f147c54370ae6c20a2b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/streaming.txt"
+      },
+      "rawBytes": 9767,
+      "rawSha256": "0b73ba6e2fd9717e86172b38b127d97a688357ca4e58f078674e19a051fca3af",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 9767,
+        "lineStart": 1,
+        "lineEnd": 150,
+        "sha256": "0b73ba6e2fd9717e86172b38b127d97a688357ca4e58f078674e19a051fca3af"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/verbatim-pulls.txt"
+      },
+      "rawBytes": 4689,
+      "rawSha256": "1ec4557f22df3605729eeeb6597a3c1328c72214a6c9c7036f033489de8c4941",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4689,
+        "lineStart": 1,
+        "lineEnd": 11,
+        "sha256": "1ec4557f22df3605729eeeb6597a3c1328c72214a6c9c7036f033489de8c4941"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/warm-paths.txt"
+      },
+      "rawBytes": 1706,
+      "rawSha256": "a6069cbc7d6c9fd4129b8e38df9c9c060b9562f866149ecbfb9e4195788c604d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1706,
+        "lineStart": 1,
+        "lineEnd": 9,
+        "sha256": "a6069cbc7d6c9fd4129b8e38df9c9c060b9562f866149ecbfb9e4195788c604d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/evidence/warmth.txt"
+      },
+      "rawBytes": 12792,
+      "rawSha256": "f6735f1ee468c458fea6c122877a89a3f2839495b8673de8fef5aeab63d0bd74",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 12792,
+        "lineStart": 1,
+        "lineEnd": 128,
+        "sha256": "f6735f1ee468c458fea6c122877a89a3f2839495b8673de8fef5aeab63d0bd74"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/README.md"
+      },
+      "rawBytes": 550,
+      "rawSha256": "fba1e5ab9edc86dce8d2a6a52151dd3eabb576d925d377ac6e2d4ab4b671dd79",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 550,
+        "lineStart": 1,
+        "lineEnd": 7,
+        "sha256": "fba1e5ab9edc86dce8d2a6a52151dd3eabb576d925d377ac6e2d4ab4b671dd79"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/TURNS.md"
+      },
+      "rawBytes": 9231,
+      "rawSha256": "c3bd2f17a75a042c642b41bff25941a47ba8c8a3dfff95c9154a1073ac925d6f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 9231,
+        "lineStart": 1,
+        "lineEnd": 167,
+        "sha256": "c3bd2f17a75a042c642b41bff25941a47ba8c8a3dfff95c9154a1073ac925d6f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/compaction.txt"
+      },
+      "rawBytes": 15798,
+      "rawSha256": "1d63c9b7ea278c6e7600c254a232e1372769bd758b1ef8e1eceaf2a88b2d4acf",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 15798,
+        "lineStart": 1,
+        "lineEnd": 120,
+        "sha256": "1d63c9b7ea278c6e7600c254a232e1372769bd758b1ef8e1eceaf2a88b2d4acf"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/continuation.txt"
+      },
+      "rawBytes": 9127,
+      "rawSha256": "7aa68f8e512aafb3d9f74a30c0a0d9c5e87c868ad418a4a8a909609c31e4a85d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 9127,
+        "lineStart": 1,
+        "lineEnd": 120,
+        "sha256": "7aa68f8e512aafb3d9f74a30c0a0d9c5e87c868ad418a4a8a909609c31e4a85d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/held-events.txt"
+      },
+      "rawBytes": 1568,
+      "rawSha256": "9e28daeee5b58576b9ce406956bc87a8f7d3a80f272514feffb685d0cac8a920",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1568,
+        "lineStart": 1,
+        "lineEnd": 20,
+        "sha256": "9e28daeee5b58576b9ce406956bc87a8f7d3a80f272514feffb685d0cac8a920"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-00.txt"
+      },
+      "rawBytes": 949,
+      "rawSha256": "e9a71606af0dbff3907f844ed8bc531e82d99be34854cc25f6ff31b507dedcca",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 949,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "e9a71606af0dbff3907f844ed8bc531e82d99be34854cc25f6ff31b507dedcca"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-01.txt"
+      },
+      "rawBytes": 2602,
+      "rawSha256": "9fa7d9a39c9169f70d4cb21b5ed450826a0798b8fe38bb3dd6a46add7480c1b3",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2602,
+        "lineStart": 1,
+        "lineEnd": 14,
+        "sha256": "9fa7d9a39c9169f70d4cb21b5ed450826a0798b8fe38bb3dd6a46add7480c1b3"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-02.txt"
+      },
+      "rawBytes": 3139,
+      "rawSha256": "4e4c3fe8b02becfd1f8cabf2e2c8a884ceac9e2d41147651c7dfa032c3eba6fb",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 3139,
+        "lineStart": 1,
+        "lineEnd": 16,
+        "sha256": "4e4c3fe8b02becfd1f8cabf2e2c8a884ceac9e2d41147651c7dfa032c3eba6fb"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-03.txt"
+      },
+      "rawBytes": 6887,
+      "rawSha256": "e998a2324507907d59e8dfd123d92794c9685b410d4bc68e0c27f84fb0c4e684",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 6887,
+        "lineStart": 1,
+        "lineEnd": 35,
+        "sha256": "e998a2324507907d59e8dfd123d92794c9685b410d4bc68e0c27f84fb0c4e684"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-04.txt"
+      },
+      "rawBytes": 39,
+      "rawSha256": "0d7922fe752a77d3e212ecd10bfb2003548e7c8a633431ea7b5e0a72274f5c4e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 39,
+        "lineStart": 1,
+        "lineEnd": 2,
+        "sha256": "0d7922fe752a77d3e212ecd10bfb2003548e7c8a633431ea7b5e0a72274f5c4e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-05.txt"
+      },
+      "rawBytes": 670,
+      "rawSha256": "5bdbee2a46925d2b0d1a91990e653f336ec36badaaad21958729811e8c33fd15",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 670,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "5bdbee2a46925d2b0d1a91990e653f336ec36badaaad21958729811e8c33fd15"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-06.txt"
+      },
+      "rawBytes": 2970,
+      "rawSha256": "295535d005176db42f02baf846c3a15b974bb54a1ad9810e3dbd1206605d6cd8",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2970,
+        "lineStart": 1,
+        "lineEnd": 14,
+        "sha256": "295535d005176db42f02baf846c3a15b974bb54a1ad9810e3dbd1206605d6cd8"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-07.txt"
+      },
+      "rawBytes": 670,
+      "rawSha256": "30fb20bd7a3fe752496ef301ce23cc8dcaf0f01c1d1c4736eda2cd990a7bbdee",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 670,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "30fb20bd7a3fe752496ef301ce23cc8dcaf0f01c1d1c4736eda2cd990a7bbdee"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-08.txt"
+      },
+      "rawBytes": 869,
+      "rawSha256": "8c0500690b1336b0bc2e2153c469d9028fe59fc9ed90e5f9fda824f9f25fc5a3",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 869,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "8c0500690b1336b0bc2e2153c469d9028fe59fc9ed90e5f9fda824f9f25fc5a3"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-09.txt"
+      },
+      "rawBytes": 1084,
+      "rawSha256": "389ab920f4111b3d91d09ae369356081ba249d5e1dec7ff1d373054880b55c4f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1084,
+        "lineStart": 1,
+        "lineEnd": 7,
+        "sha256": "389ab920f4111b3d91d09ae369356081ba249d5e1dec7ff1d373054880b55c4f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-10.txt"
+      },
+      "rawBytes": 654,
+      "rawSha256": "5b81bfef4086be090d12d97d8265b9139663a07085ae1e8c51a448a97bc63243",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 654,
+        "lineStart": 1,
+        "lineEnd": 4,
+        "sha256": "5b81bfef4086be090d12d97d8265b9139663a07085ae1e8c51a448a97bc63243"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-11.txt"
+      },
+      "rawBytes": 158,
+      "rawSha256": "06a995e300f1d5cbbdefb260cc335f6d96c63a5a860b281496bdbccc5cf9bd9d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 158,
+        "lineStart": 1,
+        "lineEnd": 3,
+        "sha256": "06a995e300f1d5cbbdefb260cc335f6d96c63a5a860b281496bdbccc5cf9bd9d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/hunt-12.txt"
+      },
+      "rawBytes": 744,
+      "rawSha256": "85b74dd2007db8876ee0f78f34d5199af52417eaca526790f7145b4fd51cca8f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 744,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "85b74dd2007db8876ee0f78f34d5199af52417eaca526790f7145b4fd51cca8f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/interrupt.txt"
+      },
+      "rawBytes": 10751,
+      "rawSha256": "c456b1e7a061b07494ce6b14473fbaf58631193342327d72e0e6dc28e045d6ed",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 10751,
+        "lineStart": 1,
+        "lineEnd": 120,
+        "sha256": "c456b1e7a061b07494ce6b14473fbaf58631193342327d72e0e6dc28e045d6ed"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/respawn.txt"
+      },
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 0,
+        "lineStart": 1,
+        "lineEnd": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/suspend.txt"
+      },
+      "rawBytes": 5088,
+      "rawSha256": "3f2a508bfe06b24433ec8fa693d66f37da71f0b7da79e732ac8ae9a716a188c7",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 5088,
+        "lineStart": 1,
+        "lineEnd": 55,
+        "sha256": "3f2a508bfe06b24433ec8fa693d66f37da71f0b7da79e732ac8ae9a716a188c7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/turn-lifecycle.txt"
+      },
+      "rawBytes": 7921,
+      "rawSha256": "eae93aacd8e43faeb21062142bac5689eac7efe015bf2d6c4475a81359435928",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 7921,
+        "lineStart": 1,
+        "lineEnd": 120,
+        "sha256": "eae93aacd8e43faeb21062142bac5689eac7efe015bf2d6c4475a81359435928"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/evidence/user-turn.txt"
+      },
+      "rawBytes": 1965,
+      "rawSha256": "a128b74f940391b9e52e02814cf4a7c10088bf1dbd6b62f6e3809fb09d842043",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1965,
+        "lineStart": 1,
+        "lineEnd": 22,
+        "sha256": "a128b74f940391b9e52e02814cf4a7c10088bf1dbd6b62f6e3809fb09d842043"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/README.md"
+      },
+      "rawBytes": 5981,
+      "rawSha256": "b4918c9e01e73cf345289e53b828dd0d5ae4879a163ee0c2e30904389bf86005",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 5981,
+        "lineStart": 1,
+        "lineEnd": 53,
+        "sha256": "b4918c9e01e73cf345289e53b828dd0d5ae4879a163ee0c2e30904389bf86005"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/checkpointing/checkpoint-strings.txt"
+      },
+      "rawBytes": 128321,
+      "rawSha256": "6b5ce74447ae5ca5f9528bed083ef2a0ccbec3535f04ea4584689f0eb692f4e4",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 128321,
+        "lineStart": 1,
+        "lineEnd": 53,
+        "sha256": "6b5ce74447ae5ca5f9528bed083ef2a0ccbec3535f04ea4584689f0eb692f4e4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/compaction-events/compaction-strings.txt"
+      },
+      "rawBytes": 61244,
+      "rawSha256": "9057f86ce9bea39721eb97197fe3163dfd42c13b4c11665764681ba7f0268196",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 61244,
+        "lineStart": 1,
+        "lineEnd": 25,
+        "sha256": "9057f86ce9bea39721eb97197fe3163dfd42c13b4c11665764681ba7f0268196"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/compaction-events/resume-strings.txt"
+      },
+      "rawBytes": 205693,
+      "rawSha256": "8576779982eba262c24f654318624c326e13284dfd27367e2a1f3c5c137b569e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 205693,
+        "lineStart": 1,
+        "lineEnd": 149,
+        "sha256": "8576779982eba262c24f654318624c326e13284dfd27367e2a1f3c5c137b569e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/context-growth/context-growth-strings.txt"
+      },
+      "rawBytes": 61589,
+      "rawSha256": "dfe0c4f3b398cf04ffd9ae17f5f00ec4e103c8dc7baf3a2440822db7db42a8bb",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 61589,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "dfe0c4f3b398cf04ffd9ae17f5f00ec4e103c8dc7baf3a2440822db7db42a8bb"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/context-growth/truncation-strings.txt"
+      },
+      "rawBytes": 351693,
+      "rawSha256": "7a46820fb0efc3fd26b0ac66c03860cec05818468b780d68a8e775a6665cd1ef",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 351693,
+        "lineStart": 1,
+        "lineEnd": 400,
+        "sha256": "7a46820fb0efc3fd26b0ac66c03860cec05818468b780d68a8e775a6665cd1ef"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/hooks-precompact/README.md"
+      },
+      "rawBytes": 954,
+      "rawSha256": "05ea1623d203d652f6df7171283058126cc90a179334f4942e9fac9302116c5b",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 954,
+        "lineStart": 1,
+        "lineEnd": 19,
+        "sha256": "05ea1623d203d652f6df7171283058126cc90a179334f4942e9fac9302116c5b"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/hooks-precompact/claude-hook-schema.txt"
+      },
+      "rawBytes": 343,
+      "rawSha256": "e61350997348e426f70e7454b28e6ef0da7e5c29beda0dc0a55ffeef00364d94",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 343,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "e61350997348e426f70e7454b28e6ef0da7e5c29beda0dc0a55ffeef00364d94"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/hooks-precompact/precompact-strings.txt"
+      },
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 0,
+        "lineStart": 1,
+        "lineEnd": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/prompt-text/evidence.md"
+      },
+      "rawBytes": 1183,
+      "rawSha256": "5d648c013d90ba88b8ef230c7329c061c21c3f477c92371bcc601b60776119c4",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1183,
+        "lineStart": 1,
+        "lineEnd": 22,
+        "sha256": "5d648c013d90ba88b8ef230c7329c061c21c3f477c92371bcc601b60776119c4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/runtime/README.md"
+      },
+      "rawBytes": 487,
+      "rawSha256": "b7f08b0273dcb265e66ee744d4d1b0ef2ddbb889ccbc123f8c5aef4a160ad5d5",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 487,
+        "lineStart": 1,
+        "lineEnd": 8,
+        "sha256": "b7f08b0273dcb265e66ee744d4d1b0ef2ddbb889ccbc123f8c5aef4a160ad5d5"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/runtime/automatic-checkpointing-session-action-preservation.md"
+      },
+      "rawBytes": 11428,
+      "rawSha256": "0ed932cb4a001df6e54586fd0219c1bb6a1113ab6250a3c4ef7dd61809f2e969",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 11428,
+        "lineStart": 1,
+        "lineEnd": 212,
+        "sha256": "0ed932cb4a001df6e54586fd0219c1bb6a1113ab6250a3c4ef7dd61809f2e969"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/runtime/continuations-recovery-external-events-compaction.md"
+      },
+      "rawBytes": 13923,
+      "rawSha256": "624d3d814bbc4d5c44964ae4bd3e2822fd6a05229fe958a23a2c40f1c34fc408",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 13923,
+        "lineStart": 1,
+        "lineEnd": 112,
+        "sha256": "624d3d814bbc4d5c44964ae4bd3e2822fd6a05229fe958a23a2c40f1c34fc408"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/runtime/devin-context-clipping-paths-and-visibility.md"
+      },
+      "rawBytes": 23403,
+      "rawSha256": "c908a96ae64226b0141cb7f952d9248665d04d51f239775f404e154003bbbe5a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 23403,
+        "lineStart": 1,
+        "lineEnd": 444,
+        "sha256": "c908a96ae64226b0141cb7f952d9248665d04d51f239775f404e154003bbbe5a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/runtime/devinevent-schema-verbatim.txt"
+      },
+      "rawBytes": 11279,
+      "rawSha256": "56503c612420d6ded6d87b3b6261864e2ad1fe9d45bae9da29f0cbfb4e231577",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 11279,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "56503c612420d6ded6d87b3b6261864e2ad1fe9d45bae9da29f0cbfb4e231577"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/sidechain-respawn/respawn-strings.txt"
+      },
+      "rawBytes": 29775,
+      "rawSha256": "ced0248db22c4198b194db05b83861b2c0bc14166757491257bddc80d3b1ce3a",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 29775,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "ced0248db22c4198b194db05b83861b2c0bc14166757491257bddc80d3b1ce3a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/summary-format/specimen.md"
+      },
+      "rawBytes": 1806,
+      "rawSha256": "3ad840cb548f5c2a4097021fefd0aba51ce304b456b9a6f85324d33d4a12d0e6",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1806,
+        "lineStart": 1,
+        "lineEnd": 35,
+        "sha256": "3ad840cb548f5c2a4097021fefd0aba51ce304b456b9a6f85324d33d4a12d0e6"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/summary-format/summary-strings.txt"
+      },
+      "rawBytes": 85618,
+      "rawSha256": "cfad90fbd1e3e08e4bbeec2f0ce5b867b0834e0b9f8314986035748b3c88411e",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 85618,
+        "lineStart": 1,
+        "lineEnd": 61,
+        "sha256": "cfad90fbd1e3e08e4bbeec2f0ce5b867b0834e0b9f8314986035748b3c88411e"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/prior-pack/devin-compaction-deep/transcript-evidence/files-list.txt"
+      },
+      "rawBytes": 1215,
+      "rawSha256": "bc4f83d351193c9175b201b1fb7eb795c8d24e1337b5eb198a11c8e0e7bad49d",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1215,
+        "lineStart": 1,
+        "lineEnd": 15,
+        "sha256": "bc4f83d351193c9175b201b1fb7eb795c8d24e1337b5eb198a11c8e0e7bad49d"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/barista-modules.txt"
+      },
+      "rawBytes": 122,
+      "rawSha256": "22ced1c78f9c93262db2f3aa149281076df2a4af60e21ddebf16a53ba41d9b7c",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 122,
+        "lineStart": 1,
+        "lineEnd": 2,
+        "sha256": "22ced1c78f9c93262db2f3aa149281076df2a4af60e21ddebf16a53ba41d9b7c"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/event-names-ordered.txt"
+      },
+      "rawBytes": 4625,
+      "rawSha256": "b72473c5cbbe9600621367b571a80b4a719edc37a630d81234d52fed13f4c062",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4625,
+        "lineStart": 1,
+        "lineEnd": 139,
+        "sha256": "b72473c5cbbe9600621367b571a80b4a719edc37a630d81234d52fed13f4c062"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/event-schema-dump-20436.txt"
+      },
+      "rawBytes": 11339,
+      "rawSha256": "6699db8776fddd554b4d28cb78596a55c18995dcaf88d82a8a1d95a98a77c426",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 11339,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "6699db8776fddd554b4d28cb78596a55c18995dcaf88d82a8a1d95a98a77c426"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/event-schema-tail.txt"
+      },
+      "rawBytes": 8339,
+      "rawSha256": "62c08f5727318e0db781d6c839ec777624c7d591bbe4bcba12149035afc9da21",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 8339,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "62c08f5727318e0db781d6c839ec777624c7d591bbe4bcba12149035afc9da21"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/interrupt-tool-region.txt"
+      },
+      "rawBytes": 1631,
+      "rawSha256": "53d1f61cd37f441b4ebcf720bb3bbf168aaa4c0132eb549a5717874841282fa2",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1631,
+        "lineStart": 1,
+        "lineEnd": 5,
+        "sha256": "53d1f61cd37f441b4ebcf720bb3bbf168aaa4c0132eb549a5717874841282fa2"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/region-815-825.txt"
+      },
+      "rawBytes": 671,
+      "rawSha256": "730931a41346c5a411237a551779f8d8ceb06384aa210ba88b086311309f2372",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 671,
+        "lineStart": 1,
+        "lineEnd": 11,
+        "sha256": "730931a41346c5a411237a551779f8d8ceb06384aa210ba88b086311309f2372"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/schema-dump-12918.txt"
+      },
+      "rawBytes": 17430,
+      "rawSha256": "74b0f1a598f5e079f23f1d9305213b29eb8364d3e1f00f5a8533686df7247858",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 17430,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "74b0f1a598f5e079f23f1d9305213b29eb8364d3e1f00f5a8533686df7247858"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/schema-dump-20289.txt"
+      },
+      "rawBytes": 1175,
+      "rawSha256": "217ea44eb962a9a48c5e4652051fa7b90a4f1311c60b82d439cfc5784a62c05f",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1175,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "217ea44eb962a9a48c5e4652051fa7b90a4f1311c60b82d439cfc5784a62c05f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/schema-dump-20296.txt"
+      },
+      "rawBytes": 2339,
+      "rawSha256": "70386708840029b11b439abefad66cbbfab1f3c7da69f5511561db94c1620c91",
+      "disposition": "private-reference",
+      "reason": "Private reference only: raw foreign API schemas/catalog/probe evidence; C2/C3 use actual runtime APIs instead.",
+      "span": {
+        "startByte": 0,
+        "endByte": 2339,
+        "lineStart": 1,
+        "lineEnd": 1,
+        "sha256": "70386708840029b11b439abefad66cbbfab1f3c7da69f5511561db94c1620c91"
+      }
+    },
+    {
+      "origin": {
+        "kind": "attachment",
+        "fileId": "file_01M42DDGRTZXEZ0FZRPT573PJ3",
+        "archive": "devin-limits.zip",
+        "archiveSha256": "eb1c1cf69833608856d342f4e5e2ca7382a3b83ef399a3f35e5b7c4f02fff2cf",
+        "member": "prior-pack/devin-speed/prior-pack/devin-turns/wire/turn-lifecycle-types.txt"
+      },
+      "rawBytes": 254,
+      "rawSha256": "efadfe60874ef3583fff5614290d34d9563ff97079ff6b7106fde164f2b57a15",
+      "disposition": "private-reference",
+      "reason": "Private reference only: historical runtime limits/turn/compaction evidence, not guarantees or limits of this runtime; C3 requires actual observations.",
+      "span": {
+        "startByte": 0,
+        "endByte": 254,
+        "lineStart": 1,
+        "lineEnd": 18,
+        "sha256": "efadfe60874ef3583fff5614290d34d9563ff97079ff6b7106fde164f2b57a15"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "LICENSE"
+      },
+      "rawBytes": 1234,
+      "rawSha256": "e0d1bf8d137e6d56e98ee968402b0b7f324c5c85ea505e4fd7b6b78615bc4e7a",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 1234,
+        "lineStart": 1,
+        "lineEnd": 25,
+        "sha256": "e0d1bf8d137e6d56e98ee968402b0b7f324c5c85ea505e4fd7b6b78615bc4e7a"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers.rs"
+      },
+      "rawBytes": 8240,
+      "rawSha256": "6142f1aa89a9a5f4101d32626deb817855a253c9660dc607c224ddd29c106bf7",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 8240,
+        "lineStart": 1,
+        "lineEnd": 219,
+        "sha256": "6142f1aa89a9a5f4101d32626deb817855a253c9660dc607c224ddd29c106bf7"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/core.md"
+      },
+      "rawBytes": 14350,
+      "rawSha256": "5accb697b851e3b24acc357ade7e2dab848517a774365cc7bafe0dcdcde1d5bf",
+      "disposition": "composed",
+      "reason": "Composed pinned static instruction layer.",
+      "sourceId": "prime-core"
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/opinionated.md"
+      },
+      "rawBytes": 2581,
+      "rawSha256": "ec16f3c3f8b15eadb6bd439ff14819cd36c5f52cba2592763dfb5dd1b199c150",
+      "disposition": "composed",
+      "reason": "Composed pinned static instruction layer.",
+      "sourceId": "prime-opinionated"
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/per_model.md"
+      },
+      "rawBytes": 327,
+      "rawSha256": "aea051687c0634a565af8493e977be576e96aad935f573f1abf7ac5dc66ceb81",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 327,
+        "lineStart": 1,
+        "lineEnd": 6,
+        "sha256": "aea051687c0634a565af8493e977be576e96aad935f573f1abf7ac5dc66ceb81"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/layers/usage.md"
+      },
+      "rawBytes": 5933,
+      "rawSha256": "04f5e841f2343fecb942e2f647c13cda5c4c1ab6bb7e7abbc080d5ffe409369f",
+      "disposition": "composed",
+      "reason": "Composed pinned static instruction layer.",
+      "sourceId": "prime-usage"
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/mod.rs"
+      },
+      "rawBytes": 987,
+      "rawSha256": "a240fee58a12b70cf92057faf635b74c9c5618cf046c4c3a95eb1007ec6b15b0",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 987,
+        "lineStart": 1,
+        "lineEnd": 22,
+        "sha256": "a240fee58a12b70cf92057faf635b74c9c5618cf046c4c3a95eb1007ec6b15b0"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/prompts/system_prompt.rs"
+      },
+      "rawBytes": 20550,
+      "rawSha256": "209e2575b4ad4ed8cbfdee4115c1d13813c03c10eabf0742979de4530095c802",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 20550,
+        "lineStart": 1,
+        "lineEnd": 556,
+        "sha256": "209e2575b4ad4ed8cbfdee4115c1d13813c03c10eabf0742979de4530095c802"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/skills/discovery.rs"
+      },
+      "rawBytes": 11572,
+      "rawSha256": "5baf99abe6799e1eb55df9751785603df72d6d990cd7f38b1ab20f3b2fccb41f",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 11572,
+        "lineStart": 1,
+        "lineEnd": 358,
+        "sha256": "5baf99abe6799e1eb55df9751785603df72d6d990cd7f38b1ab20f3b2fccb41f"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/skills/frontmatter.rs"
+      },
+      "rawBytes": 4045,
+      "rawSha256": "32acaaa6c493d57f1856d33fc86545055d624c0135c6446e5aa21a0f279abca4",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 4045,
+        "lineStart": 1,
+        "lineEnd": 114,
+        "sha256": "32acaaa6c493d57f1856d33fc86545055d624c0135c6446e5aa21a0f279abca4"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/skills/loader.rs"
+      },
+      "rawBytes": 13218,
+      "rawSha256": "c95bb0b93c73261897977043b7dcf34d227ed4ebe545c99c6aa320e5c157d453",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 13218,
+        "lineStart": 1,
+        "lineEnd": 339,
+        "sha256": "c95bb0b93c73261897977043b7dcf34d227ed4ebe545c99c6aa320e5c157d453"
+      }
+    },
+    {
+      "origin": {
+        "kind": "git",
+        "repository": "https://github.com/PrimeIntellect-ai/prime-agent",
+        "commit": "c24ac227f11f552ed1d3fa8ebc7d916937d7f6bc",
+        "license": "MIT",
+        "licensePath": "LICENSE",
+        "path": "crates/pa-core/src/skills/mod.rs"
+      },
+      "rawBytes": 16042,
+      "rawSha256": "61cba188c2ef9a2804f5737f2cb8313a4a55d24d55b4ffd8527e1ab35a10a6f4",
+      "disposition": "reference",
+      "reason": "Pinned attribution/composition/skill/role reference, not a generated or fabricated live Prime session; per-model map ships empty.",
+      "span": {
+        "startByte": 0,
+        "endByte": 16042,
+        "lineStart": 1,
+        "lineEnd": 456,
+        "sha256": "61cba188c2ef9a2804f5737f2cb8313a4a55d24d55b4ffd8527e1ab35a10a6f4"
+      }
+    }
+  ]
+}
