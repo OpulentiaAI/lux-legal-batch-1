@@ -9,10 +9,11 @@ import { COMPARISON_PROFILES } from '../../runtime/eval-model-profile.mjs'
 import { resolveRunAnywhereMiMo } from '../../runtime/model-provider.mjs'
 import { brokerNetwork, createEvaluationBroker, verifyEvaluationBroker } from '../../runtime/eval-broker.mjs'
 import { createHarveyHarness } from '../harvey-harness.mjs'
-import { createBroadHarness, provisionCorpus } from '../../runtime/broad-legal-eval.mjs'
+import { createBroadHarness, provisionCorpus, CAPY_CONTEXT_COMPACTION, CAPY_EVIDENCE_REPLAY_VERSION } from '../../runtime/broad-legal-eval.mjs'
 import { createSandbox } from '../../runtime/e2b.mjs'
 import { redact } from '../../runtime/security.mjs'
 import { renderInstructions } from '../../runtime/instructions/render.mjs'
+import { RETRIEVAL_PROFILE, REQUIRED_ENV } from '../../src/tp/client.ts'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const suite = fileURLToPath(new URL('.', import.meta.url))
@@ -63,13 +64,17 @@ export function parseOptions(args) {
     if (!key || options[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Unknown, duplicate or incomplete complex runner option')
     options[key] = args[++i]
   }
-  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile', 'semanticSurface'].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
+  const capy = options.instructionProfile === 'opulent-capy-v1'
+  for (const key of Object.values(keys).filter(key => !['maxSteps', 'instructionProfile', 'concurrency', 'modelProfile', 'semanticSurface',
+    ...(capy ? ['nativeModule', 'brokerOrigin', 'brokerPort', 'sandboxTemplate', 'computerImageSha256'] : [])].includes(key))) if (!options[key]) throw new Error(`Missing complex runner option: ${key}`)
   options.modelProfile ??= 'modal-deepseek-v4.1-flash'
   if (!COMPARISON_PROFILES[options.modelProfile]) throw new Error('Invalid model profile')
-  options.semanticSurface ??= 'mcp'
+  options.semanticSurface ??= capy ? 'toolbox' : 'mcp'
   if (!['mcp', 'toolbox'].includes(options.semanticSurface)) throw new Error('Invalid semantic surface')
   options.instructionProfile ??= 'opulent-prepared-v2'
-  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (!['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12', 'opulent-capy-v1'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (capy && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capy comparison requires native RunAnywhere MiMo v2.6 Pro')
+  if (capy && options.semanticSurface !== 'toolbox') throw new Error('Capy lean policy uses the approved direct corpus toolbox, not an all-tool MCP surface')
   if (options.instructionProfile === 'opulent-capability-v8' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-delivery-v9' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Delivery v9 comparison requires native RunAnywhere MiMo v2.6 Pro')
   if (options.instructionProfile === 'opulent-delivery-v10' && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Delivery v10 comparison requires native RunAnywhere MiMo v2.6 Pro')
@@ -86,14 +91,19 @@ export function parseOptions(args) {
   if (!options.tasks.length || new Set(options.tasks).size !== options.tasks.length || options.tasks.some(id => !ids.includes(id))) throw new Error('Invalid task selection')
   options.tasks.sort()
   for (const key of ['output', 'harveyRoot', 'python', 'nativeModule']) {
+    if (capy && options[key] === undefined) continue
     if (!isAbsolute(options[key])) throw new Error(`${key} must be absolute`)
     options[key] = resolve(options[key])
   }
   if (!outside(options.output, workspace) || !outside(options.output, options.harveyRoot)) throw new Error('Output must be outside source repositories')
-  options.brokerPort = Number(options.brokerPort)
-  if (!Number.isInteger(options.brokerPort) || options.brokerPort < 1 || options.brokerPort > 65535) throw new Error('Invalid broker port')
-  brokerNetwork(options.brokerOrigin)
-  if (!/^[a-zA-Z0-9_-]+$/.test(options.sandboxTemplate) || !/^[a-f0-9]{64}$/.test(options.computerImageSha256)) throw new Error('Prepared template and computer image SHA-256 required')
+  if (!capy || options.brokerPort !== undefined || options.brokerOrigin !== undefined) {
+    options.brokerPort = Number(options.brokerPort)
+    if (!Number.isInteger(options.brokerPort) || options.brokerPort < 1 || options.brokerPort > 65535) throw new Error('Invalid broker port')
+    brokerNetwork(options.brokerOrigin)
+  }
+  if (!capy || options.sandboxTemplate !== undefined || options.computerImageSha256 !== undefined) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(options.sandboxTemplate) || !/^[a-f0-9]{64}$/.test(options.computerImageSha256)) throw new Error('Prepared template and computer image SHA-256 required')
+  }
   return options
 }
 
@@ -235,7 +245,12 @@ export async function executeArms({ checkpoint, packets, harnesses, save, output
 export async function run(options, dependencies = {}) {
   const maxSteps = validMaxSteps(options.maxSteps === undefined ? defaultMaxSteps : options.maxSteps)
   const concurrency = validConcurrency(options.concurrency === undefined ? defaultConcurrency : options.concurrency)
-  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  if (options.instructionProfile !== undefined && !['standalone-v1', 'opulent-prepared-v2', 'opulent-knowledge-v3', 'opulent-rlm-v4', 'opulent-rlm-unrestricted-v5', 'opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12', 'opulent-capy-v1'].includes(options.instructionProfile)) throw new Error('Invalid instruction profile')
+  const capy = options.instructionProfile === 'opulent-capy-v1'
+  const semanticSurface = capy ? options.semanticSurface ?? 'toolbox' : options.semanticSurface
+  if (capy && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capy comparison requires native RunAnywhere MiMo v2.6 Pro')
+  if (capy && semanticSurface !== 'toolbox') throw new Error('Capy lean policy requires the direct corpus toolbox')
+  if (capy && RETRIEVAL_PROFILE !== 'voyage') throw new Error('Capy comparison requires LX_RETRIEVAL_PROFILE=voyage')
   const deliveryV9 = ['opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(options.instructionProfile)
   const capabilityV8 = options.instructionProfile === 'opulent-capability-v8' || deliveryV9
   if (capabilityV8 && options.modelProfile !== 'runanywhere-mimo-v2.6-pro') throw new Error('Capability v8 comparison requires native RunAnywhere MiMo v2.6 Pro')
@@ -258,14 +273,16 @@ export async function run(options, dependencies = {}) {
       existsSync(checkpointPath) && lstatSync(checkpointPath).isSymbolicLink()) throw new Error('Unsafe output location')
   const corpus = (dependencies.prepareCorpus ?? prepareCorpus)({ workspace: source,
     directory: join(output, existsSync(checkpointPath) ? `corpus-resume-${randomUUID()}` : 'corpus') })
-  const nativeModuleHash = fileHash(options.nativeModule)
-  const native = await (dependencies.loadNative ?? (path => import(pathToFileURL(path).href)))(options.nativeModule)
-  if (typeof native.createComparisonMcp !== 'function') throw new Error('Native module must export createComparisonMcp')
-  const mcp = options.semanticSurface === 'mcp' ? await native.createComparisonMcp({ workspace: source, corpus }) : null
+  const nativeModuleHash = capy ? null : fileHash(options.nativeModule)
+  const native = capy ? null : await (dependencies.loadNative ?? (path => import(pathToFileURL(path).href)))(options.nativeModule)
+  if (!capy && typeof native.createComparisonMcp !== 'function') throw new Error('Native module must export createComparisonMcp')
+  const mcp = semanticSurface === 'mcp' ? await native.createComparisonMcp({ workspace: source, corpus }) : null
   if (options.semanticSurface === 'mcp' && (!mcp || typeof mcp.provision !== 'function' || typeof mcp.verify !== 'function' || !mcp.server || !Array.isArray(mcp.servers) || !Array.isArray(mcp.probes))) throw new Error('Incomplete approved native MCP configuration')
-  const broker = await (dependencies.createBroker ?? createEvaluationBroker)({ port: options.brokerPort, host: '0.0.0.0' })
-  if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
-  broker.origin = options.brokerOrigin
+  const broker = capy ? null : await (dependencies.createBroker ?? createEvaluationBroker)({ port: options.brokerPort, host: '0.0.0.0' })
+  if (broker) {
+    if (broker.port !== options.brokerPort) { await broker.close(); throw new Error('Broker bound wrong port') }
+    broker.origin = options.brokerOrigin
+  }
   try {
     const profile = COMPARISON_PROFILES[options.modelProfile ?? 'modal-deepseek-v4.1-flash']
     if (!profile) throw new Error('Invalid model profile')
@@ -275,11 +292,11 @@ export async function run(options, dependencies = {}) {
       inferenceProvider, ...(nativeModel ? { providerModel: nativeModel.providerModel } : {}), workProduct: { maxCompletionTokens: 32768 } }
     const harnesses = dependencies.harnesses ?? {
       harvey: (dependencies.createHarvey ?? createHarveyHarness)({ ...common,
-        ...(['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
+        ...(['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12', 'opulent-capy-v1'].includes(options.instructionProfile) ? { workProductPromptPolicy: 'public-task-v2' } : {}),
         harveyRoot: options.harveyRoot, python: options.python, artifactsDir: join(output, 'artifacts', 'harvey') }),
-      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: options.semanticSurface === 'mcp', semanticSurface: options.semanticSurface, mcp, broker,
+      broad: (dependencies.createBroad ?? createBroadHarness)({ ...common, artifactsDir: join(output, 'artifacts', 'broad'), nativeMcp: semanticSurface === 'mcp', semanticSurface, mcp, broker,
         sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
-        nativeModuleHash, toolSurface: 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
+        nativeModuleHash, toolSurface: capy ? 'capy-lean-v1' : 'initial-scripted-v1', instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2' }),
     }
     const provenance = { protocol: 'complex-v1-paired-work-product', selectedTasks: options.tasks,
         model: profile.model, modelProfile: options.modelProfile ?? 'modal-deepseek-v4.1-flash', inferenceProvider, nativeModel,
@@ -292,6 +309,12 @@ export async function run(options, dependencies = {}) {
         ...(capabilityV8 ? ['runtime/sandbox-file-access.mjs', 'runtime/tools/scripts.mjs', 'runtime/core.mjs', 'runtime/rlm.mjs', 'runtime/rlm-kernel.py'] : [])].map(path => [path, fileHash(join(source, path))])),
       executionSha256: executionHash(source),
       runPlanSha256: fileHash(join(suiteRoot, 'RUN-PLAN.md')),
+      ...(capy ? { capyProtocol: { version: 'opulent-capy-v1', protocolSha256: fileHash(join(suiteRoot, 'CAPY-V1-PROTOCOL.md')),
+        profileInstructions: renderInstructions({ profile: 'opulent-capy-v1' }).provenance,
+        contextCompaction: CAPY_CONTEXT_COMPACTION, evidenceReplayVersion: CAPY_EVIDENCE_REPLAY_VERSION,
+        runtimePolicy: 'exact reduced Capy allowlist; no inherited operational layers, all-tool prerequisite, forced handoff loop or child quota',
+        canonicalCorpus: 'complete read-only export in every parent and child VM',
+        statePolicy: 'fresh private per-attempt state retained outside repository; owned descendants share only that memory scope' } } : {}),
       ...(options.instructionProfile === 'opulent-knowledge-v3' ? { knowledgeRunPlanSha256: fileHash(join(suiteRoot, 'KNOWLEDGE-RUN-PLAN.md')) } : {}),
       ...(capabilityV8 ? { capabilityProtocol: {
         version: deliveryV9 ? options.instructionProfile : 'opulent-capability-v8', protocolSha256: fileHash(join(suiteRoot, deliveryV9 ? `DELIVERY-${options.instructionProfile.slice('opulent-delivery-'.length).toUpperCase()}-PROTOCOL.md` : 'CAPABILITY-V8-PROTOCOL.md')),
@@ -303,39 +326,41 @@ export async function run(options, dependencies = {}) {
           browserAllowedOrigins: ['http://127.0.0.1:8765'], nativeModelVision: 'requires live verification',
           receiptPolicy: 'exact finally serialized parent-visible stdout; no host-only read credit' } } : {}),
       } } : {}),
-      nativeModuleHash, semanticSurface: options.semanticSurface, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
+      nativeModuleHash, semanticSurface, instructionProfile: options.instructionProfile ?? 'opulent-prepared-v2',
       harveyPolicy: redact(harnesses.harvey.provenance), broadPolicy: redact(harnesses.broad.provenance),
       integration: { sandboxTemplate: options.sandboxTemplate, computerImageSha256: options.computerImageSha256,
         nativeMcp: mcp?.server ?? null, servers: redact(mcp?.servers ?? []), probesSha256: hash(JSON.stringify(mcp?.probes ?? [])),
-        brokerPort: options.brokerPort, brokerOriginSha256: hash(options.brokerOrigin) },
+        ...(capy ? { runtimeBridge: 'isolated QuickJS allowlisted host dispatch; no Python broker prerequisite' }
+          : { brokerPort: options.brokerPort, brokerOriginSha256: hash(options.brokerOrigin) }) },
       evidencePolicy: 'actual answerer-visible evidence only; hidden reference never promoted',
       gradingPolicy: 'ungraded; separate criterion adapter required', costPolicy: 'unknown unless metered',
       harveyIdentity: 'pinned public Harvey LAB harness, not proprietary hosted Harvey product' }
     const checkpoint = checkpointFor(provenance, existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, 'utf8')) : null)
     const save = value => atomic(checkpointPath, value)
     if (!existsSync(checkpointPath)) save(checkpoint)
-    for (const name of [inferenceProvider === 'runanywhere' ? 'RUNA_CLOUD_KEY' : 'AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION']) {
+    for (const name of [...new Set([inferenceProvider === 'runanywhere' ? 'RUNA_CLOUD_KEY' : 'AI_GATEWAY_API_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', ...(capy ? REQUIRED_ENV : [])])]) {
       if (!process.env[name] && !dependencies.skipCredentials) {
         checkpoint.preflight = failure(new Error(`Missing ${name}`), 'credentials'); save(checkpoint)
         return checkpoint
       }
     }
     try {
-      const brokerProof = await (dependencies.verifyBroker ?? verifyEvaluationBroker)({ broker, origin: options.brokerOrigin,
+      const brokerProof = capy ? null : await (dependencies.verifyBroker ?? verifyEvaluationBroker)({ broker, origin: options.brokerOrigin,
         sandboxFactory: sandboxConfig => provisionCorpus({ ...sandboxConfig, sandboxTemplate: options.sandboxTemplate,
           computerPreparedImage: true, computerImageSha256: options.computerImageSha256,
           ...(capabilityV8 ? { secureSandboxFileAccess: true } : {}) }, corpus, source, createSandbox) })
       const preflight = await harnesses.broad.preflight()
-      if (brokerProof?.verified !== true || preflight?.sandbox?.verified !== true ||
-        ['mcp', 'runtimeBroker'].some(name => preflight[name]?.verified !== true) || options.semanticSurface === 'mcp' && preflight.desktop?.verified !== true) throw new Error('Full comparison blocked: live provider or security preflight failed')
-      checkpoint.preflight = { status: 'verified', broker: brokerProof, integrations: preflight, checkedAt: new Date().toISOString() }
+      if (capy ? preflight?.sandbox?.verified !== true || ['retrieval', 'codemode', 'security', 'egress'].some(name => preflight[name]?.verified !== true)
+        : brokerProof?.verified !== true || preflight?.sandbox?.verified !== true ||
+          ['mcp', 'runtimeBroker'].some(name => preflight[name]?.verified !== true) || options.semanticSurface === 'mcp' && preflight.desktop?.verified !== true) throw new Error('Full comparison blocked: live provider or security preflight failed')
+      checkpoint.preflight = { status: 'verified', ...(!capy ? { broker: brokerProof } : {}), integrations: preflight, checkedAt: new Date().toISOString() }
       save(checkpoint)
     } catch (error) {
       checkpoint.preflight = failure(error, 'live-preflight'); save(checkpoint)
       return checkpoint
     }
     return await executeArms({ checkpoint, packets, harnesses, save, output, concurrency })
-  } finally { await broker.close() }
+  } finally { await broker?.close() }
 }
 
 export async function main(args = process.argv.slice(2)) {

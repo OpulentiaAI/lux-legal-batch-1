@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync, realpathSync } from 'node:fs'
-import { basename, join, relative, resolve, sep } from 'node:path'
+import { basename, join, relative, resolve, sep, posix } from 'node:path'
 import { loadChunks, chunkText } from '../src/tp/manifest.ts'
 import { redact } from '../runtime/security.mjs'
 
@@ -10,6 +10,7 @@ const printsHead = command => /\bhead\s+(?:-c\s+\d+|-(?:n\s+)?\d+)\b/.test(comma
 export const PARENT_VISIBLE_EVIDENCE_VERSION = 'parent-visible-outputs-v2'
 export const PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION = 'parent-visible-findings-v3'
 export const PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION = 'parent-visible-findings-v4'
+export const CAPY_VISIBLE_EVIDENCE_VERSION = 'capy-visible-outputs-v1'
 export const EVIDENCE_REPLAY_OVERRIDES = Object.freeze([PARENT_VISIBLE_FINDINGS_EVIDENCE_VERSION, PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION])
 
 function printedValue(text, start, end = text.length) {
@@ -319,10 +320,10 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     if (!found.has(key)) found.set(key, { id, doc: source.doc, text, kind, sha256: hash(text),
       origin: { ...origin, start, end: start + text.length } })
   }
-  function findingReceipts(found, quoteAudit, serialized, origin, args, overflow) {
+  function findingReceipts(found, quoteAudit, serialized, origin, args, overflow, capy = false) {
     if (!['ipython', 'scripted_tools', 'exec', 'get_output', 'read_subagent'].includes(origin.tool) &&
         !(origin.tool === 'opulent_session_interact' && args?.action === 'get') &&
-        !(origin.tool === 'read' && overflow?.allowed)) return
+        !(origin.tool === 'read' && overflow?.allowed) && !capy) return
     if (typeof serialized !== 'string' || serialized.length > 1_000_000) return
     try { JSON.parse(serialized) } catch { return }
     const identityRange = (start, end) => ({ start, end })
@@ -505,6 +506,15 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         return
       }
       if (node.type !== 'object') return
+      if (capy && !node.invalid && !node.duplicates.size) {
+        const kind = literal(node, 'kind')
+        const channels = kind === 'file_backed_result' ? ['preview'] : kind === 'read' ? ['content'] :
+          kind === 'process' ? ['stdout', 'stderr'] : kind === 'execute' || field(node, 'run_id') ? ['value', 'result', 'logs'] : null
+        if (channels) {
+          for (const channel of channels) walk(field(node, channel), view, [...path, channel], depth + 1)
+          return
+        }
+      }
       const childId = ['rlm_child_id', 'agent_id', 'session_id'].find(key => field(node, key))
       if (blocked(node) || childId && (!node.complete || literal(node, 'status') !== 'completed' ||
           typeof literal(node, childId) !== 'string' || !literal(node, childId).trim())) return
@@ -591,9 +601,28 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     }
 
     const root = printedValue(serialized, 0)
-    if (!root.complete || root.type !== 'object' || root.duplicates.size || blocked(root)) return
+    if (!root.complete || root.type !== 'object' || root.duplicates.size || blocked(root) && !capy) return
     let channels, bounds
-    if (origin.tool === 'ipython') {
+    if (capy) {
+      if (origin.tool === 'session_get' && args?.include_transcript === true) {
+        const transcript = field(root, 'transcript')
+        if (transcript?.type !== 'array' || !transcript.complete) return
+        for (const [index, message] of transcript.children.entries()) {
+          if (message.type !== 'object' || !message.complete || message.duplicates.size || literal(message, 'role') !== 'tool') continue
+          const content = field(message, 'content')
+          if (content?.type === 'string' && content.complete) text(decodedReceipt(initial, content, ['transcript', index, 'content'], 'transcript'), 0)
+        }
+        return
+      }
+      if (literal(root, 'kind') === 'file_backed_result') channels = ['preview']
+      else if (origin.tool === 'read') channels = ['content']
+      else if (origin.tool === 'bash') channels = ['stdout', 'stderr']
+      else if (origin.tool === 'execute') channels = ['value', 'result', 'logs']
+      else if (origin.tool === 'subagent_get' || origin.tool === 'operation_get' || origin.tool === 'subagent_completion') {
+        if (literal(root, 'status') !== 'completed') return
+        channels = ['output', 'result', 'stdout', 'stderr']
+      } else return
+    } else if (origin.tool === 'ipython') {
       if (literal(root, 'ok') !== true) return
       channels = ['stdout', 'result']
     } else if (['scripted_tools', 'exec', 'get_output'].includes(origin.tool)) channels = ['stdout', 'result']
@@ -899,6 +928,109 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       }
     }
   }
+  function capyVisible(found, metadata, value, origin, args, depth = 0) {
+    if (depth > 12 || value == null) return
+    if (typeof value === 'string') {
+      parentVisible(found, metadata, value, origin)
+      const node = printedValue(value, value.length - value.trimStart().length)
+      if (!node.complete && !node.invalid && ['object', 'array'].includes(node.type)) {
+        const visibleFields = node => {
+          if (node.invalid || node.duplicates?.size) return undefined
+          if (['scalar', 'string'].includes(node.type)) return node.complete ? node.value : undefined
+          if (node.type === 'array') return node.children.map(visibleFields).filter(value => value !== undefined)
+          if (node.type === 'object') return Object.fromEntries([...node.fields].map(([key, child]) => [key, visibleFields(child)])
+            .filter(([, value]) => value !== undefined))
+        }
+        const visible = visibleFields(node)
+        if (visible?.kind !== 'read') capyVisible(found, metadata, visible, { ...origin, format: 'complete-fields-in-returned-prefix' }, undefined, depth + 1)
+      }
+      return
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => capyVisible(found, metadata, item,
+        { ...origin, fieldPath: [...(origin.fieldPath ?? []), index] }, undefined, depth + 1))
+      return
+    }
+    if (typeof value !== 'object') return
+    if (typeof value.error === 'string') capyVisible(found, metadata, value.error, { ...origin, channel: 'error' }, undefined, depth + 1)
+    else if (typeof value.error?.message === 'string') capyVisible(found, metadata, value.error.message, { ...origin, channel: 'error.message' }, undefined, depth + 1)
+    if (value.kind === 'file_backed_result') {
+      if (typeof value.preview !== 'string' || value.truncated !== true) throw new Error('Invalid evidence Capy file-backed result')
+      capyVisible(found, metadata, value.preview, { ...origin, channel: 'preview', consultation: 'returned-preview-only' }, undefined, depth + 1)
+      return
+    }
+    if (value.kind === 'read') {
+      const supplied = args?.path
+      const requested = typeof supplied === 'string' && (supplied === '~' || supplied.startsWith('~/')
+        ? posix.join('/home/user', supplied.slice(1)) : posix.resolve('/tmp/broad-legal-workspace', supplied))
+      if (typeof value.path !== 'string' || typeof value.content !== 'string' ||
+          !Number.isSafeInteger(value.offset) || value.offset < 1 || !Number.isSafeInteger(value.limit) || value.limit < 1 ||
+          !Number.isSafeInteger(value.character_offset) || value.character_offset < 0 ||
+          !Number.isSafeInteger(value.window_characters) || value.window_characters < 0 || value.content.length > 60000 ||
+          !Number.isSafeInteger(value.total_lines) || value.total_lines < 0 ||
+          args && (requested !== value.path || (args.offset ?? 1) !== value.offset || (args.limit ?? 2000) !== value.limit ||
+            (args.character_offset ?? 0) !== value.character_offset)) throw new Error('Invalid evidence Capy read identity or window')
+      const id = chunkFile(value.path)
+      if (id) {
+        const source = sourceFor(id)
+        const full = `[${id}]\n${source.text}\n`
+        const lines = full.match(/[^\n]*\n|[^\n]+$/g) ?? []
+        const selected = lines.slice(value.offset - 1, value.offset - 1 + value.limit).join('')
+        if (value.total_lines !== lines.length || value.window_characters !== selected.length ||
+            value.content !== selected.slice(value.character_offset, value.character_offset + 60000) ||
+            value.next_character_offset !== (value.character_offset + value.content.length < selected.length ? value.character_offset + value.content.length : null) ||
+            value.next_offset !== (value.offset - 1 + value.limit < lines.length ? value.offset + value.limit : null)) {
+          throw new Error('Invalid evidence Capy canonical read contents')
+        }
+        const start = lines.slice(0, value.offset - 1).join('').length + value.character_offset
+        const bodyStart = id.length + 3
+        let first = Math.max(start, bodyStart), last = Math.min(start + value.content.length, bodyStart + source.text.length)
+        if (/^[\uDC00-\uDFFF]$/.test(full[first] ?? '') && /^[\uD800-\uDBFF]$/.test(full[first - 1] ?? '')) first++
+        if (/^[\uD800-\uDBFF]$/.test(full[last - 1] ?? '') && /^[\uDC00-\uDFFF]$/.test(full[last] ?? '')) last--
+        if (last > first && full.slice(first, last).trim()) attach(found, id, full.slice(first, last),
+          { ...origin, channel: 'content', format: 'capy-read-window-v1', path: value.path,
+            offset: value.offset, limit: value.limit, characterOffset: value.character_offset },
+          first === bodyStart && last === bodyStart + source.text.length ? 'full' : 'excerpt', first - bodyStart)
+      } else capyVisible(found, metadata, value.content, { ...origin, channel: 'content',
+        path: value.path, offset: value.offset, limit: value.limit, characterOffset: value.character_offset }, undefined, depth + 1)
+      return
+    }
+    if (value.kind === 'process') {
+      for (const channel of ['stdout', 'stderr']) if (typeof value[channel] === 'string') capyVisible(found, metadata, value[channel],
+        { ...origin, channel, ...(channel === 'stdout' ? { headPrinted: printsHead(args?.command) || value.truncated === true } : {}) }, undefined, depth + 1)
+      return
+    }
+    if (value.kind === 'session' || value.parent_session_id != null && Object.hasOwn(value, 'status') ||
+        ['subagent_get', 'subagent_completion'].includes(origin.tool) && depth === 0) {
+      if (value.status === 'completed') capyVisible(found, metadata, value.output,
+        { ...origin, channel: 'output', childSessionId: value.session_id ?? value.id }, undefined, depth + 1)
+      return
+    }
+    if (origin.tool === 'execute' && depth === 0 || value.kind === 'execute' || typeof value.run_id === 'string' && Object.hasOwn(value, 'status')) {
+      for (const channel of ['value', 'result', 'logs']) capyVisible(found, metadata, value[channel], { ...origin, channel }, undefined, depth + 1)
+      return
+    }
+    if (origin.tool === 'session_get' && depth === 0) {
+      if (args?.include_transcript === true) for (const message of value.transcript ?? []) {
+        if (message.role === 'tool') {
+          let result
+          try { result = JSON.parse(message.content) } catch { continue }
+          capyVisible(found, metadata, result, { ...origin, channel: 'transcript', originalToolCallId: message.tool_call_id }, undefined, depth + 1)
+        }
+      }
+      return
+    }
+    if (value.truncated === true) return
+    if (typeof (value.chunk_id ?? value.id) === 'string' && manifest.has(value.chunk_id ?? value.id)) {
+      parentVisible(found, metadata, value, origin)
+      return
+    }
+    for (const [key, item] of Object.entries(value)) {
+      if (['complete_result', 'returned_result', 'original_result', 'guest_visible_result', 'serialized', 'preview', 'code', 'args', 'arguments', 'prompt', 'transcript', 'effects',
+        'messages', 'events', 'timeline', 'sessions', 'conversation', 'scriptCalls', 'script_calls', 'capy_execute_calls', 'ledger'].includes(key)) continue
+      capyVisible(found, metadata, item, { ...origin, fieldPath: [...(origin.fieldPath ?? []), key] }, undefined, depth + 1)
+    }
+  }
   function printedStdout(found, metadata, output, origin, command) {
     let envelope
     try { envelope = JSON.parse(output) } catch { return }
@@ -1142,7 +1274,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     const rejectionPolicy = replayVersionOverride === PARENT_VISIBLE_FINDINGS_REJECTIONS_VERSION
     const rejectedSourceCandidates = rejectionPolicy ? [] : undefined
     let parentVisiblePolicy = false
-    let findingsPolicy = false, originalArtifactSha256
+    let findingsPolicy = false, capyPolicy = false, originalArtifactSha256
     if (row.mode === 'broad') {
       if (typeof row.audit.evidenceArtifact !== 'string') throw new Error('Invalid evidence artifact identity')
       const name = basename(row.audit.evidenceArtifact)
@@ -1154,8 +1286,51 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           !(row.answer === null ? row.error && row.audit.finalAnswerHash === null :
             typeof row.answer === 'string' && hash(row.answer) === row.audit.finalAnswerHash)) throw new Error('Invalid evidence run identity')
       const version = artifact.provenance?.evidenceReplayVersion
-      if (version !== undefined && version !== PARENT_VISIBLE_EVIDENCE_VERSION) throw new Error('Invalid evidence replay version')
-      parentVisiblePolicy = version === PARENT_VISIBLE_EVIDENCE_VERSION
+      if (version !== undefined && ![PARENT_VISIBLE_EVIDENCE_VERSION, CAPY_VISIBLE_EVIDENCE_VERSION].includes(version)) throw new Error('Invalid evidence replay version')
+      capyPolicy = version === CAPY_VISIBLE_EVIDENCE_VERSION
+      if (capyPolicy && (artifact.provenance.instructions?.profile !== 'opulent-capy-v1' || replayVersionOverride !== undefined)) throw new Error('Invalid evidence Capy profile or replay override')
+      if (capyPolicy && (artifact.observationPolicy !== 'completed-answerer-inputs-v1' || !Array.isArray(artifact.modelInputs) ||
+          artifact.modelInputs.some(input => typeof input.id !== 'string' || !input.id ||
+            typeof input.sessionId !== 'string' || input.sessionId !== artifact.rootSessionId || !['answerer', 'context_compaction'].includes(input.phase) ||
+            !['started', 'completed', 'failed', 'interrupted'].includes(input.status) || !validHash(input.inputSha256) ||
+            !Array.isArray(input.orchestrationMessageIds) || input.orchestrationMessageIds.some(id => typeof id !== 'string' || !id) ||
+            new Set(input.orchestrationMessageIds).size !== input.orchestrationMessageIds.length ||
+            !Array.isArray(input.toolMessages) || input.toolMessages.some(message => typeof message.toolCallId !== 'string' ||
+              !Number.isSafeInteger(message.messageIndex) || message.messageIndex < 0 || !validHash(message.contentSha256)) ||
+            !Array.isArray(input.userMessages) || input.userMessages.some(message => !Number.isSafeInteger(message.messageIndex) ||
+              message.messageIndex < 0 || !validHash(message.contentSha256))) ||
+          new Set(artifact.modelInputs.map(input => input.id)).size !== artifact.modelInputs.length)) {
+        throw new Error('Invalid evidence Capy observation ledger')
+      }
+      const ownedSessions = new Map()
+      if (capyPolicy) {
+        if (!Array.isArray(artifact.ownedSessions) || !Array.isArray(artifact.orchestrationMessages) || !Array.isArray(artifact.deliveries) ||
+            !Array.isArray(row.audit.capyDeliveries) || artifact.deliveries.length !== row.audit.capyDeliveries.length ||
+            artifact.ownedSessions.some(session => typeof session.id !== 'string' || !session.id ||
+              (session.id === artifact.rootSessionId ? session.parentSessionId !== null :
+                typeof session.parentSessionId !== 'string' || !Number.isSafeInteger(session.childIndex) || session.childIndex < 1)) ||
+            new Set(artifact.ownedSessions.map(session => session.id)).size !== artifact.ownedSessions.length) {
+          throw new Error('Invalid evidence Capy ownership ledger')
+        }
+        for (const session of artifact.ownedSessions) ownedSessions.set(session.id, session)
+        if (artifact.modelInputs.length && !ownedSessions.has(artifact.rootSessionId)) throw new Error('Invalid evidence Capy root session')
+        for (const session of ownedSessions.values()) {
+          const visited = new Set()
+          let current = session
+          while (current.id !== artifact.rootSessionId) {
+            if (visited.has(current.id)) throw new Error('Invalid evidence Capy ownership cycle')
+            visited.add(current.id)
+            current = ownedSessions.get(current.parentSessionId)
+            if (!current) throw new Error('Invalid evidence Capy unowned session')
+          }
+        }
+        if (artifact.orchestrationMessages.some(message => typeof message.id !== 'string' || !message.id ||
+            !ownedSessions.has(message.session_id) || typeof message.source !== 'string' || typeof message.body !== 'string') ||
+            new Set(artifact.orchestrationMessages.map(message => message.id)).size !== artifact.orchestrationMessages.length) {
+          throw new Error('Invalid evidence Capy orchestration ledger')
+        }
+      }
+      parentVisiblePolicy = version === PARENT_VISIBLE_EVIDENCE_VERSION || capyPolicy
       if (replayVersionOverride !== undefined && !parentVisiblePolicy) throw new Error('Invalid evidence incompatible replay override')
       findingsPolicy = EVIDENCE_REPLAY_OVERRIDES.includes(replayVersionOverride)
       if (findingsPolicy) originalArtifactSha256 = artifactHashes.get(relative(root, realpathSync(join(broadRoot, name))))
@@ -1165,7 +1340,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         if (call.tool !== audit.tool ||
             hash(call.output) !== audit.result.sha256 || call.result?.error !== audit.result.error ||
             JSON.stringify(call.result) !== JSON.stringify(audit.result)) throw new Error('Invalid evidence call hash or identity')
-        if (findingsPolicy && (call.toolCallId !== audit.toolCallId || call.toolCallId != null &&
+        if ((findingsPolicy || capyPolicy) && (call.toolCallId !== audit.toolCallId || call.toolCallId != null &&
             (typeof call.toolCallId !== 'string' || !call.toolCallId.trim()))) throw new Error('Invalid evidence tool call identity')
         let argsVerified = hash(JSON.stringify(call.args)) === audit.argsHash
         if (Object.hasOwn(call, 'rawArguments')) {
@@ -1195,6 +1370,27 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
             sha256: output.sha256, characters: output.characters, totalLines: output.encoding === 'jsonl-string-chunks' ? output.lines : null })
           if (failed) {
             diagnostics.push({ ...origin, status: 'failed', error: output?.error ?? output?.stderr ?? null })
+            if (!capyPolicy) return
+          }
+          if (capyPolicy) {
+            if (JSON.stringify(call.observation) !== JSON.stringify(audit.observation) ||
+                !['observed', 'not-observed'].includes(call.observation?.status) || !validHash(call.observation.returnedOutputSha256) ||
+                !Array.isArray(call.observation.inputs)) throw new Error('Invalid evidence Capy observation identity')
+            const inputs = call.observation.inputs
+            if (inputs.some(seen => seen.contentSha256 !== audit.result.sha256 || !artifact.modelInputs.some(input =>
+              input.id === seen.requestRecordId && input.phase === 'answerer' && input.status === 'completed' &&
+              input.responseId === seen.responseId && input.toolMessages.some(message => message.toolCallId === call.toolCallId &&
+                message.messageIndex === seen.messageIndex && message.contentSha256 === seen.contentSha256)))) throw new Error('Invalid evidence Capy sent-input binding')
+            if (call.observation.status === 'not-observed') {
+              if (inputs.length) throw new Error('Invalid evidence Capy unseen input')
+              diagnostics.push({ ...origin, status: 'not-observed', reason: 'no-completed-answerer-input-contained-this-tool-result' })
+              return
+            }
+            if (!inputs.length) throw new Error('Invalid evidence Capy missing observed input')
+            if (call.tool === 'read' && !failed && output?.kind !== 'read' && output?.kind !== 'file_backed_result') throw new Error('Invalid evidence Capy read result')
+            capyVisible(found, modelVisibleMetadata, output, origin, call.args)
+            findingReceipts(found, quoteAudit, call.output, { ...origin,
+              toolCallId: call.toolCallId }, call.args, undefined, true)
             return
           }
           if (findingsPolicy) findingReceipts(found, quoteAudit, call.output, { ...origin,
@@ -1238,6 +1434,43 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
           } else native(found, modelVisibleMetadata, call.output, origin)
         }
       })
+      if (capyPolicy) artifact.deliveries.forEach((delivery, index) => {
+        const { body, ...identity } = delivery
+        const child = ownedSessions.get(delivery.childSessionId)
+        const recorded = artifact.orchestrationMessages.find(message => message.id === delivery.messageId)
+        if (JSON.stringify(identity) !== JSON.stringify(row.audit.capyDeliveries[index]) || typeof body !== 'string' ||
+            hash(body) !== delivery.bodySha256 || delivery.sessionId !== artifact.rootSessionId ||
+            delivery.source !== 'subagent_completion' || !child || child.parentSessionId !== artifact.rootSessionId ||
+            delivery.childPath !== String(child.childIndex) || !delivery.messageId.startsWith(`capy-child:${child.id}:`) ||
+            delivery.messageId.length <= `capy-child:${child.id}:`.length ||
+            recorded?.source !== 'subagent_completion' || recorded.session_id !== artifact.rootSessionId || recorded.body !== body ||
+            !['observed', 'not-observed'].includes(delivery.observation?.status) || !Array.isArray(delivery.observation.inputs)) {
+          throw new Error('Invalid evidence Capy child delivery identity')
+        }
+        const origin = { artifact: name, delivery: index, tool: 'subagent_completion', childSessionId: child.id,
+          orchestrationMessageId: delivery.messageId, messageSha256: delivery.bodySha256 }
+        const inputs = delivery.observation.inputs
+        if (inputs.some(seen => seen.contentSha256 !== delivery.bodySha256 || !artifact.modelInputs.some(input =>
+          input.id === seen.requestRecordId && input.phase === 'answerer' && input.status === 'completed' &&
+          input.orchestrationMessageIds.includes(delivery.messageId) &&
+          input.responseId === seen.responseId && input.userMessages.some(message => message.messageIndex === seen.messageIndex &&
+            message.contentSha256 === seen.contentSha256)))) throw new Error('Invalid evidence Capy child delivery sent-input binding')
+        if (delivery.observation.status === 'not-observed') {
+          if (inputs.length) throw new Error('Invalid evidence Capy unseen child delivery')
+          diagnostics.push({ ...origin, status: 'not-observed', reason: 'no-completed-answerer-input-contained-this-owned-child-delivery' })
+          return
+        }
+        if (!inputs.length) throw new Error('Invalid evidence Capy missing observed child delivery')
+        const prefix = 'Owned child result: '
+        let output
+        try { output = JSON.parse(body.slice(prefix.length)) } catch { throw new Error('Invalid evidence Capy child delivery body') }
+        if (!body.startsWith(prefix) || output?.kind !== 'file_backed_result' &&
+            (output?.session_id !== child.id || output?.child !== delivery.childPath)) throw new Error('Invalid evidence Capy child delivery ownership')
+        const serialized = body.slice(prefix.length)
+        const payloadOrigin = { ...origin, outputSha256: hash(serialized), messagePayloadStart: prefix.length }
+        capyVisible(found, modelVisibleMetadata, output, payloadOrigin)
+        findingReceipts(found, quoteAudit, serialized, payloadOrigin, undefined, undefined, true)
+      })
     } else {
       const matches = []
       for (const dir of readdirSync(harveyRoot)) {
@@ -1258,11 +1491,13 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
     verifyFullSources(row, found)
     return { answer: row.answer, sources: [...found.values()], modelVisibleMetadata, trace: row.trace,
       ...(parentVisiblePolicy ? { diagnostics } : {}),
-      ...(findingsPolicy ? { quoteAudit } : {}),
+      ...(findingsPolicy || capyPolicy ? { quoteAudit } : {}),
       ...(parentVisiblePolicy && rejectionPolicy ? { rejectedSourceCandidates } : {}),
       proof: { binding_strength: row.mode === 'broad' ? 'recorded-output-sha256' : 'legacy-artifact-snapshot-arguments-canonical',
         argument_hash_unverifiable: argumentHashUnverifiable, historical_result_hash_missing: row.mode === 'harvey',
-        ...(parentVisiblePolicy ? { evidenceReplayVersion: findingsPolicy ? replayVersionOverride : PARENT_VISIBLE_EVIDENCE_VERSION } : {}),
+        ...(parentVisiblePolicy ? { evidenceReplayVersion: capyPolicy ? CAPY_VISIBLE_EVIDENCE_VERSION : findingsPolicy ? replayVersionOverride : PARENT_VISIBLE_EVIDENCE_VERSION } : {}),
+        ...(capyPolicy ? { consultationPolicy: 'completed-actual-answerer-inputs; returned-windows-and-preview-only; no derived summary, host ledger or unread-file hydration',
+          replayImplementationSha256: hash(readFileSync(new URL(import.meta.url))), visibleSourceInventorySha256: hash(JSON.stringify([...found.values()])) } : {}),
         ...(findingsPolicy ? { recordedEvidenceReplayVersion: PARENT_VISIBLE_EVIDENCE_VERSION, replayOverride: true,
           originalArtifactSha256, replayImplementationSha256: hash(readFileSync(new URL(import.meta.url))),
           findingMatchingPolicy: 'exact-fragments-whitespace-hyphen-v2',
