@@ -1,0 +1,14 @@
+{
+  "version": "opulent-delivery-v10",
+  "profile": "opulent-delivery-v10",
+  "inheritedVersion": "opulent-delivery-v9",
+  "inheritedManifestSha256": "8b952209c08c1502baaad7c3b5abb93a2715080b730e7fcc9d049b6b2361f478",
+  "inheritedEffectivePromptSha256": "18564031bb3d19c5e29846bc4fbe7810b01e3593d17e53885c569acc0c836135",
+  "composition": "unchanged-delivery-v9-with-focused-work-optimization-layer",
+  "addendumSha256": "ccedea60ba821dc7058f48cd09addbbd6d09bd64eace2298f49c5eef8e981123",
+  "provenance": {
+    "source": "Observed completed-work latency/tool overhead and public requirement coverage; no hidden task answer or rubric hint",
+    "behavioralSupplement": true,
+    "note": "Separate optimization experiment, not a measured improvement claim. Historical instructions, outputs and grading remain unchanged; full approved capabilities and delivery/security contracts retained."
+  }
+}
