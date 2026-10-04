@@ -77,14 +77,18 @@ export function reconcileHarvey({ transmissions, providerRecords, trajectory, re
     boundary: 'Actual Python HTTP wire captures reconcile by native response IDs; any unfinished or non-2xx consumption remains unknown' }
 }
 
+export async function loadRuntimeModules(release) {
+  const importAt = path => import(pathToFileURL(join(release.workspace, path)))
+  return Promise.all([
+    importAt('runtime/broad-legal-eval.mjs'), importAt('runtime/model.mjs'), importAt('runtime/core.mjs'), importAt('runtime/model-provider.mjs'),
+    importAt('runtime/e2b.mjs'), importAt('eval/comparison-corpus.mjs'), importAt('runtime/instructions/opulent2.mjs'),
+    importAt(release.stateContract.module), import('e2b')])
+}
+
 export async function launch({ release, file, authorization, source }) {
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, release.retrievalProfile, 'Select Voyage before runtime imports')
   for (const name of ['RUNA_CLOUD_KEY', 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']) assert(process.env[name], `Missing credential: ${name}`)
-  const importAt = path => import(pathToFileURL(join(release.workspace, path)))
-  const [broadModule, modelModule, coreModule, providerModule, e2bModule, corpusModule, instructionModule, handoffModule, sdk] = await Promise.all([
-    importAt('runtime/broad-legal-eval.mjs'), importAt('runtime/model.mjs'), importAt('runtime/core.mjs'), importAt('runtime/model-provider.mjs'),
-    importAt('runtime/e2b.mjs'), importAt('eval/comparison-corpus.mjs'), importAt('runtime/instructions/opulent2.mjs'),
-    importAt(release.stateContract.module), importAt('node_modules/e2b/dist/index.mjs')])
+  const [broadModule, modelModule, coreModule, providerModule, e2bModule, corpusModule, instructionModule, handoffModule, sdk] = await loadRuntimeModules(release)
   assert.equal(instructionModule.OPULENT2_TASK_APPENDIX, release.prompts.appendix)
   assert.equal(handoffModule.OPULENT2_HANDOFF_VERSION, release.stateContract.version)
   assert.equal(release.stateContract.inlineByteLimit, handoffModule.OPULENT2_HANDOFF_LIMITS.snapshotBytes)

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
+import { spawnSync } from 'node:child_process'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -11,6 +12,20 @@ import { runExperiment, runSequential, seedCheckpoint } from './runner.mjs'
 import { freezeComparison, publicFingerprint, requireProvingAcceptance, validateFreshSelection } from './tasks.mjs'
 import { validateInitialAssembly, validatePreparedReceipt, verifyCarryForward, verifyNestedWork } from './validate.mjs'
 import { reconcileHarvey } from './live.mjs'
+
+test('live module preparation uses the canonical SDK in a fresh network-disabled process', () => {
+  const result = spawnSync(process.execPath, ['--import', './eval/opulent2-fixed/offline-guard.mjs', '--input-type=module', '-e', `
+    import assert from 'node:assert/strict';
+    const { loadRuntimeModules } = await import('./eval/opulent2-fixed/live.mjs');
+    const modules = await loadRuntimeModules({ workspace: process.cwd(), stateContract: { module: 'runtime/opulent2-handoff.mjs' } });
+    const canonical = await import('e2b');
+    assert.equal(modules[8].Sandbox, canonical.Sandbox);
+    assert.equal(modules[8].SandboxNotFoundError, canonical.SandboxNotFoundError);
+    assert.equal(typeof modules[0].createBroadHarness, 'function');
+    assert.equal(typeof modules[2].createRuntime, 'function');
+  `], { cwd: WORKSPACE, encoding: 'utf8', timeout: 30000 })
+  assert.equal(result.status, 0, result.stderr || result.error?.message)
+})
 
 const hash = label => sha(label)
 const root = join(LAUNCH, `offline-tests-${randomUUID()}`)
