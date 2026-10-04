@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { renderProfessionalInstructions } from './professional.mjs'
 import { renderCapyInstructions } from './capy.mjs'
+import { renderOpulent2Instructions, OPULENT2_PROFILE } from './opulent2.mjs'
 
 const sha256 = text => createHash('sha256').update(text).digest('hex')
 const manifestText = readFileSync(new URL('./manifest-v1.json', import.meta.url), 'utf8')
@@ -59,6 +60,7 @@ export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
+  if (profile === OPULENT2_PROFILE) return renderOpulent2Instructions({ appendix, variant })
   if (profile === 'opulent-capy-v1') return renderCapyInstructions({ appendix, variant })
   if (profile === 'opulent-professional-v1') return renderProfessionalInstructions({ appendix, variant })
   if (profile === 'opulent-delivery-v12') {

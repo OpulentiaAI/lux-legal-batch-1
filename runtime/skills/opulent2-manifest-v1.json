@@ -1,0 +1,19 @@
+{
+  "version": "opulent2-skills-v1",
+  "source": "Opulent2 runtime-specific desktop and child-session procedures; retained data-analysis reference",
+  "destinationRoot": "/opt/opulent/skills",
+  "skills": [
+    {
+      "name": "opulent2-computer-use",
+      "artifactSha256": "bc06fac9b6ff00cd2666ede03ba309bb2eba23dbee19ca3c596c9f087541839e"
+    },
+    {
+      "name": "opulent2-child-sessions",
+      "artifactSha256": "d74612c2c748c60aa5a1df74eaf43e14f0f26230d6d461468f57e70236d38c5b"
+    },
+    {
+      "name": "data-analysis",
+      "artifactSha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3"
+    }
+  ]
+}

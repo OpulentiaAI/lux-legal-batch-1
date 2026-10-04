@@ -67,12 +67,12 @@ export const CAPY_TOOL_POLICY = Object.freeze({
   }),
 });
 
-export function capyInitialToolDefinitions() {
-  return initialTools.map(name => CAPY_TOOL_DEFINITIONS[name]);
+export function capyInitialToolDefinitions(definitions = CAPY_TOOL_DEFINITIONS, initial = initialTools) {
+  return initial.map(name => definitions[name]);
 }
 
-export function capyCodemodeDefinitions() {
-  return allowedTools.map(name => CAPY_TOOL_DEFINITIONS[name]).filter(definition => definition.codemodePath);
+export function capyCodemodeDefinitions(definitions = CAPY_TOOL_DEFINITIONS) {
+  return Object.values(definitions).filter(definition => definition.codemodePath);
 }
 
 function compactType(schema) {
@@ -84,11 +84,11 @@ function compactType(schema) {
   return schema.type === 'integer' ? 'number' : schema.type ?? 'unknown';
 }
 
-export function capyCodemodeListing() {
-  const entries = capyCodemodeDefinitions().map(definition => {
+export function capyCodemodeListing(definitions = CAPY_TOOL_DEFINITIONS, initial = initialTools) {
+  const entries = capyCodemodeDefinitions(definitions).map(definition => {
     const { properties, required = [] } = definition.inputSchema;
     const keys = Object.entries(properties ?? {}).map(([key, schema]) => `${key}${required.includes(key) ? '' : '?'}: ${compactType(schema)}`).join(', ');
-    return `  ${definition.codemodePath}({${keys}})${initialTools.includes(definition.name) ? ` — function tool ${definition.name}, same input` : ''}`;
+    return `  ${definition.codemodePath}({${keys}})${initial.includes(definition.name) ? ` — function tool ${definition.name}, same input` : ''}`;
   });
   return `<codemode>\nOnly these paths are callable inside execute as await tools.<namespace>.<name>(input). Inputs are strict. await describe("namespace.name", "key"?) returns the exact current definition/schema; await search({query?, namespace?, limit?}) discovers only this allowlist. {} means an object whose full shape is available on demand. Function mirrors use identical input. No provider connectors are registered by this profile.\n${entries.join('\n')}\n</codemode>`;
 }

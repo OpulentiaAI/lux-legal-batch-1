@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "name": "opulent2-machine-v1",
+  "architecture": "amd64",
+  "sourceTemplateId": "aacky3169dfjvjyw7bsu",
+  "sourceImageSha256": "e85fdd87dfeebc02f178d011fbb43a5511cf6275a364bdef57fe611d340dbeba",
+  "executable": "/usr/local/bin/agrep",
+  "resolvedExecutable": "/usr/bin/tre-agrep",
+  "version": "tre-agrep (TRE agrep) 0.8.0",
+  "packages": [
+    {
+      "name": "libtre5",
+      "version": "0.8.0-7",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/t/tre/libtre5_0.8.0-7_amd64.deb",
+      "sha256": "6975c1652a051f8e8eda22515d9827e2609a86efb72f95dc477f1a4644271532"
+    },
+    {
+      "name": "tre-agrep",
+      "version": "0.8.0-7",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/t/tre/tre-agrep_0.8.0-7_amd64.deb",
+      "sha256": "dda4ffba5b1837e60f386ed3dd92af1546d0e2ba450c1def2699b25ebd262087"
+    }
+  ]
+}
