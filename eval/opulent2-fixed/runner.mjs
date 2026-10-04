@@ -122,8 +122,8 @@ export async function main(args = process.argv.slice(2)) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { console.log(JSON.stringify(await main())) } catch (error) {
+  main().then(result => console.log(JSON.stringify(result))).catch(error => {
     console.error(JSON.stringify({ status: 'failed', errorClass: error.name, message: error.message }))
     process.exitCode = 1
-  }
+  })
 }
