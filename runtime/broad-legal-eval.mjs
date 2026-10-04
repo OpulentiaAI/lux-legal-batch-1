@@ -22,6 +22,7 @@ import { probeOpulent2Machine } from './opulent2-machine.mjs'
 import { parseOpulent2Handoff, serializeOpulent2Handoff } from './opulent2-handoff.mjs'
 import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
+import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
 import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
@@ -471,7 +472,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const capyRuntimeSources = capy ? Object.fromEntries(['core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
     'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', '../package-lock.json',
-    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : [])]
+    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,
@@ -495,6 +496,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       runtimeCapabilities: [...capyPolicy.runtimeCapabilities], networkPolicy: network } : {}),
     ...(opulent2 ? { opulent2: { version: OPULENT2_PROFILE, chainId: opulent2Handoff.chainId, taskId: opulent2Handoff.taskId, attemptId: opulent2Handoff.attemptId,
       predecessorSnapshotSha256: predecessor?.sha256 ?? null,
+      sandboxLease: OPULENT2_SANDBOX_LEASE_POLICY,
       computer: { ...desktopConfig, readiness: 'validated after corpus and skill hardening in every root/child/reconnected VM' },
       carryForwardPolicy: 'successful-task-only-cumulative-memory-drive-v1', assemblyPolicy: 'opulent2-prepared-request-v1' } } : {}),
     ...(deliveryV9 ? { delivery: { version: instructionProfile, rlmHandoffPolicy, scriptTopLevelAwait: true,
@@ -931,7 +933,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         const details = collect()
         runDetails = workProduct ? { ...details, deliverables: deliverables ?? [], missingDeliverables: missingDeliverables ?? [],
           artifactPaths: [details.audit.evidenceArtifact] } : details
-        if (completed.status !== 'completed' || typeof completed.output !== 'string' || details.trace.some(entry => entry.stage === 'sandbox_pause_failed')) {
+        if (completed.status !== 'completed' || typeof completed.output !== 'string' || details.trace.some(entry => entry.stage === 'sandbox_pause_failed' || opulent2 && entry.stage === 'opulent2_sandbox_lease_failed')) {
           const error = new Error('Broad legal session failed')
           Object.assign(error, details, ...(workProduct ? [{ deliverables: deliverables ?? [], missingDeliverables: missingDeliverables ?? [],
             artifactPaths: [details.audit.evidenceArtifact] }] : []))
@@ -1097,6 +1099,7 @@ except FileNotFoundError:
         let messages = [], events = [], evidence = new Map()
         if (session) {
           try {
+            if (opulent2) completed = runtime.store.get('sessions', session.id)
             messages = runtime.store.get('conversations', session.id)?.messages ?? []
             events = runtime.store.list('events').filter(event => event.session_id === session.id)
             evidence = runtime.context(session.id).evidence

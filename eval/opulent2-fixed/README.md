@@ -58,6 +58,8 @@ Opulent2 summary repair keeps the same complete input, two-attempt limit, hard c
 
 The summary contract preserves alternatives, conditions and uncertainty; the lead must still reopen decisive sources after compaction. Mandatory nesting stops at the grandchild even if an assignment repeats it, and the post-draft delegated review belongs only to the lead rather than recursively to every reviewer.
 
+Opulent2 renews each active owned VM's unchanged one-hour lease at half-window intervals through the real E2B timeout API, including during native answerer and compaction calls. Renewal is serialized and bounded; conservative expiry advances only after acknowledgement. Resource renewal never extends a command's original deadline or changes model, step, token, request or execute budgets. Pause/kill refresh the collection window, then stop and drain renewal before releasing the VM; resumed work attaches to the same owned ID with a new lease controller. Renewal failure remains an infrastructure failure, never a silent replacement VM. Final acceptance rereads the root's settled state rather than trusting an earlier completion receipt. The effective policy and helper source hash are included in provenance. Offline tests do not establish live E2B continuity or native provider health.
+
 ## Only after both proving tasks pass
 
 The parent reviews the actual assignments/findings, desktop images, search, memory/Drive readback and saved deliverables. A separate `opulent2-fixed-proving-acceptance-v1` document has `issuer:"parent"`, an actual `reference`, `checkpointSha256` (file bytes), `resultsSha256=SHA256(JSON.stringify(checkpoint.rows.map(row=>row.opulent2.completed)))`, and `executionAndMeaningfulWorkPassed:true`.

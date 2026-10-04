@@ -44,6 +44,7 @@ import { createOpulent2MachineTools } from './opulent2-machine.mjs';
 import { createOpulent2DriveTools, materializeOpulent2Drive } from './tools/opulent2-drive.mjs';
 import { prepareOpulent2Task, exportOpulent2Handoff } from './opulent2-handoff.mjs';
 import { checkOpulent2DriveReadback } from './opulent2-completion.mjs';
+import { createOpulent2SandboxLease } from './opulent2-sandbox-lease.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -195,6 +196,9 @@ export function createRuntime(options = {}) {
         if (type === 'capy_report_requested') { ctx.stopRequested = true; ctx.capyReport = data; }
         if (capyEnabled && type === 'capy_process_finished') void trackInvocation(tickCapy()).catch(error => event(id, 'capy_wait_failed', { error: safeError(error) }));
         if (type === 'message_user' && data.block_on_user) ctx.stopRequested = true;
+        if (opulent2 && type === 'opulent2_sandbox_lease_failed' && !['cancelled', 'stopped', 'terminated'].includes(store.get('sessions', id).status)) {
+          update(id, { status: 'failed', error: data.error, pending_child_completion: false });
+        }
         return result;
       },
       startSession: args => startSession({ ...args, parent_session_id: id }),
@@ -373,6 +377,7 @@ export function createRuntime(options = {}) {
   }
 
   async function ensureSandbox(ctx, desktop = false) {
+    if (opulent2 && ctx.sandboxLease?.failure) throw ctx.sandboxLease.failure;
     if (!ctx.sandbox) {
       ctx.provisioning ??= (async () => {
         ctx.signal.throwIfAborted();
@@ -390,7 +395,7 @@ export function createRuntime(options = {}) {
           }
           ctx.signal.throwIfAborted();
           ctx.sandbox = sandbox;
-          ctx.sandboxDeadlineAt = sandboxDeadlineAt;
+          if (!opulent2) ctx.sandboxDeadlineAt = sandboxDeadlineAt;
           if (capyEnabled) {
             const run = sandbox.commands.run.bind(sandbox.commands);
             sandbox.commands.run = (command, opts = {}) => run(`setpriv --no-new-privs -- /bin/sh -c '${command.replaceAll("'", "'\\''")}'`, { ...opts, user: 'user' });
@@ -409,6 +414,10 @@ export function createRuntime(options = {}) {
                 return original(command, { ...rest, envs: { ...(rlmNoSecrets ? {} : Object.fromEntries(ctx.secrets)), ...rest.envs } });
               }
               : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
+          }
+          if (opulent2) {
+            ctx.sandboxLease = createOpulent2SandboxLease(ctx);
+            await ctx.sandboxLease.renew();
           }
           await sandbox.files.makeDir(ctx.workspace);
           ctx.signal.throwIfAborted();
@@ -432,9 +441,10 @@ export function createRuntime(options = {}) {
           }
         } catch (error) {
           if (sandbox) {
-            ctx.sandbox = undefined;
+            if (!opulent2) ctx.sandbox = undefined;
             let cleanupError;
             try { await sandbox.kill(); } catch (failure) { cleanupError = failure; }
+            ctx.sandbox = undefined;
             if (!cleanupError) sandboxHandles.delete(ctx.sessionId);
             update(ctx.sessionId, { sandbox_id: cleanupError ? sandbox.sandboxId : null, desktop_ready: false });
             if (cleanupError) {
@@ -458,6 +468,7 @@ export function createRuntime(options = {}) {
       })();
       try { await ctx.desktopStarting; } finally { ctx.desktopStarting = undefined; }
     }
+    if (opulent2) await ctx.sandboxLease.ensure();
   }
 
   function allocate(args = {}) {
@@ -745,6 +756,7 @@ export function createRuntime(options = {}) {
       }
       throw new Error('Agent step budget exhausted');
     } catch (error) {
+      const failure = (opulent2 ? ctx.sandboxLease?.failure : undefined) ?? error;
       if (!capyEnabled && error.inferenceAttempts) event(id, 'model_failed', { error: safeError(error), request_attempts: error.inferenceAttempts, usage_unknown: true });
       for (const [key, value] of Object.entries(error.compactionUsage ?? {})) usage[key] = (usage[key] ?? 0) + value;
       if (error.compactionUsage) {
@@ -752,10 +764,11 @@ export function createRuntime(options = {}) {
         event(id, 'context_compaction_failed', { usage: error.compactionUsage, error: safeError(error) });
       }
       const currentStatus = store.get('sessions', id)?.status;
-      update(id, { status: ctx.signal.aborted ? (['sleeping', 'terminated', ...(capyEnabled ? ['stopped'] : [])].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(error),
-        ...(capyEnabled && !ctx.signal.aborted ? { pending_child_completion: false, capy_completion_id: randomUUID() } : {}) });
-      event(id, 'session_failed', { error: safeError(error) });
-      if (capyEnabled && !ctx.signal.aborted) await deliverCapyCompletion(id);
+      const cancelled = ctx.signal.aborted && (!ctx.sandboxLease?.failure || ['cancelled', 'stopped', 'terminated'].includes(currentStatus));
+      update(id, { status: cancelled ? (['sleeping', 'terminated', ...(capyEnabled ? ['stopped'] : [])].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(failure),
+        ...(capyEnabled && !cancelled ? { pending_child_completion: false, capy_completion_id: randomUUID() } : {}) });
+      event(id, 'session_failed', { error: safeError(failure) });
+      if (capyEnabled && !cancelled) await deliverCapyCompletion(id);
     } finally {
       checkpoint();
       const livePreview = store.list('previews').some(preview => preview.session_id === id && Date.parse(preview.expires_at) > Date.now());
@@ -763,7 +776,7 @@ export function createRuntime(options = {}) {
       const liveCapyProcess = capyEnabled && store.list('capy_operations').some(operation => operation.session_id === id && operation.kind === 'process' && operation.status === 'running');
       if (ctx.sandbox && !ctx.signal.aborted && !livePreview && !liveWorkflow && !liveCapyProcess && !(rlmEnabled && ctx.rlm?.resident())) {
         try { await ctx.sandbox.pause(); ctx.sandbox = undefined; ctx.computer = undefined; }
-        catch (error) { event(id, 'sandbox_pause_failed', { error: safeError(error) }); await ctx.sandbox.kill().catch(() => {}); ctx.sandbox = undefined; update(id, { sandbox_id: null, desktop_ready: false }); }
+        catch (error) { event(id, 'sandbox_pause_failed', { error: safeError(error) }); await ctx.sandbox.kill().catch(() => {}); ctx.sandbox = undefined; update(id, { ...(!opulent2 ? { sandbox_id: null } : {}), desktop_ready: false }); }
       }
     }
   }
@@ -862,6 +875,7 @@ export function createRuntime(options = {}) {
     const ctx = contexts.get(id);
     await ctx?.capyExecutor?.close?.();
     await ctx?.capyProcesses?.close();
+    await ctx?.sandboxLease?.release(() => {});
     update(id, { status: 'stopped' });
     ctx?.controller.abort(new Error('Session stopped'));
     if (workers.has(id)) await workers.get(id);
@@ -901,7 +915,10 @@ export function createRuntime(options = {}) {
     const sandboxId = ownedSandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
     let cleanupError;
     try {
-      if (ownedSandbox) { if (ctx) ctx.sandbox = undefined; await ownedSandbox.kill(); }
+      if (ownedSandbox) {
+        if (ctx && !opulent2) ctx.sandbox = undefined;
+        try { await ownedSandbox.kill(); } finally { if (ctx) ctx.sandbox = undefined; }
+      }
       else if (sandboxId) {
         const sandbox = await (options.connect ?? connectSandbox)(sandboxId, { ...config, desktop: false });
         await sandbox.kill();
@@ -1039,6 +1056,7 @@ export function createRuntime(options = {}) {
         await Promise.allSettled([...workers.values()]);
         await Promise.allSettled([...workflowCalls.values()]);
         while (invocations.size) await Promise.allSettled([...invocations]);
+        for (const ctx of contexts.values()) await ctx.sandboxLease?.release(() => {});
         if (errors.length) throw new AggregateError(errors, 'Runtime quiescence cleanup failed');
       })();
       return quiescence;

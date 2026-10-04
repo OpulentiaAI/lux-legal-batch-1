@@ -21,6 +21,8 @@ Each root and descendant's registered, dispatcher-allowed and initially visible 
 
 Capability omissions, failed wiring, missing observations or cleanup/accounting defects are **execution failures to diagnose, repair and retry**, not legal-score penalties or invented successes. Failed and interrupted attempts remain visible. Fixing source or policy requires a new release/run identity; changed source cannot be smuggled into a resumed run.
 
+Active Opulent2 VMs retain the configured one-hour renewable lease, with real owned-ID renewals at half-window intervals and bounded cancellable requests. Renewal covers active tools and native inference, preserves immutable command deadlines, and stops before pause, termination or runtime release. A failed renewal is not explicit user cancellation and cannot justify silently replacing lost backing files. Provenance binds the lease policy and implementation; final root status is checked after quiescence and collection. Live lease continuity and native chat health are separate from mocked lifecycle tests and from legal quality.
+
 ## Release, accounting and grading
 
 The release pins the final clean source commit and source-file hashes; exact model/catalogue, budgets, corpus/retrieval, prompts/appendix, tool schemas/dispatcher grants, state API/policy/snapshot, task set, protocol, Harvey sources, prepared VM image and replay/evidence policy. A separate parent authorization binds the release's **file-byte hash**, stage and run ID. Drafts and offline tests cannot authorize live calls. A changed release, source, authorization, initial state or policy rejects resume. Output files live only in the new private launch scratch.
