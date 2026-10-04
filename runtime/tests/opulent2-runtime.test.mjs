@@ -24,7 +24,7 @@ test('Opulent2 pins its exact addendum while preserving the historical instructi
   const historical = renderInstructions({ profile: 'opulent-capy-v1' })
   const rendered = renderInstructions({ profile: OPULENT2_PROFILE })
   assert.equal(hash(historical.systemPrompt), '797b5c0de8fff9f570340a601f11e67707c263cffc8ccc72bfa6d51292cdfd54')
-  assert.equal(hash(OPULENT2_TASK_APPENDIX), 'a2bd76c92f7dfd3d9201a20d62e44e1af451b30b3b20505209c3769eb251bd37')
+  assert.equal(hash(OPULENT2_TASK_APPENDIX), 'cefadb53fb4aec0a6b62f4ed5d0bb2f0202315e75f8cde58c65c9ed342c1ff64')
   assert.equal(rendered.systemPrompt, `${historical.systemPrompt.replace('You are Opulent,', 'You are Opulent2,')}\n\n${OPULENT2_TASK_APPENDIX}`)
   assert.equal(rendered.provenance.effectivePromptSha256, hash(rendered.systemPrompt))
   assert.equal(rendered.provenance.foundation.effectivePromptSha256, hash(historical.systemPrompt))
@@ -41,11 +41,18 @@ test('Opulent2 delivers contradiction checking and source-supported persistence 
   const task = opulent2TaskPrompt({ question: 'Independent public request.', taskPath: '/task', outputPath: '/output' })
   for (const prompt of [system, task]) {
     assert.match(prompt, /challenge the draft's decisive claims/)
+    assert.match(prompt, /After drafting, send the actual draft or its exact decisive claims to a child for review/)
+    assert.match(prompt, /Resolve legal classification from the complete operative statutory definition, including each alternative and condition/)
+    assert.match(prompt, /After context compaction, reopen the primary sources and task materials supporting decisive classifications, timing rules and negative factual claims/)
+    assert.match(prompt, /Missing facts remain unknown, not established negatives/)
+    assert.match(prompt, /Scope each procedure and deadline to the route whose conditions are established/)
     assert.match(prompt, /contradictory text, exceptions and scope limits, with exact source quotations/)
     assert.match(prompt, /read the complete provision and its surrounding paragraphs/)
     assert.match(prompt, /distinguish absence of a rule from uncertainty about its application/)
     assert.match(prompt, /For each legal proposition retained in memory or Drive, include its source identity, a short supporting quotation and its applicability limits/)
     assert.match(prompt, /read back the entire final saved file, paging when necessary; a header or preview is insufficient/)
+    assert.match(prompt, /Readback means the content is returned to you, not merely loaded inside a program/)
+    assert.match(prompt, /Do not replace it with head\/tail slices, a length or a hash/)
     assert.match(prompt, /do not treat an unfinished assignment as evidence/)
     assert.doesNotMatch(prompt, /1031-1|Orion|Vega|doc-06:s0158/)
   }
@@ -111,7 +118,8 @@ test('a second isolated task receives genuine saved memory and Drive once in its
   const first = await fixture(t, { model: async () => ++turn === 1
     ? callsResponse(['memory_save', { scope: 'project', file: 'lesson.md', title: 'Verified source lesson', description: 'Read before relying on this lesson.', body: 'FIRST_MEMORY_BODY_SENTINEL' }],
       ['drive_write', { scope: 'project', path: 'source-check.md', content: 'FIRST_DRIVE_BODY_SENTINEL' }])
-    : completion('Offline first task complete') })
+    : turn === 2 ? callsResponse(['execute', { code: 'return await tools.drive.read({scope:"project",path:"source-check.md"});' }])
+      : completion('Offline first task complete') })
   const root = await first.runtime.startSession({ prompt: 'FIRST_ASSIGNMENT' })
   assert.equal((await first.runtime.waitSession(root.id)).status, 'completed')
   const saved = await first.runtime.exportOpulent2Handoff(root.id)
@@ -135,4 +143,77 @@ test('a second isolated task receives genuine saved memory and Drive once in its
   assert.equal(exported.sequence, 2)
   assert.equal(first.runtime.config.capyMemory.projectId, second.runtime.config.capyMemory.projectId)
   assert.notEqual(first.runtime.config.stateDir, second.runtime.config.stateDir)
+})
+
+test('Opulent2 repairs incomplete Drive observations before either terminal delivery path', async t => {
+  for (const terminal of ['message_user', 'assistant']) await t.test(terminal, async t => {
+    const content = `${'Offline prefix. '.repeat(90)}FULL_MIDDLE_MUST_BE_OBSERVED${' Offline suffix.'.repeat(90)}`
+    let turn = 0
+    const { runtime, sandboxes } = await fixture(t, { config: { maxSteps: 8 }, model: async messages => {
+      turn++
+      if (turn === 1) return callsResponse(['drive_write', { scope: 'project', path: 'review.md', content }])
+      if (turn === 2) return callsResponse(['execute', { code: 'const r = await tools.drive.read({scope:"project",path:"review.md"}); return {bytes:r.content.length,head:r.content.slice(0,500),tail:r.content.slice(-500)};' }])
+      if (turn === 3) return terminal === 'message_user'
+        ? callsResponse(['message_user', { state: 'final', text: 'Premature offline completion' }])
+        : completion('Premature offline completion')
+      if (turn === 4) {
+        assert.match(messages.at(-1).content, /Completion was not accepted/)
+        assert.match(messages.at(-1).content, /review\.md/)
+        assert(!runtime.store.list('events').some(event => event.type === 'session_completed' || event.type === 'capy_user_message'))
+        return callsResponse(['execute', { code: 'return await tools.drive.read({scope:"project",path:"review.md"});' }])
+      }
+      assert.equal(turn, 5)
+      assert(messages.some(message => message.role === 'tool' && message.content.includes('FULL_MIDDLE_MUST_BE_OBSERVED')))
+      return terminal === 'message_user'
+        ? callsResponse(['message_user', { state: 'final', text: 'Verified offline completion' }])
+        : completion('Verified offline completion')
+    } })
+    const root = await runtime.startSession({ prompt: 'Save and inspect the complete offline Drive artifact.' })
+    const result = await runtime.waitSession(root.id)
+    assert.equal(result.status, 'completed', result.error)
+    assert.equal(result.output, 'Verified offline completion')
+    assert.equal(result.steps, 5)
+    assert.equal(sandboxes.length, 1)
+    const deferred = runtime.store.list('events').filter(event => event.type === 'opulent2_completion_deferred')
+    assert.equal(deferred.length, 1)
+    assert.deepEqual(deferred[0].data.pending.map(file => file.path), ['review.md'])
+    assert(!JSON.stringify(deferred[0].data).includes('FULL_MIDDLE_MUST_BE_OBSERVED'))
+    const saved = await runtime.exportOpulent2Handoff(root.id)
+    assert.equal(saved.drive.scopes[0].files[0].content, content)
+  })
+})
+
+test('Opulent2 still verifies Drive after a pending child wakes a provisionally finished lead', async t => {
+  const content = 'CHILD_WAKE_READBACK_BODY'
+  let releaseChild, turn = 0
+  const childReady = new Promise(resolve => { releaseChild = resolve })
+  const { runtime } = await fixture(t, { model: async messages => {
+    if (messages.find(message => message.role === 'user').content === 'PENDING_CHILD') {
+      await childReady
+      return completion('Completed child work')
+    }
+    if (++turn === 1) return callsResponse(
+      ['drive_write', { scope: 'project', path: 'child-wake.md', content }],
+      ['subagent_create', { tasks: [{ prompt: 'PENDING_CHILD' }], start: { machine: 'fresh' } }],
+    )
+    if (turn === 2 || turn === 3) return completion('Premature completion')
+    if (turn === 4) {
+      assert.match(messages.at(-1).content, /Completion was not accepted/)
+      assert(messages.some(message => JSON.stringify(message).includes('Completed child work')))
+      return callsResponse(['execute', { code: 'return await tools.drive.read({scope:"project",path:"child-wake.md"});' }])
+    }
+    assert.equal(turn, 5)
+    return completion('Verified after child wake')
+  } })
+  const put = runtime.store.put.bind(runtime.store)
+  runtime.store.put = (table, id, value) => {
+    const result = put(table, id, value)
+    if (table === 'events' && value.type === 'capy_final_delivered') releaseChild()
+    return result
+  }
+  const root = await runtime.startSession({ prompt: 'Complete a task with a pending child and saved Drive file.' })
+  const result = await runtime.waitSession(root.id)
+  assert.equal(result.status, 'completed', result.error)
+  assert.equal(result.output, 'Verified after child wake')
+  assert.equal(runtime.store.list('events').filter(event => event.type === 'opulent2_completion_deferred').length, 1)
 })

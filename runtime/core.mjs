@@ -43,6 +43,7 @@ import { OPULENT2_TOOL_POLICY, OPULENT2_TOOL_DEFINITIONS } from './opulent2-poli
 import { createOpulent2MachineTools } from './opulent2-machine.mjs';
 import { createOpulent2DriveTools, materializeOpulent2Drive } from './tools/opulent2-drive.mjs';
 import { prepareOpulent2Task, exportOpulent2Handoff } from './opulent2-handoff.mjs';
+import { checkOpulent2DriveReadback } from './opulent2-completion.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -531,6 +532,17 @@ export function createRuntime(options = {}) {
       if (capyEnabled) ctx.capyImageUsage = { images: 0, bytes: 0 };
       checkpoint();
     };
+    const checkOpulent2Completion = async () => {
+      if (!opulent2 || row.parent_session_id) return true;
+      const readback = await checkOpulent2DriveReadback(ctx);
+      if (!readback.pending.length) return true;
+      event(id, 'opulent2_completion_deferred', readback);
+      messages.push({ role: 'user', content: `Completion was not accepted: the following saved Drive files have no verified full-content observation in a completed model request. Reading inside execute and returning only a preview, byte count or hash does not deliver the file to you. Return the complete read result, for example: return await tools.drive.read({scope: "project", path: "the exact pending path"}); then inspect that returned content and finish in this same session. Do not recreate completed work or change its substantive conclusions merely to satisfy this transport check. Existing budgets and all task requirements still apply. Pending readbacks: ${JSON.stringify(readback.pending)}` });
+      ctx.stopRequested = false;
+      ctx.capyReport = null;
+      checkpoint();
+      return false;
+    };
     try {
       update(id, { status: 'running' });
       if (capyEnabled || row.repos?.length || config.eagerChildSandbox === true && row.parent_session_id) await ensureSandbox(ctx);
@@ -665,6 +677,7 @@ export function createRuntime(options = {}) {
           if (queuedMessages().length) continue;
           ctx.signal.throwIfAborted();
           const pendingChildren = capyEnabled && pendingCapyChildren(id).length > 0;
+          if (!pendingChildren && !await checkOpulent2Completion()) continue;
           update(id, { status: pendingChildren ? 'sleeping' : 'completed', output, usage, ...(capyEnabled ? { pending_child_completion: pendingChildren, capy_completion_id: randomUUID() } : {}) });
           event(id, pendingChildren ? 'capy_final_delivered' : 'session_completed', {});
           if (capyEnabled) await deliverCapyCompletion(id);
@@ -721,6 +734,7 @@ export function createRuntime(options = {}) {
         if (ctx.capyReport) {
           const report = ctx.capyReport;
           const pendingChildren = report.state === 'final' && pendingCapyChildren(id).length > 0;
+          if (report.state === 'final' && !pendingChildren && !await checkOpulent2Completion()) continue;
           update(id, { status: report.state === 'final' ? (pendingChildren ? 'sleeping' : 'completed') : 'blocked', pending_child_completion: pendingChildren, capy_completion_id: randomUUID(), output: report.output, attachments: report.files ?? [], usage });
           event(id, report.state === 'final' ? (pendingChildren ? 'capy_final_delivered' : 'session_completed') : 'session_blocked', { output_channel: report.target ? 'message_agent' : 'message_user' });
           ctx.emit('capy_user_message', { text: report.text, state: report.state, files: report.files ?? [] });

@@ -52,6 +52,8 @@ On failure, repair the actual defect and rerun the same launch command only if s
 
 When the adapter returns a result, `unvalidated-result.json` preserves its sanitized output before post-run verification. A failure receipt references that candidate for diagnosis; it is not an execution-success receipt, cannot advance the chain and is not eligible for comparison grading.
 
+The Opulent2 lead checks acknowledged Drive readbacks before accepting either a plain final answer or a final report. A read inside codemode followed by a head/tail, length or hash return is not a full-content observation. Missing observations produce a source-pinned, metadata-only correction in the same session so the model can return and inspect the actual content without restarting the task. This transport check is not a legal-quality judgment and does not replace post-run verification or substantive parent acceptance.
+
 ## Only after both proving tasks pass
 
 The parent reviews the actual assignments/findings, desktop images, search, memory/Drive readback and saved deliverables. A separate `opulent2-fixed-proving-acceptance-v1` document has `issuer:"parent"`, an actual `reference`, `checkpointSha256` (file bytes), `resultsSha256=SHA256(JSON.stringify(checkpoint.rows.map(row=>row.opulent2.completed)))`, and `executionAndMeaningfulWorkPassed:true`.

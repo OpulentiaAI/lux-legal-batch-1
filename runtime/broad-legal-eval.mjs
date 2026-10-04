@@ -471,7 +471,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const capyRuntimeSources = capy ? Object.fromEntries(['core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
     'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', '../package-lock.json',
-    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-handoff.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : [])]
+    ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,

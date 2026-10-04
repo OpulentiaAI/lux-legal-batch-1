@@ -238,6 +238,7 @@ export async function launch({ release, file, authorization, source }) {
         handoff: { ...handoffFile, contentSha256: handoff.sha256 }, validation }
     } catch (error) {
       const audit = immutable(join(directory, 'execution-failure.json'), { version: 'opulent2-fixed-execution-failure-v1', errorClass: error.name,
+        failureReason: safe(String(error.message ?? error.name)).slice(0, 2048),
         nativeAccounting: aggregateNative(captures.rows.filter(row => row.taskId === context.taskId && row.attempt === context.attempt)),
         details: safe((result ?? failure)?.audit ?? {}), candidateOutput, snapshotAvailable: !!snapshot, chainAdvanced: false, grading: 'ungraded; execution/wiring repair required' })
       error.audit = audit
