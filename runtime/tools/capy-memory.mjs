@@ -3,6 +3,7 @@ import { chmodSync, existsSync, lstatSync, mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { redact } from '../security.mjs';
+import { assertOpulent2ArtifactSafe } from './opulent2-drive.mjs';
 
 const VERSION = 'capy-memory-local-v1';
 const SCOPES = ['user', 'project-user', 'project'];
@@ -383,4 +384,83 @@ export function createCapyMemoryTools(ctx) {
       });
     },
   };
+}
+
+export const CAPY_MEMORY_TRANSFER_VERSION = 'capy-memory-transfer-v1';
+
+function transferConfiguration(ctx) {
+  if (ctx.config?.capyMemory?.transferEnabled !== true) throw new Error('Memory transfer requires explicit opt-in');
+  return configuration(ctx);
+}
+
+export function validateCapyMemoryTransfer(ctx, transfer) {
+  const config = transferConfiguration(ctx);
+  const exact = (value, fields) => value && typeof value === 'object' && !Array.isArray(value)
+    && Object.keys(value).sort().join(',') === [...fields].sort().join(',');
+  if (!exact(transfer, ['version', 'scopes']) || transfer.version !== CAPY_MEMORY_TRANSFER_VERSION
+    || !Array.isArray(transfer.scopes) || transfer.scopes.length !== config.mounts.length) throw new Error('Invalid memory transfer');
+  noCredentials(ctx, transfer);
+  assertOpulent2ArtifactSafe(ctx, transfer);
+  const seen = new Set();
+  for (const entry of transfer.scopes) {
+    const mount = config.mounts.find(candidate => candidate.scope === entry?.scope);
+    if (!exact(entry, ['scope', 'key', 'revision', 'topics', 'files']) || !mount || entry.key !== mount.key || seen.has(entry.scope)
+      || !Number.isSafeInteger(entry.revision) || entry.revision < 0 || !Array.isArray(entry.topics) || !Array.isArray(entry.files)) {
+      throw new Error('Memory transfer ownership or scope manifest is invalid');
+    }
+    seen.add(entry.scope);
+    if (entry.topics.some(topic => !topic || typeof topic !== 'object' || Array.isArray(topic)
+      || Object.keys(topic).some(field => !['file', 'title', 'description', 'body', 'lastConfirmed', 'kind', 'statedBy', 'repositories'].includes(field))
+      || !validFile(topic.file) || ['title', 'description'].some(field => typeof topic[field] !== 'string' || !topic[field].trim() || topic[field] !== oneLine(topic[field]))
+      || topic.title.length > 1024 || topic.description.length > 4096
+      || typeof topic.body !== 'string' || Buffer.byteLength(topic.body) > MAX_TOPIC_BYTES
+      || topic.statedBy !== undefined && (typeof topic.statedBy !== 'string' || topic.statedBy.length > 1024 || topic.statedBy !== oneLine(topic.statedBy))
+      || mount.scope !== 'project' && topic.repositories !== undefined
+      || mount.scope === 'project' && (!Array.isArray(topic.repositories) || !topic.repositories.length || topic.repositories.length > 64))
+      || entry.revision === 0 && entry.topics.length || new Set(entry.topics.map(topic => topic.file)).size !== entry.topics.length) {
+      throw new Error('Memory transfer topic manifest is invalid');
+    }
+    const files = snapshot(ctx, { topics: entry.topics });
+    if (entry.files.length !== Object.keys(files).length || new Set(entry.files.map(file => file?.path)).size !== entry.files.length
+      || entry.files.some(file => !exact(file, ['path', 'content', 'bytes', 'sha256']) || !Object.hasOwn(files, file.path)
+        || file.content !== files[file.path] || file.bytes !== Buffer.byteLength(files[file.path])
+        || file.sha256 !== createHash('sha256').update(files[file.path]).digest('hex'))) {
+      throw new Error('Memory transfer bytes or hashes differ from the authoritative topic state');
+    }
+  }
+  return transfer;
+}
+
+export async function exportCapyMemory(ctx) {
+  const config = transferConfiguration(ctx);
+  return withBacking(ctx, config, async db => {
+    const scopes = config.mounts.map(mount => {
+      const state = scopeState(db, mount), files = snapshot(ctx, state);
+      return { scope: mount.scope, key: mount.key, revision: state.revision, topics: state.topics,
+        files: Object.entries(files).map(([path, content]) => ({ path, content, bytes: Buffer.byteLength(content),
+          sha256: createHash('sha256').update(content).digest('hex') })) };
+    });
+    return validateCapyMemoryTransfer(ctx, { version: CAPY_MEMORY_TRANSFER_VERSION, scopes });
+  });
+}
+
+export async function importCapyMemory(ctx, transfer, { materialize = true } = {}) {
+  const config = transferConfiguration(ctx);
+  const validated = JSON.parse(JSON.stringify(validateCapyMemoryTransfer(ctx, transfer)));
+  if (typeof materialize !== 'boolean') throw new Error('Memory import materialize must be a boolean');
+  if (materialize && !ctx.sandbox && typeof ctx.ensureSandbox === 'function') await ctx.ensureSandbox();
+  return withBacking(ctx, config, async (db, remember) => {
+    if (db.prepare('SELECT COUNT(*) AS count FROM scopes').get().count !== 0) throw new Error('Memory import requires an empty backing store');
+    for (const mount of config.mounts) {
+      const entry = validated.scopes.find(scope => scope.scope === mount.scope);
+      const state = { version: VERSION, scope: mount.scope, key: mount.key, revision: entry.revision, topics: entry.topics };
+      db.prepare('INSERT INTO scopes(id,state) VALUES(?,?)').run(mount.key, JSON.stringify(state));
+      if (materialize) {
+        remember(mount);
+        await project(ctx, config, mount, snapshot(ctx, state));
+      }
+    }
+    return { version: CAPY_MEMORY_TRANSFER_VERSION, imported: true, materialized: materialize,
+      mounts: config.mounts.map(({ scope, mountPath, indexPath }) => ({ scope, mountPath, indexPath })) };
+  });
 }

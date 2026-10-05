@@ -1,0 +1,16 @@
+{
+  "criteria": [
+    {
+      "id": "coverage-evidence-only",
+      "requirement": "Report actual model-driven approved-tool integration outcomes without claiming legal quality or improvement.",
+      "pass": "Every claimed outcome is supported by the retained native trajectory and actual owned resources; unresolved gaps remain explicit.",
+      "fail": "Catalogue entries, operator probes or fabricated observations are represented as native tool execution.",
+      "deliverables": ["coverage.md"],
+      "sourceRefs": [],
+      "factRefs": [],
+      "minimalPass": "An independently verified infrastructure coverage matrix; no legal comparison score.",
+      "nearMiss": "A model-authored coverage report without independent invocation or observation evidence.",
+      "failureFamily": "infrastructure-evidence"
+    }
+  ]
+}

@@ -4,9 +4,11 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
+import { probePreparedDocumentTools } from './document-tools-image.mjs';
 
 export { probePreparedComputer } from './probe.mjs';
 export { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
+export { probePreparedDocumentTools } from './document-tools-image.mjs';
 
 const BRIDGE = '/tmp/computer-use/bridge.py';
 const PACKAGE = 'modal-computer-use==2.0.2';
@@ -15,6 +17,7 @@ const preparedSandboxes = new WeakMap();
 
 export function createComputer(sandbox, config = {}) {
   if (!sandbox?.commands?.run) throw new TypeError('connected E2B sandbox required');
+  if (config.computerBrowserPrewarm !== undefined && typeof config.computerBrowserPrewarm !== 'boolean') throw new TypeError('computerBrowserPrewarm must be a boolean');
   const prepared = config.computerPreparedImage === true;
   const python = prepared ? '/opt/computer-use/venv/bin/python' : '/tmp/computer-use/venv/bin/python';
   const run = async (command, timeoutMs = 120_000) => {
@@ -53,6 +56,7 @@ export function createComputer(sandbox, config = {}) {
     if (manifest.schema !== 1 || manifest.python_package !== PACKAGE || manifest.bridge_sha256 !== createHash('sha256').update(bridge).digest('hex')) {
       throw new Error('Prepared computer image is incompatible with this adapter');
     }
+    if (manifest.opulent2_machine?.documentTools) await probePreparedDocumentTools(sandbox, manifest.opulent2_machine.documentTools);
   };
   const ready = async () => {
     if (prepared) await verifyPreparedImage();
@@ -86,7 +90,7 @@ export function createComputer(sandbox, config = {}) {
     const browserArgs = ['--remote-debugging-port=9222', '--remote-debugging-address=127.0.0.1', '--remote-allow-origins=http://127.0.0.1:9222'];
     if (prepared) browserArgs.push('--no-first-run', '--no-default-browser-check');
     try {
-      const process = await sandbox.commands.run(`PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium ${prepared ? 'COMPUTER_USE_WINDOW_MANAGER=openbox COMPUTER_USE_BROWSER_GPU_MODE=off ' : ''}COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS='${JSON.stringify(browserArgs)}' ${python} -m modal_computer_use.daemon`, { background: true, timeoutMs: 120_000, rlmNoSecrets: true });
+      const process = await sandbox.commands.run(`PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium ${config.computerBrowserPrewarm === true ? 'COMPUTER_USE_BROWSER_PREWARM=1 ' : ''}${prepared ? 'COMPUTER_USE_WINDOW_MANAGER=openbox COMPUTER_USE_BROWSER_GPU_MODE=off ' : ''}COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS='${JSON.stringify(browserArgs)}' ${python} -m modal_computer_use.daemon`, { background: true, timeoutMs: 120_000, rlmNoSecrets: true });
       await process.disconnect();
     } catch {
       throw new Error('Computer daemon could not start');

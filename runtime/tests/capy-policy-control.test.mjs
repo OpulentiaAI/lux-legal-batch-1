@@ -325,6 +325,71 @@ test('core uses the same model callable for bounded compaction and keeps exact r
   assert.ok(requests.filter(row => row.phase === 'answerer').every(row => JSON.stringify(row.messages).length <= 300000));
 });
 
+test('repaired, exhausted and unknown summary attempts retain per-response ledgers while conserving observed session usage', async t => {
+  for (const outcome of ['repaired', 'exhausted', 'transport_failure']) await t.test(outcome, async t => {
+    let answererTurns = 0, summaryCalls = 0;
+    const bodies = new Map(), metadata = [];
+    const rejectedUsage = { prompt_tokens: 7, completion_tokens: 8192, total_tokens: 8199, completion_tokens_details: { reasoning_tokens: 7957 } };
+    const { runtime, root } = await capyFixture(t, { config: { contextCompaction: {
+      enabled: true, maxInputChars: 35000, maxSummaryInputChars: 30000, maxSummaryChars: 2000, maxSummaryTokens: 8192, recentGroups: 2, maxBatches: 32,
+    } }, model: async (messages, options) => {
+      metadata.push(options.capy_request_record_id);
+      if (options.phase === 'context_compaction') {
+        assert.equal(options.max_tokens, 8192);
+        assert.ok(JSON.stringify(messages).length <= 30000);
+        if (++summaryCalls === 2 && outcome === 'transport_failure') throw Object.assign(new Error('Fixture connection lost'), { inferenceAttempts: [{ attempt: 1, status: 503 }] });
+        const rejected = summaryCalls === 1 || outcome === 'exhausted';
+        const response = rejected
+          ? { id: `fixture-rejected-${summaryCalls}`, choices: [{ finish_reason: 'length', message: { role: 'assistant', content: 'Short truncated summary' } }], usage: rejectedUsage, inferenceAttempts: [{ attempt: 1, status: 200 }] }
+          : { ...completion('Complete concise fixture summary', 'fixture-repaired'), inferenceAttempts: [{ attempt: 1, status: 200 }] };
+        bodies.set(response.id, structuredClone(response));
+        return response;
+      }
+      if (++answererTurns > 2) return completion('Bounded context delivered', 'fixture-final');
+      const response = callsResponse(['read', { path: 'repair-ledger-fixture.txt' }]);
+      response.id = `fixture-answerer-${answererTurns}`;
+      response.choices[0].message.tool_calls[0].id = `fixture-read-${answererTurns}`;
+      return response;
+    } });
+    await writeFile(join(root, 'workspace', 'repair-ledger-fixture.txt'), 'x'.repeat(20000) + '\n');
+    const row = await runtime.startSession({ prompt: 'Verify bounded summary repair accounting' });
+    const finished = await runtime.waitSession(row.id);
+    assert.equal(finished.status, outcome === 'repaired' ? 'completed' : 'failed');
+    assert.equal(summaryCalls, 2);
+    const requests = runtime.store.list('capy_model_requests'), summaries = requests.filter(row => row.phase === 'context_compaction');
+    assert.equal(summaries.length, 2);
+    assert.equal(new Set(metadata).size, requests.length);
+    const inputs = summaries.map(row => JSON.parse(row.messages[1].content));
+    assert.equal(inputs[0].capySummaryContract.repair, null);
+    assert.equal(inputs[1].capySummaryContract.repair.reason, 'truncated');
+    assert.deepEqual(inputs[1].transcript, inputs[0].transcript);
+    assert.equal(inputs[1].previousSummary, inputs[0].previousSummary);
+    for (const request of summaries.filter(row => row.status === 'completed')) {
+      assert.deepEqual(request.usage, bodies.get(request.response_id).usage);
+      const event = runtime.store.list('events').find(row => row.type === 'model_usage' && row.data.capy_request_record_id === request.id);
+      assert.equal(event.data.response_id, request.response_id);
+      assert.deepEqual(event.data.usage, request.usage);
+      assert.deepEqual(event.data.request_attempts, [{ attempt: 1, status: 200 }]);
+    }
+    const observed = {};
+    for (const request of requests) for (const [key, value] of Object.entries(request.usage ?? {})) {
+      if (typeof value === 'number') observed[key] = (observed[key] ?? 0) + value;
+    }
+    assert.deepEqual(finished.usage, observed);
+    if (outcome === 'transport_failure') {
+      const failed = summaries.find(row => row.status === 'failed');
+      assert.equal(failed.response_id, null);
+      assert.equal(failed.usage_unknown, true);
+      assert.equal(failed.usage, undefined);
+      assert.deepEqual(failed.request_attempts, [{ attempt: 1, status: 503 }]);
+    }
+    const raw = runtime.store.get('conversations', row.id);
+    assert.equal(raw.messages.filter(row => row.role === 'tool').length, 2);
+    assert.ok(!raw.messages.some(row => row.content?.includes('truncated summary')));
+    if (outcome !== 'repaired') assert.equal(raw.context_checkpoint, undefined);
+  });
+});
+
 test('resumed child completions at the same step number deliver new actual results through unique persisted notification IDs', async t => {
   let childTurns = 0;
   const { runtime } = await capyFixture(t, { model: async messages => {
@@ -435,7 +500,8 @@ test('an explicitly changed Capy source fingerprint invalidates retained summari
   assert.equal((await runtime.waitSession(row.id)).status, 'completed');
   const stable = runtime.store.get('conversations', row.id).context_checkpoint;
   assert.equal(stable.provenance.policyFingerprintDigest, original.provenance.policyFingerprintDigest);
-  assert.equal(summaries[stableIndex].previousSummary, 'Derived stable fixture summary');
+  assert.equal(summaries.length, stableIndex);
+  assert.deepEqual(stable, original);
   const changedIndex = summaries.length;
   runtime.config.contextCompaction.policyFingerprint = 'fixture-corpus-instructions-runtime-v2';
   await runtime.messageSession(row.id, 'Continue under an explicitly changed source fingerprint');

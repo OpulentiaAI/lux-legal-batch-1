@@ -1,0 +1,34 @@
+# Real document and approved-tool coverage
+
+The lead owns the report. Exercise these 40 approved tools across the lead and its owned descendants:
+
+`bash`, `read`, `write`, `edit`, `apply_patch`, `execute`, `wait`, `todo_write`, `message_agent`, `message_user`, `task_create`, `task_update`, `task_get`, `task_list`, `subagent_create`, `subagent_start`, `subagent_get`, `subagent_list`, `subagent_message`, `subagent_stop`, `subagent_events`, `session_get`, `session_events`, `session_stop`, `operation_get`, `operation_list`, `operation_cancel`, `skill_list`, `skill_read`, `memory_save`, `browser`, `computer`, `lx_search`, `lx_chunk`, `lx_documents`, `agrep`, `drive_list`, `drive_read`, `drive_write`, `drive_delete`.
+
+Discover schemas only when needed. Return actual results from execute, not just their lengths, catalogue entries or claims. Do not dump every schema or whole transcripts. Use small connected workflows and avoid status-query loops. The 250-request bound is shared by root, descendants and compaction; cumulative token usage is recorded, not a session execution cap. Per-request context and output bounds still apply.
+
+## Local document workflows
+
+Read the installed data-analysis skill and the actual prepared CLI help. Run the supplied Python program `create-fixtures.txt` with the prepared Python virtualenv to create reproducible PDF, DOCX and image-only PDF inputs under the writable analysis directory. Its `.txt` filename preserves the unchanged public-material loader contract; Python executes the actual source directly. These are explicitly synthetic infrastructure fixtures, not legal evidence or mocked parser responses.
+
+Use the prepared `/usr/bin/opulent-document` CLI with `--workspace /tmp/broad-legal-workspace`, a local `--input`, and separate private output directories. Do not use mutable `/usr/local/bin` or workspace launchers. Its parse/search/render commands retain complete outputs in files and return bounded JSON. Return the actual small JSON reports in bash stdout or execute outcomes, without adding prose to stdout; the host joins these observed reports to native calls. Never dump the source binary, base64 pixels or full large extraction into conversation text. Record the real backend, input/output hashes and returned page/chunk/offset metadata. Also exercise the approved document-aware read tool with explicit `document_backend` values `pymupdf`, `anydoc` and `liteparse`, selecting small source page/chunk windows; use `auto` for ordinary text. Unreturned contents are not consulted evidence.
+
+- Parse only selected pages 2 and 24 of `native-pages.pdf` using PyMuPDF (`--pages 2,24`, or separate document-aware reads at offsets 2 and 24 with limit 1), then retrieve both returned excerpts and verify the page-specific markers. Show that the other pages were not included in the returned selection.
+- Convert `native-office.docx` using AnyDoc and read the actual bounded Markdown output. A successful `--version` does not establish office conversion.
+- Parse a selected page using LiteParse with local parsing, fixed offline English tessdata and no external OCR server. Use limited OCR on `native-scan.pdf`; report the actual text or explicit failure, without guessing what the OCR saw. Do not request unprepared languages or network downloads.
+- Run ripgrep-all against the actual PDF/document fixtures for a distinctive page marker and inspect genuine bounded matches. Use the helper's search command and available rga help rather than assuming an unverified adapter. Report a genuine no-match normally; do not synthesize matches.
+- Render one selected PDF page to a bounded image file, read its real dimensions and identity, and observe its actual pixels through the approved computer/browser image procedure. Serve it in a small local HTML preview at the approved localhost origin, labeling the image with its actual full rendered file path and output SHA256 in visible text. Obtain a closing browser DOM observation and screenshot so the host can join the observed source identity to transmitted pixels; also inspect the preview with computer. Keep original source and normalized output identities distinct.
+- Inspect installed local document/office/PDF/OCR/archive/text utilities when relevant. Installed packages are capabilities, not proof every utility or format was exercised; list missing, unsupported and untested paths honestly.
+
+## Connected runtime workflows
+
+- Track the work with a todo and task records. Create, update, get and list task records using actual IDs.
+- Read the child-session and computer guides. Demonstrate write/read/edit/apply_patch with ordinary scratch files and reread the final content.
+- Draft a useful document/corpus audit child and explicitly start it on a fresh VM. Have it receive a completed useful grandchild review, then return its completed findings. Give descendants the direct parent-report contract: message_agent with to="parent", state="final" and actual findings; never a terminal parent report inside execute or a guessed ancestor path. Inspect owned sessions/events and use both message_agent and subagent_message for bounded clarification. Do not propagate the whole coverage mandate recursively.
+- Have a separate disposable child call session_stop. Observe its sleeping state from its parent, explicitly park it with subagent_stop, and observe its stopped state. This branch is not the useful completed delegation.
+- Start a short background process, inspect its operation ID and register a real durable wait. Separately start, inspect/list, cancel and confirm a disposable long process. Do not stop the lead or unrelated processes.
+- Run lx_documents, genuine lx_search and lx_chunk with returned source IDs. Run real agrep with a one-character misspelling and inspect actual file/line text. Preserve the corpus and disclose genuine no-matches.
+- Create a small local HTML document under analysis from actual corpus text, serve it at the approved http://127.0.0.1:8765 origin, and inspect it through browser DOM and computer pixels. Reopen the decisive corpus source afterwards.
+- Save a short infrastructure note with memory_save and fully read its saved topic. Write/read/list a corresponding intentional Drive note. Separately create/read/delete a disposable Drive note and list to confirm deletion. Keep and fully reread the intentional note.
+- Send a nonterminal message_user report. Use message_agent for a real owned-agent message or completed report. Write and reread coverage.md, settle task/todo status and receive useful completed delegation before the lead finishes normally.
+
+The host independently verifies model-generated calls, actual results, transmitted observations, document artifacts, usage accounting and authenticated owned-VM cleanup. Your report alone is not proof of native coverage, legal quality or improvement.

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { posix as path } from 'node:path';
+import { OPULENT2_PROFILE } from './instructions/opulent2.mjs';
 
 const active = new Set(['idle', 'queued', 'starting', 'running', 'sleeping']);
 const terminal = new Set(['completed', 'failed', 'cancelled', 'interrupted', 'terminated', 'stopped', 'blocked']);
@@ -200,7 +201,7 @@ export function createCapyControlTools(ctx) {
     async subagent_list(args) { return page(children().filter(row => !args.status || row.status === args.status).map(row => ({ id: row.id, path: capyChildPath(store, sessionId, row.id), title: row.title, status: row.status, sandbox_id: row.sandbox_id, parent_session_id: row.parent_session_id })), args); },
     async subagent_message({ path: value, text }) {
       const row = capyOwnedChild(store, sessionId, value);
-      await ctx.messageSession(row.id, text);
+      await ctx.messageSession(row.id, text, ctx.config.instructionProfile === OPULENT2_PROFILE ? sessionId : null);
       return result(store.get('sessions', row.id));
     },
     async subagent_stop({ paths }) {
@@ -210,12 +211,12 @@ export function createCapyControlTools(ctx) {
     },
     async subagent_events({ path: value, ...args }) { return events(capyOwnedChild(store, sessionId, value).id, args); },
     async message_agent({ to, text, state }) {
-      if (to) return tools.subagent_message({ path: to, text });
+      if (to && !(ctx.config.instructionProfile === OPULENT2_PROFILE && to === 'parent')) return tools.subagent_message({ path: to, text });
       const parent = store.get('sessions', sessionId)?.parent_session_id;
       if (!parent) throw new Error('This session has no parent; use message_user');
       if (state === 'working') { ctx.emit('capy_progress', { text }); return { recorded: true, delivered: false }; }
       ctx.acceptCapyReport({ text, state, target: parent });
-      return { recorded: true, delivered_on_turn_end: true, state };
+      return { recorded: true, ...(ctx.config.instructionProfile === OPULENT2_PROFILE ? { delivered_when_settled: true } : { delivered_on_turn_end: true }), state };
     },
     async message_user({ text, state, files = [] }) {
       const attachments = [];

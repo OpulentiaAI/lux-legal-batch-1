@@ -12,6 +12,10 @@ const scrub = (value, max = 600) => {
   for (const secret of knownSecrets) text = text.split(secret).join('[redacted]');
   return text.slice(0, max);
 };
+const boundedText = (value, max) => {
+  const text = scrub(value, Infinity);
+  return { text: text.slice(0, max), truncated: text.length > max, source_chars: text.length };
+};
 const safeUrl = raw => { try { const u = new URL(raw); if (!['http:', 'https:'].includes(u.protocol)) return '[unavailable]'; return scrub(`${u.origin}${/(?:token|key|password|secret|auth|session)/i.test(u.pathname) ? '/[redacted-path]' : u.pathname}`); } catch { return '[unavailable]'; } };
 const failure = (code, phase = 'before', retry = 'none') => ({ code, phase, retry });
 const fail = (code, phase, retry) => { throw failure(code, phase, retry); };
@@ -86,29 +90,47 @@ async function resolve(a) {
 }
 async function observe({ text, interactive = false } = {}) {
   const p = active();
-  const array = await p.evaluateHandle(({ text, interactive }) => {
+  const snapshot = await p.evaluateHandle(({ text, interactive }) => {
     const selectors = 'a,button,input,textarea,select,[role],label,summary,[contenteditable="true"],h1,h2,h3,p';
-    return [...document.querySelectorAll(selectors)].filter(el => {
+    const nodes = [...document.querySelectorAll(selectors)].filter(el => {
       const style = getComputedStyle(el);
       return el.isConnected && style.visibility !== 'hidden' && style.display !== 'none' && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0 && (!interactive || el.matches('a,button,input,textarea,select,[contenteditable="true"],[role="button"]')) && (!text || (el.innerText || el.getAttribute('aria-label') || '').toLowerCase().includes(text.toLowerCase()));
-    }).slice(0, 120);
+    });
+    return { nodes: nodes.slice(0, 120), matching_nodes: nodes.length };
   }, { text, interactive });
+  const matchingNodes = await snapshot.evaluate(value => value.matching_nodes);
+  const array = await snapshot.getProperty('nodes');
   const handles = await array.getProperties();
   const next = new Map(), lines = [], matches = [];
-  let i = 0;
+  const escapeLine = value => JSON.stringify(value).slice(1, -1).replace(/[\u007f-\u009f\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  let treeChars = 0, treeLimited = false, unreadableNodes = 0, nameTruncations = 0, roleTruncations = 0;
   for (const h of handles.values()) {
+    if (treeLimited) { await h.dispose(); continue; }
     const info = await h.evaluate(el => ({ role: el.getAttribute('role') || el.tagName.toLowerCase(), name: (el.getAttribute('aria-label') || el.innerText || el.getAttribute('placeholder') || '').trim() })).catch(() => null);
-    if (!info) { await h.dispose(); continue; }
-    const ref = `e${++i}`;
+    if (!info) { unreadableNodes++; await h.dispose(); continue; }
+    const ref = `e${next.size + 1}`;
+    const role = boundedText(info.role, 160), name = boundedText(info.name, 160);
+    const line = `${ref} ${escapeLine(role.text)} ${escapeLine(name.text)}`;
+    const size = line.length + (lines.length ? 1 : 0);
+    if (size > 18000 - treeChars) { treeLimited = true; await h.dispose(); continue; }
     next.set(ref, { handle: h, page: p });
-    lines.push(`${ref} ${info.role} ${scrub(info.name, 160)}`);
-    matches.push({ ref, ...info, name: scrub(info.name, 160) });
+    treeChars += size;
+    nameTruncations += Number(name.truncated);
+    roleTruncations += Number(role.truncated);
+    lines.push(line);
+    matches.push({ ref, role: role.text, name: name.text });
   }
   await array.dispose();
+  await snapshot.dispose();
   for (const { handle } of refs.values()) await handle.dispose().catch(() => {});
   refs = next; epoch++;
   pageTitle = scrub(await p.title().catch(() => ''), 200);
-  return { epoch, tree: lines.join('\n').slice(0, 18000), ref_count: next.size, ...(text ? { matches } : {}) };
+  return { epoch, tree: lines.join('\n'), ref_count: next.size, ...(text ? { matches } : {}),
+    truncated: matchingNodes > next.size || nameTruncations > 0 || roleTruncations > 0,
+    coverage: { scope: 'visible-selector-matches-in-main-document', interactive_filter: interactive, literal_text_filter: !!text,
+      matching_nodes: matchingNodes, returned_nodes: next.size, omitted_nodes: matchingNodes - next.size, unreadable_nodes: unreadableNodes,
+      node_limit_reached: matchingNodes > 120, tree_limit_reached: treeLimited, name_truncations: nameTruncations, role_truncations: roleTruncations,
+      name_normalization: 'trim-whitespace', tree_chars: treeChars, unit: 'utf16-code-units', limits: { nodes: 120, tree_chars: 18000, field_chars: 160 } } };
 }
 const details = () => ({ tab_id: page && tabIds.get(page), epoch, url: page ? safeUrl(page.url()) : null, title: pageTitle });
 async function action(a, origins) {
@@ -142,7 +164,11 @@ async function action(a, origins) {
     case 'check': { const h = await resolve(a); if (a.checked) await h.check({ timeout: 5000 }); else await h.uncheck({ timeout: 5000 }); if (await h.isChecked() !== a.checked) fail('PostconditionFailed', 'after'); return { action: a.action, ok: true, checked: a.checked }; }
     case 'key': { await p.keyboard.press(a.keys); return { action: a.action, ok: true, outcome: 'unverifiable' }; }
     case 'scroll': { const h = await resolve(a); await h.evaluate((el, direction) => el.scrollIntoView({ block: direction === 'up' ? 'start' : 'end' }), a.direction); return { action: a.action, ok: true, outcome: 'unverifiable' }; }
-    case 'read': return { action: a.action, ok: true, text: scrub(await p.locator('body').innerText(), 16000) };
+    case 'read': {
+      const bounded = boundedText(await p.locator('body').innerText(), 16000);
+      return { action: a.action, ok: true, text: bounded.text, truncated: bounded.truncated,
+        coverage: { scope: 'body-inner-text', source_chars: bounded.source_chars, returned_chars: bounded.text.length, limit_chars: 16000, unit: 'utf16-code-units' } };
+    }
     case 'screenshot': { const bytes = await p.screenshot({ type: 'png', fullPage: a.full_page ?? false, timeout: 10000 }); if (bytes.length > 5_000_000) fail('OutputTooLarge', 'after'); return { action: a.action, ok: true, mime_type: 'image/png', image_base64: bytes.toString('base64') }; }
     case 'console': { const entries = consoleEntries.slice(-50); if (a.operation === 'clear') consoleEntries = []; return { action: a.action, ok: true, entries }; }
     case 'network': return { action: a.action, ok: true, requests: networkEntries.slice(-50) };

@@ -315,7 +315,7 @@ export function createCapyExecutor(ctx) {
     const safeBindings = await sanitize(bindings);
     if (json(safeBindings).length <= limits.bindingChars) {
       await ctx.store.put(BINDINGS, ctx.sessionId, { bindings: safeBindings, updated_at: iso() });
-    } else outcome = { status: 'failed', error: fault('StateLimit', 'Persistent bindings exceeded their size limit') };
+    } else outcome = { ...outcome, status: 'failed', error: fault('StateLimit', `Persistent bindings exceeded their size limit (${limits.bindingChars} characters). Assign large saved bindings to undefined or keep transient results in a block scope. Completed effects are not undone.`) };
     const result = await sanitize({ run_id: runId, ...outcome, value: outcome.value ?? null, logs, logs_truncated: logsTruncated,
       effects: effects.map(entry => ({ call_id: entry.call_id, name: entry.name, path: entry.path, status: entry.status,
         ...(entry.operation_ids?.length ? { operation_ids: entry.operation_ids } : {}), ...(entry.error ? { error: bound(entry.error, 512) } : {}) })),
@@ -460,7 +460,7 @@ async function workerRun(data) {
     stopped = true;
     let bindings;
     try { bindings = readSnapshot(); } catch (error) {
-      if (result.status === 'completed') result = { status: 'failed', error: errorData(error) };
+      if (result.status === 'completed') result = { ...result, status: 'failed', error: errorData(error) };
     }
     parentPort.postMessage({ type: 'done', result, bindings });
   };
@@ -546,7 +546,7 @@ async function workerRun(data) {
       const proto = Object.getPrototypeOf, descriptors = Object.getOwnPropertyDescriptors;
       const host = __capyHost, capture = __capyCapture, clock = __capyClock, pause = __capyPause, log = __capyLog;
       const RealDate = Date, floor = ${data.limits.sleepFloorMs}, deadline = ${data.deadline};
-      const fail = (code, message) => { const error = new Error(message); error.name = 'ToolError'; error.code = code; throw error; };
+      const fail = (code, message, issues) => { const error = new Error(message); error.name = 'ToolError'; error.code = code; if (issues) error.issues = issues; throw error; };
       function plain(value, seen = new Set(), depth = 0) {
         if (depth > 100) fail('StateLimit', 'Plain-data nesting exceeds 100 levels');
         if (value === undefined || typeof value === 'number' && !Number.isFinite(value)) return null;
@@ -612,7 +612,15 @@ async function workerRun(data) {
       Object.defineProperty(globalThis, ${json(prepared.id)}, { value: Object.freeze({ bindings, capture: getters => capture(() => {
         const saved = Object.assign(Object.create(null), bindings);
         for (const [name, getter] of getters) { let value; try { value = getter(); } catch (error) { if (error instanceof ReferenceError) continue; throw error; } saved[name] = plain(value); }
-        const text = stringify(saved); if (text.length > ${data.limits.bindingChars}) fail('StateLimit', 'Persistent bindings exceeded their size limit'); return text;
+        const text = stringify(saved);
+        if (text.length > ${data.limits.bindingChars}) {
+          const issues = Object.entries(saved).filter(([name]) => name.length <= 64)
+            .map(([name, value]) => ({ path: 'bindings.' + name, characters: stringify(value).length }))
+            .sort((a, b) => b.characters - a.characters).slice(0, 8)
+            .map(({ path, characters }) => ({ path, message: characters + ' serialized characters' }));
+          fail('StateLimit', 'Persistent bindings exceeded their size limit (' + text.length + ' > ${data.limits.bindingChars} characters). Assign large saved bindings to undefined or keep transient results in a block scope. Completed effects are not undone.', issues);
+        }
+        return text;
       }) }) });
       for (const name of ['__capyHost', '__capyCapture', '__capyClock', '__capyPause', '__capyLog']) delete globalThis[name];
     })()`;
