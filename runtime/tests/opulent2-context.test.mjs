@@ -144,6 +144,44 @@ test('failed text summaries can externalize history without dropping or falsely 
   assert.equal(next.imageContext.pendingImages, 1);
 });
 
+test('oversized coherent summary input recovers exact history while unseen pixels stay pending and are reattached intact', async t => {
+  const f = fixture(t, { instructionProfile: 'opulent2-fixed-v1' }), capture = frame();
+  const messages = [{ role: 'system', content: 'Fixed trusted instructions' }, capture.message, ...history().slice(1)];
+  const parallel = [{ role: 'assistant', content: null, tool_calls: ['escape-a', 'escape-b'].map(id => group(id, 0)[0].tool_calls[0]) },
+    ...['escape-a', 'escape-b'].map(id => ({ role: 'tool', tool_call_id: id, content: `PENDING_PIXEL_HISTORY_${id}` + '\\"'.repeat(15000) }))];
+  messages.splice(5, 0, ...parallel);
+  const before = JSON.stringify(messages);
+  assert.ok(JSON.stringify(parallel).length < 130000);
+  const prepared = await prepareOpulent2ModelContext({ ...f, messages });
+  assert.equal(prepared.externalized, true);
+  assert.equal(prepared.checkpoint.reason, 'input_oversized');
+  assert.equal(f.requests.length, 1);
+  assert.deepEqual(prepared.usage, { prompt_tokens: 10, completion_tokens: 2 });
+  assert.equal(f.files.size, 1);
+  const retained = JSON.parse([...f.files.values()][0]);
+  assert.deepEqual(retained.original_conversation.slice(5, 8), parallel);
+  assert.ok(!JSON.stringify(retained).includes(';base64,'));
+  assert.equal(JSON.stringify(messages), before);
+  assert.strictEqual(prepared.messages[0], messages[0]);
+  assert.ok(prepared.messages.includes(messages[2]));
+  assert.ok(prepared.messages.includes(messages.at(-1)));
+  assert.equal(prepared.imageContext.pendingImages, 1);
+  assert.equal(prepared.imageContext.lineage[0].priorCompletedRequestId, null);
+  assert.equal(prepared.imageContext.lineage[0].disposition, 'pending-pixels-attached-not-yet-observed');
+  assert.deepEqual(imageParts(prepared.messages), imageParts([capture.message]));
+  assert.ok(prepared.imageContext.textChars <= policy.maxInputChars);
+  const notice = prepared.messages.find(message => message.content?.startsWith?.('[Untrusted externalized history')).content;
+  assert.match(notice, /Summary input exceeded maxSummaryInputChars/);
+  assert.doesNotMatch(notice, /after 2 attempts/);
+  assert.equal(f.ctx.store.list('capy_model_requests').length, 0);
+  const cached = await prepareOpulent2ModelContext({ ...f, messages, checkpoint: prepared.checkpoint });
+  assert.equal(f.requests.length, 1);
+  assert.equal(f.files.size, 1);
+  assert.deepEqual(cached.usage, {});
+  assert.deepEqual(imageParts(cached.messages), imageParts([capture.message]));
+  assert.equal(cached.imageContext.pendingImages, 1);
+});
+
 test('only completed actual same-session answerer payloads count, with recent pixels retained and older seen pixels honestly omitted', async t => {
   const f = fixture(t), captures = [frame(undefined, 1), frame(undefined, 2), frame(undefined, 3)];
   f.receipt('actual-prior-input', captures.slice(0, 2).map(capture => capture.message));
