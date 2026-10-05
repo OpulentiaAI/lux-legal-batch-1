@@ -211,7 +211,7 @@ export function createCapyControlTools(ctx) {
     },
     async subagent_events({ path: value, ...args }) { return events(capyOwnedChild(store, sessionId, value).id, args); },
     async message_agent({ to, text, state }) {
-      if (to) return tools.subagent_message({ path: to, text });
+      if (to && !(ctx.config.instructionProfile === OPULENT2_PROFILE && to === 'parent')) return tools.subagent_message({ path: to, text });
       const parent = store.get('sessions', sessionId)?.parent_session_id;
       if (!parent) throw new Error('This session has no parent; use message_user');
       if (state === 'working') { ctx.emit('capy_progress', { text }); return { recorded: true, delivered: false }; }

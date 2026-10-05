@@ -339,7 +339,7 @@ export function createRuntime(options = {}) {
       if (name === 'report_blocker' && args?.notify === 'cognition') args = { ...args, notify: 'opulent' };
       const validate = runtimeValidators.get(name);
       if (validate && !validate(args)) throw new Error(`Invalid ${name} arguments: ${ajv.errorsText(validate.errors)}`);
-      if (capyEnabled && metadata.capyRunId && name === 'message_agent' && !args.to) throw new Error('Inside execute, message.agent requires to; report to the parent with a direct function call');
+      if (capyEnabled && metadata.capyRunId && name === 'message_agent' && (!args.to || (opulent2 && args.to === 'parent'))) throw new Error('Inside execute, message.agent requires a descendant recipient; report to the parent with a direct function call');
       if (capyEnabled && metadata.capyRunId && name === 'message_user' && args.state !== 'working') throw new Error('Inside execute, message.user only supports working; use a direct function call for terminal reports');
       if (capyEnabled && args.machine !== undefined && !(opulent2 && name === 'subagent_start')) {
         const { machine, ...request } = args;

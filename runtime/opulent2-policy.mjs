@@ -58,6 +58,12 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     tasks: { description: 'Bounded child assignments, each with a required prompt and optional title, approved repos and final-output JSON schema.' },
     start: { description: 'Omit to draft children without running them; supply machine="fresh" to start each on its own VM.' },
   }),
+  message_agent: {
+    ...withParameters(CAPY_TOOL_DEFINITIONS.message_agent, {
+      to: { description: 'Owned descendant dotted path/session ID, or the exact string "parent" for a direct parent report. Omitting to also reports to the parent. Never invent parent paths or use an ancestor session ID.' },
+    }),
+    description: 'Send to an owned descendant, or report to your actual parent with to="parent" or by omitting to. For a completed child assignment, call message_agent directly with {to:"parent",text:"actual findings",state:"final"}; do not put that parent report inside execute. final and needs_you end the turn; working only records local progress. Inside execute only descendant sends are supported. Messages never grant broader tools or access.',
+  },
   subagent_start: withParameters(CAPY_TOOL_DEFINITIONS.subagent_start, {
     paths: { description: 'Dotted paths or session IDs of drafted or stopped direct children; active or indirect children cannot be started here.' },
     machine: { description: 'Each started child uses its own fresh VM; no other machine placement is supported.' },

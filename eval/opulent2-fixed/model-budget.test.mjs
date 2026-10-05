@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { Buffer } from 'node:buffer'
+import { getEventListeners } from 'node:events'
 import test from 'node:test'
 import { ENDPOINT, MODEL, NATIVE_MODEL } from './contract.mjs'
 import { createTaskModelBudget, TaskModelBudgetError } from './model-budget.mjs'
@@ -9,6 +10,9 @@ import { modelTransport, NATIVE_REQUEST_POLICY } from '../../runtime/model-provi
 const budgets = overrides => ({ maxSteps: 250, maxInputTokens: 2_000_000, maxContextTokens: 32_768, ...overrides })
 const request = overrides => ({ messages: [{ role: 'user', content: 'Offline test request' }], tools: [], maxCompletionTokens: 256, sessionId: 'root', phase: 'answerer', ...overrides })
 const usage = (input = 10, output = 2) => ({ prompt_tokens: input, completion_tokens: output, total_tokens: input + output })
+const turn = () => new Promise(resolve => setImmediate(resolve))
+const opaqueRequest = overrides => request({ messages: [{ role: 'assistant', content: 'Offline encrypted reasoning fixture',
+  reasoning: { encrypted: 'opaque-not-tokenized' }, provider_metadata: { gateway: 'opaque-not-tokenized' } }], maxCompletionTokens: 32768, ...overrides })
 const imageRequest = overrides => request({ messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/png;base64,offline-not-an-image' } }] }], ...overrides })
 const estimate = input => {
   const budget = createTaskModelBudget(budgets())
@@ -446,4 +450,142 @@ test('serialization callbacks cannot reenter admission to bypass atomic step or 
     assert.equal(snapshot.reservedInputTokens, reservation)
     assert(snapshot.usage.usedOrReservedInputTokens <= snapshot.budgets.maxInputTokens)
   }
+})
+
+test('async FIFO admission waits for metered pending holds without changing the public ledger', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  const first = await budget.admitAsync(opaqueRequest())
+  const before = budget.ledger.snapshot()
+  const child = budget.admitAsync(opaqueRequest({ sessionId: 'child' }))
+  const summary = budget.admitAsync(opaqueRequest({ sessionId: 'grandchild', phase: 'context_compaction', maxCompletionTokens: 8192 }))
+  let admitted = 0
+  child.then(() => admitted++)
+  summary.then(() => admitted++)
+  await turn()
+  assert.equal(admitted, 0)
+  assert.deepEqual(budget.ledger.snapshot(), before)
+  rejects(() => budget.admit(request()), 'MODEL_BUDGET_EXHAUSTED')
+  first.settle({ requestId: 'queued-root', usage: usage(20) })
+  const next = await child
+  assert.equal(next.id, 'model-request-2')
+  assert.equal(budget.ledger.snapshot().modelCalls, 2)
+  assert.equal(budget.ledger.snapshot().reservedInputTokens, 1_050_000 - 32768)
+  next.settle({ requestId: 'queued-child', usage: usage(20) })
+  const last = await summary
+  assert.equal(last.id, 'model-request-3')
+  assert.equal(budget.ledger.snapshot().reservedInputTokens, 1_050_000 - 8192)
+  last.settle({ requestId: 'queued-summary', usage: usage(20) })
+  const settled = budget.ledger.snapshot()
+  assert.equal(settled.modelCalls, 3)
+  assert.equal(settled.inputTokens, 60)
+  assert.equal(settled.reservedInputTokens, 0)
+  assert(settled.reservations.every(row => row.reservationBasis === 'full-input-window'))
+})
+
+test('async true insufficiency rejects immediately or when known settlement eliminates possible relief', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  const first = await budget.admitAsync(opaqueRequest())
+  first.settle({ requestId: 'true-conservative-bound', usage: usage(982769, 0) })
+  await assert.rejects(budget.admitAsync(opaqueRequest()), error => error.code === 'MODEL_BUDGET_EXHAUSTED')
+  assert.equal(budget.ledger.snapshot().modelCalls, 1)
+  assert.equal(budget.ledger.snapshot().blocked, false)
+  const window = 32768 - 256
+  const pending = createTaskModelBudget(budgets({ maxInputTokens: window + 10 }))
+  const active = await pending.admitAsync(imageRequest())
+  const queued = pending.admitAsync(imageRequest({ sessionId: 'child' }))
+  const rejected = assert.rejects(queued, error => error.code === 'MODEL_BUDGET_EXHAUSTED')
+  active.settle({ requestId: 'no-longer-fits', usage: usage(11, 0) })
+  await rejected
+  assert.equal(pending.ledger.snapshot().modelCalls, 1)
+  assert.equal(pending.ledger.snapshot().reservedInputTokens, 0)
+  const tooLarge = pending.admitAsync(imageRequest({ maxCompletionTokens: 1 }))
+  await assert.rejects(tooLarge, error => error.code === 'MODEL_BUDGET_EXHAUSTED')
+})
+
+test('FIFO head cancellation wakes a fitting successor without spending a step or leaking listeners', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  const first = await budget.admitAsync(opaqueRequest())
+  const cancel = new AbortController()
+  const successorSignal = new AbortController()
+  const head = budget.admitAsync(opaqueRequest({ sessionId: 'cancelled', signal: cancel.signal }))
+  const rejected = assert.rejects(head, error => error.name === 'AbortError' && error.code === 'MODEL_BUDGET_CANCELLED')
+  const successor = budget.admitAsync(request({ sessionId: 'successor', signal: successorSignal.signal }))
+  await turn()
+  assert.equal(budget.ledger.snapshot().modelCalls, 1)
+  assert.equal(getEventListeners(cancel.signal, 'abort').length, 1)
+  assert.equal(getEventListeners(successorSignal.signal, 'abort').length, 1)
+  cancel.abort(new Error('sensitive-cancellation-body'))
+  await rejected
+  const second = await successor
+  assert.equal(second.id, 'model-request-2')
+  assert.equal(getEventListeners(cancel.signal, 'abort').length, 0)
+  assert.equal(getEventListeners(successorSignal.signal, 'abort').length, 0)
+  assert.equal(budget.ledger.snapshot().blocked, false)
+  assert(!JSON.stringify(budget.ledger.snapshot()).includes('sensitive-cancellation-body'))
+  first.settle({ requestId: 'uncancelled-root', usage: usage() })
+  second.settle({ requestId: 'uncancelled-successor', usage: usage() })
+})
+
+test('pre-aborted, invalid and oversized async requests never enter admission', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  const signal = AbortSignal.abort(new Error('sensitive-pre-abort'))
+  await assert.rejects(budget.admitAsync(opaqueRequest({ signal })), error => error.code === 'MODEL_BUDGET_CANCELLED')
+  await assert.rejects(budget.admitAsync(request({ signal: {} })), error => error.code === 'MODEL_BUDGET_INVALID_ARGUMENT')
+  await assert.rejects(budget.admitAsync(request({ maxCompletionTokens: LUNA_BUDGETS.maxContextTokens })), error => error.code === 'MODEL_CONTEXT_EXCEEDED')
+  assert.equal(budget.ledger.snapshot().modelCalls, 0)
+  assert.equal(budget.ledger.snapshot().reservedInputTokens, 0)
+  assert.equal(budget.ledger.snapshot().blocked, false)
+})
+
+test('unknown consumption and metering violations promptly reject every queued admission', async () => {
+  for (const action of ['fail', 'missing-usage', 'underestimate', 'duplicate']) {
+    const budget = createTaskModelBudget(LUNA_BUDGETS)
+    let prior
+    if (action === 'duplicate') {
+      prior = budget.admit(request())
+      prior.settle({ requestId: 'previous-verified', usage: usage() })
+    }
+    const first = await budget.admitAsync(opaqueRequest())
+    const signals = [new AbortController(), new AbortController()]
+    const waiting = signals.map((controller, i) => budget.admitAsync(opaqueRequest({ sessionId: `child-${i}`, signal: controller.signal })))
+    const results = Promise.allSettled(waiting)
+    if (action === 'fail') first.fail()
+    else if (action === 'missing-usage') rejects(() => first.settle({ requestId: 'unmetered' }), 'MODEL_BUDGET_UNKNOWN_CONSUMPTION')
+    else if (action === 'underestimate') rejects(() => first.settle({ requestId: 'underestimated', usage: usage(1_050_000 - 32768 + 1) }), 'MODEL_BUDGET_VIOLATION')
+    else rejects(() => prior.settle({ requestId: 'duplicate', usage: usage() }), 'MODEL_BUDGET_DUPLICATE_SETTLEMENT')
+    const outcomes = await results
+    const code = ['fail', 'missing-usage'].includes(action) ? 'MODEL_BUDGET_UNKNOWN_CONSUMPTION' : 'MODEL_BUDGET_VIOLATION'
+    assert(outcomes.every(result => result.status === 'rejected' && result.reason.code === code))
+    assert(signals.every(controller => getEventListeners(controller.signal, 'abort').length === 0))
+    assert.equal(budget.ledger.snapshot().modelCalls, action === 'duplicate' ? 2 : 1)
+  }
+})
+
+test('queued step-250 contention is bounded without spending step 250 early or admitting step 251', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  for (let i = 0; i < 248; i++) budget.admit(request()).settle({ requestId: `prefix-${i}`, usage: usage(0, 0) })
+  const first = await budget.admitAsync(opaqueRequest())
+  const final = budget.admitAsync(opaqueRequest({ sessionId: 'step-250' }))
+  await assert.rejects(budget.admitAsync(request({ sessionId: 'step-251' })), error => error.code === 'MODEL_BUDGET_EXHAUSTED' && error.reason === 'shared_request_slots_committed')
+  assert.equal(budget.ledger.snapshot().modelCalls, 249)
+  assert.equal(budget.ledger.snapshot().usage.remainingSteps, 1)
+  first.settle({ requestId: 'step-249', usage: usage() })
+  const last = await final
+  assert.equal(last.id, 'model-request-250')
+  await assert.rejects(budget.admitAsync(request()), error => error.code === 'MODEL_BUDGET_EXHAUSTED')
+  last.settle({ requestId: 'step-250', usage: usage() })
+  assert.equal(budget.ledger.snapshot().modelCalls, 250)
+})
+
+test('async waiter count is bounded by remaining steps and failure releases every waiting listener', async () => {
+  const budget = createTaskModelBudget(LUNA_BUDGETS)
+  const first = await budget.admitAsync(opaqueRequest())
+  const calls = Array.from({ length: 300 }, (_, i) => budget.admitAsync(opaqueRequest({ sessionId: `queued-${i}` })))
+  const results = Promise.allSettled(calls)
+  assert.equal(budget.ledger.snapshot().modelCalls, 1)
+  first.fail()
+  const outcomes = await results
+  assert.equal(outcomes.filter(result => result.reason.code === 'MODEL_BUDGET_UNKNOWN_CONSUMPTION').length, 249)
+  assert.equal(outcomes.filter(result => result.reason.code === 'MODEL_BUDGET_EXHAUSTED').length, 51)
+  assert.equal(budget.ledger.snapshot().modelCalls, 1)
 })

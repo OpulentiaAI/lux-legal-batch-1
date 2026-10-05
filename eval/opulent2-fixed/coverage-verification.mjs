@@ -23,7 +23,7 @@ export function verifyToolCoverage({ release, snapshot, transmissions }) {
         observedOutcome ||= session?.status === 'completed' && transmissions.some(item => item.row.sessionId === session.id &&
           item.response?.choices?.[0]?.message?.tool_calls?.some(call => {
             if (call.id !== record.tool_call_id || call.function?.name !== name) return false
-            try { const args = JSON.parse(call.function.arguments); return !args.to && args.state === 'final' } catch { return false }
+            try { const args = JSON.parse(call.function.arguments); return (!args.to || args.to === 'parent') && args.state === 'final' } catch { return false }
           }))
       }
       return { sessionId: record.session_id, toolCallId: record.tool_call_id ?? null, executeRunId: record.execute_run_id ?? null,

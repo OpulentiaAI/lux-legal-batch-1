@@ -10,6 +10,7 @@ const errorNames = {
   MODEL_BUDGET_VIOLATION: 'ModelBudgetViolationError',
   MODEL_BUDGET_DUPLICATE_SETTLEMENT: 'ModelBudgetViolationError',
   MODEL_BUDGET_DUPLICATE_REQUEST_ID: 'ModelBudgetViolationError',
+  MODEL_BUDGET_CANCELLED: 'AbortError',
 }
 const policy = Object.freeze({
   version: 'task-model-budget-admission-v1',
@@ -73,6 +74,8 @@ export function createTaskModelBudget(options) {
   const tickets = []
   const requestIds = new Set()
   const blocks = []
+  const waiters = []
+  let draining = false
   let heldInputTokens = 0n, admittedConservativeInputTokens = 0n
   let knownInputTokens = 0n, knownOutputTokens = 0n, knownTotalTokens = 0n
 
@@ -80,6 +83,7 @@ export function createTaskModelBudget(options) {
     const event = { name: error.name, code: error.code, reason: error.reason, ticketId: row.id, details: structuredClone(error.details) }
     blocks.push(event)
     row.errors.push(event)
+    drain()
     return error
   }
   const duplicate = row => {
@@ -123,7 +127,7 @@ export function createTaskModelBudget(options) {
     })
   }
 
-  function admit(request) {
+  function prepareAdmission(request) {
     requireOpen()
     if (!Array.isArray(request?.messages) || (request.tools !== undefined && !Array.isArray(request.tools))) throw new TaskModelBudgetError('MODEL_BUDGET_INVALID_ARGUMENT', 'messages_and_tools_must_be_arrays')
     const { messages, tools = [], maxCompletionTokens, sessionId, phase } = request
@@ -146,12 +150,17 @@ export function createTaskModelBudget(options) {
     const reservedInputTokens = textOnly ? serializedUtf8Bytes + framingTokens : inputWindowTokens
     if (reservedInputTokens > inputWindowTokens) throw new TaskModelBudgetError('MODEL_CONTEXT_EXCEEDED', 'conservative_input_and_completion_exceed_context', { reservedInputTokens, maxCompletionTokens, maxContextTokens: limits.maxContextTokens })
     requireOpen()
+    return { sessionId, phase, reservationBasis: textOnly ? 'serialized-text-byte-upper-bound' : 'full-input-window',
+      serializedUtf8Bytes, framingTokens, reservedInputTokens, inputWindowTokens, maxCompletionTokens }
+  }
+
+  function reserve(prepared) {
+    requireOpen()
+    const { sessionId, phase, reservedInputTokens, maxCompletionTokens } = prepared
     if (tickets.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_limit_exhausted', { maxSteps: limits.maxSteps })
     if (BigInt(reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens, maxInputTokens: limits.maxInputTokens })
     const row = {
-      id: `model-request-${tickets.length + 1}`, step: tickets.length + 1, sessionId, phase, status: 'pending', requestId: null,
-      reservationBasis: textOnly ? 'serialized-text-byte-upper-bound' : 'full-input-window',
-      serializedUtf8Bytes, framingTokens, reservedInputTokens, inputWindowTokens, maxCompletionTokens,
+      ...prepared, id: `model-request-${tickets.length + 1}`, step: tickets.length + 1, status: 'pending', requestId: null,
       observedInputTokens: null, observedOutputTokens: null, observedTotalTokens: null,
       reportedUsage: null, usageVerified: false, violations: [], errors: [],
     }
@@ -211,6 +220,7 @@ export function createTaskModelBudget(options) {
         if (knownInputTokens + heldInputTokens > BigInt(limits.maxInputTokens)) row.violations.push({ reason: 'shared_input_commitment_exceeded', observedAndReserved: integer(knownInputTokens + heldInputTokens), limit: limits.maxInputTokens })
         row.status = row.violations.length || row.errors.length ? 'violated' : 'settled'
         if (row.status === 'violated') throw block(new TaskModelBudgetError('MODEL_BUDGET_VIOLATION', 'metered_usage_violates_admission', { violations: row.violations }), row)
+        drain()
         return structuredClone(row)
       },
       fail() {
@@ -221,5 +231,64 @@ export function createTaskModelBudget(options) {
     })
   }
 
-  return Object.freeze({ admit, ledger: Object.freeze({ snapshot }) })
+  function admit(request) {
+    const prepared = prepareAdmission(request)
+    if (waiters.length) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'queued_admissions_have_priority')
+    return reserve(prepared)
+  }
+
+  function finishWaiter(index, error, ticket) {
+    const [waiter] = waiters.splice(index, 1)
+    waiter.signal?.removeEventListener('abort', waiter.onAbort)
+    if (error) waiter.reject(error)
+    else waiter.resolve(ticket)
+  }
+
+  function drain() {
+    if (draining) return
+    draining = true
+    try {
+      for (let index = 0; index < waiters.length;) {
+        const waiter = waiters[index]
+        try {
+          requireOpen()
+          if (waiter.signal?.aborted) throw new TaskModelBudgetError('MODEL_BUDGET_CANCELLED', 'admission_cancelled')
+          if (tickets.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_limit_exhausted', { maxSteps: limits.maxSteps })
+          if (BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: waiter.prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
+        } catch (error) {
+          finishWaiter(index, error)
+          continue
+        }
+        index++
+      }
+      while (waiters.length) {
+        const waiter = waiters[0]
+        if (BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) break
+        try { finishWaiter(0, null, reserve(waiter.prepared)) }
+        catch (error) { finishWaiter(0, error) }
+      }
+    } finally { draining = false }
+  }
+
+  async function admitAsync(request) {
+    const prepared = prepareAdmission(request)
+    const signal = request.signal
+    if (signal != null && !(signal instanceof AbortSignal)) throw new TaskModelBudgetError('MODEL_BUDGET_INVALID_ARGUMENT', 'abort_signal_required')
+    if (signal?.aborted) throw new TaskModelBudgetError('MODEL_BUDGET_CANCELLED', 'admission_cancelled')
+    if (tickets.length + waiters.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_slots_committed', { maxSteps: limits.maxSteps, admittedSteps: tickets.length, queuedRequests: waiters.length })
+    if (BigInt(prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
+    return new Promise((resolve, reject) => {
+      const waiter = { prepared, signal, resolve, reject, onAbort: () => {
+        const index = waiters.indexOf(waiter)
+        if (index < 0) return
+        finishWaiter(index, new TaskModelBudgetError('MODEL_BUDGET_CANCELLED', 'admission_cancelled'))
+        drain()
+      } }
+      waiters.push(waiter)
+      signal?.addEventListener('abort', waiter.onAbort, { once: true })
+      drain()
+    })
+  }
+
+  return Object.freeze({ admit, admitAsync, ledger: Object.freeze({ snapshot }) })
 }
