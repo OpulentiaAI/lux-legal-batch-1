@@ -40,7 +40,7 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     replace_all: { description: 'Replace every occurrence instead of requiring exactly one match.', default: false },
   }),
   execute: withParameters(CAPY_TOOL_DEFINITIONS.execute, {
-    code: { description: 'JavaScript or TypeScript program with top-level await/return; only declared codemode tools and plain-data bindings are available.' },
+    code: { description: 'JavaScript or TypeScript program with top-level await/return; only declared codemode tools and plain-data bindings are available. Top-level plain-data bindings persist across programs within 256000 serialized characters. Keep large transient results in a block scope or assign saved bindings to undefined. A persistence failure does not undo completed effects; inspect the actual returned value/effects instead of repeating writes.' },
     timeout_seconds: { description: 'Program wall-clock limit in seconds, independent of the existing tool-call, concurrency and CPU bounds.', default: 600 },
   }),
   wait: withParameters(CAPY_TOOL_DEFINITIONS.wait, {
@@ -100,7 +100,8 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
   operation_cancel: withParameters(CAPY_TOOL_DEFINITIONS.operation_cancel, {
     operation_id: { description: 'Owned process, descendant-session, wait or execute operation ID to cancel; cancellation does not undo completed effects.' },
   }),
-  computer: { ...CAPY_TOOL_DEFINITIONS.computer, description: CAPY_TOOL_DEFINITIONS.computer.description.replace('use `exec`', 'use `bash`') },
+  computer: { ...CAPY_TOOL_DEFINITIONS.computer, description: CAPY_TOOL_DEFINITIONS.computer.description.replace('use `exec`', 'use `bash`')
+    + '\nIf coordinate or start_coordinate is present, it must contain exactly two nonnegative integers [x, y], never an empty array. Omit unused optional coordinates for screenshot, read_dom and cursor_position actions.' },
   agrep: withParameters(OPULENT2_AGREP_DEFINITION, {
     pattern: { description: 'Literal single-line UTF-8 text to search for, not shell flags or a regular expression.' },
     path: { description: 'File or directory inside this VM’s workspace; symlinks, special files and traversal are refused.', default: '.' },

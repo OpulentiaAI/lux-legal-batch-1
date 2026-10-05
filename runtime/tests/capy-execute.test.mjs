@@ -91,6 +91,29 @@ test('nonplain persistent values fail visibly without replaying completed writes
   assert.equal(store.list('capy_execute_calls')[0].status, 'completed');
 });
 
+test('binding overflow preserves evaluated results and completed effects with actionable bounded diagnostics', async t => {
+  const { run, calls, store, ctx } = fixture(t, { executeLimits: { bindingChars: 1024 } });
+  await run('let retained = "r".repeat(500); return retained.length;');
+  const result = await run('const oversized = "PRIVATE_BINDING_VALUE".repeat(50); const receipt = await tools.capy.write({}); return { verified: true, receipt };');
+  assert.equal(result.status, 'failed');
+  assert.equal(result.error.code, 'StateLimit');
+  assert.match(result.error.message, /1024/);
+  assert.match(result.error.message, /undefined/);
+  assert.deepEqual(result.value, { verified: true, receipt: { name: 'write', args: {} } });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(result.effects.map(effect => [effect.name, effect.status]), [['write', 'completed']]);
+  assert(result.error.issues.some(issue => issue.path === 'bindings.oversized'));
+  assert(!JSON.stringify(result.error).includes('PRIVATE_BINDING_VALUE'));
+  assert(JSON.stringify(result.error).length < 2048);
+  assert.equal(store.get('capy_bindings', ctx.sessionId).bindings.retained.length, 500);
+  assert(!Object.hasOwn(store.get('capy_bindings', ctx.sessionId).bindings, 'oversized'));
+  const recovery = await run('retained = undefined; { const transient = await tools.capy.read({}); return transient; }');
+  assert.equal(recovery.status, 'completed');
+  assert.deepEqual(recovery.value, { name: 'read', args: {} });
+  assert.equal(calls.length, 2);
+  assert(!Object.hasOwn(store.get('capy_bindings', ctx.sessionId).bindings, 'transient'));
+});
+
 test('function declarations are useful within a call and do not persist as data', async t => {
   const { run } = fixture(t);
   assert.equal((await run('function twice(n) { return n * 2; } const value = twice(3); return value;')).value, 6);
