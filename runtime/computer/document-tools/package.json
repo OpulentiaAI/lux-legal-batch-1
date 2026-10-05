@@ -1,0 +1,21 @@
+{
+  "name": "opulent2-document-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.18.0" },
+  "dependencies": {
+    "@firecrawl/anydoc": "0.2.4",
+    "@llamaindex/liteparse": "2.15.1",
+    "csv-parse": "7.0.3",
+    "exceljs": "4.4.0",
+    "mammoth": "1.13.0",
+    "pdf-lib": "1.17.1",
+    "pptxgenjs": "4.0.1",
+    "sharp": "0.35.5"
+  },
+  "overrides": {
+    "image-size": "2.0.4",
+    "uuid": "11.1.1"
+  }
+}

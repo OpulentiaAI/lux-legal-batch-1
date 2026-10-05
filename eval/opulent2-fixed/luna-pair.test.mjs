@@ -3,15 +3,15 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import test from 'node:test'
 import './offline-guard.mjs'
-import { LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_CONTEXT_EXPERIMENT, LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
 import { runExperiment, seedCheckpoint } from './runner.mjs'
 import { LAUNCH, digest, immutable, privateDirectory } from './io.mjs'
 
-function fixture(t) {
+function fixture(t, experiment = LUNA_EXPERIMENT) {
   privateDirectory(LAUNCH)
   const directory = mkdtempSync(join(LAUNCH, 'luna-pair-offline-'))
   t.after(() => rmSync(directory, { recursive: true, force: true }))
-  const release = { experiment: LUNA_EXPERIMENT, stage: 'comparison', tasks: [1, 2].map(n => ({ id: `offline-task-${n}`, publicFingerprint: 'public-fixture', rubricSha256: `rubric-fixture-${n}` })) }
+  const release = { experiment, stage: 'comparison', tasks: [1, 2].map(n => ({ id: `offline-task-${n}`, publicFingerprint: 'public-fixture', rubricSha256: `rubric-fixture-${n}` })) }
   const checkpoint = seedCheckpoint({ release })
   const calls = []
   const execute = arm => async context => {
@@ -63,6 +63,19 @@ test('recovering an unfinished counterpart retains the clean completed arm and s
   assert.equal(f.checkpoint.rows[0].opulent2.attempts.length, 1)
   assert.equal(f.checkpoint.rows[0].harvey.attempts.length, 2)
   assert.equal(f.checkpoint.rows[1].opulent2.status, 'planned')
+})
+
+test('v2 keeps one clean pair at a time and cannot advance without hash-bound independent grading', async t => {
+  const f = fixture(t, LUNA_CONTEXT_EXPERIMENT)
+  await f.run()
+  assert.deepEqual(f.calls, [['opulent2', 'offline-task-1'], ['harvey', 'offline-task-1']])
+  await f.run()
+  assert.equal(f.calls.length, 2)
+  assert.equal(f.checkpoint.rows[1].opulent2.status, 'planned')
+  f.grade(f.checkpoint.rows[0])
+  await f.run()
+  assert.equal(f.calls.length, 4)
+  assert.equal(f.checkpoint.rows[1].opulent2.completed.inputSnapshotSha256, 'snapshot-offline-task-1')
 })
 
 test('tampered completed output or grading receipt cannot unlock a later task', async t => {

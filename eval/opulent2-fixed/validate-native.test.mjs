@@ -8,7 +8,7 @@ import './offline-guard.mjs'
 import { ENDPOINT, NATIVE_MODEL, PROFILE } from './contract.mjs'
 import { digest, proof, sha } from './io.mjs'
 import { sanitize, wireMeasurements } from './native.mjs'
-import { nativeTransmissions, validatePreparedReceipt, verifyCarryForward, verifyNestedWork, verifyPreparedTransmissions, verifyTaskExecution } from './validate.mjs'
+import { artifactReadbacks, nativeTransmissions, validatePreparedReceipt, verifyCarryForward, verifyNestedWork, verifyPreparedTransmissions, verifyTaskExecution } from './validate.mjs'
 
 const localhost = 'http://127.0.0.1:8765.'
 const safe = value => JSON.parse(sanitize(Buffer.from(JSON.stringify(value))))
@@ -147,6 +147,44 @@ test('public localhost punctuation matches only the explicit native sanitization
   assert.equal(digest(saved.request.messages), digest(safe(saved.prepared.messages)))
   assert.notEqual(saved.row.measurements.schemaSha256, digest(saved.request.tools))
   assert.equal(saved.row.measurements.schemaSha256, digest(saved.prepared.tools))
+})
+
+test('saved-artifact validation uses actual Unicode continuation units without redefining historical reads', () => {
+  const f = completeFixture()
+  const content = '😀'.repeat(35000) + 'decisive source alternative'
+  const saved = f.handoff.memory.scopes[0].files[0]
+  Object.assign(saved, { content, sha256: sha(content), bytes: Buffer.byteLength(content) })
+  const record = f.snapshot.capy_tool_results.find(record => record.name === 'read')
+  const send = () => request(f, f.snapshot.sessions[0], [system,
+    { role: 'tool', tool_call_id: record.tool_call_id, content: JSON.stringify(record.returned_result) }])
+  Object.assign(record.complete_result, { content, offset_unit: 'unicode_code_points' })
+  record.returned_result = structuredClone(record.complete_result)
+  send()
+  assert.equal(artifactReadbacks('memory', f.handoff, f.snapshot, transmissions(f))[0].fullFileObserved, true)
+  Object.assign(record.complete_result, { content: Array.from(content).slice(30000).join(''), character_offset: 30000 })
+  record.returned_result = structuredClone(record.complete_result)
+  send()
+  assert.equal(artifactReadbacks('memory', f.handoff, f.snapshot, transmissions(f))[0].fullFileObserved, false)
+  delete record.complete_result.offset_unit
+  record.complete_result.content = content.slice(30000, 90000)
+  record.returned_result = structuredClone(record.complete_result)
+  send()
+  assert.equal(artifactReadbacks('memory', f.handoff, f.snapshot, transmissions(f))[0].fullFileObserved, false)
+  record.complete_result.content = 'invented unobserved content'
+  record.returned_result = structuredClone(record.complete_result)
+  send()
+  assert.throws(() => artifactReadbacks('memory', f.handoff, f.snapshot, transmissions(f)), /read back/)
+})
+
+test('a full internal result behind an observed file-backed preview cannot prove saved-artifact readback', () => {
+  for (const name of ['read', 'drive_read']) {
+    const f = completeFixture()
+    const record = f.snapshot.capy_tool_results.find(record => record.name === name)
+    record.returned_result = { kind: 'file_backed_result', preview: 'Only an unrelated header was returned', output_path: '/results/backing.json' }
+    request(f, f.snapshot.sessions[0], [system,
+      { role: 'tool', tool_call_id: record.tool_call_id, content: JSON.stringify(record.returned_result) }])
+    assert.throws(() => artifactReadbacks(name === 'read' ? 'memory' : 'drive', f.handoff, f.snapshot, transmissions(f)), /read back/)
+  }
 })
 
 test('non-system content, tools, child returns, artifact readbacks and raw carry-forward verify together offline', () => {

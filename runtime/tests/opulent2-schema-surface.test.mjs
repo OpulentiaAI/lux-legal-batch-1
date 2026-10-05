@@ -46,7 +46,10 @@ test('Opulent2 enriches only its own surface and preserves historical schemas, l
   assert.equal(hash(JSON.stringify(CAPY_TOOL_DEFINITIONS)), historicalDefinitionsHash)
   assert.equal(hash(capyCodemodeListing()), historicalListingHash)
   assert.equal(hash(JSON.stringify(CAPY_TOOL_POLICY)), historicalPolicyHash)
-  const original = { ...CAPY_TOOL_DEFINITIONS, agrep: OPULENT2_AGREP_DEFINITION, ...opulent2DriveDefinitions }
+  const original = { ...CAPY_TOOL_DEFINITIONS, agrep: OPULENT2_AGREP_DEFINITION, ...opulent2DriveDefinitions,
+    read: { ...CAPY_TOOL_DEFINITIONS.read, inputSchema: { ...CAPY_TOOL_DEFINITIONS.read.inputSchema,
+      properties: { ...CAPY_TOOL_DEFINITIONS.read.inputSchema.properties,
+        document_backend: { type: 'string', enum: ['auto', 'pymupdf', 'anydoc', 'liteparse'] } } } } }
   for (const [name, definition] of Object.entries(OPULENT2_TOOL_DEFINITIONS)) {
     const schema = structuredClone(definition.inputSchema)
     if (name === 'bash') { delete schema.if; delete schema.then }
@@ -76,7 +79,7 @@ test('Opulent2 enriches only its own surface and preserves historical schemas, l
 
 test('Opulent2 default annotations follow handlers, preserve conditional bash defaults and render falsy values', () => {
   const expected = {
-    read: { offset: 1, limit: 2000, character_offset: 0 },
+    read: { offset: 1, limit: 2000, character_offset: 0, document_backend: 'auto' },
     bash: { execution: 'foreground' },
     edit: { replace_all: false },
     execute: { timeout_seconds: 600 },
@@ -130,6 +133,23 @@ test('actual core definitions and execute full/key discovery have identical sche
   assert.equal(directMirrors, OPULENT2_TOOL_POLICY.initialTools.length - 1)
   assert.equal(deferred, OPULENT2_TOOL_POLICY.allowedTools.length - OPULENT2_TOOL_POLICY.initialTools.length)
   assert(runtime.config.systemPrompt.endsWith(capyCodemodeListing(OPULENT2_TOOL_DEFINITIONS, OPULENT2_TOOL_POLICY.initialTools)))
+})
+
+test('only Opulent2 exposes the bounded local document selector with Unicode continuation semantics', () => {
+  assert(!Object.hasOwn(CAPY_TOOL_DEFINITIONS.read.inputSchema.properties, 'document_backend'))
+  const read = OPULENT2_TOOL_DEFINITIONS.read.inputSchema
+  assert.deepEqual(withoutAnnotations(read.properties.document_backend), {
+    type: 'string', enum: ['auto', 'pymupdf', 'anydoc', 'liteparse'],
+  })
+  assert.equal(read.properties.document_backend.default, 'auto')
+  assert.match(read.properties.offset.description, /source page.*logical chunk/)
+  assert.match(read.properties.limit.description, /four source pages or logical chunks.*16000 Unicode code points/)
+  assert.match(read.properties.character_offset.description, /Unicode code-point/)
+  const accepts = new Ajv({ strict: false }).compile(read)
+  for (const document_backend of ['auto', 'pymupdf', 'anydoc', 'liteparse']) assert(accepts({ path: 'source.pdf', document_backend }))
+  for (const document_backend of ['hosted', '', null, {}, ['anydoc']]) assert(!accepts({ path: 'source.pdf', document_backend }))
+  assert(accepts({ path: 'text.txt' }))
+  assert.equal(hash(JSON.stringify(CAPY_TOOL_DEFINITIONS)), historicalDefinitionsHash)
 })
 
 test('Opulent2 schemas retain valid timeout and wait combinations at the existing bounds without filling inputs', () => {

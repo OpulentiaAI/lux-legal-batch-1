@@ -21,6 +21,9 @@ LUNA_MODEL = 'openai/gpt-6-luna'
 GATEWAY = 'https://ai-gateway.vercel.sh/v1'
 LUNA_BUDGETS = {'maxSteps': 250, 'maxInputTokens': 2000000, 'maxContextTokens': 1050000,
                 'maxCompletionTokens': 32768, 'summaryMaxTokens': 8192, 'modelRequestTimeoutMs': 600000}
+LUNA_CONTEXT_EXPERIMENT = 'gateway-luna-context-v2'
+LUNA_CONTEXT_BUDGETS = {**LUNA_BUDGETS, 'maxInputTokens': None}
+LUNA_CONTEXT_BUDGET_DISCLOSURE = "Context-window safeguards for this task and this harness arm: at most 250 model requests. Opulent2's root, descendants and context-compaction requests share this request limit; Harvey's model requests use the same task-level request limit. There is no cumulative session input-token execution limit. Full cumulative provider-reported input and completion usage remains recorded as provenance; repeated context and cached input count in full, and compaction does not reset accounting. Each request must fit GPT-6 Luna's 1,050,000-token input-plus-output context window, including its reserved completion budget of 32,768 tokens for answerer requests or 8,192 tokens for context-compaction requests. Conservative pre-request text reservations enforce this per-request bound; image, opaque reasoning or unrecognized content reserves the complete per-request input capacity because its exact tokenization is not verified. These full-window reservations are not compared with a cumulative task allowance. Unknown consumption stops further inference and remains explicitly unknown. These are execution safeguards, not semantic grading or turn-count penalties. Complete and return the requested work before the shared request limit is exhausted; never claim unfinished work is complete."
 ADMISSION_POLICY = {
     'version': 'task-model-budget-admission-v1',
     'limits': 'explicit caller opt-in; no model, provider or historical policy defaults',
@@ -41,6 +44,9 @@ ADMISSION_POLICY = {
     'requestBinding': 'caller must admit the exact prepared messages/tools before each provider request',
     'integerEncoding': 'safe integers are numbers; larger cumulative observed totals are decimal strings',
 }
+CONTEXT_ADMISSION_POLICY = {**ADMISSION_POLICY, 'version': 'task-model-budget-admission-v2',
+                            'cumulativeInput': 'metered provenance only; no cumulative session input-token execution limit',
+                            'nonTextInput': 'images, opaque reasoning or unrecognized content reserve the per-request input window, never a cumulative task allowance'}
 
 
 def experiment_config(document):
@@ -52,14 +58,17 @@ def experiment_config(document):
             raise ValueError('The Luna experiment requires one explicit launch config')
         return None
     if (not isinstance(config, dict) or set(config) != {'experiment', 'model', 'providerModel', 'inferenceProvider', 'reasoningEffort', 'endpoint', 'budgets', 'prompts'}
-            or config.get('experiment') != LUNA_EXPERIMENT
+            or config.get('experiment') not in (LUNA_EXPERIMENT, LUNA_CONTEXT_EXPERIMENT)
             or config.get('model') != LUNA_MODEL or config.get('providerModel') != LUNA_MODEL
             or config.get('inferenceProvider') != 'gateway' or config.get('reasoningEffort') != 'max'
-            or config.get('endpoint') != GATEWAY or config.get('budgets') != LUNA_BUDGETS
+            or config.get('endpoint') != GATEWAY
+            or config.get('budgets') != (LUNA_CONTEXT_BUDGETS if config.get('experiment') == LUNA_CONTEXT_EXPERIMENT else LUNA_BUDGETS)
             or not isinstance(config.get('prompts'), dict)
             or not isinstance(config['prompts'].get('budgetDisclosure'), str)
             or not config['prompts']['budgetDisclosure'].strip()):
         raise ValueError('Invalid opt-in Luna experiment model, transport, budgets or disclosure')
+    if config['experiment'] == LUNA_CONTEXT_EXPERIMENT and config['prompts']['budgetDisclosure'] != LUNA_CONTEXT_BUDGET_DISCLOSURE:
+        raise ValueError('The context-window experiment requires its exact shared disclosure')
     return json.loads(json.dumps(config))
 
 
@@ -117,6 +126,13 @@ class ModelBudget:
     def __init__(self, directory, config, context):
         self.path = private_directory(directory) / 'model-budget.json'
         self.config, self.context = config, context
+        limits = config['budgets']
+        for key in ('maxSteps', 'maxContextTokens'):
+            if not isinstance(limits.get(key), int) or isinstance(limits[key], bool) or not 0 < limits[key] <= 2 ** 53 - 1:
+                raise ValueError('Explicit positive safe-integer model limits required')
+        if 'maxInputTokens' not in limits or (limits['maxInputTokens'] is not None and
+                (not isinstance(limits['maxInputTokens'], int) or isinstance(limits['maxInputTokens'], bool) or not 0 < limits['maxInputTokens'] <= 2 ** 53 - 1)):
+            raise ValueError('Explicit positive safe-integer or null cumulative input limit required')
         self.lock = threading.RLock()
         self.calls, self.input_tokens, self.output_tokens = 0, 0, 0
         self.reservations, self.block_reasons, self.request_ids = [], [], set()
@@ -132,10 +148,11 @@ class ModelBudget:
                         'total_tokens': encode(self.input_tokens + self.output_tokens)}
             pending = sum(row['status'] == 'pending' for row in self.reservations)
             unknown = sum(row['status'] == 'unknown' for row in self.reservations)
-            unallocated = max(0, self.config['budgets']['maxInputTokens'] - self.input_tokens - held)
-            return {'version': 'task-model-budget-v1',
+            capped_input = self.config['budgets']['maxInputTokens'] is not None
+            unallocated = max(0, self.config['budgets']['maxInputTokens'] - self.input_tokens - held) if capped_input else None
+            return {'version': 'task-model-budget-v1' if capped_input else 'task-model-budget-v2',
                     'budgets': {key: self.config['budgets'][key] for key in ('maxSteps', 'maxInputTokens', 'maxContextTokens')},
-                    'admissionPolicy': ADMISSION_POLICY, 'modelCalls': self.calls,
+                    'admissionPolicy': ADMISSION_POLICY if capped_input else CONTEXT_ADMISSION_POLICY, 'modelCalls': self.calls,
                     'inputTokens': encode(self.input_tokens), 'outputTokens': encode(self.output_tokens),
                     'reservedInputTokens': encode(held), 'usageUnknown': self.usage_unknown,
                     'blocked': self.blocked_reason is not None, 'blockedReason': self.blocked_reason,
@@ -150,12 +167,12 @@ class ModelBudget:
                               'admittedConservativeInputTokens': encode(sum(row['reservedInputTokens'] for row in self.reservations)),
                               'usedOrReservedInputTokens': encode(self.input_tokens + held),
                               'remainingSteps': self.config['budgets']['maxSteps'] - self.calls,
-                              'unallocatedInputTokens': encode(unallocated),
-                              'admissibleInputTokens': 0 if self.blocked_reason else encode(unallocated)}}
+                              'unallocatedInputTokens': encode(unallocated) if capped_input else None,
+                              'admissibleInputTokens': 0 if self.blocked_reason else encode(unallocated) if capped_input else None}}
 
     def persist(self):
         with self.lock:
-            write_json(self.path, {'experiment': LUNA_EXPERIMENT, 'budgets': self.config['budgets'], 'ledger': self.snapshot()}, replace=self.path.exists())
+            write_json(self.path, {'experiment': self.config['experiment'], 'budgets': self.config['budgets'], 'ledger': self.snapshot()}, replace=self.path.exists())
 
     def block(self, reason, unknown=False, ticket=None, details=None):
         with self.lock:
@@ -182,7 +199,7 @@ class ModelBudget:
                     reason = 'model-call-limit'
                 elif reserved > capacity:
                     reason = 'per-request-context-limit'
-                elif self.input_tokens + held + reserved > budgets['maxInputTokens']:
+                elif budgets['maxInputTokens'] is not None and self.input_tokens + held + reserved > budgets['maxInputTokens']:
                     reason = 'cumulative-input-limit'
             if reason is not None:
                 self.block(reason)
@@ -233,7 +250,7 @@ class ModelBudget:
                 ticket['violations'].append('provider-context-limit-exceeded')
             if usage['completion_tokens'] > ticket['maxCompletionTokens']:
                 ticket['violations'].append('provider-completion-limit-exceeded')
-            if self.input_tokens + sum(row['heldInputTokens'] for row in self.reservations) > self.config['budgets']['maxInputTokens']:
+            if self.config['budgets']['maxInputTokens'] is not None and self.input_tokens + sum(row['heldInputTokens'] for row in self.reservations) > self.config['budgets']['maxInputTokens']:
                 ticket['violations'].append('provider-input-limit-exceeded')
             if ticket['violations']:
                 ticket['status'] = 'violated'
@@ -534,7 +551,7 @@ def main():
                     or request.get('provider_only') is not None or request.get('reasoning_effort') != config['reasoningEffort']
                     or request.get('max_steps') != config['budgets']['maxSteps']
                     or request.get('max_completion_tokens') != config['budgets']['maxCompletionTokens']
-                    or request.get('max_input_tokens') != config['budgets']['maxInputTokens']
+                    or 'max_input_tokens' not in request or request['max_input_tokens'] != config['budgets']['maxInputTokens']
                     or request.get('max_context_tokens') != config['budgets']['maxContextTokens']
                     or request.get('budget_disclosure') != config['prompts']['budgetDisclosure']):
                 raise RuntimeError('Harvey bridge request differs from the frozen Luna launch config')
@@ -587,7 +604,7 @@ def reconcile_gateway_records(rows, records, config, snapshot):
                 or len(record.get('requestAttempts', [])) != 1 or record['requestAttempts'][0].get('status') != row['status']
                 or record['requestAttempts'][0].get('requestId') != row['responseBodyId']):
             raise RuntimeError('Gateway adapter identity, actual usage or attempts differ from captured HTTP evidence')
-    if (snapshot['usageUnknown'] or snapshot['modelCalls'] != len(rows)
+    if (snapshot['usageUnknown'] or snapshot['blocked'] or snapshot['modelCalls'] != len(rows)
             or snapshot['inputTokens'] != sum(row['usage']['prompt_tokens'] for row in rows)
             or snapshot['outputTokens'] != sum(row['usage']['completion_tokens'] for row in rows)
             or snapshot['reservedInputTokens']):

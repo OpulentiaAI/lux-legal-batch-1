@@ -23,11 +23,14 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     execution: { description: 'Foreground waits for a bounded result; background/detached return the started process operation.', default: 'foreground' },
     machine: { description: 'Select this session’s primary VM or an owned descendant by dotted path/session ID; omission uses this session’s VM.' },
   }, { if: { properties: { execution: { const: 'foreground' } } }, then: { properties: { timeout: { maximum: 3600 } } } }),
-  read: withParameters(CAPY_TOOL_DEFINITIONS.read, {
+  read: withParameters({ ...CAPY_TOOL_DEFINITIONS.read, inputSchema: { ...CAPY_TOOL_DEFINITIONS.read.inputSchema,
+    properties: { ...CAPY_TOOL_DEFINITIONS.read.inputSchema.properties,
+      document_backend: { type: 'string', enum: ['auto', 'pymupdf', 'anydoc', 'liteparse'], default: 'auto' } } } }, {
     path: { description: 'VM file path; relative paths resolve from the selected workspace and ~ resolves to /home/user.' },
-    offset: { description: '1-based first line of the selected file window.', default: 1 },
-    limit: { description: 'Maximum lines in the selected window; returned content is also bounded to 60000 UTF-16 code units.', default: 2000 },
-    character_offset: { description: '0-based UTF-16 code-unit offset within the selected line window; use next_character_offset to continue the same window.', default: 0 },
+    offset: { description: '1-based first line for UTF-8 text, source page for PDFs, or logical chunk for other supported documents.', default: 1 },
+    limit: { description: 'Maximum text lines, bounded to 60000 Unicode code points; document reads select at most four source pages or logical chunks and return at most 16000 Unicode code points.', default: 2000 },
+    character_offset: { description: '0-based Unicode code-point offset within the selected text or document window; use next_character_offset to continue that same window.', default: 0 },
+    document_backend: { description: 'Local supported-document parser: auto selects PyMuPDF for PDFs or AnyDoc for Office documents; explicit pymupdf, anydoc or liteparse applies only to document probes, not ordinary UTF-8 text.' },
     machine: { description: 'Select this session’s primary VM or an owned descendant; omission uses this session’s VM.' },
   }),
   edit: withParameters(CAPY_TOOL_DEFINITIONS.edit, {

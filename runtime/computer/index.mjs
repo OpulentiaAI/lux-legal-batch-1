@@ -4,9 +4,11 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
+import { probePreparedDocumentTools } from './document-tools-image.mjs';
 
 export { probePreparedComputer } from './probe.mjs';
 export { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
+export { probePreparedDocumentTools } from './document-tools-image.mjs';
 
 const BRIDGE = '/tmp/computer-use/bridge.py';
 const PACKAGE = 'modal-computer-use==2.0.2';
@@ -54,6 +56,7 @@ export function createComputer(sandbox, config = {}) {
     if (manifest.schema !== 1 || manifest.python_package !== PACKAGE || manifest.bridge_sha256 !== createHash('sha256').update(bridge).digest('hex')) {
       throw new Error('Prepared computer image is incompatible with this adapter');
     }
+    if (manifest.opulent2_machine?.documentTools) await probePreparedDocumentTools(sandbox, manifest.opulent2_machine.documentTools);
   };
   const ready = async () => {
     if (prepared) await verifyPreparedImage();

@@ -11,7 +11,7 @@ import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_HANDOFF_VERSION } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TOOL_POLICY } from '../../runtime/opulent2-policy.mjs'
-import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
 import { ENDPOINT, LUNA_CORPUS_BOUNDARY, LUNA_PROTOCOL, MODEL, NATIVE_MODEL, PROFILE, PROVING_TASKS, STATE_POLICY, validateGatewayCatalogue, WORKSPACE } from './contract.mjs'
 import { digest, immutable, json, LAUNCH, privateDirectory, proof, sha } from './io.mjs'
@@ -56,12 +56,11 @@ async function summarySystemHash(model = MODEL) {
 export async function draftRelease(spec) {
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, 'voyage', 'Select Voyage for source-only constructor inspection')
   assert(/^[a-zA-Z0-9_-]+$/.test(spec.runId ?? '') && /^[a-zA-Z0-9_-]+$/.test(spec.chainId ?? ''))
-  const luna = spec.experiment === LUNA_EXPERIMENT
-  assert(spec.experiment === undefined || luna, 'Unknown fixed evaluation experiment')
+  const luna = lunaPolicy(spec.experiment)
   assert((luna ? ['coverage', 'proving', 'comparison'] : ['proving', 'comparison']).includes(spec.stage), 'Coverage is separate and Luna-only')
   const gatewayCatalogue = luna ? validateGatewayCatalogue(spec.gatewayCatalogue) : null
-  const inference = luna ? { experiment: LUNA_EXPERIMENT, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
-    endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...LUNA_BUDGETS } }
+  const inference = luna ? { experiment: luna.experiment, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
+    endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...luna.budgets } }
     : { model: MODEL, inferenceProvider: 'runanywhere', providerModel: NATIVE_MODEL, endpoint: ENDPOINT,
       budgets: { maxSteps: 1000, maxCompletionTokens: 32768, summaryMaxTokens: 8192, modelRequestTimeoutMs: 600000 } }
   const inspection = join(LAUNCH, 'preparation', `${spec.runId}-${randomUUID()}`)
@@ -70,7 +69,7 @@ export async function draftRelease(spec) {
   if (spec.stage === 'coverage' || spec.stage === 'proving') {
     assert(!spec.tasks && !spec.comparisonFreeze, 'No early holdout selection')
     if (luna) assert(!spec.initialSnapshot, 'Coverage cannot seed proving and coverage starts fresh')
-    tasks = spec.stage === 'coverage' ? [bindTask('eval/opulent2-fixed/coverage/task.json')]
+    tasks = spec.stage === 'coverage' ? [bindTask(`eval/opulent2-fixed/${luna.experiment === LUNA_CONTEXT_EXPERIMENT ? 'coverage-documents' : 'coverage'}/task.json`)]
       : PROVING_TASKS.map(id => bindTask(`eval/complex-v1/drafts/${id}/task.json`))
   } else {
     const freeze = json(spec.comparisonFreeze.path)
@@ -80,12 +79,12 @@ export async function draftRelease(spec) {
     requireProvingAcceptance({ checkpoint, checkpointFile, acceptance: json(freeze.acceptance.path) })
     if (luna) {
       const proving = checkpoint.provenance.release
-      assert.equal(proving.experiment, LUNA_EXPERIMENT, 'Luna comparison requires its own accepted proving experiment')
+      assert.equal(proving.experiment, luna.experiment, 'Luna comparison requires its own accepted proving experiment')
       assert.equal(proving.chainId, spec.chainId)
       for (const key of ['model', 'inferenceProvider', 'providerModel', 'endpoint', 'reasoningEffort']) assert.equal(proving[key], inference[key])
-      assert.deepEqual(proving.budgets, LUNA_BUDGETS, 'Cannot carry successful state across budget policies')
-      assert.equal(proving.prompts.budgetDisclosure, LUNA_BUDGET_DISCLOSURE)
-      assert.equal(proving.prompts.budgetDisclosureSha256, sha(LUNA_BUDGET_DISCLOSURE))
+      assert.deepEqual(proving.budgets, luna.budgets, 'Cannot carry successful state across budget policies')
+      assert.equal(proving.prompts.budgetDisclosure, luna.disclosure)
+      assert.equal(proving.prompts.budgetDisclosureSha256, sha(luna.disclosure))
       assert.deepEqual(proving.gatewayCatalogue, gatewayCatalogue, 'Cannot change provider evidence across the successful experiment chain')
     }
     tasks = freeze.tasks
@@ -105,13 +104,13 @@ export async function draftRelease(spec) {
   const harness = createBroadHarness({ workspace: WORKSPACE, corpus, artifactsDir: join(inspection, 'adapter'),
     instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
     maxSteps: inference.budgets.maxSteps, model: inference.model, inferenceProvider: inference.inferenceProvider,
-    ...(luna ? { experiment: LUNA_EXPERIMENT, budgetDisclosure: LUNA_BUDGET_DISCLOSURE, reasoningEffort: 'max' } : { providerModel: NATIVE_MODEL }),
+    ...(luna ? { experiment: luna.experiment, budgetDisclosure: luna.disclosure, reasoningEffort: 'max' } : { providerModel: NATIVE_MODEL }),
     workProduct: { maxCompletionTokens: inference.budgets.maxCompletionTokens }, sandboxTemplate: spec.sandboxTemplate, computerImageSha256: spec.computerImageSha256,
     opulent2Handoff: { chainId: spec.chainId, taskId: tasks[0].id, attemptId: 'offline-prepare', inlineByteLimit: 33554432 },
     runtimeFactory: () => { throw stopped },
     sandboxFactory: () => { throw stopped }, modelFactory: () => { throw stopped } })
   assert.equal(typeof harness.opulent2SystemPrompt, 'string', 'Actual adapter configured instruction text is required')
-  if (luna) assert.equal(harness.opulent2SystemPrompt.split(LUNA_BUDGET_DISCLOSURE).length, 2, 'Configured disclosure must be delivered once')
+  if (luna) assert.equal(harness.opulent2SystemPrompt.split(luna.disclosure).length, 2, 'Configured disclosure must be delivered once')
   const capturedConfig = { instructionProfile: PROFILE, systemPrompt: harness.opulent2SystemPrompt, model: inference.model,
     runtimeCapabilities: [...OPULENT2_TOOL_POLICY.runtimeCapabilities], allowedTools: [...OPULENT2_TOOL_POLICY.allowedTools],
     initialTools: [...OPULENT2_TOOL_POLICY.initialTools], corpusWorkspace: WORKSPACE, contextCompaction: harness.provenance.capy.contextCompaction }
@@ -146,7 +145,7 @@ export async function draftRelease(spec) {
       codemodeToolName: 'execute', answererSchemaSha256: digest(definitions), requiredCompletions: ['nested-native-return', 'computer', 'agrep', 'memory_save'] },
     prompts: { runtimePromptSha256: sha(capturedConfig.systemPrompt), assembledRuntimePromptSha256, profileManifestSha256: harness.provenance.instructions.foundation.manifestSha256,
       summarySystemMessagesSha256: await summarySystemHash(inference.model), appendix: OPULENT2_TASK_APPENDIX, appendixSha256: sha(OPULENT2_TASK_APPENDIX),
-      ...(luna ? { budgetDisclosure: LUNA_BUDGET_DISCLOSURE, budgetDisclosureSha256: sha(LUNA_BUDGET_DISCLOSURE) } : {}),
+      ...(luna ? { budgetDisclosure: luna.disclosure, budgetDisclosureSha256: sha(luna.disclosure) } : {}),
       referenceUpdateSha256: sha(OPULENT2_REFERENCE_UPDATE), skillsRegistry, skillsRegistrySha256: sha(skillsRegistry),
       appendixReference: 'Parent-supplied runtime/instructions/opulent2-fixed-v1.md, trimmed-end exact bytes' },
     stateContract: { module: 'runtime/opulent2-handoff.mjs', sha256: bindings['runtime/opulent2-handoff.mjs'], version: OPULENT2_HANDOFF_VERSION,

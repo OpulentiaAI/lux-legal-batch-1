@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "name": "opulent2-document-tools-v1",
+  "architecture": "amd64",
+  "ubuntu": "24.04",
+  "destinationRoot": "/opt/opulent/document-tools",
+  "helperSources": ["document.mjs", "document.py"],
+  "helperSourceDirectory": "runtime/document-tools",
+  "cli": "/usr/local/bin/opulent-document",
+  "node": {
+    "version": "24.18.0",
+    "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz",
+    "sha256": "55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742",
+    "archiveRoot": "node-v24.18.0-linux-x64",
+    "license": "MIT AND bundled third-party licenses",
+    "licenseFile": "node/LICENSE"
+  },
+  "rga": {
+    "version": "0.10.10",
+    "url": "https://github.com/phiresky/ripgrep-all/releases/download/v0.10.10/ripgrep_all-v0.10.10-x86_64-unknown-linux-musl.tar.gz",
+    "sha256": "a969c25b182ac84aa672518313b5f741091decf7d93d03a020bcfe517b9ff4e8",
+    "archiveRoot": "ripgrep_all-v0.10.10-x86_64-unknown-linux-musl",
+    "license": "AGPL-3.0-or-later",
+    "licenseFile": "rga/LICENSE.md",
+    "source": "https://github.com/phiresky/ripgrep-all/tree/e8cd5552379d60b12a17997177b7a8d34eedcdc4"
+  },
+  "pdfium": {
+    "version": "chromium/8058",
+    "url": "https://github.com/run-llama/pdfium-binaries/releases/download/chromium/8058/pdfium-linux-x64.tgz",
+    "sha256": "2dd418a8974dbb373ad281f99b6f95ed02e01b1a2bb2e05e772c80b7587577b5",
+    "binarySha256": "c23593cbb401ce28feb2cf89ff2d3f51351397b9c0781be561b4eef6975ac35b",
+    "license": "BSD-3-Clause AND bundled third-party licenses",
+    "policy": "The pinned release binary matches LiteParse's npm-bundled libpdfium.so byte-for-byte. Install its LICENSE and complete licenses directory, not a second binary."
+  },
+  "sourceLicenses": [
+    {
+      "name": "anydoc",
+      "url": "https://raw.githubusercontent.com/firecrawl/anydoc/42bf1c5ecdde9eb0d96d6bd75a9e6698cf93b14c/LICENSE",
+      "sha256": "03a9e7657aac6536fb6458bd220347c4e7f85bd0a51d8d9e8528530b7a682ade",
+      "license": "MIT"
+    },
+    {
+      "name": "liteparse",
+      "url": "https://raw.githubusercontent.com/run-llama/liteparse/ab8879623ee45a0b7a775d12b42a9a7ae9dab16b/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "license": "Apache-2.0"
+    }
+  ],
+  "tessdata": {
+    "path": "/usr/share/tesseract-ocr/5/tessdata",
+    "languages": ["eng", "osd"],
+    "files": {
+      "eng.traineddata": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+      "osd.traineddata": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
+    },
+    "license": "Apache-2.0",
+    "runtimeDownloads": false
+  },
+  "npmInstall": "npm ci --ignore-scripts --include=optional --no-audit --no-fund",
+  "pythonInstall": "isolated Python 3.12 venv; exact SHA256-verified wheels; pip --no-index --no-deps --require-hashes --only-binary=:all:",
+  "aptInstall": "exact root versions from the signed and InRelease-hash-pinned immutable Noble snapshot, no recommends, no removals",
+  "networkPolicy": "Build-time public artifact retrieval only. Prepared CLIs reject hosted OCR, HTTP OCR servers, alternative configs, and unprepared OCR languages. Runtime adapters must retain the existing workspace, network and human-approval boundaries.",
+  "licenses": {
+    "PyMuPDF": "AGPL-3.0-or-later OR Artifex commercial license; bundled MuPDF has the same dual-license policy",
+    "ghostscript": "AGPL-3.0-or-later; consult packaged copyright for third-party notices",
+    "poppler": "GPL-2.0-or-later; consult packaged copyright for third-party notices",
+    "pandoc": "GPL-2.0-or-later",
+    "libreoffice": "MPL-2.0 AND LGPL-3.0-or-later; consult packaged copyright for component notices",
+    "qpdf": "Apache-2.0",
+    "tesseract": "Apache-2.0",
+    "ffmpeg": "GPL-2.0-or-later in Ubuntu's build; optional codecs have additional notices",
+    "ripgrep": "MIT OR Unlicense",
+    "sharp": "Apache-2.0; upstream's bundled libvips/dependencies are used under LGPL-3.0 and other licenses listed in node_modules/@img/sharp-libvips-linux-x64/README.md. Exact native dependency versions are retained in its versions.json.",
+    "pdfium": "BSD-3-Clause AND third-party notices in pdfium-licenses/LICENSE and pdfium-licenses/licenses/",
+    "policy": "Retain upstream license/copyright files and notices. Inclusion is not a commercial-license grant or a legal-compliance certification. Distribution/service deployments must review copyleft obligations, especially PyMuPDF, Ghostscript and rga."
+  }
+}

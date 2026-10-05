@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime/instructions/opulent2.mjs'
-import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_BUDGETS, LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { digest, json, LAUNCH, ordinary, proof, sha, within } from './io.mjs'
 
 export const WORKSPACE = '/home/user/.capy/work/opulent2-fixed-eval'
@@ -16,6 +16,7 @@ export const PROFILE = 'opulent2-fixed-v1'
 export const STATE_POLICY = 'sequential-success-only-model-memory-local-drive-v1'
 export const PROVING_TASKS = Object.freeze(['task-02', 'task-05'])
 export const COVERAGE_TASK = 'luna-tool-coverage-01'
+export const CONTEXT_COVERAGE_TASK = 'luna-tool-coverage-02'
 export const LUNA_PROTOCOL = 'eval/opulent2-fixed/LUNA_PROTOCOL.md'
 export const LUNA_CORPUS_BOUNDARY = 'Historical corpus identity only; no model, budget, provider catalogue, answers, memory, evidence or grades reused'
 export const hex = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
@@ -45,8 +46,7 @@ export function validateGatewayCatalogue(binding) {
 
 export function validateRelease(release) {
   assert.equal(release?.version, 'opulent2-fixed-release-v1')
-  const luna = release.experiment === LUNA_EXPERIMENT
-  assert(release.experiment === undefined || luna, 'Unknown fixed evaluation experiment')
+  const luna = lunaPolicy(release.experiment)
   assert.equal(release.name, NAME)
   assert((luna ? ['coverage', 'proving', 'comparison'] : ['proving', 'comparison']).includes(release.stage), 'Coverage is separate and Luna-only')
   assert.equal(release.workspace, WORKSPACE)
@@ -60,7 +60,7 @@ export function validateRelease(release) {
     assert.equal(release.providerModel, LUNA_MODEL)
     assert.equal(release.endpoint, LUNA_ENDPOINT)
     assert.equal(release.reasoningEffort, 'max')
-    assert.deepEqual(release.budgets, LUNA_BUDGETS)
+    assert.deepEqual(release.budgets, luna.budgets)
     validateGatewayCatalogue(release.gatewayCatalogue)
     assert.equal(release.nativeCatalogueSha256, undefined, 'Native catalogue is not Luna provider evidence')
     assert(text(release.budgetSource?.checkpoint?.path) && isAbsolute(release.budgetSource.checkpoint.path) && hex(release.budgetSource.checkpoint.sha256))
@@ -101,8 +101,8 @@ export function validateRelease(release) {
     assert.equal(release.prompts.appendix, OPULENT2_TASK_APPENDIX, 'Luna keeps the exact Opulent2 appendix')
     assert.equal(release.prompts.skillsRegistry, opulent2SkillRegistry().block, 'Luna keeps the exact approved skills registry')
     assert.equal(release.prompts.referenceUpdateSha256, sha(OPULENT2_REFERENCE_UPDATE))
-    assert.equal(release.prompts.budgetDisclosure, LUNA_BUDGET_DISCLOSURE, 'Shared safeguard disclosure must remain exact')
-    assert.equal(release.prompts.budgetDisclosureSha256, sha(LUNA_BUDGET_DISCLOSURE))
+    assert.equal(release.prompts.budgetDisclosure, luna.disclosure, 'Shared safeguard disclosure must remain exact')
+    assert.equal(release.prompts.budgetDisclosureSha256, sha(luna.disclosure))
   }
   assert.equal(release.evidencePolicy, 'exact-native-wire-prepared-instructions-returned-observations-v1')
   assert.equal(release.gradingPolicy, 'separate-parent-jev-capy-no-answerer-feedback-v1')
@@ -128,10 +128,12 @@ export function validateRelease(release) {
     assert.equal(release.sourceBindings[task.rubricPath], task.rubricSha256)
   }
   if (release.stage === 'coverage' || release.stage === 'proving') {
-    assert.deepEqual(release.tasks.map(task => task.id), release.stage === 'coverage' ? [COVERAGE_TASK] : PROVING_TASKS)
+    const contextCoverage = luna?.experiment === LUNA_CONTEXT_EXPERIMENT
+    assert.deepEqual(release.tasks.map(task => task.id), release.stage === 'coverage' ? [contextCoverage ? CONTEXT_COVERAGE_TASK : COVERAGE_TASK] : PROVING_TASKS)
     if (release.stage === 'coverage') {
-      assert.equal(release.tasks[0].taskPath, 'eval/opulent2-fixed/coverage/task.json')
-      assert.equal(release.tasks[0].rubricPath, 'eval/opulent2-fixed/coverage/rubric.json')
+      const directory = contextCoverage ? 'coverage-documents' : 'coverage'
+      assert.equal(release.tasks[0].taskPath, `eval/opulent2-fixed/${directory}/task.json`)
+      assert.equal(release.tasks[0].rubricPath, `eval/opulent2-fixed/${directory}/rubric.json`)
     }
     assert.equal(release.initialSnapshot, null, 'Coverage and proving start without historical memory or Drive')
     assert.equal(release.comparisonFreeze, null, 'No holdouts can be selected before proving passes')
@@ -165,7 +167,7 @@ export function verifyCommittedRelease(release, runGit = args => execFileSync('g
     for (const [path, expected] of Object.entries(release.harvey.sourceBindings)) proof(join(release.harvey.root, path), expected)
     assert.equal(digest(release.harvey.sourceBindings), release.harvey.sourceSha256)
   }
-  if (release.experiment === LUNA_EXPERIMENT) validateGatewayCatalogue(release.gatewayCatalogue)
+  if (lunaPolicy(release.experiment)) validateGatewayCatalogue(release.gatewayCatalogue)
   return { commit: release.commit, sourceBindingsSha256: digest(release.sourceBindings) }
 }
 

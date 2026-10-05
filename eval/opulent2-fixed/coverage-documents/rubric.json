@@ -1,0 +1,16 @@
+{
+  "criteria": [
+    {
+      "id": "coverage-evidence-only",
+      "requirement": "Report actual model-driven approved-tool and local document-workflow outcomes without claiming legal quality or improvement.",
+      "pass": "Every claimed outcome is supported by the native trajectory and actual owned resources; document processing returns selected content and verifiable backing references, while unresolved gaps remain explicit.",
+      "fail": "Catalogue entries, package versions, operator probes or fabricated observations are represented as native conversion, search, rendering or tool execution.",
+      "deliverables": ["coverage.md"],
+      "sourceRefs": [],
+      "factRefs": [],
+      "minimalPass": "An independently verified infrastructure and document-workflow coverage record; no legal comparison score.",
+      "nearMiss": "A model-authored report without independent invocation, returned-content or backing evidence.",
+      "failureFamily": "infrastructure-evidence"
+    }
+  ]
+}

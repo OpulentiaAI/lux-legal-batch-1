@@ -3,12 +3,13 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import { Template } from 'e2b';
+import { prepareDocumentToolsLayer } from './document-tools-image.mjs';
 
 const recipeUrl = new URL('./opulent2-machine-image.json', import.meta.url);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const quote = value => `'${value.replaceAll("'", "'\\''")}'`;
 
-export async function buildOpulent2Machine({ alias, outputDirectory, apiKey = process.env.E2B_API_KEY, TemplateImpl = Template } = {}) {
+export async function buildOpulent2Machine({ alias, outputDirectory, apiKey = process.env.E2B_API_KEY, TemplateImpl = Template, documentToolsSourceDirectory } = {}) {
   if (typeof alias !== 'string' || !/^opulent2-machine-v1-[a-z0-9-]+$/.test(alias)) throw new TypeError('A new unique opulent2-machine-v1-* alias is required');
   if (typeof outputDirectory !== 'string' || !outputDirectory.startsWith('/') || resolve(outputDirectory) !== outputDirectory) throw new TypeError('An absolute private output directory is required');
   if (!apiKey) throw new Error('E2B_API_KEY is required for an authenticated template build');
@@ -33,6 +34,8 @@ export async function buildOpulent2Machine({ alias, outputDirectory, apiKey = pr
     if (!/^[a-z0-9-]+$/.test(pkg.name) || !/^[0-9][a-z0-9.+-]*$/.test(pkg.version) || !/^https:\/\/archive\.ubuntu\.com\/ubuntu\/pool\/[a-zA-Z0-9_./+-]+\.deb$/.test(pkg.url) || !/^[a-f0-9]{64}$/.test(pkg.sha256)) throw new Error('Invalid pinned package recipe');
   }
   if (await TemplateImpl.exists(alias, { apiKey })) throw new Error('Refusing to rebuild an existing alias; use a new unique image name');
+  if (recipe.documentTools?.required !== true || recipe.documentTools.manifest !== 'document-tools/install-manifest.json') throw new Error('A pinned document-tool layer is required for this new image recipe');
+  const documentLayer = await prepareDocumentToolsLayer({ sourceDirectory: documentToolsSourceDirectory });
   const sourceTags = await TemplateImpl.getTags(recipe.sourceTemplateId, { apiKey });
   const sourceTag = sourceTags.find(tag => tag.tag === 'default') ?? sourceTags.find(tag => tag.tag === 'latest');
   if (!sourceTag?.buildId) throw new Error('The approved source template has no recorded default build');
@@ -40,6 +43,11 @@ export async function buildOpulent2Machine({ alias, outputDirectory, apiKey = pr
     sourceBuildId: sourceTag.buildId, sourceTag: sourceTag.tag, sourceImageSha256: recipe.sourceImageSha256,
     recipeSha256: sha256(bytes), builderSha256, packages: recipe.packages,
     executable: recipe.executable, resolvedExecutable: recipe.resolvedExecutable, version: recipe.version,
+    documentTools: { name: documentLayer.recipe.name, destinationRoot: documentLayer.recipe.destinationRoot,
+      installedManifestPath: '/opt/opulent/document-tools/installed.json',
+      recipeSha256: documentLayer.recipeSha256, bundleSha256: documentLayer.bundleSha256,
+      installerSha256: documentLayer.installerSha256,
+      sourceFiles: documentLayer.files.map(({ path, sha256 }) => ({ path, sha256 })) },
     skills: { destinationRoot: skillsManifest.destinationRoot, manifestSha256: sha256(skillsBytes),
       installedManifestPath: '/opt/opulent/skills/opulent2-manifest-v1.json', files: skills.map(({ name, sha256 }) => ({ path: `${name}/SKILL.md`, sha256 })) } };
   let image = TemplateImpl().fromTemplate(`${recipe.sourceTemplateId}:${sourceTag.tag}`).setUser('root');
@@ -70,6 +78,14 @@ manifest.write_bytes(base64.b64decode(p['manifest']))
 manifest.chmod(0o444)
 root.chmod(0o555)
 PY`);
+  const documentPayload = Buffer.from(JSON.stringify({ recipe: documentLayer.recipe,
+    recipeSha256: documentLayer.recipeSha256, files: documentLayer.files })).toString('base64');
+  image = image.runCmd('set -eu; test ! -e /opt/opulent/document-tools; test ! -e /opt/opulent2-document-build; install -d -m 0700 /opt/opulent2-document-build; touch /opt/opulent2-document-build/payload.b64');
+  for (let offset = 0; offset < documentPayload.length; offset += 24_000) {
+    image = image.runCmd(`printf '%s' ${quote(documentPayload.slice(offset, offset + 24_000))} >> /opt/opulent2-document-build/payload.b64`);
+  }
+  image = image.runCmd(`python3 - /opt/opulent2-document-build/payload.b64 /opt/opulent2-document-build/record.json <<'PY'\n${documentLayer.installSource}\nPY`);
+  image = image.setEnvs({ TESSDATA_PREFIX: documentLayer.recipe.tessdata.path });
   const payload = Buffer.from(JSON.stringify(addition)).toString('base64');
   image = image.runCmd(String.raw`python3 - '${payload}' <<'PY'
 import base64,hashlib,json,pathlib,os,stat,sys
@@ -78,6 +94,10 @@ marker=pathlib.Path('/opt/computer-use/image.json')
 if hashlib.sha256(marker.read_bytes()).hexdigest()!=addition['sourceImageSha256']:raise RuntimeError('Source image changed')
 manifest=json.loads(marker.read_bytes())
 if 'opulent2_machine' in manifest:raise RuntimeError('Source image already carries a machine layer')
+document=json.loads(pathlib.Path('/opt/opulent2-document-build/record.json').read_bytes())
+if document['recipeSha256']!=addition['documentTools']['recipeSha256']:raise RuntimeError('Document layer recipe changed')
+addition['documentTools'].update(document)
+print('OPULENT2_DOCUMENT_MANIFEST_SHA256='+document['installedManifestSha256'])
 addition['executableSha256']=hashlib.sha256(pathlib.Path(addition['resolvedExecutable']).read_bytes()).hexdigest()
 addition['installedPackages']={p['name']:p['version'] for p in addition['packages']}
 manifest['opulent2_machine']=addition
@@ -87,17 +107,20 @@ pathlib.Path('/opt/computer-use/opulent2-machine.json').write_text(json.dumps(ad
 pathlib.Path('/opt/computer-use/opulent2-machine.json').chmod(0o444)
 print('OPULENT2_IMAGE_SHA256='+hashlib.sha256(marker.read_bytes()).hexdigest())
 PY`);
-  image = image.setUser('user').runCmd('set -eu; test "$(id -u)" != 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/computer-use/opulent2-machine.json; test ! -w /usr/bin/tre-agrep; /usr/local/bin/agrep --version');
+  image = image.runCmd('rm -rf /opt/opulent2-document-build');
+  image = image.setUser('user').runCmd('set -eu; test "$(id -u)" != 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/computer-use/opulent2-machine.json; test ! -w /usr/bin/tre-agrep; /usr/local/bin/agrep --version; setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions --fixtures');
   await mkdir(outputDirectory, { recursive: true, mode: 0o700 });
   const logs = [];
   const built = await TemplateImpl.build(image, alias, { apiKey, cpuCount: 2, memoryMB: 4096,
     onBuildLogs: entry => { const line = String(entry.message ?? ''); logs.push(line); process.stdout.write(`${line}\n`); } });
   const imageSha256 = logs.map(line => line.match(/OPULENT2_IMAGE_SHA256=([a-f0-9]{64})/)?.[1]).filter(Boolean).at(-1);
+  const documentManifestSha256 = logs.map(line => line.match(/OPULENT2_DOCUMENT_MANIFEST_SHA256=([a-f0-9]{64})/)?.[1]).filter(Boolean).at(-1);
   const record = { schema: 1, alias, templateId: built.templateId, buildId: built.buildId, imageSha256: imageSha256 ?? null,
-    ...addition, createdAt: new Date().toISOString(), provenance: 'Authenticated E2B build; no runtime installs or credentials in image' };
+    ...addition, documentTools: { ...addition.documentTools, installedManifestSha256: documentManifestSha256 ?? null },
+    createdAt: new Date().toISOString(), provenance: 'Authenticated E2B build; no runtime installs or credentials in image' };
   await writeFile(join(outputDirectory, 'build.json'), `${JSON.stringify(record, null, 2)}\n`, { mode: 0o600 });
   await writeFile(join(outputDirectory, 'build.log'), `${logs.join('\n')}\n`, { mode: 0o600 });
-  if (!imageSha256) throw new Error('Build completed but its image marker digest was not returned; record the actual digest in the owned verification probe');
+  if (!imageSha256 || !documentManifestSha256) throw new Error('Build completed but its image/document marker digest was not returned; record the actual digests in the owned verification probe');
   return record;
 }
 

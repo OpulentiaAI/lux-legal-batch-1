@@ -7,6 +7,10 @@
   "executable": "/usr/local/bin/agrep",
   "resolvedExecutable": "/usr/bin/tre-agrep",
   "version": "tre-agrep (TRE agrep) 0.8.0",
+  "documentTools": {
+    "manifest": "document-tools/install-manifest.json",
+    "required": true
+  },
   "packages": [
     {
       "name": "libtre5",

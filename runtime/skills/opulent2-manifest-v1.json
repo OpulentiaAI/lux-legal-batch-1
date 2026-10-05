@@ -31,13 +31,18 @@
     },
     {
       "name": "opulent2-data-analysis",
-      "description": "Analyze supplied local tables and corpus data with reproducible calculations and verified source-backed outputs.",
-      "artifactSha256": "0c0ef128aea55a6b0c7b99f55fe84abd853040d7d6c490133fa427788e0ee0fd",
+      "description": "Extract and analyze supplied local documents and tables with bounded, reproducible, source-backed outputs.",
+      "artifactSha256": "b2ef60f77c653513b1a7cc4794ea5a88622ed2f4c75f5e5aa02462366c1ad0d8",
       "source": {
         "kind": "local-data-adaptation",
         "path": "runtime/skills/data-analysis/SKILL.md",
         "sha256": "57ed48e0c77275fa34b551da6fced9aaee60b7b6771a736484906038f5d3ddb3",
-        "disposition": "Preserve the historical artifact; adapt supplied-file analysis and persistence to approved local file/corpus/shell/memory/Drive tools without enabling its excluded hosted APIs."
+        "disposition": "Preserve the historical artifact; extend local document/table analysis with the October 5 AnyDoc, PyMuPDF, LiteParse and ripgrep-all requirements, bounded file-backed extraction and offline OCR, without enabling excluded hosted APIs.",
+        "references": [
+          "https://github.com/firecrawl/anydoc/tree/261fc257d17c3eab0f673be31c408fd9fdc2171a",
+          "https://github.com/run-llama/liteparse/tree/b2a87350e5a40638d8e39d47875a6b8f4e4a0faf",
+          "https://github.com/phiresky/ripgrep-all/tree/fce1a28683142b3dbd6ea2f7b719d89c90aee227"
+        ]
       }
     }
   ],
