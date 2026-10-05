@@ -101,7 +101,7 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     operation_id: { description: 'Owned process, descendant-session, wait or execute operation ID to cancel; cancellation does not undo completed effects.' },
   }),
   computer: { ...CAPY_TOOL_DEFINITIONS.computer, description: CAPY_TOOL_DEFINITIONS.computer.description.replace('use `exec`', 'use `bash`')
-    + '\nIf coordinate or start_coordinate is present, it must contain exactly two nonnegative integers [x, y], never an empty array. Omit unused optional coordinates for screenshot, read_dom and cursor_position actions.' },
+    + '\nCoordinate validation is action-specific: mouse_move, click actions, left_mouse_down, left_mouse_up and scroll validate a supplied coordinate as exactly two nonnegative integers [x, y]; left_click_drag requires both coordinate and start_coordinate in that form. Actions that do not use coordinates ignore unrelated coordinate fields. Omit unused optional fields for screenshot, read_dom, key, type, wait, hold_key, cursor_position and zoom.' },
   agrep: withParameters(OPULENT2_AGREP_DEFINITION, {
     pattern: { description: 'Literal single-line UTF-8 text to search for, not shell flags or a regular expression.' },
     path: { description: 'File or directory inside this VM’s workspace; symlinks, special files and traversal are refused.', default: '.' },
