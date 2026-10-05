@@ -9,17 +9,22 @@ import { CAPY_VISIBLE_EVIDENCE_VERSION, evidenceV4 } from '../grading-evidence.m
 import { chunkText } from '../../src/tp/manifest.ts'
 import { OPULENT2_HANDOFF_VERSION, parseOpulent2Handoff } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
+import { LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
 import { redact } from '../../runtime/security.mjs'
+import { verifyModelBudget } from './budget-verification.mjs'
 import { PROFILE, requireLiveAuthorization, validateRelease } from './contract.mjs'
 import { digest, immutable, json, LAUNCH, privateDirectory, proof, sha, within } from './io.mjs'
 import { reconcileHarvey } from './live.mjs'
-import { aggregateNative, reconcileNative } from './native.mjs'
+import { createTaskModelBudget } from './model-budget.mjs'
+import { aggregateNative, reconcileNative, wireMeasurements } from './native.mjs'
 import { loadPublicPacket, verifyComparisonFreeze } from './tasks.mjs'
-import { nativeTransmissions, validatePreparedReceipt, verifyCarryForward } from './validate.mjs'
+import { nativeTransmissions, validatePreparedReceipt, verifyCarryForward, verifyPreparedTransmissions } from './validate.mjs'
 
 const implementationRoot = fileURLToPath(new URL('../..', import.meta.url))
 export const GRADING_VERSION = 'opulent2-fixed-saved-output-jev-v1'
 export const METRICS_PROFILE = 'completed-work-v6'
+export const PAIR_SELECTION_VERSION = 'opulent2-fixed-single-pair-v1'
+export const PAIR_GRADE_VERSION = 'opulent2-fixed-pair-grade-v1'
 const options = { metricsProfile: METRICS_PROFILE }
 const pythonJson = value => Array.isArray(value) ? `[${value.map(pythonJson).join(', ')}]` : value && typeof value === 'object'
   ? `{${Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${pythonJson(item)}`).join(', ')}}` : JSON.stringify(value)
@@ -78,6 +83,12 @@ function modelInput(request) {
 
 function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   const policy = result.audit.provenance
+  if (release.experiment === LUNA_EXPERIMENT) {
+    assert.equal(policy.experiment, release.experiment)
+    assert.deepEqual(policy.modelBudget, release.budgets)
+    assert.equal(policy.budgetDisclosureSha256, release.prompts.budgetDisclosureSha256)
+    assert.equal(policy.reasoningEffort, release.reasoningEffort)
+  }
   assert.equal(policy.policy, PROFILE, 'Historical artifact profiles cannot stand in for Opulent2 fixed')
   assert.equal(policy.instructions.profile, PROFILE)
   assert.equal(policy.instructions.effectivePromptSha256, release.prompts.runtimePromptSha256)
@@ -87,7 +98,7 @@ function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   assert.equal(policy.maxSteps, release.budgets.maxSteps)
   assert.equal(policy.maxCompletionTokens, release.budgets.maxCompletionTokens)
   assert.equal(policy.inference.provider, release.inferenceProvider)
-  assert.equal(policy.inference.providerModel, release.providerModel)
+  assert.equal(policy.inference.providerModel, release.experiment === LUNA_EXPERIMENT ? undefined : release.providerModel)
   assert.equal(policy.inference.endpoint, release.endpoint)
   assert.equal(policy.toolSurface, PROFILE)
   assert.equal(policy.semanticSurface, release.semanticSurface)
@@ -105,6 +116,35 @@ function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   assert.equal(policy.opulent2.chainId, release.chainId)
   assert.equal(policy.opulent2.taskId, bundle.task.id)
   assert.equal(policy.opulent2.predecessorSnapshotSha256, previousSnapshot?.sha256 ?? null)
+}
+
+function savedModelBudget({ release, path, bind, transmissions, validation, resultLedger }) {
+  const file = bind(path), envelope = json(file.path)
+  assert.equal(envelope.experiment, release.experiment)
+  assert.deepEqual(envelope.budgets, release.budgets)
+  if (resultLedger !== undefined) assert.deepEqual(envelope.ledger, resultLedger, 'Harvey result differs from its actual budget ledger')
+  const verified = verifyModelBudget({ release, ledger: envelope.ledger, rows: transmissions.map(item => item.row) })
+  assert.deepEqual(verified, validation.modelBudget, 'Saved execution budget validation changed')
+  assert.deepEqual(envelope.ledger.admissionPolicy, createTaskModelBudget(release.budgets).ledger.snapshot().admissionPolicy)
+  assert.deepEqual(envelope.ledger.blockReasons, [])
+  for (const ticket of envelope.ledger.reservations) {
+    const item = transmissions.find(item => item.row.budgetTicketId === ticket.id), request = item.prepared ?? item.request
+    if (item.row.request.originalTransmittedSha256 === item.row.request.sanitizedSha256) assert.deepEqual(item.row.measurements, wireMeasurements(item.request))
+    const budget = createTaskModelBudget(release.budgets)
+    budget.admit({ messages: request.messages, tools: request.tools ?? [], maxCompletionTokens: item.row.maxTokens, sessionId: item.row.sessionId, phase: item.row.phase })
+    const admission = budget.ledger.snapshot().reservations[0]
+    assert.equal(ticket.id, `model-request-${ticket.step}`)
+    for (const field of ['reservationBasis', 'framingTokens', 'inputWindowTokens', 'maxCompletionTokens']) assert.equal(ticket[field], admission[field], `Source-bound budget admission changed: ${field}`)
+    const bytes = item.row.measurements.messagesJsonBytes + (item.row.measurements.schemaJsonBytes || 2) + Buffer.byteLength('{"messages":,"tools":}')
+    assert.equal(ticket.serializedUtf8Bytes, bytes, 'Budget input reservation differs from original native byte measurements')
+    assert.equal(ticket.reservedInputTokens, admission.reservationBasis === 'full-input-window' ? admission.inputWindowTokens : bytes + admission.framingTokens)
+    assert(ticket.reservedInputTokens <= admission.inputWindowTokens)
+    const usage = Object.fromEntries(['prompt_tokens', 'completion_tokens', 'total_tokens'].map(key => [key, item.row.usage[key]]))
+    if (item.row.usage.prompt_tokens_details?.cached_tokens !== undefined) usage.prompt_tokens_details = { cached_tokens: item.row.usage.prompt_tokens_details.cached_tokens }
+    if (item.row.usage.completion_tokens_details?.reasoning_tokens !== undefined) usage.completion_tokens_details = { reasoning_tokens: item.row.usage.completion_tokens_details.reasoning_tokens }
+    assert.deepEqual(ticket.reportedUsage, usage)
+  }
+  return { ledger: file, verified }
 }
 
 export function prepareSavedArm({ release, row, arm, bundle, workspace, previousSnapshot = null }) {
@@ -141,6 +181,18 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
   assert.deepEqual(json(join(directory, 'owned-absence.json')), receipt.validation.cleanup)
   assert.equal(receipt.validation.cleanup.queriedOnlyFactoryOwnedIds, true)
   assert(receipt.validation.cleanup.sandboxes.every(vm => vm.absent === true && vm.source === 'actual factory creation'))
+  if (release.experiment === LUNA_EXPERIMENT) {
+    const registry = json(proof(join(release.output, 'owned-vms.json')).path)
+    assert(registry.every(vm => vm.bindingSha256 === digest(release)), 'Foreign factory ownership record')
+    const owned = registry.filter(vm => vm.arm === arm && vm.taskId === row.taskId && vm.attempt === attempt.attempt)
+    assert(owned.length && owned.every(vm => vm.source === 'actual factory creation'))
+    assert.equal(new Set(owned.map(vm => vm.sandboxId)).size, owned.length)
+    assert.deepEqual(receipt.validation.cleanup.sandboxes.map(vm => vm.sandboxId).sort(), owned.map(vm => vm.sandboxId).sort(), 'Saved cleanup must cover exactly the actual attempt-owned VMs')
+    for (const vm of owned) {
+      const absence = receipt.validation.cleanup.sandboxes.find(item => item.sandboxId === vm.sandboxId)
+      for (const [key, value] of Object.entries(vm)) assert.deepEqual(absence[key], value, 'Saved cleanup factory ownership changed')
+    }
+  }
   assert(Array.isArray(result.deliverables) && Array.isArray(result.missingDeliverables))
   assert.deepEqual(result.missingDeliverables, [])
   assert.deepEqual(result.deliverables.map(item => item.file).sort(), bundle.task.deliverables.slice().sort(), 'Declared saved deliverable set changed')
@@ -148,7 +200,7 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
   assert.equal(typeof result.answer, 'string')
   const mode = arm === 'opulent2' ? 'broad' : 'harvey'
   const staging = mkdtempSync(join(LAUNCH, 'grading-replay-'))
-  let replay, accounting, handoff = null
+  let replay, accounting, modelBudget, handoff = null
   try {
     mkdirSync(join(staging, 'broad'))
     mkdirSync(join(staging, 'harvey'))
@@ -174,6 +226,11 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
       if (previousSnapshot) assert.deepEqual(handoff.owner, previousSnapshot.owner)
       const snapshot = json(result.audit.opulent2SnapshotArtifact)
       assert.equal(snapshot.version, 'opulent2-runtime-snapshot-v1')
+      if (release.experiment === LUNA_EXPERIMENT) {
+        assert.equal(result.audit.terminalStatus, 'completed', 'Saved Opulent2 answerer did not finish cleanly')
+        assert.equal(result.audit.terminal?.status, 'completed')
+        assert.equal(snapshot.sessions.find(session => session.id === snapshot.root_session_id)?.status, 'completed', 'Saved Opulent2 root did not complete cleanly')
+      }
       const captureDirectory = join(release.output, 'native-captures')
       const allRows = json(join(release.output, 'native-capture-index.json'))
       const rows = allRows.filter(item => item.arm === arm && item.taskId === row.taskId && item.attempt === attempt.attempt)
@@ -181,19 +238,25 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
       assert(rows.every(item => item.endpoint === `${release.endpoint}/chat/completions` && item.model === release.providerModel))
       const records = json(join(release.output, 'native-model-records.json')).filter(item => item.arm === arm && item.taskId === row.taskId && item.attempt === attempt.attempt)
       accounting = reconcileNative({ directory: captureDirectory, rows, records, modelRequests: snapshot.capy_model_requests,
-        events: snapshot.events, reportedRecords: result.metrics.providerUsageRecords })
+        events: snapshot.events, reportedRecords: result.metrics.providerUsageRecords, experiment: release.experiment })
       assert.deepEqual(accounting, receipt.validation.accounting, 'Saved native reconciliation changed')
-      const transmissions = nativeTransmissions(captureDirectory, rows)
+      let transmissions = nativeTransmissions(captureDirectory, rows)
+      if (release.experiment === LUNA_EXPERIMENT) {
+        transmissions = verifyPreparedTransmissions(release, snapshot, transmissions)
+        modelBudget = savedModelBudget({ release, path: join(directory, 'model-budget.json'), bind, transmissions, validation: receipt.validation })
+      }
       assert.equal(snapshot.opulent2_model_assemblies.length, snapshot.capy_model_requests.length)
-      for (const prepared of snapshot.opulent2_model_assemblies) {
-        validatePreparedReceipt(release, prepared)
-        const sent = transmissions.filter(item => item.row.capyRequestRecordId === prepared.request_record_id)
-        assert(sent.length)
-        for (const item of sent) {
-          assert.deepEqual(item.request.messages, prepared.messages)
-          assert.deepEqual(item.request.tools ?? [], prepared.tools)
-          assert.equal(item.row.sessionId, prepared.session_id)
-          assert.equal(item.row.instructionEquality.expectedSha256, digest(validatePreparedReceipt(release, prepared)))
+      if (release.experiment !== LUNA_EXPERIMENT) {
+        for (const prepared of snapshot.opulent2_model_assemblies) {
+          validatePreparedReceipt(release, prepared)
+          const sent = transmissions.filter(item => item.row.capyRequestRecordId === prepared.request_record_id)
+          assert(sent.length)
+          for (const item of sent) {
+            assert.deepEqual(item.request.messages, prepared.messages)
+            assert.deepEqual(item.request.tools ?? [], prepared.tools)
+            assert.equal(item.row.sessionId, prepared.session_id)
+            assert.equal(item.row.instructionEquality.expectedSha256, digest(validatePreparedReceipt(release, prepared)))
+          }
         }
       }
       assert.equal(release.prompts.appendix, OPULENT2_TASK_APPENDIX)
@@ -250,10 +313,25 @@ print(json.dumps([{'role':'user','content':user}],ensure_ascii=False))`, join(wo
       for (const item of transmissions) {
         assert.deepEqual(item.request.messages.filter(message => message.role === 'user'), expected.userMessages)
         assert.deepEqual(item.request.tools, expected.tools)
+        if (release.experiment === LUNA_EXPERIMENT) {
+          assert.equal(item.request.max_tokens, undefined)
+          assert.equal(item.request.providerOptions, undefined)
+          assert(!item.request.stream)
+          assert.equal(item.response?.model, release.providerModel)
+          assert.equal(item.row.responseModel, release.providerModel)
+          assert.equal(item.request.messages.filter(message => message.role === 'system')[0].content.split(release.prompts.budgetDisclosure).length, 2, 'Exact shared budget disclosure must be delivered once to Harvey')
+        }
       }
       const trajectory = readFileSync(join(artifactDirectory, 'trajectory.jsonl'), 'utf8').split('\n').filter(Boolean).map(JSON.parse)
       accounting = reconcileHarvey({ transmissions, providerRecords: result.provider_usage_records, trajectory, release })
       assert.deepEqual(accounting, receipt.validation.accounting)
+      if (release.experiment === LUNA_EXPERIMENT) {
+        assert.equal(result.experiment, release.experiment)
+        assert(result.model_budget, 'Harvey saved budget ledger is missing')
+        assert.equal(result.model_budget_path, join(captureDirectory, 'model-budget.json'))
+        modelBudget = savedModelBudget({ release, path: join(captureDirectory, 'model-budget.json'), bind, transmissions,
+          validation: receipt.validation, resultLedger: result.model_budget })
+      }
       const calls = readFileSync(join(artifactDirectory, 'tool-results.jsonl'), 'utf8').split('\n').filter(Boolean).map(JSON.parse)
       const outputs = trajectory.filter(event => event.event === 'tool_output')
       assert.equal(outputs.length, calls.length, 'Harvey tool-output trajectory differs from original results')
@@ -282,21 +360,30 @@ print(json.dumps([{'role':'user','content':user}],ensure_ascii=False))`, join(wo
     for (const item of result.deliverables) writeFileSync(join(outputDirectory, item.file), item.content)
     const jobs = bundle.rubric.criteria.map(criterion => ({ identity: `${row.taskId}:${arm}:${criterion.id}`, taskId: row.taskId, arm, criterionId: criterion.id,
       request: redact(prepareJevCriterion(bundle, outputDirectory, criterion.id, sources, options)) }))
-    return { handoff, jobs, replay, binding: { completedSha256: state.completedSha256, output: completed.output, receipt: completed.receipt, artifacts },
+    return { handoff, jobs, replay, binding: { completedSha256: state.completedSha256, output: completed.output, receipt: completed.receipt, artifacts,
+      ...(modelBudget ? { modelBudgetLedger: modelBudget.ledger } : {}) },
       completion: { declared: bundle.task.deliverables.length, present: result.deliverables.length },
       performance: { latencyMs: arm === 'opulent2' ? result.metrics.latencyMs ?? null : Number.isFinite(result.wall_clock_seconds) ? result.wall_clock_seconds * 1000 : null,
-        native: arm === 'opulent2' ? aggregateNative(json(join(release.output, 'native-capture-index.json')).filter(item => item.arm === arm && item.taskId === row.taskId && item.attempt === attempt.attempt)) : accounting.aggregate } }
+        native: arm === 'opulent2' ? aggregateNative(json(join(release.output, 'native-capture-index.json')).filter(item => item.arm === arm && item.taskId === row.taskId && item.attempt === attempt.attempt)) : accounting.aggregate,
+        ...(modelBudget ? { modelBudget } : {}) } }
   } finally { rmSync(staging, { recursive: true, force: true }) }
 }
 
-function buildSavedRun({ input, sourceWorkspace }) {
+function buildSavedRun({ input, sourceWorkspace, taskId }) {
   const checkpointFile = proof(resolve(input)), checkpoint = json(checkpointFile.path), provenance = checkpoint.provenance
   assert.equal(checkpoint.version, 'opulent2-fixed-checkpoint-v1')
-  assert.equal(provenance.version, 'opulent2-fixed-native-experiment-v1')
   const release = validateRelease(provenance.release)
+  assert.equal(provenance.version, release.experiment === LUNA_EXPERIMENT ? 'opulent2-fixed-gateway-experiment-v1' : 'opulent2-fixed-native-experiment-v1')
+  const singlePair = taskId !== undefined
+  if (singlePair) {
+    assert(typeof taskId === 'string' && /^[A-Za-z0-9_-]+$/.test(taskId), 'Select exactly one explicit frozen task ID')
+    assert.equal(release.experiment, LUNA_EXPERIMENT, 'Single-pair grading is only available for the separate Gateway Luna experiment')
+    assert.equal(release.stage, 'comparison', 'Single-pair grading requires the frozen five-task comparison')
+    assert(release.tasks.some(task => task.id === taskId), 'Selected task ID is not in the frozen release')
+  }
   assert.equal(release.stateContract.version, OPULENT2_HANDOFF_VERSION)
   assert.equal(checkpointFile.path, join(release.output, 'checkpoint.json'))
-  assert(['execution-completed', 'execution-failed'].includes(checkpoint.status), 'Answerer execution is still unfinished')
+  assert((singlePair ? ['awaiting-independent-pair-grading', 'execution-completed', 'execution-failed'] : ['execution-completed', 'execution-failed']).includes(checkpoint.status), 'Answerer execution is still unfinished')
   assert(within(LAUNCH, provenance.releaseFile.path))
   proof(provenance.releaseFile.path, provenance.releaseFile.sha256)
   assert.deepEqual(json(provenance.releaseFile.path), release)
@@ -309,13 +396,49 @@ function buildSavedRun({ input, sourceWorkspace }) {
   assert.equal(provenance.source.sourceBindingsSha256, source.sourceBindingsSha256)
   assert.equal(provenance.taskSetSha256, digest(release.tasks))
   assert.deepEqual(checkpoint.rows.map(row => row.taskId), release.tasks.map(task => task.id))
+  if (singlePair) {
+    const selected = checkpoint.rows.find(row => row.taskId === taskId)
+    assert(['opulent2', 'harvey'].every(arm => selected[arm]?.status === 'completed'), 'Both selected arms must be clean completed executions before pair grading')
+  }
+  const tasks = singlePair ? release.tasks.filter(task => task.id === taskId) : release.tasks
   let previousSnapshot = release.initialSnapshot ? parseOpulent2Handoff(readFileSync(proof(release.initialSnapshot.path, release.initialSnapshot.sha256).path),
     { chainId: release.chainId, expectedSha256: release.initialSnapshot.contentSha256 }) : null
   assert.equal(provenance.initialSnapshotSha256, previousSnapshot?.sha256 ?? null)
   const bindings = [], replays = [], jobs = [], performance = [], audit = []
-  const completion = Object.fromEntries(['opulent2', 'harvey'].map(arm => [arm, { selectedTasks: arm === 'harvey' && release.stage === 'proving' ? 0 : release.tasks.length,
+  const completion = Object.fromEntries(['opulent2', 'harvey'].map(arm => [arm, { selectedTasks: arm === 'harvey' && release.stage === 'proving' ? 0 : tasks.length,
     completedTasks: 0, declaredDeliverables: 0, presentDeliverables: 0 }]))
   for (const row of checkpoint.rows) {
+    if (singlePair && row.taskId !== taskId) {
+      if (checkpoint.rows.indexOf(row) > checkpoint.rows.findIndex(item => item.taskId === taskId)) continue
+      const state = row.opulent2, completed = state.completed, attempt = state.attempts.at(-1)
+      assert.equal(state.status, 'completed', 'Selected pair has an unfinished predecessor')
+      assert.equal(state.completedSha256, digest(completed), 'Predecessor completed record changed')
+      assert.equal(attempt.status, 'completed')
+      assert.equal(attempt.attempt, state.attempts.length)
+      assert.equal(attempt.attemptId, `opulent2-${row.taskId}-${attempt.attempt}`)
+      assert.deepEqual(attempt.receipt, completed.receipt)
+      const directory = join(release.output, 'attempts', attempt.attemptId)
+      assert.equal(completed.receipt.path, join(directory, 'execution-success.json'))
+      const receipt = json(proof(completed.receipt.path, completed.receipt.sha256).path)
+      assert.equal(receipt.taskId, row.taskId)
+      assert.equal(receipt.attemptId, attempt.attemptId)
+      assert.deepEqual(receipt.validation, completed.validation)
+      assert.equal(receipt.validation.executionValid, true)
+      assert.equal(receipt.validation.cleanup.allOwnedAbsent, true)
+      assert.equal(completed.inputSnapshotSha256, previousSnapshot?.sha256 ?? null)
+      assert.equal(completed.handoff.path, join(directory, 'accepted-snapshot.json'))
+      const handoff = parseOpulent2Handoff(readFileSync(proof(completed.handoff.path, completed.handoff.sha256).path),
+        { chainId: release.chainId, expectedSha256: completed.handoff.contentSha256 })
+      assert.deepEqual(receipt.handoff, completed.handoff)
+      assert.deepEqual(handoff, completed.snapshot)
+      assert.equal(handoff.parentSha256, previousSnapshot?.sha256 ?? null)
+      assert.equal(handoff.sequence, (previousSnapshot?.sequence ?? 0) + 1)
+      assert.deepEqual(handoff.tasks.slice(0, -1), previousSnapshot?.tasks ?? [])
+      assert.deepEqual(handoff.tasks.at(-1), { taskId: row.taskId, attemptId: attempt.attemptId, sequence: handoff.sequence })
+      assert.deepEqual(handoff.owner, previousSnapshot.owner)
+      previousSnapshot = handoff
+      continue
+    }
     const taskBinding = release.tasks.find(task => task.id === row.taskId)
     assert.equal(row.publicFingerprint, taskBinding.publicFingerprint)
     const packet = loadPublicPacket(workspace, taskBinding)
@@ -361,9 +484,11 @@ function buildSavedRun({ input, sourceWorkspace }) {
     'eval/opulent2-fixed/tasks.mjs', 'eval/opulent2-fixed/validate.mjs', 'runtime/opulent2-handoff.mjs', 'src/tp/manifest.ts']
   implementationFiles.push('runtime/tools/capy-memory.mjs', 'runtime/tools/opulent2-drive.mjs', 'runtime/instructions/opulent2.mjs',
     'runtime/instructions/opulent2-fixed-v1.md', 'runtime/instructions/capy.mjs', 'package.json', 'package-lock.json')
+  if (release.experiment === LUNA_EXPERIMENT) implementationFiles.push('runtime/opulent2-luna-policy.mjs', 'eval/opulent2-fixed/model-budget.mjs', 'eval/opulent2-fixed/budget-verification.mjs')
   return JSON.parse(JSON.stringify({ version: GRADING_VERSION, name: 'Opulent2 fixed', binding: { checkpoint: checkpointFile, release: provenance.releaseFile,
     authorization: provenance.authorization, source, stage: release.stage, runId: release.runId, policy: COMPLETED_WORK_POLICY,
-    metricsProfile: METRICS_PROFILE, tasks: release.tasks, completedOutputs: bindings,
+    metricsProfile: METRICS_PROFILE, tasks, completedOutputs: bindings,
+    ...(singlePair ? { selection: { version: PAIR_SELECTION_VERSION, taskId, frozenTaskSetSha256: digest(release.tasks), frozenTasks: release.tasks.length } } : {}),
     nativeRunArtifacts: ['native-capture-index.json', 'native-model-records.json', 'harvey-native-capture-index.json', 'aggregate-native-accounting.json', 'owned-vms.json', 'owned-absence.json']
       .filter(name => existsSync(join(release.output, name))).map(name => proof(join(release.output, name))),
     gradingImplementations: Object.fromEntries(implementationFiles.map(path => [path, sha(readFileSync(join(implementationRoot, path)))])),
@@ -372,10 +497,10 @@ function buildSavedRun({ input, sourceWorkspace }) {
     completion, performance, failedAttemptAudit: audit, replays, jobs }))
 }
 
-export function prepareSavedRun({ input, output, sourceWorkspace }) {
+export function prepareSavedRun({ input, output, sourceWorkspace, taskId }) {
   output = resolve(output)
   assert(within(LAUNCH, output) && !within(implementationRoot, output))
-  const prepared = buildSavedRun({ input, sourceWorkspace })
+  const prepared = buildSavedRun({ input, sourceWorkspace, taskId })
   privateDirectory(output)
   const path = join(output, 'prepared.json')
   if (existsSync(path)) assert.deepEqual(json(proof(path).path), prepared, 'Saved grading preparation changed; use a new output directory')
@@ -388,7 +513,9 @@ export function validatePreparedRun({ output, sourceWorkspace }) {
   assert(within(LAUNCH, output))
   const file = proof(join(output, 'prepared.json')), prepared = json(file.path)
   assert.equal(prepared.version, GRADING_VERSION)
-  const actual = buildSavedRun({ input: prepared.binding.checkpoint.path, sourceWorkspace: sourceWorkspace ?? prepared.binding.source.workspace })
+  if (prepared.binding.selection) assert.equal(prepared.binding.selection.version, PAIR_SELECTION_VERSION)
+  const actual = buildSavedRun({ input: prepared.binding.checkpoint.path, sourceWorkspace: sourceWorkspace ?? prepared.binding.source.workspace,
+    taskId: prepared.binding.selection?.taskId })
   assert.deepEqual(prepared, actual, 'Saved grading preparation or its source/output/replay bindings changed')
   return { file, prepared }
 }

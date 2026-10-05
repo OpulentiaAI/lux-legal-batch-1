@@ -14,7 +14,7 @@ import { parseOpulent2Handoff } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
 import { ENDPOINT, MODEL, NATIVE_MODEL, PROFILE, STATE_POLICY, WORKSPACE } from './contract.mjs'
 import { corpusIdentity, prepareSavedArm, prepareSavedRun, summarizeSavedGrades, validatePreparedRun } from './grading.mjs'
-import { gradePreparedRun } from './jev-grade-run.mjs'
+import { gradePreparedRun, main, preparePairGradeReport } from './jev-grade-run.mjs'
 import { digest, immutable, json, LAUNCH, privateDirectory, proof, sha } from './io.mjs'
 import { reconcileHarvey } from './live.mjs'
 import { aggregateNative, reconcileNative, wireMeasurements } from './native.mjs'
@@ -392,4 +392,19 @@ test('missing Jev credentials remain captured judge failures without a provider 
   assert(result.rows.every(row => row.status === 'judgeFailure' && /AI_GATEWAY_API_KEY/.test(row.reason) && !row.scores))
   assert.equal(result.summary.summaries.opulent2.quality.full, null)
   assert.equal(result.completion.opulent2.completionRate, 1)
+})
+
+test('single-pair selection cannot broaden historical acceptance or create a parent receipt from whole-run grading', async t => {
+  const f = await fixture(t)
+  for (const taskId of [['task-02'], 'task-02,task-05', '', null]) {
+    assert.throws(() => prepareSavedRun({ input: f.input, output: f.output, sourceWorkspace: workspace, taskId }), /exactly one explicit/)
+  }
+  assert.throws(() => prepareSavedRun({ input: f.input, output: f.output, sourceWorkspace: workspace, taskId: 'task-02' }), /separate Gateway Luna experiment/)
+  await assert.rejects(main(['--prepare-pair', 'task-02', f.input, f.output, workspace]), /separate Gateway Luna experiment/)
+  await assert.rejects(main(['--prepare-pair', 'task-02', 'task-05', f.input, f.output, workspace]), /Usage/)
+  prepareSavedRun({ input: f.input, output: f.output, sourceWorkspace: workspace })
+  assert.throws(() => preparePairGradeReport({ output: f.output }), /explicit single-pair preparation/)
+  f.checkpoint.status = 'awaiting-independent-pair-grading'
+  f.save()
+  assert.throws(() => prepareSavedRun({ input: f.input, output: join(f.scratch, 'unfinished'), sourceWorkspace: workspace }), /still unfinished/)
 })
