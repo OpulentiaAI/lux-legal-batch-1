@@ -5,7 +5,7 @@ import test from 'node:test'
 import './offline-guard.mjs'
 import { createModel } from '../../runtime/model.mjs'
 import { LUNA_EXPERIMENT, LUNA_MODEL, LUNA_ENDPOINT, LUNA_CONTEXT_EXPERIMENT, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
-import { aggregateNative, attemptContext, createNativeCapture, readCapture } from './native.mjs'
+import { aggregateNative, attemptContext, createNativeCapture, readCapture, reconcileNative } from './native.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { LAUNCH, privateDirectory, digest, sha } from './io.mjs'
 
@@ -96,6 +96,51 @@ test('unknown consumption stops further provider traffic and retains held input'
   assert.equal(ledger.usageUnknown, true)
   assert.equal(ledger.usage.fullConsumptionUsage, null)
   assert(ledger.reservedInputTokens > 0)
+})
+
+for (const experiment of [LUNA_EXPERIMENT, LUNA_CONTEXT_EXPERIMENT]) {
+  test(`${experiment} records a no-response attempt in the runtime failure ledger`, async t => {
+    const f = fixture(t, { experiment, fetchImpl: () => {
+      throw new TypeError('Synthetic offline transport failure', { cause: { code: 'ECONNRESET' } })
+    } })
+    let failure
+    await assert.rejects(f.run('resumed-child'), error => { failure = error; return error.message === 'Synthetic offline transport failure' })
+    assert.equal(failure.inferenceAttempts?.length, 1)
+    assert.equal(failure.inferenceAttempts[0].status, null)
+    assert.equal(failure.inferenceAttempts[0].transportCode, 'ECONNRESET')
+    assert.equal(failure.inferenceAttempts[0].usageUnknown, true)
+    const request = { id: 'resumed-child', phase: 'answerer', status: 'failed', max_tokens: 32768,
+      response_id: null, usage_unknown: true, request_attempts: failure.inferenceAttempts ?? [] }
+    const audit = reconcileNative({ directory: f.directory, rows: f.captures.rows, records: f.captures.records,
+      modelRequests: [request], allowIncomplete: true, experiment })
+    assert.equal(audit.successfulExchanges, 0)
+    assert.equal(audit.unknownUsageExchanges.length, 1)
+    assert.equal(audit.fullConsumptionUsage, null)
+    assert.equal(audit.coverageComplete, false)
+    assert.equal(f.captures.records[0].requestAttemptSource, 'native-model-provider-metadata')
+    await assert.rejects(f.run('root'), error => error.code === 'MODEL_BUDGET_UNKNOWN_CONSUMPTION')
+    assert.equal(f.sent.length, 1)
+  })
+}
+
+test('Luna failed HTTP and response-body attempts retain their observed status without retrying', async t => {
+  for (const bodyFailure of [false, true]) {
+    const f = fixture(t, { experiment: LUNA_CONTEXT_EXPERIMENT, fetchImpl: () => bodyFailure
+      ? new Response('synthetic invalid JSON', { status: 200 })
+      : new Response('synthetic provider rejection', { status: 503 }) })
+    let failure
+    await assert.rejects(f.run('child'), error => { failure = error; return true })
+    assert.equal(failure.inferenceAttempts?.length, 1)
+    assert.equal(failure.inferenceAttempts[0].status, bodyFailure ? 200 : 503)
+    assert.equal(failure.inferenceAttempts[0].usageUnknown, true)
+    if (bodyFailure) assert.equal(failure.inferenceAttempts[0].failureStage, 'response_body')
+    const audit = reconcileNative({ directory: f.directory, rows: f.captures.rows, records: f.captures.records,
+      modelRequests: [{ id: 'child', phase: 'answerer', status: 'failed', request_attempts: failure.inferenceAttempts ?? [] }],
+      allowIncomplete: true, experiment: LUNA_CONTEXT_EXPERIMENT })
+    assert.equal(audit.fullConsumptionUsage, null)
+    assert.equal(audit.coverageComplete, false)
+    assert.equal(f.sent.length, 1)
+  }
 })
 
 test('wire proof rejects invented budget tickets, changed totals and missing settlements', async t => {
