@@ -9,7 +9,7 @@ import { CAPY_VISIBLE_EVIDENCE_VERSION, evidenceV4 } from '../grading-evidence.m
 import { chunkText } from '../../src/tp/manifest.ts'
 import { OPULENT2_HANDOFF_VERSION, parseOpulent2Handoff } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
-import { LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
+import { lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { redact } from '../../runtime/security.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { PROFILE, requireLiveAuthorization, validateRelease } from './contract.mjs'
@@ -83,7 +83,7 @@ function modelInput(request) {
 
 function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   const policy = result.audit.provenance
-  if (release.experiment === LUNA_EXPERIMENT) {
+  if (lunaPolicy(release.experiment)) {
     assert.equal(policy.experiment, release.experiment)
     assert.deepEqual(policy.modelBudget, release.budgets)
     assert.equal(policy.budgetDisclosureSha256, release.prompts.budgetDisclosureSha256)
@@ -98,7 +98,7 @@ function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   assert.equal(policy.maxSteps, release.budgets.maxSteps)
   assert.equal(policy.maxCompletionTokens, release.budgets.maxCompletionTokens)
   assert.equal(policy.inference.provider, release.inferenceProvider)
-  assert.equal(policy.inference.providerModel, release.experiment === LUNA_EXPERIMENT ? undefined : release.providerModel)
+  assert.equal(policy.inference.providerModel, lunaPolicy(release.experiment) ? undefined : release.providerModel)
   assert.equal(policy.inference.endpoint, release.endpoint)
   assert.equal(policy.toolSurface, PROFILE)
   assert.equal(policy.semanticSurface, release.semanticSurface)
@@ -181,7 +181,7 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
   assert.deepEqual(json(join(directory, 'owned-absence.json')), receipt.validation.cleanup)
   assert.equal(receipt.validation.cleanup.queriedOnlyFactoryOwnedIds, true)
   assert(receipt.validation.cleanup.sandboxes.every(vm => vm.absent === true && vm.source === 'actual factory creation'))
-  if (release.experiment === LUNA_EXPERIMENT) {
+  if (lunaPolicy(release.experiment)) {
     const registry = json(proof(join(release.output, 'owned-vms.json')).path)
     assert(registry.every(vm => vm.bindingSha256 === digest(release)), 'Foreign factory ownership record')
     const owned = registry.filter(vm => vm.arm === arm && vm.taskId === row.taskId && vm.attempt === attempt.attempt)
@@ -226,7 +226,7 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
       if (previousSnapshot) assert.deepEqual(handoff.owner, previousSnapshot.owner)
       const snapshot = json(result.audit.opulent2SnapshotArtifact)
       assert.equal(snapshot.version, 'opulent2-runtime-snapshot-v1')
-      if (release.experiment === LUNA_EXPERIMENT) {
+      if (lunaPolicy(release.experiment)) {
         assert.equal(result.audit.terminalStatus, 'completed', 'Saved Opulent2 answerer did not finish cleanly')
         assert.equal(result.audit.terminal?.status, 'completed')
         assert.equal(snapshot.sessions.find(session => session.id === snapshot.root_session_id)?.status, 'completed', 'Saved Opulent2 root did not complete cleanly')
@@ -241,12 +241,12 @@ export function prepareSavedArm({ release, row, arm, bundle, workspace, previous
         events: snapshot.events, reportedRecords: result.metrics.providerUsageRecords, experiment: release.experiment })
       assert.deepEqual(accounting, receipt.validation.accounting, 'Saved native reconciliation changed')
       let transmissions = nativeTransmissions(captureDirectory, rows)
-      if (release.experiment === LUNA_EXPERIMENT) {
+      if (lunaPolicy(release.experiment)) {
         transmissions = verifyPreparedTransmissions(release, snapshot, transmissions)
         modelBudget = savedModelBudget({ release, path: join(directory, 'model-budget.json'), bind, transmissions, validation: receipt.validation })
       }
       assert.equal(snapshot.opulent2_model_assemblies.length, snapshot.capy_model_requests.length)
-      if (release.experiment !== LUNA_EXPERIMENT) {
+      if (!lunaPolicy(release.experiment)) {
         for (const prepared of snapshot.opulent2_model_assemblies) {
           validatePreparedReceipt(release, prepared)
           const sent = transmissions.filter(item => item.row.capyRequestRecordId === prepared.request_record_id)
@@ -313,7 +313,7 @@ print(json.dumps([{'role':'user','content':user}],ensure_ascii=False))`, join(wo
       for (const item of transmissions) {
         assert.deepEqual(item.request.messages.filter(message => message.role === 'user'), expected.userMessages)
         assert.deepEqual(item.request.tools, expected.tools)
-        if (release.experiment === LUNA_EXPERIMENT) {
+        if (lunaPolicy(release.experiment)) {
           assert.equal(item.request.max_tokens, undefined)
           assert.equal(item.request.providerOptions, undefined)
           assert(!item.request.stream)
@@ -325,7 +325,7 @@ print(json.dumps([{'role':'user','content':user}],ensure_ascii=False))`, join(wo
       const trajectory = readFileSync(join(artifactDirectory, 'trajectory.jsonl'), 'utf8').split('\n').filter(Boolean).map(JSON.parse)
       accounting = reconcileHarvey({ transmissions, providerRecords: result.provider_usage_records, trajectory, release })
       assert.deepEqual(accounting, receipt.validation.accounting)
-      if (release.experiment === LUNA_EXPERIMENT) {
+      if (lunaPolicy(release.experiment)) {
         assert.equal(result.experiment, release.experiment)
         assert(result.model_budget, 'Harvey saved budget ledger is missing')
         assert.equal(result.model_budget_path, join(captureDirectory, 'model-budget.json'))
@@ -373,11 +373,11 @@ function buildSavedRun({ input, sourceWorkspace, taskId }) {
   const checkpointFile = proof(resolve(input)), checkpoint = json(checkpointFile.path), provenance = checkpoint.provenance
   assert.equal(checkpoint.version, 'opulent2-fixed-checkpoint-v1')
   const release = validateRelease(provenance.release)
-  assert.equal(provenance.version, release.experiment === LUNA_EXPERIMENT ? 'opulent2-fixed-gateway-experiment-v1' : 'opulent2-fixed-native-experiment-v1')
+  assert.equal(provenance.version, lunaPolicy(release.experiment) ? 'opulent2-fixed-gateway-experiment-v1' : 'opulent2-fixed-native-experiment-v1')
   const singlePair = taskId !== undefined
   if (singlePair) {
     assert(typeof taskId === 'string' && /^[A-Za-z0-9_-]+$/.test(taskId), 'Select exactly one explicit frozen task ID')
-    assert.equal(release.experiment, LUNA_EXPERIMENT, 'Single-pair grading is only available for the separate Gateway Luna experiment')
+    assert(lunaPolicy(release.experiment), 'Single-pair grading is only available for the separate Gateway Luna experiments')
     assert.equal(release.stage, 'comparison', 'Single-pair grading requires the frozen five-task comparison')
     assert(release.tasks.some(task => task.id === taskId), 'Selected task ID is not in the frozen release')
   }
@@ -484,7 +484,7 @@ function buildSavedRun({ input, sourceWorkspace, taskId }) {
     'eval/opulent2-fixed/tasks.mjs', 'eval/opulent2-fixed/validate.mjs', 'runtime/opulent2-handoff.mjs', 'src/tp/manifest.ts']
   implementationFiles.push('runtime/tools/capy-memory.mjs', 'runtime/tools/opulent2-drive.mjs', 'runtime/instructions/opulent2.mjs',
     'runtime/instructions/opulent2-fixed-v1.md', 'runtime/instructions/capy.mjs', 'package.json', 'package-lock.json')
-  if (release.experiment === LUNA_EXPERIMENT) implementationFiles.push('runtime/opulent2-luna-policy.mjs', 'eval/opulent2-fixed/model-budget.mjs', 'eval/opulent2-fixed/budget-verification.mjs')
+  if (lunaPolicy(release.experiment)) implementationFiles.push('runtime/opulent2-luna-policy.mjs', 'eval/opulent2-fixed/model-budget.mjs', 'eval/opulent2-fixed/budget-verification.mjs')
   return JSON.parse(JSON.stringify({ version: GRADING_VERSION, name: 'Opulent2 fixed', binding: { checkpoint: checkpointFile, release: provenance.releaseFile,
     authorization: provenance.authorization, source, stage: release.stage, runId: release.runId, policy: COMPLETED_WORK_POLICY,
     metricsProfile: METRICS_PROFILE, tasks, completedOutputs: bindings,

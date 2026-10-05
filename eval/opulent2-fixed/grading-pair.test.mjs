@@ -10,7 +10,7 @@ import { validateBundle } from '../complex-v1/validate.mjs'
 import { createCapyFileTools } from '../../runtime/capy-files.mjs'
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
-import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { modelTransport } from '../../runtime/model-provider.mjs'
 import { parseOpulent2Handoff } from '../../runtime/opulent2-handoff.mjs'
 import { capyMemoryDescriptors } from '../../runtime/tools/capy-memory.mjs'
@@ -67,13 +67,14 @@ function wire(release, directory, context, messages, schema, budget, phase = 'an
   ticket.settle({ requestId: response.id, usage })
   const row = { id: `${context.arm}-${ticket.id}`, bindingSha256: digest(release), ...context, phase,
     endpoint: `${LUNA_ENDPOINT}/chat/completions`, method: 'POST', model: LUNA_MODEL, maxTokens,
-    experiment: LUNA_EXPERIMENT, budgetConfig: release.budgets, budgetTicketId: ticket.id,
+    experiment: release.experiment, budgetConfig: release.budgets, budgetTicketId: ticket.id,
     status: 200, responseBodyId: response.id, responseModel: LUNA_MODEL, usage, usageUnknown: false,
     measurements: wireMeasurements(request), request: capture('request', request), response: capture('response', response), elapsedMs: 12 }
   return { row, request, response, usage }
 }
 
-async function fixture(t) {
+async function fixture(t, experiment = LUNA_EXPERIMENT) {
+  const luna = lunaPolicy(experiment)
   const scratch = join(LAUNCH, `offline-grading-pair-${randomUUID()}`), sourceWorkspace = join(scratch, 'source')
   const runId = `offline-pair-${randomUUID()}`, output = join(LAUNCH, 'runs', runId), taskId = 'offline-selected-pair'
   privateDirectory(scratch)
@@ -113,17 +114,17 @@ async function fixture(t) {
   execFileSync('git', ['add', '.'], { cwd: sourceWorkspace })
   execFileSync('git', ['commit', '-qm', 'Synthetic offline grading fixture; no holdout task or live result'], { cwd: sourceWorkspace })
   const skillsRegistry = opulent2SkillRegistry().block
-  const system = `Synthetic offline Opulent2 system\n${OPULENT2_TASK_APPENDIX}\n${OPULENT2_REFERENCE_UPDATE}\n${skillsRegistry}\n${LUNA_BUDGET_DISCLOSURE}`
+  const system = `Synthetic offline Opulent2 system\n${OPULENT2_TASK_APPENDIX}\n${OPULENT2_REFERENCE_UPDATE}\n${skillsRegistry}\n${luna.disclosure}`
   const summaryMessages = [{ role: 'system', content: 'Synthetic offline summary system' }]
-  const harveySystem = [{ role: 'system', content: `Synthetic offline unchanged Harvey system\n\n${LUNA_BUDGET_DISCLOSURE}` }]
+  const harveySystem = [{ role: 'system', content: `Synthetic offline unchanged Harvey system\n\n${luna.disclosure}` }]
   const catalogue = immutable(join(scratch, 'gateway-catalogue.json'), { endpoint: `${LUNA_ENDPOINT}/models`, status: 200,
     catalogueSha256: sha('synthetic offline catalogue, not a live provider'), modelCount: 1,
     selected: [{ id: LUNA_MODEL, context_window: LUNA_BUDGETS.maxContextTokens, max_tokens: 32768,
       supported_parameters: ['tools'], modalities: { input: ['image', 'text'] }, reasoning_options: [{ type: 'effort', values: ['max'] }] }] })
   const budgetSource = immutable(join(scratch, 'corpus-source.json'), { note: 'Synthetic offline corpus identity; no reused live artifacts' })
-  const release = { version: 'opulent2-fixed-release-v1', name: 'Opulent2 fixed', stage: 'comparison', experiment: LUNA_EXPERIMENT, workspace: WORKSPACE,
+  const release = { version: 'opulent2-fixed-release-v1', name: 'Opulent2 fixed', stage: 'comparison', experiment, workspace: WORKSPACE,
     commit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceWorkspace, encoding: 'utf8' }).trim(), runId, chainId: `offline-chain-${randomUUID()}`, output,
-    model: LUNA_MODEL, providerModel: LUNA_MODEL, inferenceProvider: 'gateway', endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...LUNA_BUDGETS },
+    model: LUNA_MODEL, providerModel: LUNA_MODEL, inferenceProvider: 'gateway', endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...luna.budgets },
     gatewayCatalogue: { path: catalogue.path, sha256: catalogue.sha256 }, budgetSource: { checkpoint: budgetSource, boundary: LUNA_CORPUS_BOUNDARY },
     statePolicy: STATE_POLICY, harveyStatePolicy: 'fresh-per-task-no-cross-task-state-v1', seedHistoricalMemory: false, seedHistoricalOutputs: false,
     profile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', retrievalProfile: 'voyage', corpus: corpusIdentity(sourceWorkspace),
@@ -132,7 +133,7 @@ async function fixture(t) {
     prompts: { runtimePromptSha256: sha(system), assembledRuntimePromptSha256: sha(system), profileManifestSha256: sha('synthetic offline manifest'),
       summarySystemMessagesSha256: digest(summaryMessages), appendix: OPULENT2_TASK_APPENDIX, appendixSha256: sha(OPULENT2_TASK_APPENDIX),
       appendixReference: 'Synthetic offline fixture; not actual parent authorization', skillsRegistry, skillsRegistrySha256: sha(skillsRegistry),
-      referenceUpdateSha256: sha(OPULENT2_REFERENCE_UPDATE), budgetDisclosure: LUNA_BUDGET_DISCLOSURE, budgetDisclosureSha256: sha(LUNA_BUDGET_DISCLOSURE) },
+      referenceUpdateSha256: sha(OPULENT2_REFERENCE_UPDATE), budgetDisclosure: luna.disclosure, budgetDisclosureSha256: sha(luna.disclosure) },
     stateContract: { module: 'runtime/opulent2-handoff.mjs', sha256: sourceBindings['runtime/opulent2-handoff.mjs'], version: 'opulent2-local-handoff-v1', driveBacking: 'local-export-not-cloud', inlineByteLimit: 33554432 },
     protocol: { path: 'eval/opulent2-fixed/LUNA_PROTOCOL.md', sha256: sourceBindings['eval/opulent2-fixed/LUNA_PROTOCOL.md'] }, sourceBindings, tasks,
     harvey: { root: sourceWorkspace, python: '/usr/bin/python3', promptPolicy: 'public-task-v2', sandboxTemplate: 'offline-no-vm',
@@ -202,7 +203,7 @@ async function fixture(t) {
           usage: capture.usage, requestAttempts: [{ status: 200 }] })
       }
       snapshot = { version: 'opulent2-runtime-snapshot-v1', root_session_id: rootId, sessions, capy_model_requests: requests, opulent2_model_assemblies: assemblies, orchestration_messages: [], events }
-      const policy = { policy: PROFILE, experiment: LUNA_EXPERIMENT, model: LUNA_MODEL, modelBudget: release.budgets, budgetDisclosureSha256: release.prompts.budgetDisclosureSha256,
+      const policy = { policy: PROFILE, experiment: release.experiment, model: LUNA_MODEL, modelBudget: release.budgets, budgetDisclosureSha256: release.prompts.budgetDisclosureSha256,
         reasoningEffort: 'max', maxSteps: 250, maxCompletionTokens: 32768, instructions: { profile: PROFILE, effectivePromptSha256: release.prompts.runtimePromptSha256,
           foundation: { manifestSha256: release.prompts.profileManifestSha256 }, taskAppendixSha256: release.prompts.appendixSha256 },
         inference: modelTransport({ inferenceProvider: 'gateway', reasoningEffort: 'max' }), toolSurface: PROFILE, semanticSurface: 'toolbox', evidenceReplayVersion: 'capy-visible-outputs-v1',
@@ -232,7 +233,7 @@ async function fixture(t) {
       immutable(join(output, 'native-model-records.json'), records)
       immutable(join(output, 'aggregate-native-accounting.json'), aggregateNative(wires.map(capture => capture.row)))
       accounting = reconcileNative({ directory: join(output, 'native-captures'), rows: wires.map(capture => capture.row), records, modelRequests: requests, events,
-        reportedRecords: result.metrics.providerUsageRecords, experiment: LUNA_EXPERIMENT })
+        reportedRecords: result.metrics.providerUsageRecords, experiment: release.experiment })
     } else {
       const publicRequest = { question: task.instructions, work_product_prompt_policy: 'public-task-v2', work_product: { task, materials: [...bundle.materials].map(([path, content]) => ({ path, content })) } }
       const user = execFileSync('/usr/bin/python3', ['-c', `import importlib.util,json,sys
@@ -251,7 +252,7 @@ print(json.dumps(user,ensure_ascii=False))`, join(sourceWorkspace, 'eval/harvey-
       writeFileSync(join(artifactDirectory, 'trajectory.jsonl'), trajectory.map(event => JSON.stringify(event)).join('\n') + '\n', { mode: 0o600 })
       writeFileSync(join(artifactDirectory, 'tool-results.jsonl'), calls.map(call => JSON.stringify(call)).join('\n') + '\n', { mode: 0o600 })
       const provider = { inferenceProvider: 'gateway', requestedModel: LUNA_MODEL, responseModel: LUNA_MODEL, requestId: capture.response.id, ...capture.usage, requestAttempts: [{ status: 200 }] }
-      result = { answer: content, deliverables, missingDeliverables: [], inference_provider: 'gateway', provider_model: LUNA_MODEL, experiment: LUNA_EXPERIMENT,
+      result = { answer: content, deliverables, missingDeliverables: [], inference_provider: 'gateway', provider_model: LUNA_MODEL, experiment: release.experiment,
         finished_cleanly: true, template_id: release.harvey.sandboxTemplate, work_product_prompt_policy: 'public-task-v2', tool_names: harveyTools.map(tool => tool.function.name),
         wall_clock_seconds: 0.4, taskSha256: sha(pythonJson(task)), materialHashes: bundle.materialHashes, provider_usage_records: [provider], model_budget: budget.ledger.snapshot(), model_budget_path: join(captureDirectory, 'model-budget.json') }
       immutable(join(artifactDirectory, 'bridge-result.json'), { receiptVersion: 2, answerSha256: sha(content), taskSha256: result.taskSha256,
@@ -259,7 +260,7 @@ print(json.dumps(user,ensure_ascii=False))`, join(sourceWorkspace, 'eval/harvey-
       accounting = reconcileHarvey({ transmissions: nativeTransmissions(captureDirectory, [capture.row]), providerRecords: [provider], trajectory, release })
     }
     const ledger = budget.ledger.snapshot(), ledgerPath = arm === 'opulent2' ? join(directory, 'model-budget.json') : result.model_budget_path
-    immutable(ledgerPath, { experiment: LUNA_EXPERIMENT, budgets: release.budgets, ledger })
+    immutable(ledgerPath, { experiment: release.experiment, budgets: release.budgets, ledger })
     immutable(join(directory, 'owned-absence.json'), cleanup)
     const validation = { executionValid: true, instructions: { exactPreparedAndWireEquality: true }, cleanup, accounting, modelBudget: verifyModelBudget({ release, ledger, rows: wires.map(capture => capture.row) }) }
     const outputFile = immutable(join(directory, 'result.json'), result)
@@ -306,6 +307,28 @@ function mockJudge(t) {
       claimsPresent: { type: 'boolean', probability: 1 }, satisfied: { type: 'boolean', probability: 1 }, sourceCompliance: { type: 'boolean', probability: 1 }, unresolved: { type: 'boolean', probability: 0 } } }))
   } }
 }
+
+test('v2 saved-pair preparation verifies uncapped ledgers with unchanged frozen criteria and grading policy', async t => {
+  const f = await fixture(t, LUNA_CONTEXT_EXPERIMENT)
+  assert.equal(f.release.budgets.maxInputTokens, null)
+  const before = sha(readFileSync(f.input))
+  f.prepare()
+  const { prepared } = validatePreparedRun({ output: f.output })
+  assert.equal(sha(readFileSync(f.input)), before)
+  assert.equal(prepared.binding.selection.frozenTasks, 5)
+  assert.deepEqual(prepared.binding.policy, COMPLETED_WORK_POLICY)
+  assert.equal(prepared.binding.metricsProfile, 'completed-work-v6')
+  assert.equal(prepared.binding.tasks[0].rubricSha256, sha(readFileSync(join(workspace, 'eval/complex-v1/drafts/task-02/rubric.json'))))
+  assert.equal(prepared.jobs.length, 2 * f.bundle.rubric.criteria.length)
+  for (const arm of ['opulent2', 'harvey']) {
+    const ledger = json(prepared.binding.completedOutputs.find(row => row.arm === arm).modelBudgetLedger.path).ledger
+    assert.equal(ledger.version, 'task-model-budget-v2')
+    assert.equal(ledger.admissionPolicy.version, 'task-model-budget-admission-v2')
+    assert.equal(ledger.usage.unallocatedInputTokens, null)
+    assert.equal(prepared.completion[arm].selectedTasks, 1)
+    assert.equal(prepared.completion[arm].completedTasks, 1)
+  }
+})
 
 test('one clean Gateway pair preserves frozen-five provenance, exact proving criteria and denominator one without parsing future packets', async t => {
   const f = await fixture(t), before = sha(readFileSync(f.input))
