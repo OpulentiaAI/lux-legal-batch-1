@@ -59,6 +59,155 @@ async function backedFixture(t, overrides = {}, count = 5) {
 
 const fallbackNotice = prepared => prepared.messages.find(message => typeof message.content === 'string' && message.content.startsWith('[Untrusted externalized history'));
 
+function escapedParallelHistory(f) {
+  const group = [{ role: 'assistant', content: null, tool_calls: ['escape-a', 'escape-b'].map(id =>
+    ({ id, type: 'function', function: { name: 'read', arguments: JSON.stringify({ path: `corpus/${id}.json` }) } })) },
+  ...['escape-a', 'escape-b'].map(id => ({ role: 'tool', tool_call_id: id, content: `ESCAPED_HISTORY_${id} é🙂\r\n` + '\\"'.repeat(15000) }))];
+  f.messages.splice(4, 0, ...group);
+  return group;
+}
+
+test('Opulent2 recovers escape-heavy parallel history that fits projection but exceeds actual summary input', async t => {
+  const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } });
+  const group = escapedParallelHistory(f), before = JSON.stringify(f.messages), configBefore = JSON.stringify(f.config);
+  assert.ok(JSON.stringify(group).length < 130000);
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(call => call === 1 ? truncated() : response('Valid intermediate summary.')) });
+  assert.equal(f.requests.length, 2);
+  const actualGroupInput = [f.requests[0].messages[0], { role: 'user', content: JSON.stringify({ previousSummary: 'Valid intermediate summary.', transcript: group }) }];
+  assert.ok(JSON.stringify(actualGroupInput).length > f.config.contextCompaction.maxSummaryInputChars);
+  assert.equal(f.ctx.store.list('capy_context_groups').length, 0);
+  assert.equal(prepared.externalized, true);
+  assert.equal(prepared.checkpoint.reason, 'input_oversized');
+  assert.equal(Object.hasOwn(prepared.checkpoint, 'summary'), false);
+  assert.deepEqual(prepared.usage, totalUsage);
+  assert.equal(f.writes.length, 1);
+  const reference = prepared.checkpoint.reference;
+  const serialized = await readFile(f.file(reference.output_path), 'utf8'), retained = JSON.parse(serialized);
+  assert.deepEqual(retained.original_conversation, f.messages.slice(0, prepared.checkpoint.prefixLength));
+  assert.deepEqual(retained.original_conversation.slice(4, 7), group);
+  assert.deepEqual([...retained.original_conversation, ...f.messages.slice(prepared.checkpoint.prefixLength)], f.messages);
+  assert.equal(reference.sha256, createHash('sha256').update(serialized).digest('hex'));
+  assert.equal(reference.characters, serialized.length);
+  assert.strictEqual(prepared.messages[0], f.messages[0]);
+  assert.strictEqual(prepared.messages[2], f.messages[1]);
+  assert.deepEqual(prepared.messages.slice(3), f.messages.slice(prepared.checkpoint.prefixLength));
+  const notice = fallbackNotice(prepared).content;
+  assert.match(notice, /Summary input exceeded maxSummaryInputChars \(input_oversized\)/);
+  assert.match(notice, /Only metadata is delivered here, not file consultation/);
+  assert.doesNotMatch(notice, /validation failed|after 2 attempts|ESCAPED_HISTORY|Valid intermediate summary|Native truncation/);
+  assert.ok(JSON.stringify(prepared.messages).length <= f.config.contextCompaction.maxInputChars);
+  assert.equal(JSON.stringify(f.messages), before);
+  assert.equal(JSON.stringify(f.config), configBefore);
+  const cached = await prepareCapyModelContext({ ...f, checkpoint: prepared.checkpoint, model: f.model(() => { throw new Error('No extra summary call on cached input-bound recovery'); }) });
+  assert.strictEqual(cached.checkpoint, prepared.checkpoint);
+  assert.deepEqual(cached.usage, {});
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 1);
+  assert.equal(fallbackNotice(cached).content, notice);
+  const extended = [...f.messages, ...fixture(t, {}, 8).messages.slice(-6)];
+  const next = await prepareCapyModelContext({ ...f, messages: extended, checkpoint: prepared.checkpoint, model: f.model(() => { throw new Error('No extra summary call when extending input-bound recovery'); }) });
+  assert.equal(next.checkpoint.reason, 'input_oversized');
+  assert.ok(next.checkpoint.prefixLength > prepared.checkpoint.prefixLength);
+  assert.deepEqual(JSON.parse(await readFile(f.file(next.checkpoint.reference.output_path), 'utf8')).original_conversation,
+    extended.slice(0, next.checkpoint.prefixLength));
+  assert.deepEqual(next.usage, {});
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 2);
+});
+
+test('historical and nonexact profiles still fail closed at the coherent summary-input bound', async t => {
+  for (const instructionProfile of [undefined, 'opulent-capy-v1', 'opulent-delivery-v12', 'opulent2-fixed-v2', 'opulent2-fixed-v1-extra']) await t.test(String(instructionProfile), async t => {
+    const f = await backedFixture(t, { instructionProfile, contextCompaction: { ...policy, maxSummaryInputChars: 160000 } });
+    escapedParallelHistory(f);
+    const before = JSON.stringify(f.messages);
+    await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => response('Valid intermediate summary.')) }), error => {
+      assert.equal(error.message, 'Coherent history group exceeds maxSummaryInputChars; no history was truncated');
+      assert.equal(error.code, 'CONTEXT_SUMMARY_INPUT_TOO_LARGE');
+      assert.deepEqual(error.compactionUsage, repairUsage);
+      return true;
+    });
+    assert.equal(f.requests.length, 1);
+    assert.equal(f.writes.length, 0);
+    assert.equal(JSON.stringify(f.messages), before);
+  });
+});
+
+test('an oversized first coherent group externalizes with zero summary calls and no invented usage or validation attempts', async t => {
+  const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } });
+  const group = escapedParallelHistory(f);
+  f.messages = [f.messages[0], ...group, f.messages[1], ...f.messages.slice(2, 4), ...f.messages.slice(7)];
+  const before = JSON.stringify(f.messages);
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(() => { throw new Error('The oversized first group must not reach inference'); }) });
+  assert.equal(f.requests.length, 0);
+  assert.equal(prepared.checkpoint.reason, 'input_oversized');
+  assert.deepEqual(prepared.usage, {});
+  assert.doesNotMatch(fallbackNotice(prepared).content, /validation failed|attempts/);
+  const retained = JSON.parse(await readFile(f.file(prepared.checkpoint.reference.output_path), 'utf8'));
+  assert.deepEqual(retained.original_conversation, f.messages.slice(0, prepared.checkpoint.prefixLength));
+  assert.deepEqual(retained.original_conversation.slice(1, 4), group);
+  assert.equal(JSON.stringify(f.messages), before);
+});
+
+test('input-bound recovery still requires exact owned backing and preserves earlier metered usage on failure', async t => {
+  for (const failure of ['missing-handler', 'foreign-row', 'wrong-hash', 'corrupt-bytes']) await t.test(failure, async t => {
+    const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000 } });
+    escapedParallelHistory(f);
+    const before = JSON.stringify(f.messages), persist = f.ctx.persistCapyResult;
+    if (failure === 'missing-handler') delete f.ctx.persistCapyResult;
+    else f.ctx.persistCapyResult = async (value, bound) => {
+      const reference = await persist(value, bound), row = f.ctx.store.get('capy_results', reference.result_id);
+      if (failure === 'foreign-row') f.ctx.store.put('capy_results', row.id, { ...row, session_id: 'foreign' });
+      if (failure === 'wrong-hash') reference.sha256 = '0'.repeat(64);
+      if (failure === 'corrupt-bytes') await writeFile(f.file(reference.output_path), 'Not the exact original history');
+      return reference;
+    };
+    await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => response('Valid intermediate summary.')) }), error => {
+      assert.match(error.message, /Opulent2 preserved history/);
+      assert.deepEqual(error.compactionUsage, repairUsage);
+      return true;
+    });
+    assert.equal(f.requests.length, 1);
+    assert.equal(JSON.stringify(f.messages), before);
+  });
+});
+
+test('input-bound history recovery never bypasses maxBatches or an abort during verified file read', async t => {
+  for (const failure of ['batch-cap', 'abort']) await t.test(failure, async t => {
+    const f = await backedFixture(t, { contextCompaction: { ...policy, maxSummaryInputChars: 160000,
+      ...(failure === 'batch-cap' ? { maxBatches: 1 } : {}) } });
+    escapedParallelHistory(f);
+    const before = JSON.stringify(f.messages), controller = new AbortController(), aborted = new Error('Offline verified-history read aborted');
+    if (failure === 'abort') {
+      const read = f.ctx.sandbox.files.read;
+      f.ctx.sandbox.files.read = async (...args) => { const bytes = await read(...args); controller.abort(aborted); return bytes; };
+    }
+    await assert.rejects(prepareCapyModelContext({ ...f, signal: controller.signal, model: f.model(() => response('Valid intermediate summary.')) }), error => {
+      if (failure === 'abort') assert.strictEqual(error, aborted);
+      else assert.equal(error.message, 'Context compaction exceeded maxBatches without dropping history');
+      assert.deepEqual(error.compactionUsage, repairUsage);
+      return true;
+    });
+    assert.equal(f.requests.length, 1);
+    assert.equal(f.writes.length, failure === 'abort' ? 1 : 0);
+    assert.equal(JSON.stringify(f.messages), before);
+  });
+});
+
+test('a provider error imitating the coherent summary-input failure does not activate history recovery', async t => {
+  const f = await backedFixture(t), actual = Object.assign(new Error('Coherent history group exceeds maxSummaryInputChars; no history was truncated'),
+    { code: 'CONTEXT_SUMMARY_INPUT_TOO_LARGE' });
+  await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(call => {
+    if (call === 2) throw actual;
+    return truncated();
+  }) }), error => {
+    assert.strictEqual(error, actual);
+    assert.deepEqual(error.compactionUsage, originalUsage);
+    return true;
+  });
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.writes.length, 0);
+});
+
 test('Opulent2 requests a preferred-size repair with the original hard limit and full unchanged input', async t => {
   const f = fixture(t), before = JSON.stringify(f.messages), configBefore = JSON.stringify(f.config);
   const completed = 'Alternatives depend on unknown approval; conflicting sources remain unresolved, see corpus/source-0.md.'.padEnd(12000, '.');

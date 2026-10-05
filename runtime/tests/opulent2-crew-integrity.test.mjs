@@ -94,6 +94,36 @@ test('Opulent2 failures notify the owner without reusing a prior user-only work 
   assert(delivered.every(row => !/PRIOR_USER_ONLY_SENTINEL|"output"|"attachments"/.test(row.body)));
 });
 
+test('Opulent2 queued child completion cannot automatically restart a failed worker', async t => {
+  const entered = Promise.withResolvers(), failure = Promise.withResolvers();
+  let middleCalls = 0;
+  const { runtime } = await fixture(t, { model: async messages => {
+    if (messages.find(row => row.role === 'user').content !== 'MIDDLE') return completion('Completed offline leaf');
+    if (++middleCalls > 1) return completion('Explicitly resumed after failure');
+    entered.resolve();
+    await failure.promise;
+    throw new Error('Offline fatal compaction failure');
+  } });
+  const owner = runtime.allocate();
+  const created = await runtime.invoke(owner.id, 'subagent_create', { tasks: [{ prompt: 'MIDDLE' }], start: { machine: 'fresh' } });
+  const middleId = created.tasks[0].id;
+  await entered.promise;
+  const leafCreated = await runtime.invoke(middleId, 'subagent_create', { tasks: [{ prompt: 'LEAF' }], start: { machine: 'fresh' } });
+  await runtime.waitSession(leafCreated.tasks[0].id);
+  const queued = notifications(runtime, middleId);
+  assert.equal(queued.length, 1);
+  failure.resolve();
+  const failed = await runtime.waitSession(middleId);
+  assert.equal(failed.status, 'failed');
+  assert.equal(failed.error, 'Offline fatal compaction failure');
+  assert.equal(middleCalls, 1);
+  assert(!runtime.store.get('conversations', middleId).delivered.includes(queued[0].id));
+  await runtime.invoke(owner.id, 'message_agent', { to: '1', text: 'Explicitly retry after the failure', state: 'working' });
+  assert.equal((await runtime.waitSession(middleId)).output, 'Explicitly resumed after failure');
+  assert.equal(middleCalls, 2);
+  assert(runtime.store.get('conversations', middleId).delivered.includes(queued[0].id));
+});
+
 test('Opulent2 does not publish sleeping-child final reports as completion summaries', async t => {
   for (const channel of ['message_agent', 'message_user']) await t.test(channel, async t => {
     let middleTurns = 0, leafTurns = 0;
