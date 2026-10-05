@@ -12,6 +12,7 @@ export function createModel(config, fetchImpl = fetch) {
     const key = process.env[transport.credentialEnvironment];
     if (!key) throw new Error(`${transport.credentialEnvironment} is required for agent sessions; no provider fallback`);
     const native = transport.provider === 'runanywhere';
+    const recordAttempts = native || !!luna;
     if (native && (options.model && options.model !== config.model || options.reasoning_effort != null)) throw new Error('Native RunAnywhere model and request contract are pinned');
     // Honour the harness request timeout instead of a hardcoded 120s: high and
     // max reasoning models routinely exceed two minutes on long tool-heavy
@@ -37,14 +38,14 @@ export function createModel(config, fetchImpl = fetch) {
       try {
         response = await fetchImpl(`${transport.endpoint}/chat/completions`, request);
       } catch (error) {
-        if (native) {
+        if (recordAttempts) {
           attempts.push({ status: null, elapsedMs: Math.round(performance.now() - start), usageUnknown: true, failure: error.name,
             ...(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_CONNECT_TIMEOUT', 'ECONNRESET', 'ECONNREFUSED'].includes(error.cause?.code) ? { transportCode: error.cause.code } : {}) });
           error.inferenceAttempts = attempts;
         }
         throw error;
       }
-      if (native) attempts.push({ status: response.status ?? 200, elapsedMs: Math.round(performance.now() - start),
+      if (recordAttempts) attempts.push({ status: response.status ?? 200, elapsedMs: Math.round(performance.now() - start),
         ...(response.ok ? {} : { usageUnknown: true }) });
       if (!native || response.ok || attempt + 1 === transport.requestPolicy.maxAttempts || !transport.requestPolicy.retryStatuses.includes(response.status)) break;
       const header = response.headers?.get('retry-after');
@@ -61,20 +62,20 @@ export function createModel(config, fetchImpl = fetch) {
     }
     if (!response.ok) {
       const error = new Error(`Model provider failed (${response.status})`);
-      if (native) error.inferenceAttempts = attempts;
+      if (recordAttempts) error.inferenceAttempts = attempts;
       throw error;
     }
     let result;
     try {
       result = await response.json();
+      if (!result.choices?.[0]?.message) throw new Error('Model provider returned no message');
     } catch (error) {
-      if (native) {
+      if (recordAttempts) {
         Object.assign(attempts.at(-1), { usageUnknown: true, failure: error.name, failureStage: 'response_body' });
         error.inferenceAttempts = attempts;
       }
       throw error;
     }
-    if (!result.choices?.[0]?.message) throw new Error('Model provider returned no message');
-    return native ? { ...result, inferenceAttempts: attempts } : result;
+    return recordAttempts ? { ...result, inferenceAttempts: attempts } : result;
   };
 }
