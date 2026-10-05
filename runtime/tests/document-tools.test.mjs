@@ -111,6 +111,30 @@ test('read rejects binary, excessive input, unsafe symlinks and invalid ranges i
   }
 });
 
+test('real doubly hardened shell wrappers keep the bounded reader below the process argument limit', async t => {
+  const root = await fixture(t);
+  const name = "quoted ' 😀.txt";
+  const text = 'Bounded Unicode text 😀漢\n';
+  await writeFile(join(root, name), text);
+  const quote = value => `'${value.replaceAll("'", "'\\''")}'`;
+  const tools = createCapyFileTools({ workspace: root, config: { instructionProfile: 'opulent2-fixed-v1' }, sandbox: {
+    commands: { async run(command, options) {
+      assert.equal(options.user, 'user');
+      assert.equal(options.rlmNoSecrets, true);
+      for (let layer = 0; layer < 2; layer++) command = `setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`;
+      assert(Buffer.byteLength(command) < 131072);
+      const result = await exec('/bin/bash', ['-l', '-c', command], {
+        env: { PATH: '/usr/bin:/bin', HOME: root }, timeout: options.timeoutMs, maxBuffer: 1000000,
+      });
+      return { ...result, exitCode: 0 };
+    } },
+  } });
+  const result = await tools.read({ path: name });
+  assert.equal(result.content, text);
+  assert.equal(result.source_sha256, sha(Buffer.from(text)));
+  assert.equal(result.consultation.omitted_text_consulted, false);
+});
+
 test('document reads never decode a PDF as text and explicitly report an absent installed helper', async t => {
   const root = await fixture(t);
   await writeFile(join(root, 'source.pdf'), '%PDF-1.7\nSECRET BINARY MARKER\0\n');
