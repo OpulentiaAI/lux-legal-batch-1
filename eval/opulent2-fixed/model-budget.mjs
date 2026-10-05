@@ -32,6 +32,10 @@ const policy = Object.freeze({
   requestBinding: 'caller must admit the exact prepared messages/tools before each provider request',
   integerEncoding: 'safe integers are numbers; larger cumulative observed totals are decimal strings',
 })
+const contextPolicy = Object.freeze({ ...policy, version: 'task-model-budget-admission-v2',
+  cumulativeInput: 'metered provenance only; no cumulative session input-token execution limit',
+  nonTextInput: 'images, opaque reasoning or unrecognized content reserve the per-request input window, never a cumulative task allowance',
+})
 
 export class TaskModelBudgetError extends Error {
   constructor(code, reason, details = {}) {
@@ -67,10 +71,12 @@ function textMessage(message) {
 }
 
 export function createTaskModelBudget(options) {
-  for (const key of ['maxSteps', 'maxInputTokens', 'maxContextTokens']) {
+  for (const key of ['maxSteps', 'maxContextTokens']) {
     if (!Number.isSafeInteger(options?.[key]) || options[key] <= 0) throw new TaskModelBudgetError('MODEL_BUDGET_INVALID_ARGUMENT', 'explicit_positive_safe_integer_limit_required', { field: key })
   }
+  if (options.maxInputTokens !== null && (!Number.isSafeInteger(options.maxInputTokens) || options.maxInputTokens <= 0)) throw new TaskModelBudgetError('MODEL_BUDGET_INVALID_ARGUMENT', 'explicit_positive_safe_integer_or_null_input_limit_required', { field: 'maxInputTokens' })
   const limits = { maxSteps: options.maxSteps, maxInputTokens: options.maxInputTokens, maxContextTokens: options.maxContextTokens }
+  const cappedInput = limits.maxInputTokens !== null
   const tickets = []
   const requestIds = new Set()
   const blocks = []
@@ -102,9 +108,9 @@ export function createTaskModelBudget(options) {
     const pendingSteps = tickets.filter(row => ['pending', 'settling'].includes(row.status)).length
     const unknownConsumptionSteps = tickets.filter(row => row.status === 'unknown').length
     const knownUsageSubtotal = { prompt_tokens: integer(knownInputTokens), completion_tokens: integer(knownOutputTokens), total_tokens: integer(knownTotalTokens) }
-    const unallocated = BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens
+    const unallocated = cappedInput ? BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens : null
     return structuredClone({
-      version: 'task-model-budget-v1', budgets: limits, admissionPolicy: policy,
+      version: cappedInput ? 'task-model-budget-v1' : 'task-model-budget-v2', budgets: limits, admissionPolicy: cappedInput ? policy : contextPolicy,
       modelCalls: tickets.length, inputTokens: integer(knownInputTokens), outputTokens: integer(knownOutputTokens),
       reservedInputTokens: integer(heldInputTokens), usageUnknown: unknownConsumptionSteps > 0,
       blocked: blocks.length > 0,
@@ -120,8 +126,8 @@ export function createTaskModelBudget(options) {
         admittedConservativeInputTokens: integer(admittedConservativeInputTokens),
         usedOrReservedInputTokens: integer(knownInputTokens + heldInputTokens),
         remainingSteps: limits.maxSteps - tickets.length,
-        unallocatedInputTokens: integer(unallocated > 0n ? unallocated : 0n),
-        admissibleInputTokens: blocks.length ? 0 : integer(unallocated > 0n ? unallocated : 0n),
+        unallocatedInputTokens: unallocated === null ? null : integer(unallocated > 0n ? unallocated : 0n),
+        admissibleInputTokens: blocks.length ? 0 : unallocated === null ? null : integer(unallocated > 0n ? unallocated : 0n),
       },
       reservations: tickets.map(row => ({ ...row, heldInputTokens: row.usageVerified ? 0 : row.reservedInputTokens })),
     })
@@ -158,7 +164,7 @@ export function createTaskModelBudget(options) {
     requireOpen()
     const { sessionId, phase, reservedInputTokens, maxCompletionTokens } = prepared
     if (tickets.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_limit_exhausted', { maxSteps: limits.maxSteps })
-    if (BigInt(reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens, maxInputTokens: limits.maxInputTokens })
+    if (cappedInput && BigInt(reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens, maxInputTokens: limits.maxInputTokens })
     const row = {
       ...prepared, id: `model-request-${tickets.length + 1}`, step: tickets.length + 1, status: 'pending', requestId: null,
       observedInputTokens: null, observedOutputTokens: null, observedTotalTokens: null,
@@ -217,7 +223,7 @@ export function createTaskModelBudget(options) {
         if (usage.prompt_tokens > row.reservedInputTokens) row.violations.push({ reason: 'input_reservation_underestimated', observed: usage.prompt_tokens, limit: row.reservedInputTokens })
         if (usage.completion_tokens > maxCompletionTokens) row.violations.push({ reason: 'completion_limit_exceeded', observed: usage.completion_tokens, limit: maxCompletionTokens })
         if (BigInt(usage.prompt_tokens) + BigInt(maxCompletionTokens) > BigInt(limits.maxContextTokens)) row.violations.push({ reason: 'request_context_exceeded', observedInputTokens: usage.prompt_tokens, reservedCompletionTokens: maxCompletionTokens, limit: limits.maxContextTokens })
-        if (knownInputTokens + heldInputTokens > BigInt(limits.maxInputTokens)) row.violations.push({ reason: 'shared_input_commitment_exceeded', observedAndReserved: integer(knownInputTokens + heldInputTokens), limit: limits.maxInputTokens })
+        if (cappedInput && knownInputTokens + heldInputTokens > BigInt(limits.maxInputTokens)) row.violations.push({ reason: 'shared_input_commitment_exceeded', observedAndReserved: integer(knownInputTokens + heldInputTokens), limit: limits.maxInputTokens })
         row.status = row.violations.length || row.errors.length ? 'violated' : 'settled'
         if (row.status === 'violated') throw block(new TaskModelBudgetError('MODEL_BUDGET_VIOLATION', 'metered_usage_violates_admission', { violations: row.violations }), row)
         drain()
@@ -254,7 +260,7 @@ export function createTaskModelBudget(options) {
           requireOpen()
           if (waiter.signal?.aborted) throw new TaskModelBudgetError('MODEL_BUDGET_CANCELLED', 'admission_cancelled')
           if (tickets.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_limit_exhausted', { maxSteps: limits.maxSteps })
-          if (BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: waiter.prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
+          if (cappedInput && BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: waiter.prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
         } catch (error) {
           finishWaiter(index, error)
           continue
@@ -263,7 +269,7 @@ export function createTaskModelBudget(options) {
       }
       while (waiters.length) {
         const waiter = waiters[0]
-        if (BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) break
+        if (cappedInput && BigInt(waiter.prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens - heldInputTokens) break
         try { finishWaiter(0, null, reserve(waiter.prepared)) }
         catch (error) { finishWaiter(0, error) }
       }
@@ -276,7 +282,7 @@ export function createTaskModelBudget(options) {
     if (signal != null && !(signal instanceof AbortSignal)) throw new TaskModelBudgetError('MODEL_BUDGET_INVALID_ARGUMENT', 'abort_signal_required')
     if (signal?.aborted) throw new TaskModelBudgetError('MODEL_BUDGET_CANCELLED', 'admission_cancelled')
     if (tickets.length + waiters.length >= limits.maxSteps) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_request_slots_committed', { maxSteps: limits.maxSteps, admittedSteps: tickets.length, queuedRequests: waiters.length })
-    if (BigInt(prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
+    if (cappedInput && BigInt(prepared.reservedInputTokens) > BigInt(limits.maxInputTokens) - knownInputTokens) throw new TaskModelBudgetError('MODEL_BUDGET_EXHAUSTED', 'shared_input_reservation_exhausted', { reservedInputTokens: prepared.reservedInputTokens, maxInputTokens: limits.maxInputTokens })
     return new Promise((resolve, reject) => {
       const waiter = { prepared, signal, resolve, reject, onAbort: () => {
         const index = waiters.indexOf(waiter)

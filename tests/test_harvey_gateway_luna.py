@@ -5,6 +5,7 @@ import io
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 import tempfile
@@ -46,10 +47,13 @@ class PartialStream(httpx.SyncByteStream):
 
 class GatewayLunaTests(unittest.TestCase):
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory(prefix='offline-harvey-gateway-', dir=ROOT)
+        worker.LAUNCH.mkdir(parents=True, exist_ok=True, mode=0o700)
+        temporary = tempfile.TemporaryDirectory(prefix='offline-harvey-gateway-', dir=worker.LAUNCH)
         self.addCleanup(temporary.cleanup)
         self.directory = Path(temporary.name)
         self.enterContext(patch.object(worker, 'LAUNCH', self.directory))
+        self.enterContext(patch.object(socket.socket, 'connect', side_effect=RuntimeError('OFFLINE_ONLY: no network calls')))
+        self.enterContext(patch.object(socket, 'create_connection', side_effect=RuntimeError('OFFLINE_ONLY: no network calls')))
         self.enterContext(patch.dict(os.environ, {'AI_GATEWAY_API_KEY': 'offline-gateway-fixture-key',
                                                 'RUNA_CLOUD_KEY': 'offline-native-fixture-key',
                                                 'OPENAI_API_KEY': 'offline-wrong-fixture-key',
@@ -97,7 +101,7 @@ class GatewayLunaTests(unittest.TestCase):
         if self.mode == 'partial':
             return httpx.Response(200, stream=PartialStream(), headers={'x-request-id': identifier + '-http'})
         data = {'id': identifier, 'model': worker.LUNA_MODEL, 'choices': [
-            {'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': 'Offline fixture output'}}],
+            {'index': 0, 'finish_reason': 'stop', 'message': getattr(self, 'response_message', {'role': 'assistant', 'content': 'Offline fixture output'})}],
                 'usage': {'prompt_tokens': self.input_tokens, 'completion_tokens': self.output_tokens,
                           'total_tokens': self.input_tokens + self.output_tokens,
                           'prompt_tokens_details': {'cached_tokens': 5}, 'completion_tokens_details': {'reasoning_tokens': 1}}}
@@ -120,10 +124,10 @@ class GatewayLunaTests(unittest.TestCase):
         return self.adapter.chat(self.messages() if messages is None else messages, self.tools)
 
     def rows(self):
-        return json.loads((self.directory / 'captures/index.json').read_text())
+        return json.loads((Path(self.document['captureDirectory']) / 'index.json').read_text())
 
     def ledger(self):
-        return json.loads((self.directory / 'captures/model-budget.json').read_text())['ledger']
+        return json.loads((Path(self.document['captureDirectory']) / 'model-budget.json').read_text())['ledger']
 
     def body(self):
         return {'model': worker.LUNA_MODEL, 'max_completion_tokens': 32768, 'reasoning_effort': 'max',
@@ -376,9 +380,9 @@ console.log(JSON.stringify(verifyModelBudget(fixture)))
                 worker.experiment_config({'config': config})
 
     def launch_request(self):
-        return {'experiment': worker.LUNA_EXPERIMENT, 'model': worker.LUNA_MODEL, 'inference_provider': 'gateway',
+        return {'experiment': self.config['experiment'], 'model': worker.LUNA_MODEL, 'inference_provider': 'gateway',
                 'provider_model': None, 'provider_only': None, 'reasoning_effort': 'max',
-                'max_steps': 250, 'max_completion_tokens': 32768, 'max_input_tokens': 2000000, 'max_context_tokens': 1050000,
+                'max_steps': 250, 'max_completion_tokens': 32768, 'max_input_tokens': self.config['budgets']['maxInputTokens'], 'max_context_tokens': 1050000,
                 'budget_disclosure': self.config['prompts']['budgetDisclosure']}
 
     def run_main(self, document, bridge):
@@ -489,6 +493,162 @@ console.log(JSON.stringify(verifyModelBudget(fixture)))
                 time.sleep(0.05)
         self.assertEqual(signal.getsignal(signal.SIGALRM), previous)
         self.assertEqual(signal.getitimer(signal.ITIMER_REAL)[0], 0)
+
+    def select_context_experiment(self):
+        httpx.Client.send = self.original_send
+        httpx.Client._send_single_request = self.original_single_request
+        self.config = {**self.config, 'experiment': worker.LUNA_CONTEXT_EXPERIMENT,
+                       'budgets': copy.deepcopy(worker.LUNA_CONTEXT_BUDGETS),
+                       'prompts': {'budgetDisclosure': worker.LUNA_CONTEXT_BUDGET_DISCLOSURE}}
+        self.expected['systemMessages'] = [{'role': 'system', 'content': worker.append_budget_disclosure('Pinned fixture system', self.config)}]
+        self.document.update({'config': self.config, 'captureDirectory': str(self.directory / 'context-captures'),
+                              'ownedRegistry': str(self.directory / 'context-owned.json'),
+                              'expectedSystemMessagesSha256': worker.digest(self.expected['systemMessages'])})
+        self.capture = worker.install_capture(self.document, self.expected)
+
+    def test_context_policy_requires_explicit_null_and_exact_disclosure_without_redefining_v1(self):
+        self.select_context_experiment()
+        self.assertEqual(worker.experiment_config({'config': self.config}), self.config)
+        self.assertIsNone(self.config['budgets']['maxInputTokens'])
+        self.assertEqual(worker.LUNA_BUDGETS['maxInputTokens'], 2000000)
+        for field, replacement in [('experiment', worker.LUNA_EXPERIMENT), ('budgets', worker.LUNA_BUDGETS),
+                                   ('prompts', {'budgetDisclosure': 'Changed disclosure'})]:
+            changed = {**self.config, field: replacement}
+            with self.assertRaises(ValueError):
+                worker.experiment_config({'config': changed})
+        for value in (2000000, 0, 'null'):
+            changed = {**self.config, 'budgets': {**self.config['budgets'], 'maxInputTokens': value}}
+            with self.assertRaises(ValueError):
+                worker.experiment_config({'config': changed})
+        missing = copy.deepcopy(self.config)
+        del missing['budgets']['maxInputTokens']
+        with self.assertRaises(ValueError):
+            worker.experiment_config({'config': missing})
+
+    def test_context_policy_meters_repeated_cached_input_above_two_million_and_matches_javascript(self):
+        self.select_context_experiment()
+        messages = self.messages() + [{'role': 'assistant', 'content': 'Opaque offline fixture.',
+                                      'reasoning': {'encrypted': 'provider-opaque'}, 'provider_metadata': {'gateway': 'opaque'}}]
+        self.input_tokens = 1000000
+        for _ in range(3):
+            self.chat(messages)
+        ledger = self.ledger()
+        self.assertEqual(len(self.transmitted), 3)
+        self.assertEqual(ledger['inputTokens'], 3000000)
+        self.assertEqual(ledger['outputTokens'], 6)
+        self.assertEqual(ledger['version'], 'task-model-budget-v2')
+        self.assertFalse(ledger['blocked'])
+        self.assertIsNone(ledger['usage']['unallocatedInputTokens'])
+        self.assertIsNone(ledger['usage']['admissibleInputTokens'])
+        self.assertEqual(ledger['usage']['fullConsumptionUsage'], {'prompt_tokens': 3000000, 'completion_tokens': 6, 'total_tokens': 3000006})
+        self.assertTrue(all(row['reservationBasis'] == 'full-input-window' for row in ledger['reservations']))
+        self.assertTrue(all(row['reportedUsage']['prompt_tokens_details']['cached_tokens'] == 5 for row in ledger['reservations']))
+        self.assertTrue(all(json.loads(request.content)['messages'] == messages for request in self.transmitted))
+        worker.reconcile_gateway_records(self.rows(), self.adapter.usage_records, self.config, ledger)
+        program = """
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { LUNA_CONTEXT_BUDGETS, LUNA_CONTEXT_BUDGET_DISCLOSURE, LUNA_CONTEXT_EXPERIMENT } from './runtime/opulent2-luna-policy.mjs'
+import { createTaskModelBudget } from './eval/opulent2-fixed/model-budget.mjs'
+import { verifyModelBudget } from './eval/opulent2-fixed/budget-verification.mjs'
+const fixture = JSON.parse(readFileSync(0, 'utf8'))
+assert.equal(fixture.release.experiment, LUNA_CONTEXT_EXPERIMENT)
+assert.deepEqual(fixture.release.budgets, LUNA_CONTEXT_BUDGETS)
+assert.equal(fixture.disclosure, LUNA_CONTEXT_BUDGET_DISCLOSURE)
+const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+budget.admit({ messages: fixture.body.messages, tools: fixture.body.tools, maxCompletionTokens: 32768, sessionId: 'harvey', phase: 'answerer' })
+assert.deepEqual(fixture.ledger.admissionPolicy, budget.ledger.snapshot().admissionPolicy)
+assert.equal(fixture.ledger.reservations[0].reservedInputTokens, budget.ledger.snapshot().reservedInputTokens)
+console.log(JSON.stringify(verifyModelBudget(fixture)))
+"""
+        fixture = {'release': {'experiment': self.config['experiment'], 'budgets': self.config['budgets']},
+                   'ledger': ledger, 'rows': self.rows(), 'disclosure': self.config['prompts']['budgetDisclosure'],
+                   'body': json.loads(self.transmitted[0].content)}
+        result = subprocess.run(['node', '--input-type=module', '-e', program], input=json.dumps(fixture), text=True, cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['verified'])
+
+    def test_context_policy_replays_provider_opaque_reasoning_without_reclassifying_or_dropping_it(self):
+        self.select_context_experiment()
+        self.response_message = {'role': 'assistant', 'content': 'Provider offline response.',
+                                 'reasoning': {'encrypted': 'provider-opaque'}, 'provider_metadata': {'gateway': 'opaque'}}
+        response = self.chat()
+        self.assertEqual(response.message, self.response_message)
+        self.chat(self.messages() + [response.message])
+        self.assertEqual(json.loads(self.transmitted[1].content)['messages'][-1], self.response_message)
+        ticket = self.ledger()['reservations'][1]
+        self.assertEqual(ticket['reservationBasis'], 'full-input-window')
+        self.assertEqual(ticket['reservedInputTokens'], 1050000 - 32768)
+
+    def test_context_policy_enforces_250_actual_http_requests_and_denies_251(self):
+        self.select_context_experiment()
+        for _ in range(250):
+            self.chat()
+        self.assertEqual(self.ledger()['modelCalls'], 250)
+        with self.assertRaisesRegex(RuntimeError, 'model-call-limit'):
+            self.chat()
+        self.assertEqual(len(self.transmitted), 250)
+        self.assertEqual(len(self.rows()), 250)
+
+    def test_context_policy_unknown_consumption_blocks_new_http_without_guessing_zero(self):
+        self.select_context_experiment()
+        self.mode = 'missing'
+        messages = self.messages() + [{'role': 'assistant', 'content': [{'type': 'image_url', 'image_url': {'url': 'https://offline.invalid/image.png'}}]}]
+        with self.assertRaisesRegex(RuntimeError, 'actual token usage'):
+            self.chat(messages)
+        with self.assertRaisesRegex(RuntimeError, 'shared model budget'):
+            self.chat(messages)
+        self.assertEqual(len(self.transmitted), 1)
+        self.assertTrue(self.ledger()['usageUnknown'])
+        self.assertIsNone(self.ledger()['usage']['fullConsumptionUsage'])
+        self.assertEqual(self.ledger()['reservedInputTokens'], 1050000 - 32768)
+        self.assertEqual(self.ledger()['usage']['admissibleInputTokens'], 0)
+
+    def test_context_policy_enforces_provider_input_plus_reserved_completion_not_just_actual_output(self):
+        self.select_context_experiment()
+        messages = self.messages() + [{'role': 'assistant', 'content': [{'type': 'image_url', 'image_url': {'url': 'https://offline.invalid/image.png'}}]}]
+        self.input_tokens = 1050000 - 32768 + 1
+        self.chat(messages)
+        ticket = self.ledger()['reservations'][0]
+        self.assertFalse(self.ledger()['usageUnknown'])
+        self.assertEqual(ticket['status'], 'violated')
+        self.assertIn('provider-context-limit-exceeded', ticket['violations'])
+        with self.assertRaisesRegex(RuntimeError, 'shared model budget'):
+            self.chat(messages)
+        self.assertEqual(len(self.transmitted), 1)
+
+    def test_context_policy_concurrent_full_window_reservations_are_not_a_task_allowance(self):
+        self.select_context_experiment()
+        body = self.body()
+        body['messages'].append({'role': 'assistant', 'content': 'Opaque fixture', 'reasoning': {'encrypted': 'opaque'}})
+        budget = self.capture['budget']
+        tickets = [budget.reserve(body, 'offline-concurrent-' + str(i)) for i in range(3)]
+        ledger = budget.snapshot()
+        self.assertEqual(ledger['modelCalls'], 3)
+        self.assertEqual(ledger['reservedInputTokens'], 3 * (1050000 - 32768))
+        self.assertFalse(ledger['blocked'])
+        for i, ticket in enumerate(tickets):
+            budget.settle(ticket, {'responseBodyId': 'offline-concurrent-response-' + str(i), 'usageUnknown': False,
+                                   'usage': {'prompt_tokens': 1000000, 'completion_tokens': 1, 'total_tokens': 1000001}})
+        self.assertEqual(budget.snapshot()['inputTokens'], 3000000)
+        self.assertFalse(budget.snapshot()['blocked'])
+        self.assertEqual(self.transmitted, [])
+
+    def test_context_launch_persists_its_version_and_requires_explicit_null_in_the_bridge_request(self):
+        self.select_context_experiment()
+        def main():
+            self.chat()
+            print(json.dumps({'provider_usage_records': self.adapter.usage_records, 'finished_cleanly': True}))
+        result = self.run_main(self.document, types.SimpleNamespace(main=main))
+        self.assertEqual(result['experiment'], worker.LUNA_CONTEXT_EXPERIMENT)
+        self.assertEqual(result['model_budget']['version'], 'task-model-budget-v2')
+        persisted = json.loads(Path(result['model_budget_path']).read_text())
+        self.assertEqual(persisted['experiment'], worker.LUNA_CONTEXT_EXPERIMENT)
+        self.assertIsNone(persisted['budgets']['maxInputTokens'])
+        request = self.launch_request()
+        del request['max_input_tokens']
+        with patch.object(self, 'launch_request', return_value=request), self.assertRaisesRegex(RuntimeError, 'launch config'):
+            self.run_main(self.document, types.SimpleNamespace(main=lambda: self.fail('No further bridge execution is allowed')))
 
 
 if __name__ == '__main__':

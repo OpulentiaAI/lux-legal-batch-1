@@ -3,7 +3,7 @@ import { basename } from 'node:path'
 import { digest, sha } from './io.mjs'
 import { aggregateNative, readCapture, reconcileNative, sanitize, wireMeasurements } from './native.mjs'
 import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX } from '../../runtime/instructions/opulent2.mjs'
-import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 
 const same = (left, right) => digest(left) === digest(right)
 const nonempty = value => value !== undefined && value !== null && (typeof value !== 'string' || !!value.trim())
@@ -43,14 +43,15 @@ export function validatePreparedReceipt(release, receipt) {
   assert(Number.isSafeInteger(receipt.depth) && receipt.depth >= 0, 'Actual nonnegative session depth required')
   assert(['answerer', 'context_compaction'].includes(receipt.phase))
   validateGrants(release, receipt.grants)
-  if (release.experiment === LUNA_EXPERIMENT) {
-    assert.equal(release.prompts.budgetDisclosure, LUNA_BUDGET_DISCLOSURE, 'Frozen budget disclosure differs from the shared source')
-    assert.equal(release.prompts.budgetDisclosureSha256, sha(LUNA_BUDGET_DISCLOSURE))
+  const luna = lunaPolicy(release.experiment)
+  if (luna) {
+    assert.equal(release.prompts.budgetDisclosure, luna.disclosure, 'Frozen budget disclosure differs from the shared source')
+    assert.equal(release.prompts.budgetDisclosureSha256, sha(luna.disclosure))
     assert(typeof release.prompts.skillsRegistry === 'string' && release.prompts.skillsRegistry, 'Luna requires the frozen skills registry')
     if (receipt.phase === 'answerer') {
       const systems = receipt.messages.filter(message => message.role === 'system')
       assert.equal(systems.length, 1)
-      assert.equal(systems[0].content.split(LUNA_BUDGET_DISCLOSURE).length, 2, 'Exact shared budget disclosure must be delivered once to every answerer')
+      assert.equal(systems[0].content.split(luna.disclosure).length, 2, 'Exact shared budget disclosure must be delivered once to every answerer')
       assert.equal(systems[0].content.split(OPULENT2_TASK_APPENDIX).length, 2, 'Exact Opulent2 appendix must be delivered once in the answerer system')
     }
   }
@@ -75,9 +76,9 @@ export function validatePreparedReceipt(release, receipt) {
 }
 
 export function verifyPreparedTransmissions(release, snapshot, transmissions) {
-  const luna = release.experiment === LUNA_EXPERIMENT
+  const luna = lunaPolicy(release.experiment)
   if (luna) {
-    assert.deepEqual(release.budgets, LUNA_BUDGETS)
+    assert.deepEqual(release.budgets, luna.budgets)
     assert.equal(release.model, LUNA_MODEL)
     assert.equal(release.providerModel, LUNA_MODEL)
     assert.equal(release.inferenceProvider, 'gateway')
@@ -87,7 +88,7 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
     const known = transmissions.filter(item => !item.row.usageUnknown)
     assert(known.every(item => Number.isSafeInteger(item.row.usage?.prompt_tokens) && item.row.usage.prompt_tokens >= 0 &&
       Number.isSafeInteger(item.row.usage.completion_tokens) && item.row.usage.completion_tokens >= 0), 'Known consumption requires actual provider token usage')
-    assert(known.reduce((total, item) => total + item.row.usage.prompt_tokens, 0) <= release.budgets.maxInputTokens, 'Cumulative actual input includes repeated and cached context')
+    if (release.budgets.maxInputTokens !== null) assert(known.reduce((total, item) => total + item.row.usage.prompt_tokens, 0) <= release.budgets.maxInputTokens, 'Cumulative actual input includes repeated and cached context')
   }
   const receipts = snapshot.opulent2_model_assemblies
   assert(receipts.length, 'Actual prepared model receipts are required')
@@ -105,7 +106,7 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
     for (const item of actual) {
       if (luna) {
         const completionTokens = receipt.phase === 'context_compaction' ? release.budgets.summaryMaxTokens : release.budgets.maxCompletionTokens
-        assert.equal(item.row.experiment, LUNA_EXPERIMENT)
+        assert.equal(item.row.experiment, luna.experiment)
         assert.deepEqual(item.row.budgetConfig, release.budgets, 'Captured configured budgets differ from the frozen experiment')
         assert(typeof item.row.budgetTicketId === 'string' && item.row.budgetTicketId, 'Actual model-budget reservation must be recorded')
         assert.equal(item.row.endpoint, `${LUNA_ENDPOINT}/chat/completions`, 'Luna request used a separate, unexpected provider')
@@ -121,6 +122,7 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
           assert.equal(item.response?.model, LUNA_MODEL, 'Returned model identity differs from the pinned request')
           assert.equal(item.row.responseModel, LUNA_MODEL)
           assert(item.row.usage.prompt_tokens + item.row.usage.completion_tokens <= release.budgets.maxContextTokens, 'Actual per-request input plus output exceeds the context window')
+          assert(item.row.usage.prompt_tokens + completionTokens <= release.budgets.maxContextTokens, 'Provider input plus reserved completion exceeds the context window')
         }
       }
       const raw = { messages: receipt.messages, ...(item.request.tools === undefined && !receipt.tools.length ? {} : { tools: receipt.tools }) }
@@ -142,9 +144,9 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
   })
 }
 
-export function validateInitialAssembly({ receipt, session, configuredPrompt, childInstructions = '', memoryIndexes, expectedUser, skillsRegistry, budgetDisclosure }) {
+export function validateInitialAssembly({ receipt, session, configuredPrompt, childInstructions = '', memoryIndexes, expectedUser, skillsRegistry, budgetDisclosure, experiment }) {
   if (budgetDisclosure !== undefined) {
-    assert.equal(budgetDisclosure, LUNA_BUDGET_DISCLOSURE)
+    assert.equal(budgetDisclosure, lunaPolicy(experiment === undefined ? LUNA_EXPERIMENT : experiment).disclosure)
     assert.equal(configuredPrompt.split(budgetDisclosure).length, 2, 'Configured prompt must contain the shared budget disclosure once')
   }
   if (skillsRegistry !== undefined) {
@@ -219,13 +221,16 @@ export function artifactReadbacks(store, handoff, snapshot, transmissions) {
       const result = record.complete_result
       let content, expected
       if (record.name === 'read' && result.path?.endsWith(`/${file.path}`)) {
-        content = result.content
+        content = record.returned_result?.content
         const lines = file.content.match(/[^\n]*\n|[^\n]+$/g) ?? []
-        expected = lines.slice(result.offset - 1, result.offset - 1 + result.limit).join('').slice(result.character_offset, result.character_offset + 60000)
+        const window = lines.slice(result.offset - 1, result.offset - 1 + result.limit).join('')
+        expected = result.offset_unit === 'unicode_code_points'
+          ? Array.from(window).slice(result.character_offset, result.character_offset + 60000).join('')
+          : window.slice(result.character_offset, result.character_offset + 60000)
       } else if (record.name === 'drive_read' && result.scope === origin.scope && result.path === file.path) {
-        content = result.content
+        content = record.returned_result?.content
         expected = file.content
-      } else if (record.name === 'bash' && typeof result.stdout === 'string' && result.stdout.includes(file.content)) {
+      } else if (record.name === 'bash' && typeof record.returned_result?.stdout === 'string' && record.returned_result.stdout.includes(file.content)) {
         content = expected = file.content
       }
       if (typeof content === 'string' && content.trim() && content === expected) readbacks.push({ store, scope: origin.scope, path: file.path,

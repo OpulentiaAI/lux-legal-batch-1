@@ -187,6 +187,7 @@ test('mock build contract preserves the prepared base and adds only pinned genui
   const steps = [];
   const image = { fromTemplate(value) { steps.push(['fromTemplate', value]); return this; },
     setUser(value) { steps.push(['setUser', value]); return this; },
+    setEnvs(value) { steps.push(['setEnvs', value]); return this; },
     runCmd(value) { steps.push(['runCmd', value]); return this; } };
   const fake = Object.assign(() => image, {
     exists: async () => false,
@@ -195,17 +196,25 @@ test('mock build contract preserves the prepared base and adds only pinned genui
       assert.equal(value, image);
       assert.equal(alias, 'opulent2-machine-v1-mocked-contract');
       options.onBuildLogs({ message: `OPULENT2_IMAGE_SHA256=${'a'.repeat(64)}` });
+      options.onBuildLogs({ message: `OPULENT2_DOCUMENT_MANIFEST_SHA256=${'b'.repeat(64)}` });
       return { templateId: 'mock-template-only', buildId: 'mock-build-only' };
     },
   });
-  const result = await buildOpulent2Machine({ alias: 'opulent2-machine-v1-mocked-contract', outputDirectory: directory, apiKey: 'fixture-only-not-a-credential', TemplateImpl: fake });
+  await writeFile(join(directory, 'document.mjs'), 'export const mockBuildSource = true;\n');
+  await writeFile(join(directory, 'document.py'), 'mock_build_source = True\n');
+  const result = await buildOpulent2Machine({ alias: 'opulent2-machine-v1-mocked-contract', outputDirectory: directory, apiKey: 'fixture-only-not-a-credential', TemplateImpl: fake, documentToolsSourceDirectory: directory });
   assert.equal(result.imageSha256, 'a'.repeat(64));
   assert.equal(result.skills.files.length, 3);
+  assert.equal(result.documentTools.installedManifestSha256, 'b'.repeat(64));
+  assert.equal(result.documentTools.sourceFiles.filter(file => ['document.mjs', 'document.py'].includes(file.path)).length, 2);
   assert.deepEqual(steps[0], ['fromTemplate', 'aacky3169dfjvjyw7bsu:default']);
   const commands = steps.filter(([name]) => name === 'runCmd').map(([, command]) => command);
   assert.ok(commands[0].includes('e85fdd87dfeebc02f178d011fbb43a5511cf6275a364bdef57fe611d340dbeba'));
   assert.ok(commands[1].includes('sha256sum -c -'));
   assert.ok(commands[1].includes('ln -s /usr/bin/tre-agrep /usr/local/bin/agrep'));
+  assert.ok(commands.some(command => command.includes('--require-hashes')));
+  assert.ok(commands.some(command => command.includes('probe-installed.mjs --permissions')));
+  assert.deepEqual(steps.find(([name]) => name === 'setEnvs')[1], { TESSDATA_PREFIX: '/usr/share/tesseract-ocr/5/tessdata' });
   assert.deepEqual(steps.filter(([name]) => name === 'setUser').map(([, user]) => user), ['root', 'user']);
   for (const [index, command] of commands.entries()) {
     if (!command.includes("<<'PY'")) continue;

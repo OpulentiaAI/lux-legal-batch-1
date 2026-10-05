@@ -1,12 +1,13 @@
 import { modelTransport } from './model-provider.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Agent } from 'undici';
-import { LUNA_EXPERIMENT } from './opulent2-luna-policy.mjs';
+import { lunaPolicy } from './opulent2-luna-policy.mjs';
 
 const nativeDispatcher = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
 
 export function createModel(config, fetchImpl = fetch) {
   const transport = modelTransport(config);
+  const luna = lunaPolicy(config.experiment);
   return async (messages, options = {}) => {
     const key = process.env[transport.credentialEnvironment];
     if (!key) throw new Error(`${transport.credentialEnvironment} is required for agent sessions; no provider fallback`);
@@ -22,7 +23,7 @@ export function createModel(config, fetchImpl = fetch) {
       method: 'POST',
       redirect: 'error',
       signal,
-      ...(native || config.experiment === LUNA_EXPERIMENT ? { dispatcher: nativeDispatcher } : {}),
+      ...(native || luna ? { dispatcher: nativeDispatcher } : {}),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: native ? transport.providerModel : options.model ?? config.model, messages, ...(options.tools ? { tools: options.tools } : {}),
         ...(native ? { max_tokens: options.max_tokens ?? 4000 } : { max_completion_tokens: options.max_tokens ?? 4000 }),

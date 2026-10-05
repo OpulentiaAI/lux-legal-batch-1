@@ -4,7 +4,7 @@ import { getEventListeners } from 'node:events'
 import test from 'node:test'
 import { ENDPOINT, MODEL, NATIVE_MODEL } from './contract.mjs'
 import { createTaskModelBudget, TaskModelBudgetError } from './model-budget.mjs'
-import { LUNA_BUDGETS } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_BUDGETS, LUNA_CONTEXT_BUDGETS } from '../../runtime/opulent2-luna-policy.mjs'
 import { modelTransport, NATIVE_REQUEST_POLICY } from '../../runtime/model-provider.mjs'
 
 const budgets = overrides => ({ maxSteps: 250, maxInputTokens: 2_000_000, maxContextTokens: 32_768, ...overrides })
@@ -588,4 +588,98 @@ test('async waiter count is bounded by remaining steps and failure releases ever
   assert.equal(outcomes.filter(result => result.reason.code === 'MODEL_BUDGET_UNKNOWN_CONSUMPTION').length, 249)
   assert.equal(outcomes.filter(result => result.reason.code === 'MODEL_BUDGET_EXHAUSTED').length, 51)
   assert.equal(budget.ledger.snapshot().modelCalls, 1)
+})
+
+test('uncapped session input is an explicit null opt-in with separately versioned accounting', () => {
+  const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+  const snapshot = budget.ledger.snapshot()
+  assert.equal(snapshot.version, 'task-model-budget-v2')
+  assert.equal(snapshot.admissionPolicy.version, 'task-model-budget-admission-v2')
+  assert.deepEqual(snapshot.budgets, { maxSteps: 250, maxInputTokens: null, maxContextTokens: 1_050_000 })
+  assert.equal(snapshot.usage.unallocatedInputTokens, null)
+  assert.equal(snapshot.usage.admissibleInputTokens, null)
+  assert.equal(snapshot.inputTokens, 0)
+  rejects(() => createTaskModelBudget({ maxSteps: 250, maxContextTokens: 1_050_000 }), 'MODEL_BUDGET_INVALID_ARGUMENT')
+  assert.equal(createTaskModelBudget(LUNA_BUDGETS).ledger.snapshot().version, 'task-model-budget-v1')
+})
+
+test('uncapped root, descendants and compaction admit concurrent opaque windows and meter above two million', async () => {
+  const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+  const calls = [['root', 'answerer', 32768], ['child', 'answerer', 32768], ['grandchild', 'context_compaction', 8192]]
+  const tickets = await Promise.all(calls.map(([sessionId, phase, maxCompletionTokens]) => budget.admitAsync(opaqueRequest({ sessionId, phase, maxCompletionTokens }))))
+  const pending = budget.ledger.snapshot()
+  assert.equal(pending.modelCalls, 3)
+  assert.equal(pending.reservedInputTokens, 3 * 1_050_000 - 2 * 32768 - 8192)
+  assert.equal(pending.usage.fullConsumptionUsage, null)
+  assert(pending.reservations.every(row => row.reservationBasis === 'full-input-window'))
+  for (const [i, ticket] of tickets.entries()) ticket.settle({ requestId: `uncapped-${i}`, usage: { ...usage(1_000_000, 20),
+    prompt_tokens_details: { cached_tokens: 1_000_000 }, completion_tokens_details: { reasoning_tokens: 20 } } })
+  const settled = budget.ledger.snapshot()
+  assert.equal(settled.inputTokens, 3_000_000)
+  assert.equal(settled.outputTokens, 60)
+  assert.deepEqual(settled.usage.fullConsumptionUsage, usage(3_000_000, 60))
+  assert.equal(settled.reservedInputTokens, 0)
+  assert.equal(settled.blocked, false)
+  assert.deepEqual(settled.reservations.map(row => [row.sessionId, row.phase, row.maxCompletionTokens]), calls)
+  assert(settled.reservations.every(row => row.reportedUsage.prompt_tokens_details.cached_tokens === 1_000_000))
+  budget.admit(imageRequest({ maxCompletionTokens: 32768 }))
+  assert.equal(budget.ledger.snapshot().reservations.at(-1).reservationBasis, 'full-input-window')
+})
+
+test('uncapped opaque reservations still consume a hard shared request slot, never step 251', async () => {
+  const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+  const admissions = await Promise.allSettled(Array.from({ length: 251 }, (_, i) => budget.admitAsync(opaqueRequest({
+    sessionId: `session-${i}`, phase: i % 2 ? 'answerer' : 'context_compaction', maxCompletionTokens: i % 2 ? 32768 : 8192,
+  }))))
+  const accepted = admissions.filter(result => result.status === 'fulfilled').map(result => result.value)
+  assert.equal(accepted.length, 250)
+  assert.equal(admissions.at(-1).reason.code, 'MODEL_BUDGET_EXHAUSTED')
+  assert.equal(budget.ledger.snapshot().modelCalls, 250)
+  for (const [i, ticket] of accepted.entries()) ticket.settle({ requestId: `uncapped-step-${i}`, usage: usage(1_000_000, 0) })
+  assert.equal(budget.ledger.snapshot().inputTokens, 250_000_000)
+  rejects(() => budget.admit(request()), 'MODEL_BUDGET_EXHAUSTED')
+})
+
+test('uncapped sessions still enforce the exact input-plus-reserved-output context and output bounds', async () => {
+  const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+  const ticket = await budget.admitAsync(imageRequest({ maxCompletionTokens: 32768 }))
+  ticket.settle({ requestId: 'uncapped-context-equality', usage: usage(1_050_000 - 32768, 32768) })
+  await assert.rejects(budget.admitAsync(request({ messages: [{ role: 'user', content: 'x'.repeat(1_050_000) }] })), error => error.code === 'MODEL_CONTEXT_EXCEEDED')
+  assert.equal(budget.ledger.snapshot().modelCalls, 1)
+  const overflow = budget.admit(opaqueRequest())
+  rejects(() => overflow.settle({ requestId: 'uncapped-context-overflow', usage: usage(1_050_000 - 32768 + 1, 0) }), 'MODEL_BUDGET_VIOLATION')
+  assert(budget.ledger.snapshot().reservations.at(-1).violations.some(row => row.reason === 'request_context_exceeded'))
+  rejects(() => budget.admit(request()), 'MODEL_BUDGET_VIOLATION')
+  const completion = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+  rejects(() => completion.admit(request()).settle({ requestId: 'uncapped-completion-overflow', usage: usage(10, 257) }), 'MODEL_BUDGET_VIOLATION')
+})
+
+test('uncapped unknown consumption retains opaque holds and blocks new calls while known siblings settle', () => {
+  for (const action of ['fail', 'missing-usage', 'duplicate-id', 'inconsistent-usage']) {
+    const budget = createTaskModelBudget(LUNA_CONTEXT_BUDGETS)
+    const first = budget.admit(opaqueRequest())
+    const sibling = budget.admit(opaqueRequest({ sessionId: 'child' }))
+    sibling.settle({ requestId: 'known-child', usage: usage(1_000_000, 1) })
+    if (action === 'fail') first.fail()
+    else rejects(() => first.settle({ requestId: action === 'duplicate-id' ? 'known-child' : action,
+      usage: action === 'missing-usage' ? undefined : action === 'inconsistent-usage' ? { ...usage(), total_tokens: 1 } : usage() }),
+    action === 'duplicate-id' ? 'MODEL_BUDGET_DUPLICATE_REQUEST_ID' : 'MODEL_BUDGET_UNKNOWN_CONSUMPTION')
+    const snapshot = budget.ledger.snapshot()
+    assert.equal(snapshot.usage.fullConsumptionUsage, null)
+    assert.equal(snapshot.inputTokens, 1_000_000)
+    assert.equal(snapshot.reservedInputTokens, 1_050_000 - 32768)
+    assert.equal(snapshot.usage.admissibleInputTokens, 0)
+    rejects(() => budget.admit(request()), 'MODEL_BUDGET_UNKNOWN_CONSUMPTION')
+  }
+})
+
+test('uncapped cumulative usage above the safe-integer range retains exact decimal totals', () => {
+  const maximum = Number.MAX_SAFE_INTEGER
+  const budget = createTaskModelBudget({ maxSteps: 2, maxInputTokens: null, maxContextTokens: maximum })
+  for (let i = 0; i < 2; i++) budget.admit(imageRequest({ maxCompletionTokens: 1 })).settle({ requestId: `uncapped-large-${i}`, usage: usage(maximum - 1, 1) })
+  const snapshot = budget.ledger.snapshot()
+  assert.equal(snapshot.inputTokens, (2n * BigInt(maximum - 1)).toString())
+  assert.equal(snapshot.usage.fullConsumptionUsage.total_tokens, (2n * BigInt(maximum)).toString())
+  assert.equal(snapshot.blocked, false)
+  assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), snapshot)
 })

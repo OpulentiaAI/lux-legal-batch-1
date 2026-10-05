@@ -11,7 +11,7 @@ import { aggregateNative, attemptContext, createNativeCapture, readCapture, sani
 import { runExperiment, seedCheckpoint } from './runner.mjs'
 import { loadPublicPacket } from './tasks.mjs'
 import { nativeTransmissions, validateInitialAssembly, validatePreparedReceipt, verifyTaskExecution } from './validate.mjs'
-import { LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { verifyToolCoverage } from './coverage-verification.mjs'
 
@@ -47,7 +47,7 @@ function runPython(python, worker, document, environment, cwd) {
 }
 
 export function reconcileHarvey({ transmissions, providerRecords, trajectory, release }) {
-  const luna = release.experiment === LUNA_EXPERIMENT
+  const luna = lunaPolicy(release.experiment)
   const completed = transmissions.filter(item => !item.row.usageUnknown && item.row.status >= 200 && item.row.status < 300)
   assert.equal(new Set(completed.map(item => item.row.responseBodyId)).size, completed.length)
   const records = providerRecords ?? trajectory.filter(event => event.event === 'assistant' && event.providerUsage).map(event => event.providerUsage)
@@ -91,7 +91,7 @@ export async function loadRuntimeModules(release) {
 }
 
 export async function launch({ release, file, authorization, source }) {
-  const luna = release.experiment === LUNA_EXPERIMENT
+  const luna = lunaPolicy(release.experiment)
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, release.retrievalProfile, 'Select Voyage before runtime imports')
   for (const name of [...(luna ? [] : ['RUNA_CLOUD_KEY']), 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']) assert(process.env[name], `Missing credential: ${name}`)
   const [broadModule, modelModule, coreModule, providerModule, e2bModule, corpusModule, instructionModule, handoffModule, sdk] = await loadRuntimeModules(release)
@@ -193,7 +193,7 @@ export async function launch({ release, file, authorization, source }) {
             }
             const expected = validateInitialAssembly({ receipt, session, configuredPrompt: runtime.config.systemPrompt,
               childInstructions: session.parent_session_id ? instructionModule.opulent2ChildInstructions(session.depth) : '', memoryIndexes: indexes, expectedUser,
-              skillsRegistry: release.prompts.skillsRegistry, budgetDisclosure: release.prompts.budgetDisclosure })
+              skillsRegistry: release.prompts.skillsRegistry, budgetDisclosure: release.prompts.budgetDisclosure, experiment: release.experiment })
             systems.set(session.id, expected)
           }
           assert.deepEqual(actualSystems, systems.get(session.id), 'A session system assembly changed after its initial pinned preparation')

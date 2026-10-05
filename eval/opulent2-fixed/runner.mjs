@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { loadRelease, requireLiveAuthorization, verifyCommittedRelease } from './contract.mjs'
 import { atomic, digest, json, proof } from './io.mjs'
 import { freezeComparison, usedTaskHistory, verifyComparisonFreeze } from './tasks.mjs'
-import { LUNA_EXPERIMENT } from '../../runtime/opulent2-luna-policy.mjs'
+import { lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 
 export function seedCheckpoint(provenance, previous) {
   if (previous) {
@@ -84,7 +84,7 @@ export async function runSequential({ checkpoint, arm, initialSnapshot = null, e
 
 export async function runExperiment({ checkpoint, executeOpulent2, executeHarvey, initialSnapshot, save, assertUnchanged, signal }) {
   const release = checkpoint.provenance.release
-  if (release.experiment === LUNA_EXPERIMENT && release.stage === 'comparison') {
+  if (lunaPolicy(release.experiment) && release.stage === 'comparison') {
     assert(typeof executeHarvey === 'function', 'Fresh Harvey execution is required')
     let predecessor = initialSnapshot
     for (const row of checkpoint.rows) {

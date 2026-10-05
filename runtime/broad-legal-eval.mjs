@@ -23,7 +23,8 @@ import { parseOpulent2Handoff, serializeOpulent2Handoff } from './opulent2-hando
 import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
-import { LUNA_EXPERIMENT, LUNA_BUDGETS, LUNA_BUDGET_DISCLOSURE } from './opulent2-luna-policy.mjs'
+import { lunaPolicy } from './opulent2-luna-policy.mjs'
+import { OPULENT2_RESULT_PREVIEW_POLICY } from './capy-results.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
 import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
@@ -397,10 +398,9 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly, inferenceProvider)
   const opulent2 = instructionProfile === OPULENT2_PROFILE
-  const luna = experiment === LUNA_EXPERIMENT
-  if (experiment !== undefined && !luna) throw new Error('Unknown Opulent2 experiment')
+  const luna = lunaPolicy(experiment)
   if (luna && (!opulent2 || model !== LUNA_MODEL || inferenceProvider !== 'gateway' || providerModel != null || providerOnly != null || reasoningEffort !== 'max' ||
-      maxSteps !== LUNA_BUDGETS.maxSteps || workProduct?.maxCompletionTokens !== LUNA_BUDGETS.maxCompletionTokens || budgetDisclosure !== LUNA_BUDGET_DISCLOSURE)) throw new Error('Luna experiment requires the exact disclosed model and runaway-loop policy')
+      maxSteps !== luna.budgets.maxSteps || workProduct?.maxCompletionTokens !== luna.budgets.maxCompletionTokens || budgetDisclosure !== luna.disclosure)) throw new Error('Luna experiment requires the exact disclosed model and budget policy')
   if (!luna && budgetDisclosure !== undefined) throw new Error('Budget disclosure requires the separate Luna experiment')
   const capy = opulent2 || instructionProfile === 'opulent-capy-v1'
   const capyPolicy = opulent2 ? OPULENT2_TOOL_POLICY : CAPY_TOOL_POLICY
@@ -487,7 +487,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
-    ...(luna ? { experiment, modelBudget: LUNA_BUDGETS, budgetDisclosureSha256: sha256(budgetDisclosure) } : {}),
+    ...(luna ? { experiment, modelBudget: luna.budgets, budgetDisclosureSha256: sha256(budgetDisclosure) } : {}),
     policy: opulent2 ? OPULENT2_PROFILE : capy ? 'broad-legal-native-capy-v1' : deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : BROAD_POLICY.name, model, providerOnly, reasoningEffort, inference: transport, maxSteps, maxCompletionTokens: workProduct?.maxCompletionTokens ?? BROAD_COMPLETION_TOKENS,
     ...(capy ? { capy: { version: capyPolicy.version, ...capyPolicy.provenance,
       definitionsSha256: sha256(JSON.stringify(capyDefinitions)), initialDefinitionsSha256: sha256(JSON.stringify(initialDefinitions())),
@@ -500,7 +500,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       vmExportPolicy: { version: 'capy-private-vm-exports-v1', maxProcessFileBytes: CAPY_PROCESS_EXPORT_MAX_BYTES,
         visibility: 'host-only; private exports never establish consultation', encoding: 'UTF-8 with secret redaction',
         missingFiles: 'explicit missing, unsafe, oversized or unreadable entries; never synthesized' },
-      resultPolicy: 'bounded model-visible returns with complete private file-backed results; no unread-result credit' },
+      resultPolicy: 'bounded model-visible returns with complete private file-backed results; no unread-result credit',
+      ...(opulent2 ? { resultPreviewPolicy: OPULENT2_RESULT_PREVIEW_POLICY } : {}) },
       runtimeCapabilities: [...capyPolicy.runtimeCapabilities], networkPolicy: network } : {}),
     ...(opulent2 ? { opulent2: { version: OPULENT2_PROFILE, chainId: opulent2Handoff.chainId, taskId: opulent2Handoff.taskId, attemptId: opulent2Handoff.attemptId,
       predecessorSnapshotSha256: predecessor?.sha256 ?? null,
@@ -627,7 +628,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     return {
       config: { stateDir, workspace: BROAD_SANDBOX_WORKSPACE, corpusWorkspace: workspace, allowedTools, model: evalModel,
         inferenceProvider, ...(providerModel ? { providerModel } : {}),
-        ...(luna ? { experiment, modelBudget: LUNA_BUDGETS, reasoningEffort } : {}),
+        ...(luna ? { experiment, modelBudget: luna.budgets, reasoningEffort } : {}),
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(capy ? { runtimeCapabilities: [...capyPolicy.runtimeCapabilities], contextCompaction,
           capyMemory: { organizationId: 'complex-v1-evaluation', userId: opulent2 ? OPULENT2_PROFILE : 'opulent-capy-v1', projectId: opulent2 ? opulent2Handoff.chainId : basename(stateDir),

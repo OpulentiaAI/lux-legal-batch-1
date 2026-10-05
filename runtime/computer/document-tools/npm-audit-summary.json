@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "asOf": "2026-10-05",
+  "lockSha256": "296393eabb4eb644332069bf922881dd8bb75eea5268df973c121ee3f06b167d",
+  "command": "npm audit --omit=dev --json",
+  "result": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "mitigations": {
+    "image-size": "2.0.4 override resolves GHSA-5p2g-fcmc-qvqq and GHSA-w3rx-r6r6-pgpr infinite-loop advisories in the selected PPTX dependency",
+    "uuid": "11.1.1 override resolves GHSA-w5hq-g745-h8pq in the selected ExcelJS dependency"
+  },
+  "proof": "Native fixture suite exercises ExcelJS read/write/comments and PptxGenJS text/image output after overrides. Registry advisories are a point-in-time check, not a future security guarantee."
+}

@@ -6,11 +6,12 @@ import { join } from 'node:path'
 import { gzipSync, gunzipSync } from 'node:zlib'
 import { ENDPOINT, MODEL, NATIVE_MODEL } from './contract.mjs'
 import { atomic, digest, json, ordinary, privateDirectory, proof, sha, within } from './io.mjs'
-import { LUNA_EXPERIMENT, LUNA_MODEL, LUNA_ENDPOINT } from '../../runtime/opulent2-luna-policy.mjs'
+import { LUNA_MODEL, LUNA_ENDPOINT, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { createTaskModelBudget } from './model-budget.mjs'
 
 const tokenKeys = ['prompt_tokens', 'completion_tokens', 'total_tokens']
 const metered = usage => tokenKeys.every(key => Number.isSafeInteger(usage?.[key]) && usage[key] >= 0)
+const integer = value => value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : value.toString()
 const responseId = value => value?.response_id ?? value?.responseId ?? value?.requestId ?? value?.response?.id ?? value?.usage?.requestId ?? null
 const phaseOf = value => value?.phase
 export const attemptContext = new AsyncLocalStorage()
@@ -41,7 +42,7 @@ export function wireMeasurements(body) {
 
 export function createNativeCapture({ directory, binding, baseSystemPrompt, expectedInstructions, priorRecords = [], fetchImpl = fetch }) {
   privateDirectory(directory)
-  const luna = binding.experiment === LUNA_EXPERIMENT
+  const luna = lunaPolicy(binding.experiment)
   const endpointBase = luna ? LUNA_ENDPOINT : ENDPOINT
   const requestedModel = luna ? LUNA_MODEL : NATIVE_MODEL
   const budgets = new Map()
@@ -247,12 +248,12 @@ export function readCapture(directory, capture) {
 }
 
 export function reconcileNative({ directory, rows, records, modelRequests, events = [], reportedRecords, allowIncomplete = false, experiment }) {
-  const luna = experiment === LUNA_EXPERIMENT
+  const luna = lunaPolicy(experiment)
   assert(Array.isArray(modelRequests), 'Actual capy_model_requests ledger required; saved tool outputs are not proof of transmission')
   const chats = rows.filter(row => row.endpoint.endsWith('/chat/completions'))
   const success = chats.filter(row => !row.usageUnknown && row.status >= 200 && row.status < 300 && !row.callFailed)
   const gaps = []
-  const totals = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+  const totals = { prompt_tokens: 0n, completion_tokens: 0n, total_tokens: 0n }
   const byPhase = {}
   for (const row of chats) {
     const request = JSON.parse(readCapture(directory, row.request))
@@ -323,13 +324,14 @@ export function reconcileNative({ directory, rows, records, modelRequests, event
         for (const key of tokenKeys) assert.equal(reported[0].usage?.[key] ?? reported[0][key], row.usage[key])
       }
     }
-    byPhase[row.phase] ??= { calls: 0, prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+    byPhase[row.phase] ??= { calls: 0, prompt_tokens: 0n, completion_tokens: 0n, total_tokens: 0n }
     byPhase[row.phase].calls++
-    for (const key of tokenKeys) { totals[key] += row.usage[key]; byPhase[row.phase][key] += row.usage[key] }
+    for (const key of tokenKeys) { totals[key] += BigInt(row.usage[key]); byPhase[row.phase][key] += BigInt(row.usage[key]) }
   }
   const ledgerSuccess = modelRequests.filter(request => responseId(request) && !request.failed && request.status !== 'failed')
   for (const request of ledgerSuccess) if (!success.some(row => row.responseBodyId === responseId(request))) gaps.push({ responseId: responseId(request), kind: 'ledger-success-has-no-native-wire' })
   if (!allowIncomplete) assert.equal(gaps.length, 0, 'Native ledger/accounting reconciliation has gaps')
+  for (const usage of [totals, ...Object.values(byPhase)]) for (const key of tokenKeys) usage[key] = integer(usage[key])
   return { version: 'native-capy-v1-wire-reconciliation-v1', verified: gaps.length === 0, gaps,
     successfulMeteredUsage: totals, byPhase, successfulExchanges: success.length,
     fullConsumptionUsage: chats.every(row => !row.usageUnknown) && gaps.length === 0 ? totals : null,
@@ -346,15 +348,15 @@ export function aggregateNative(rows) {
   const observed = chats.filter(row => row.status >= 200 && row.status < 300 && !row.response?.incomplete && metered(row.usage))
   const ids = observed.map(row => row.responseBodyId)
   assert(ids.every(id => typeof id === 'string' && id) && new Set(ids).size === ids.length, 'Aggregate accounting requires unique actual native response IDs')
-  const knownUsageSubtotal = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+  const knownUsageSubtotal = { prompt_tokens: 0n, completion_tokens: 0n, total_tokens: 0n }
   const byPhase = {}, bySession = {}, byArm = {}
   let knownCostSubtotal = 0, meteredCostCalls = 0
   for (const row of observed) {
-    for (const key of tokenKeys) knownUsageSubtotal[key] += row.usage[key]
+    for (const key of tokenKeys) knownUsageSubtotal[key] += BigInt(row.usage[key])
     for (const [group, name] of [[byPhase, row.phase], [bySession, row.sessionId ?? 'unattributed'], [byArm, row.arm ?? 'opulent2']]) {
-      group[name] ??= { calls: 0, prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+      group[name] ??= { calls: 0, prompt_tokens: 0n, completion_tokens: 0n, total_tokens: 0n }
       group[name].calls++
-      for (const key of tokenKeys) group[name][key] += row.usage[key]
+      for (const key of tokenKeys) group[name][key] += BigInt(row.usage[key])
     }
     if (typeof row.usage.cost === 'number' && Number.isFinite(row.usage.cost) && row.usage.cost >= 0) {
       knownCostSubtotal += row.usage.cost
@@ -362,6 +364,7 @@ export function aggregateNative(rows) {
     }
   }
   const unknownUsage = chats.filter(row => row.usageUnknown || !observed.includes(row))
+  for (const usage of [knownUsageSubtotal, ...Object.values(byPhase), ...Object.values(bySession), ...Object.values(byArm)]) for (const key of tokenKeys) usage[key] = integer(usage[key])
   return { version: 'opulent2-fixed-native-accounting-v1', calls: chats.length, knownCalls: observed.length,
     byPhase, bySession, byArm, knownUsageSubtotal, fullConsumptionUsage: unknownUsage.length ? null : knownUsageSubtotal,
     knownCostSubtotal: meteredCostCalls ? knownCostSubtotal : null,

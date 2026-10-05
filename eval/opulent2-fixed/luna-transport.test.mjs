@@ -4,8 +4,8 @@ import { join } from 'node:path'
 import test from 'node:test'
 import './offline-guard.mjs'
 import { createModel } from '../../runtime/model.mjs'
-import { LUNA_EXPERIMENT, LUNA_MODEL, LUNA_ENDPOINT, LUNA_BUDGETS } from '../../runtime/opulent2-luna-policy.mjs'
-import { attemptContext, createNativeCapture, readCapture } from './native.mjs'
+import { LUNA_EXPERIMENT, LUNA_MODEL, LUNA_ENDPOINT, LUNA_CONTEXT_EXPERIMENT, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { aggregateNative, attemptContext, createNativeCapture, readCapture } from './native.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { LAUNCH, privateDirectory, digest, sha } from './io.mjs'
 
@@ -30,8 +30,9 @@ function fixture(t, options = {}) {
     if (previous === undefined) delete process.env.AI_GATEWAY_API_KEY
     else process.env.AI_GATEWAY_API_KEY = previous
   })
-  const binding = { experiment: LUNA_EXPERIMENT, model: LUNA_MODEL, inferenceProvider: 'gateway',
-    budgets: { ...LUNA_BUDGETS, ...options.budgets }, sourceBindings: {},
+  const policy = lunaPolicy(options.experiment ?? LUNA_EXPERIMENT)
+  const binding = { experiment: policy.experiment, model: LUNA_MODEL, inferenceProvider: 'gateway',
+    budgets: { ...policy.budgets, ...options.budgets }, sourceBindings: {},
     prompts: { runtimePromptSha256: sha(system[0].content), summarySystemMessagesSha256: digest(system) } }
   const sent = []
   const captures = createNativeCapture({ directory, binding, baseSystemPrompt: system[0].content,
@@ -44,7 +45,7 @@ function fixture(t, options = {}) {
       return new Response(JSON.stringify({ id: `synthetic-response-${sent.length}`, model: LUNA_MODEL,
         choices: [{ message: { role: 'assistant', content: 'Synthetic offline response.' } }], usage: options.usage ?? usage }), { status: 200 })
     } })
-  const model = captures.modelFactory(createModel)({ experiment: LUNA_EXPERIMENT, model: LUNA_MODEL,
+  const model = captures.modelFactory(createModel)({ experiment: policy.experiment, model: LUNA_MODEL,
     inferenceProvider: 'gateway', reasoningEffort: 'max', modelRequestTimeoutMs: 600000 })
   const run = (sessionId, phase = 'answerer', taskId = 'synthetic-task', { messages: input = options.messages ?? messages, ...modelOptions } = {}) =>
     attemptContext.run({ taskId, attempt: 1, arm: 'opulent2', phase: 'answerer' },
@@ -345,4 +346,67 @@ test('queue and admitted transport share the existing deadline and runtime cance
   cancelled.abort()
   await assert.rejects(f.run('already-cancelled', 'answerer', 'new-task', { signal: cancelled.signal }), error => error.name === 'AbortError')
   assert.equal(f.sent.length, 1)
+})
+
+test('v2 transmits concurrent full-window opaque requests without a cumulative allowance and preserves all usage', async t => {
+  const gates = []
+  const f = fixture(t, { experiment: LUNA_CONTEXT_EXPERIMENT, messages: opaqueMessages, fetchImpl: () => {
+    const gate = deferred()
+    gates.push(gate)
+    return gate.promise
+  } })
+  const calls = [f.run('root'), f.run('child'), f.run('grandchild', 'context_compaction')]
+  await turn()
+  assert.equal(f.sent.length, 3)
+  const budget = f.captures.budgets.get('opulent2:synthetic-task:1')
+  assert.equal(budget.ledger.snapshot().modelCalls, 3)
+  assert.equal(budget.ledger.snapshot().reservedInputTokens, 3 * 1_050_000 - 2 * 32768 - 8192)
+  const metering = { prompt_tokens: 1_000_000, completion_tokens: 20, total_tokens: 1_000_020,
+    prompt_tokens_details: { cached_tokens: 1_000_000 }, completion_tokens_details: { reasoning_tokens: 20 } }
+  gates.forEach((gate, i) => gate.resolve(response(i + 1, metering)))
+  await Promise.all(calls)
+  const ledger = budget.ledger.snapshot()
+  assert.equal(ledger.inputTokens, 3_000_000)
+  assert.equal(ledger.version, 'task-model-budget-v2')
+  assert.equal(ledger.blocked, false)
+  assert(ledger.reservations.every(ticket => ticket.reservationBasis === 'full-input-window'))
+  assert.deepEqual(f.sent.map(item => item.body.max_completion_tokens), [32768, 32768, 8192])
+  assert(f.sent.every(item => JSON.stringify(item.body.messages) === JSON.stringify(opaqueMessages)))
+  assert.equal(verifyModelBudget({ release: f.binding, ledger, rows: f.captures.rows }).verified, true)
+  const aggregate = aggregateNative(f.captures.rows)
+  assert.equal(aggregate.fullConsumptionUsage.prompt_tokens, 3_000_000)
+  assert.equal(aggregate.byPhase.context_compaction.prompt_tokens, 1_000_000)
+  assert.equal(aggregate.bySession.grandchild.prompt_tokens, 1_000_000)
+  assert.equal(aggregate.byArm.opulent2.prompt_tokens, 3_000_000)
+  const mixedRelease = { ...f.binding, experiment: LUNA_EXPERIMENT }
+  assert.throws(() => verifyModelBudget({ release: mixedRelease, ledger, rows: f.captures.rows }))
+  assert.throws(() => createNativeCapture({ directory: f.directory, binding: mixedRelease }))
+})
+
+test('v2 provider-issued opaque reasoning survives replay and receives a full-window reservation', async t => {
+  const providerMessage = { role: 'assistant', content: 'Synthetic provider response.', reasoning: { encrypted: 'opaque-provider-issued' },
+    provider_metadata: { gateway: 'provider-issued-metadata' } }
+  const f = fixture(t, { experiment: LUNA_CONTEXT_EXPERIMENT, fetchImpl: ({ index }) => new Response(JSON.stringify({
+    id: `synthetic-response-${index}`, model: LUNA_MODEL, choices: [{ message: providerMessage }], usage,
+  }), { status: 200 }) })
+  const first = await f.run('root')
+  assert.deepEqual(first.choices[0].message, providerMessage)
+  await f.run('child', 'answerer', 'synthetic-task', { messages: [...messages, first.choices[0].message] })
+  assert.deepEqual(f.sent[1].body.messages.at(-1), providerMessage)
+  const ledger = f.captures.budgets.get('opulent2:synthetic-task:1').ledger.snapshot()
+  assert.equal(ledger.reservations[1].reservationBasis, 'full-input-window')
+  assert.equal(ledger.reservations[1].reservedInputTokens, 1_050_000 - 32768)
+  assert.equal(verifyModelBudget({ release: f.binding, ledger, rows: f.captures.rows }).verified, true)
+})
+
+test('v2 missing provider usage remains unknown and prevents further transport', async t => {
+  const f = fixture(t, { experiment: LUNA_CONTEXT_EXPERIMENT, messages: opaqueMessages, usage: {} })
+  await assert.rejects(f.run('root'))
+  await assert.rejects(f.run('child'), error => error.code === 'MODEL_BUDGET_UNKNOWN_CONSUMPTION')
+  assert.equal(f.sent.length, 1)
+  const ledger = f.captures.budgets.get('opulent2:synthetic-task:1').ledger.snapshot()
+  assert.equal(ledger.usage.fullConsumptionUsage, null)
+  assert.equal(ledger.reservedInputTokens, 1_050_000 - 32768)
+  assert.equal(aggregateNative(f.captures.rows).fullConsumptionUsage, null)
+  assert.throws(() => verifyModelBudget({ release: f.binding, ledger, rows: f.captures.rows }))
 })

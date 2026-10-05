@@ -7,19 +7,21 @@ import { gzipSync } from 'node:zlib'
 import './offline-guard.mjs'
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX, renderOpulent2Instructions } from '../../runtime/instructions/opulent2.mjs'
-import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL } from '../../runtime/opulent2-luna-policy.mjs'
-import { COVERAGE_TASK, ENDPOINT, LUNA_CORPUS_BOUNDARY, LUNA_PROTOCOL, MODEL, NATIVE_MODEL, PROFILE, PROVING_TASKS, STATE_POLICY, validateGatewayCatalogue, validateRelease, WORKSPACE } from './contract.mjs'
-import { digest, LAUNCH, proof, sha } from './io.mjs'
+import { LUNA_BUDGET_DISCLOSURE, LUNA_BUDGETS, LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL,
+  LUNA_CONTEXT_BUDGET_DISCLOSURE, LUNA_CONTEXT_BUDGETS, LUNA_CONTEXT_EXPERIMENT, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { CONTEXT_COVERAGE_TASK, COVERAGE_TASK, ENDPOINT, LUNA_CORPUS_BOUNDARY, LUNA_PROTOCOL, MODEL, NATIVE_MODEL, PROFILE, PROVING_TASKS, STATE_POLICY, validateGatewayCatalogue, validateRelease, WORKSPACE } from './contract.mjs'
+import { digest, LAUNCH, privateDirectory, proof, sha } from './io.mjs'
 import { aggregateNative, sanitize, wireMeasurements } from './native.mjs'
 import { seedCheckpoint } from './runner.mjs'
-import { requireProvingAcceptance } from './tasks.mjs'
+import { loadPublicPacket, requireProvingAcceptance } from './tasks.mjs'
 import { nativeTransmissions, validateInitialAssembly, validatePreparedReceipt, verifyPreparedTransmissions } from './validate.mjs'
 
 process.env.LX_RETRIEVAL_PROFILE = 'voyage'
 const { bindTask, draftRelease } = await import('./prepare.mjs')
 const { prepareCorpus } = await import('../comparison-corpus.mjs')
 const { createBroadHarness } = await import('../../runtime/broad-legal-eval.mjs')
-const directory = mkdtempSync(join(WORKSPACE, '.luna-contract-test-'))
+privateDirectory(LAUNCH)
+const directory = mkdtempSync(join(LAUNCH, 'luna-contract-test-'))
 const preparationRuns = []
 test.after(() => {
   rmSync(directory, { recursive: true, force: true })
@@ -47,6 +49,7 @@ const configuredPrompt = `${renderOpulent2Instructions().systemPrompt}\n\n${regi
 const summarySystems = [{ role: 'system', content: 'Synthetic offline context-compaction instructions' }]
 
 function releaseFixture(luna = false) {
+  const policy = lunaPolicy(luna === true ? LUNA_EXPERIMENT : luna || undefined)
   const protocol = luna ? LUNA_PROTOCOL : 'eval/opulent2-fixed/PROTOCOL.md'
   const tasks = PROVING_TASKS.map(id => ({ id, taskPath: `fixtures/${id}/task.json`, rubricPath: `fixtures/${id}/rubric.json`,
     taskSha256: sha(id), rubricSha256: sha(`${id}-rubric`), publicFingerprint: sha(`${id}-public`), materials: {} }))
@@ -60,8 +63,8 @@ function releaseFixture(luna = false) {
   }
   return { version: 'opulent2-fixed-release-v1', name: 'Opulent2 fixed', stage: 'proving', workspace: WORKSPACE, commit: 'a'.repeat(40),
     runId: 'synthetic-offline-release', chainId: 'synthetic-offline-chain', output: join(LAUNCH, 'runs', 'synthetic-offline-release'),
-    ...(luna ? { experiment: LUNA_EXPERIMENT, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
-      endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...LUNA_BUDGETS }, gatewayCatalogue: catalogueBinding,
+    ...(luna ? { experiment: policy.experiment, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
+      endpoint: LUNA_ENDPOINT, reasoningEffort: 'max', budgets: { ...policy.budgets }, gatewayCatalogue: catalogueBinding,
       budgetSource: { checkpoint: { path: join(directory, 'synthetic-historical-checkpoint.json'), sha256: sha('historical corpus only') }, boundary: LUNA_CORPUS_BOUNDARY } }
       : { model: MODEL, inferenceProvider: 'runanywhere', providerModel: NATIVE_MODEL, endpoint: ENDPOINT,
         budgets: { maxSteps: 1000, maxCompletionTokens: 32768, summaryMaxTokens: 8192, modelRequestTimeoutMs: 600000 }, nativeCatalogueSha256: sha('synthetic native catalogue') }),
@@ -72,7 +75,7 @@ function releaseFixture(luna = false) {
     prompts: { runtimePromptSha256: sha('synthetic configured prompt'), assembledRuntimePromptSha256: sha('synthetic assembled prompt'), profileManifestSha256: sha('synthetic manifest'),
       summarySystemMessagesSha256: digest(summarySystems), appendix: OPULENT2_TASK_APPENDIX, appendixSha256: sha(OPULENT2_TASK_APPENDIX), appendixReference: 'Synthetic offline source binding',
       ...(luna ? { skillsRegistry: registry, skillsRegistrySha256: sha(registry), referenceUpdateSha256: sha(OPULENT2_REFERENCE_UPDATE),
-        budgetDisclosure: LUNA_BUDGET_DISCLOSURE, budgetDisclosureSha256: sha(LUNA_BUDGET_DISCLOSURE) } : {}) },
+        budgetDisclosure: policy.disclosure, budgetDisclosureSha256: sha(policy.disclosure) } : {}) },
     stateContract: { module: 'runtime/opulent2-handoff.mjs', sha256: bindings['runtime/opulent2-handoff.mjs'], version: 'opulent2-local-handoff-v1', driveBacking: 'local-export-not-cloud', inlineByteLimit: 33554432 },
     protocol: { path: protocol, sha256: bindings[protocol] }, sourceBindings: bindings,
     tasks, initialSnapshot: null, comparisonFreeze: null, harvey: null,
@@ -177,7 +180,7 @@ function preparationSpec(luna, overrides = {}) {
   const provenance = { inferenceProvider: 'runanywhere', model: MODEL, maxSteps: 1000, maxCompletionTokens: 32768,
     nativeModel: { catalogue: { sha256: sha('synthetic prior native catalogue') } }, corpusHash: corpus.hash, corpusCount: corpus.count, ...overrides }
   return { stage: 'proving', runId, chainId: `offline-chain-${randomUUID()}`, sandboxTemplate: 'synthetic-offline-template', computerImageSha256: sha('synthetic image'),
-    priorNativeCheckpoint: file({ provenance }), ...(luna ? { experiment: LUNA_EXPERIMENT, gatewayCatalogue: catalogueBinding } : {}) }
+    priorNativeCheckpoint: file({ provenance }), ...(luna ? { experiment: luna === true ? LUNA_EXPERIMENT : luna, gatewayCatalogue: catalogueBinding } : {}) }
 }
 
 test('offline preparation preserves native defaults and binds only the unchanged corpus for Luna', async () => {
@@ -261,7 +264,7 @@ function wireFixture(luna = true, phases = ['answerer', 'answerer', 'context_com
     computer_image_sha256: release.harnessOptions.computerImageSha256 }
   const snapshot = { opulent2_model_assemblies: [], capy_model_requests: [] }
   const transmissions = phases.map((phase, index) => {
-    const messages = phase === 'answerer' ? [{ role: 'system', content: luna ? configuredPrompt : 'Synthetic legacy instructions' }, { role: 'user', content: 'Synthetic public task' }]
+    const messages = phase === 'answerer' ? [{ role: 'system', content: luna ? configuredPrompt.replace(LUNA_BUDGET_DISCLOSURE, release.prompts.budgetDisclosure) : 'Synthetic legacy instructions' }, { role: 'user', content: 'Synthetic public task' }]
       : [...summarySystems, { role: 'user', content: 'Synthetic prior conversation' }]
     const definitions = phase === 'answerer' ? tools : []
     const receipt = { version: 'opulent2-prepared-request-v1', request_record_id: `prepared-${index}`, session_id: index ? `child-${index}` : 'root',
@@ -275,7 +278,7 @@ function wireFixture(luna = true, phases = ['answerer', 'answerer', 'context_com
     const row = { endpoint: `${luna ? LUNA_ENDPOINT : ENDPOINT}/chat/completions`, model: request.model, maxTokens,
       capyRequestRecordId: receipt.request_record_id, sessionId: receipt.session_id, phase, usageUnknown: false,
       usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 }, responseModel: request.model,
-      ...(luna ? { experiment: LUNA_EXPERIMENT, budgetConfig: { ...LUNA_BUDGETS }, budgetTicketId: `model-request-${index + 1}` } : {}),
+      ...(luna ? { experiment: release.experiment, budgetConfig: { ...release.budgets }, budgetTicketId: `model-request-${index + 1}` } : {}),
       measurements: wireMeasurements(request), instructionEquality: { system: true, user: true, tools: true,
         expectedSha256: digest(validatePreparedReceipt(release, receipt)), sourceBindingsSha256: digest(release.sourceBindings) } }
     return { row, request, response: { model: request.model, choices: [{ message: { role: 'assistant', content: 'Synthetic offline response' } }] } }
@@ -374,4 +377,129 @@ test('resume rejects experiment, provider, disclosure and budget policy changes 
     mutate(changed.release)
     assert.throws(() => seedCheckpoint(changed, structuredClone(checkpoint)), /resume rejected/)
   }
+})
+
+test('v2 policy explicitly opts out of a cumulative session cap without redefining v1', () => {
+  assert.equal(lunaPolicy(undefined), null)
+  for (const experiment of [null, '', 'unknown-policy', 'toString', {}, [], new String(LUNA_CONTEXT_EXPERIMENT)]) assert.throws(() => lunaPolicy(experiment))
+  assert.deepEqual(lunaPolicy(LUNA_EXPERIMENT), { experiment: 'gateway-luna-runaway-v1', budgets: LUNA_BUDGETS, disclosure: LUNA_BUDGET_DISCLOSURE })
+  assert.deepEqual(lunaPolicy(LUNA_CONTEXT_EXPERIMENT), { experiment: 'gateway-luna-context-v2', budgets: LUNA_CONTEXT_BUDGETS, disclosure: LUNA_CONTEXT_BUDGET_DISCLOSURE })
+  assert(Object.isFrozen(lunaPolicy(LUNA_CONTEXT_EXPERIMENT)) && Object.isFrozen(LUNA_CONTEXT_BUDGETS))
+  assert.equal(LUNA_BUDGETS.maxInputTokens, 2_000_000)
+  assert.equal(LUNA_CONTEXT_BUDGETS.maxInputTokens, null)
+  for (const phrase of ['250 model requests', 'no cumulative session input-token execution limit', 'cached input count in full',
+    '1,050,000-token input-plus-output', '32,768', '8,192', 'opaque reasoning', 'not compared with a cumulative task allowance',
+    'Unknown consumption stops', 'not semantic grading or turn-count penalties']) assert(LUNA_CONTEXT_BUDGET_DISCLOSURE.includes(phrase), phrase)
+  const release = releaseFixture(LUNA_CONTEXT_EXPERIMENT)
+  assert.equal(validateRelease(release), release)
+  for (const change of [{ experiment: LUNA_EXPERIMENT }, { budgets: LUNA_BUDGETS },
+    { budgets: { ...LUNA_CONTEXT_BUDGETS, maxInputTokens: undefined } }, { prompts: { ...release.prompts, budgetDisclosure: LUNA_BUDGET_DISCLOSURE, budgetDisclosureSha256: sha(LUNA_BUDGET_DISCLOSURE) } }]) {
+    assert.throws(() => validateRelease({ ...release, ...change }))
+  }
+})
+
+test('v2 offline preparation and adapter select the uncapped policy while preserving capabilities and output budgets', async () => {
+  const release = await draftRelease(preparationSpec(LUNA_CONTEXT_EXPERIMENT))
+  assert.equal(release.experiment, LUNA_CONTEXT_EXPERIMENT)
+  assert.deepEqual(release.budgets, LUNA_CONTEXT_BUDGETS)
+  assert.equal(release.prompts.budgetDisclosure, LUNA_CONTEXT_BUDGET_DISCLOSURE)
+  assert.equal(release.prompts.budgetDisclosureSha256, sha(LUNA_CONTEXT_BUDGET_DISCLOSURE))
+  assert.equal(release.prompts.appendix, OPULENT2_TASK_APPENDIX)
+  assert.equal(release.prompts.skillsRegistry, registry)
+  assert.equal(release.reasoningEffort, 'max')
+  assert.equal(release.endpoint, LUNA_ENDPOINT)
+  assert.equal(release.harnessOptions.contextCompaction.maxSummaryTokens, 8192)
+  assert.equal(validateRelease({ ...release, parentVerification: { sourceAndPolicyReady: true, reference: 'Synthetic v2 parent fixture' } }).experiment, LUNA_CONTEXT_EXPERIMENT)
+  const spec = preparationSpec(false)
+  const shared = { workspace: WORKSPACE, corpus, artifactsDir: join(LAUNCH, 'preparation', spec.runId, 'adapter'),
+    instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', workProduct: { maxCompletionTokens: 32768 },
+    opulent2Handoff: { chainId: spec.chainId, taskId: PROVING_TASKS[0], attemptId: 'offline-only', inlineByteLimit: 33554432 },
+    sandboxTemplate: spec.sandboxTemplate, computerImageSha256: spec.computerImageSha256,
+    runtimeFactory: () => { throw new Error('Offline runtime must not execute') }, sandboxFactory: () => { throw new Error('Offline VM must not execute') },
+    modelFactory: () => { throw new Error('Offline model must not execute') } }
+  const native = createBroadHarness({ ...shared, maxSteps: 1000, model: MODEL, inferenceProvider: 'runanywhere', providerModel: NATIVE_MODEL })
+  const options = { ...shared, experiment: LUNA_CONTEXT_EXPERIMENT, budgetDisclosure: LUNA_CONTEXT_BUDGET_DISCLOSURE,
+    maxSteps: 250, model: LUNA_MODEL, inferenceProvider: 'gateway', reasoningEffort: 'max' }
+  const luna = createBroadHarness(options)
+  assert.equal(luna.opulent2SystemPrompt, `${native.opulent2SystemPrompt}\n\n${LUNA_CONTEXT_BUDGET_DISCLOSURE}`)
+  assert.deepEqual(luna.provenance.modelBudget, LUNA_CONTEXT_BUDGETS)
+  assert.deepEqual(luna.provenance.allowedTools, native.provenance.allowedTools)
+  assert.equal(luna.provenance.budgetDisclosureSha256, sha(LUNA_CONTEXT_BUDGET_DISCLOSURE))
+  for (const override of [{ budgetDisclosure: LUNA_BUDGET_DISCLOSURE }, { maxSteps: 251 }, { providerModel: LUNA_MODEL },
+    { reasoningEffort: 'high' }, { inferenceProvider: 'runanywhere' }]) assert.throws(() => createBroadHarness({ ...options, ...override }))
+})
+
+test('v2 prepared root, descendants and summary validate full input above two million without allowing context overflow', () => {
+  const f = wireFixture(LUNA_CONTEXT_EXPERIMENT)
+  for (const item of f.transmissions) item.row.usage = { prompt_tokens: 1_000_000, completion_tokens: 1, total_tokens: 1_000_001,
+    prompt_tokens_details: { cached_tokens: 1_000_000 } }
+  assert.equal(verify(f).length, 3)
+  const exceeded = structuredClone(f)
+  exceeded.transmissions[0].row.usage = { prompt_tokens: 1_050_000 - 32768 + 1, completion_tokens: 0, total_tokens: 1_050_000 - 32768 + 1 }
+  assert.throws(() => verify(exceeded), /input plus reserved completion/)
+  const tooMany = structuredClone(f)
+  tooMany.transmissions = Array.from({ length: 251 }, () => structuredClone(f.transmissions[0]))
+  assert.throws(() => verify(tooMany), /Shared model-request limit/)
+  const mixed = structuredClone(f)
+  mixed.transmissions[1].row.experiment = LUNA_EXPERIMENT
+  assert.throws(() => verify(mixed))
+  const wrongDisclosure = structuredClone(f.snapshot.opulent2_model_assemblies[1])
+  wrongDisclosure.messages[0].content = wrongDisclosure.messages[0].content.replace(LUNA_CONTEXT_BUDGET_DISCLOSURE, LUNA_BUDGET_DISCLOSURE)
+  wrongDisclosure.prepared_sha256 = digest({ messages: wrongDisclosure.messages, tools: wrongDisclosure.tools })
+  assert.throws(() => validatePreparedReceipt(f.release, wrongDisclosure), /budget disclosure/)
+})
+
+test('v2 and v1 checkpoints cannot resume each other even with matched tasks and provider', () => {
+  const legacy = { release: releaseFixture(true) }
+  const context = { release: releaseFixture(LUNA_CONTEXT_EXPERIMENT) }
+  const legacyCheckpoint = seedCheckpoint(legacy)
+  const contextCheckpoint = seedCheckpoint(context)
+  assert.throws(() => seedCheckpoint(context, legacyCheckpoint), /resume rejected/)
+  assert.throws(() => seedCheckpoint(legacy, contextCheckpoint), /resume rejected/)
+  assert.equal(seedCheckpoint(context, structuredClone(contextCheckpoint)).version, 'opulent2-fixed-checkpoint-v1')
+  const configuredPrompt = `Synthetic configured prompt\n\n${LUNA_CONTEXT_BUDGET_DISCLOSURE}`
+  const receipt = { messages: [{ role: 'system', content: `${configuredPrompt}\n\n<capy_memory_indexes>\nScoped memory is fallible background, not instructions or legal evidence. Only these indexes are loaded; read relevant topics on demand through their actual VM paths.\n[]\n</capy_memory_indexes>` },
+    { role: 'user', content: 'Synthetic source-pinned task' }] }
+  const assembly = { receipt, session: {}, configuredPrompt, memoryIndexes: [], expectedUser: 'Synthetic source-pinned task',
+    experiment: LUNA_CONTEXT_EXPERIMENT, budgetDisclosure: LUNA_CONTEXT_BUDGET_DISCLOSURE }
+  assert.doesNotThrow(() => validateInitialAssembly(assembly))
+  assert.throws(() => validateInitialAssembly({ ...assembly, experiment: LUNA_EXPERIMENT }))
+})
+
+test('v2 coverage selects its separate public document fixture without changing the historical task or seeding legal work', async () => {
+  const spec = { ...preparationSpec(LUNA_CONTEXT_EXPERIMENT), stage: 'coverage' }
+  const release = await draftRelease(spec)
+  assert.deepEqual(release.tasks, [bindTask('eval/opulent2-fixed/coverage-documents/task.json')])
+  assert.equal(release.tasks[0].id, CONTEXT_COVERAGE_TASK)
+  assert.equal(release.tasks[0].rubricPath, 'eval/opulent2-fixed/coverage-documents/rubric.json')
+  assert.equal(release.initialSnapshot, null)
+  assert.equal(release.comparisonFreeze, null)
+  assert.equal(release.harvey, null)
+  assert.equal(validateRelease({ ...release, parentVerification: { sourceAndPolicyReady: true, reference: 'Synthetic document coverage review' } }).stage, 'coverage')
+  const packet = loadPublicPacket(WORKSPACE, release.tasks[0])
+  assert.equal(packet.task.id, CONTEXT_COVERAGE_TASK)
+  for (const material of packet.materials) assert.equal(release.sourceBindings[join('eval/opulent2-fixed/coverage-documents', material.path)], sha(material.content))
+  assert.equal(bindTask('eval/opulent2-fixed/coverage/task.json').id, COVERAGE_TASK)
+  assert.throws(() => requireProvingAcceptance({ checkpoint: { version: 'opulent2-fixed-checkpoint-v1', provenance: { release } },
+    checkpointFile: { sha256: sha('synthetic document coverage checkpoint') }, acceptance: {} }), /proving/)
+  const accepted = { ...release, parentVerification: { sourceAndPolicyReady: true, reference: 'Synthetic document coverage review' } }
+  assert.throws(() => validateRelease({ ...accepted, tasks: [bindTask('eval/opulent2-fixed/coverage/task.json')] }))
+  await assert.rejects(draftRelease({ ...spec, initialSnapshot: { path: 'coverage-state.json' } }), /Coverage cannot seed proving/)
+})
+
+test('cumulative native provenance retains exact totals even when observed usage exceeds safe-integer sums', () => {
+  const maximum = Number.MAX_SAFE_INTEGER
+  const rows = Array.from({ length: 2 }, (_, i) => ({ endpoint: `${LUNA_ENDPOINT}/chat/completions`, status: 200,
+    id: `synthetic-capture-${i}`, taskId: 'synthetic-task', attempt: 1,
+    responseBodyId: `synthetic-large-${i}`, usageUnknown: false, phase: 'answerer', sessionId: 'root', arm: 'opulent2',
+    usage: { prompt_tokens: maximum - 1, completion_tokens: 1, total_tokens: maximum } }))
+  const aggregate = aggregateNative(rows)
+  const expected = { prompt_tokens: (2n * BigInt(maximum - 1)).toString(), completion_tokens: 2, total_tokens: (2n * BigInt(maximum)).toString() }
+  assert.deepEqual(aggregate.fullConsumptionUsage, expected)
+  for (const group of [aggregate.byPhase.answerer, aggregate.bySession.root, aggregate.byArm.opulent2]) assert.deepEqual(group, { calls: 2, ...expected })
+  rows[1].usageUnknown = true
+  const partial = aggregateNative(rows)
+  assert.equal(partial.fullConsumptionUsage, null)
+  assert.deepEqual(partial.knownUsageSubtotal, expected)
+  assert.deepEqual(JSON.parse(JSON.stringify(partial)), partial)
 })

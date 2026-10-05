@@ -1,0 +1,72 @@
+import hashlib
+import json
+import pathlib
+import sys
+import zipfile
+
+import pymupdf
+
+root = pathlib.Path(sys.argv[1])
+root.mkdir(mode=0o700, parents=True, exist_ok=False)
+pdf = pymupdf.open()
+for number in range(1, 25):
+    page = pdf.new_page(width=595, height=842)
+    page.insert_text((50, 70), f"OPULENT DOCUMENT SOURCE PAGE {number}", fontsize=16)
+    page.insert_textbox(
+        pymupdf.Rect(50, 100, 545, 790),
+        f"Local fixture page {number}. Selected pages remain separate from omitted pages.\n" * 28,
+        fontsize=10,
+    )
+pdf.save(root / "native-pages.pdf", deflate=True, no_new_id=True)
+pdf.close()
+
+text_page = pymupdf.open()
+page = text_page.new_page(width=595, height=842)
+page.insert_text((50, 100), "LOCAL OFFLINE OCR FIXTURE", fontsize=24)
+page.insert_text((50, 145), "Invoice reference 8427", fontsize=20)
+pixels = page.get_pixmap(matrix=pymupdf.Matrix(2, 2), alpha=False)
+scan = pymupdf.open()
+scan_page = scan.new_page(width=595, height=842)
+scan_page.insert_image(scan_page.rect, stream=pixels.tobytes("png"))
+scan.save(root / "native-scan.pdf", deflate=True, no_new_id=True)
+scan.close()
+text_page.close()
+
+with zipfile.ZipFile(root / "native-office.docx", "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    def write_part(name, text):
+        entry = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+        entry.compress_type = zipfile.ZIP_DEFLATED
+        archive.writestr(entry, text)
+
+    write_part(
+        "[Content_Types].xml",
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/word/document.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        '</Types>',
+    )
+    write_part(
+        "_rels/.rels",
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+        'Target="word/document.xml"/></Relationships>',
+    )
+    write_part(
+        "word/document.xml",
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        '<w:body><w:p><w:r><w:t>ANYDOC LOCAL OFFICE FIXTURE</w:t></w:r></w:p>'
+        '<w:p><w:r><w:t>Only returned document text is observed evidence.</w:t></w:r></w:p>'
+        '</w:body></w:document>',
+    )
+
+print(json.dumps({
+    "kind": "synthetic-local-document-fixtures",
+    "files": [{"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+               "bytes": path.stat().st_size} for path in sorted(root.iterdir())],
+}))
