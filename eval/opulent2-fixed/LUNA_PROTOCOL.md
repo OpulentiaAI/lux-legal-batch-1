@@ -10,11 +10,15 @@ Luna's advertised 1,050,000-token context includes input and reserved output; it
 
 Before transmission, reservations atomically protect the shared counters. Text admission uses serialized UTF-8 bytes plus explicit conservative framing, not a claimed exact Luna tokenizer. Image or unrecognized content reserves the complete provider input window because its tokenization is not verified. Reservations can stop a request before the measured subtotal reaches two million. Verified successful usage replaces reservations; missing/invalid usage, failed transport or a boundary violation blocks further inference and preserves uncertainty. Unknown consumption is never zero, and safeguards do not create semantic grading or turn-count penalties.
 
+Opulent2 waits in a bounded cancellable FIFO queue when pending reservations alone prevent admission and known usage still permits the request. Queued calls consume no ticket, request step or provider traffic; settlement notifies them without polling. Genuine insufficiency, unknown consumption and violations reject rather than retry. Queueing and transport share the existing 600-second request deadline, and a settled Luna response flushes only its own capture before releasing its reservation. The synchronous admission API, token bounds, ledger snapshot and historical native behavior remain unchanged.
+
 Every admitted request has a ticket binding phase/session, completion reservation, actual response-body ID and usage. Captured wire rows bind the same ticket and exact frozen budgets. Clean acceptance independently joins every ticket to exactly one actual HTTP exchange, verifies totals and context bounds, and rejects pending, unknown or violated consumption. Root/child/compaction totals are reported separately as well as jointly.
 
 ## Coverage, proving and clean pairs
 
 First run the separately authorized `coverage` stage on `luna-tool-coverage-01`. It is an ungraded infrastructure fixture, not a legal holdout. Verify all approved tools from model-generated calls and actual returned outcomes on owned VMs; intentional stop/cancel effects and genuine no-matches are distinct from fatal failures. Preserve a coverage matrix and missing observations honestly. Coverage's isolated memory/Drive chain must never seed proving or comparisons.
+
+Opulent2 supports the explicit direct-tool parent recipient `to:"parent"` as well as omission of `to`; it resolves only to the caller's actual parent and does not grant ancestor or unrelated-session access. Terminal parent reports remain forbidden inside execute. Coverage performs the source-backed image observation early and discovers schemas as needed rather than bulk-dumping control-plane records into context.
 
 Then run the historical proving public packets task-02 followed by task-05 in a new empty chain. Only actual acknowledged model-written state from the clean predecessor is carried forward. Parent substantive acceptance of both actual work products, meaningful delegation and observed tools is required before selecting or freezing five unused legal tasks. Existing freshness checks, frozen hidden criteria and independent Jev/Capy grading stay intact.
 

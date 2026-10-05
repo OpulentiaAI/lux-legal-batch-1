@@ -46,7 +46,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
   const requestedModel = luna ? LUNA_MODEL : NATIVE_MODEL
   const budgets = new Map()
   const modelContext = new AsyncLocalStorage()
-  const pending = new Set()
+  const pending = new Map()
   const rows = readdirSync(directory).filter(name => name.endsWith('-metadata.json')).sort().map(name => json(join(directory, name)))
   assert(rows.every(row => row.bindingSha256 === digest(binding)), 'Foreign wire capture binding; resume rejected')
   const records = structuredClone(priorRecords)
@@ -153,7 +153,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
             persist(row)
           }
         })()
-        pending.add(operation)
+        pending.set(operation, row.modelCallId)
         operation.catch(() => {})
         return response
       } catch (error) {
@@ -161,8 +161,8 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
         throw error
       }
     },
-    async flush() {
-      const operations = [...pending]
+    async flush(modelCallId) {
+      const operations = [...pending].filter(([, id]) => modelCallId === undefined || id === modelCallId).map(([operation]) => operation)
       await Promise.all(operations)
       for (const operation of operations) pending.delete(operation)
     },
@@ -187,12 +187,16 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
           assert.equal(options.max_tokens, phase === 'context_compaction' ? 8192 : 32768, 'Native adapter must preserve summary and answerer budgets')
           let ticket
           if (luna) {
+            const deadline = AbortSignal.timeout(config.modelRequestTimeoutMs)
+            const signal = options.signal ? AbortSignal.any([options.signal, deadline]) : deadline
+            signal.throwIfAborted()
+            options = { ...options, signal }
             const key = `${attempt.arm}:${attempt.taskId}:${attempt.attempt}`
             if (!budgets.has(key)) budgets.set(key, createTaskModelBudget({ maxSteps: binding.budgets.maxSteps,
               maxInputTokens: binding.budgets.maxInputTokens, maxContextTokens: binding.budgets.maxContextTokens }))
             const expected = await expectedInstructions({ ...attempt, phase, capyRequestRecordId: options.capy_request_record_id ?? options.capyRequestRecordId ?? null })
-            ticket = budgets.get(key).admit({ messages, tools: options.tools ?? [], maxCompletionTokens: options.max_tokens,
-              sessionId: expected.sessionId, phase })
+            ticket = await budgets.get(key).admitAsync({ messages, tools: options.tools ?? [], maxCompletionTokens: options.max_tokens,
+              sessionId: expected.sessionId, phase, signal })
           }
           const callId = randomUUID()
           const record = { callId, ...attempt, phase, model: requestedModel, maxTokens: options.max_tokens,
@@ -204,7 +208,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
             ...(ticket ? { budgetTicketId: ticket.id } : {}) }, async () => {
             try {
               const result = await model(messages, options)
-              await api.flush()
+              await api.flush(luna ? callId : undefined)
               Object.assign(record, { requestId: result.id ?? null, responseModel: result.model ?? null, usage: result.usage ?? null,
                 requestAttempts: result.inferenceAttempts ?? (luna ? rows.filter(row => row.modelCallId === callId).map(row => ({ status: row.status, elapsedMs: row.elapsedMs })) : []) })
               assert.equal(result.model, requestedModel)
@@ -214,7 +218,7 @@ export function createNativeCapture({ directory, binding, baseSystemPrompt, expe
               return result
             } catch (error) {
               if (ticket?.status === 'pending') ticket.fail()
-              await api.flush()
+              await api.flush(luna ? callId : undefined)
               const calls = rows.filter(row => row.modelCallId === callId)
               const attempts = error.inferenceAttempts ?? record.requestAttempts
               Object.assign(record, { failed: true, usageUnknown: true, errorClass: error.name,

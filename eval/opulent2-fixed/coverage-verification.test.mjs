@@ -60,3 +60,17 @@ test('genuine observed no-match is reported separately and remains a completed t
   const matrix = verifyToolCoverage(f).matrix
   assert.equal(matrix.find(row => row.name === 'agrep').outcomes[0].classification, 'genuine-no-match')
 })
+
+test('a real completed native parent report accepts only omission or the explicit parent recipient', () => {
+  for (const to of [undefined, 'parent', '..', 'unrelated-session']) {
+    const f = fixture(), record = f.snapshot.capy_tool_results.find(record => record.name === 'message_agent')
+    record.session_id = 'reporter'
+    delete record.returned_result
+    f.snapshot.sessions.push({ id: 'reporter', parent_session_id: 'root', status: 'completed' })
+    f.transmissions.push({ row: { phase: 'answerer', sessionId: 'reporter', usageUnknown: false }, request: { messages: [] },
+      response: { choices: [{ message: { role: 'assistant', tool_calls: [{ id: record.tool_call_id,
+        function: { name: 'message_agent', arguments: JSON.stringify({ to, text: 'Actual offline parent-report fixture', state: 'final' }) } }] } }] } })
+    if (to === undefined || to === 'parent') assert.equal(verifyToolCoverage(f).matrix.find(row => row.name === 'message_agent').verified, true)
+    else assert.throws(() => verifyToolCoverage(f), /message_agent/)
+  }
+})
