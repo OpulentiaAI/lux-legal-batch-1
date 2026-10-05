@@ -29,6 +29,15 @@ v6's historical 250-step rule or v7's budget behavior. These are resource
 safeguards, not a claim of unlimited compute. Record descendant calls and
 physical attempts separately, then roll up known Opulent usage exactly once.
 
+The current fresh run explicitly selects `LX_RETRIEVAL_PROFILE=voyage` before
+loading the runtime: `voyage/voyage-4-large` embeddings at 1,024 dimensions and
+`voyage/rerank-2.5`, with the separate Voyage turbopuffer namespaces. Polygres
+is the repository's provenance mirror; chunk hydration uses the approved local
+corpus, and no live database connection is inferred. V8 provenance records the
+effective retrieval profile, models, dimensions, namespaces and credential
+names so resume rejects a retrieval-policy change. Keep the old legacy-Jina
+preflight failure separate; neither answerer ran in that failed preflight.
+
 Harvey remains the pinned public LAB harness, with its six filesystem tools and
 existing network policy. As in capability-v7, select `public-task-v2` to permit
 the supplied public task file without duplicate task prose or access to hidden
@@ -183,3 +192,33 @@ count permits removing one high and one low per system/metric. Retain judge
 disagreement, missing coverage, uncertainty and failures. Separate known
 provider usage/charges from unmetered infrastructure; do not infer a winner or
 a complete bill from partial evidence.
+
+For the completed-output comparison, explicitly select the separately bound
+`completed-work-v6` grading profile:
+
+```sh
+node eval/complex-v1/jev-grade-run.mjs CHECKPOINT OUTPUT_DIRECTORY completed-work-v6
+```
+
+The default remains `semantic-core-v5`, preserving its historical metrics.
+The opt-in profile adds substantive completeness separately from correctness:
+omissions reduce coverage, while an addressed but false assertion reduces
+accuracy. Accuracy is null when no relevant claim is asserted. Quality,
+accuracy and completeness use direct 0–1 scores without resource penalties.
+Report final saved-deliverable completion and successful-attempt latency and
+usage separately; retain earlier failed attempts as audit history rather than
+turning first-attempt reliability into a score. Independently remove one high
+and one low task value for each system and metric, retaining the exact dropped
+and retained sets. A partial judge run, unresolved criterion or missing
+independent review is not a finished comparison. The selected grading policy,
+checkpoint, implementation and raw provider responses remain bound together;
+use a new output directory after a replay or metrics-policy change.
+
+The completed native Voyage experiment is published separately in
+[the capability-v8 report](../NATIVE-MIMO-CAPABILITY-V8-VOYAGE-REPORT.md), with
+full and independently trimmed scores, original Jev decisions, independent
+review disagreements, scored capability adoption and provider limitations.
+Its semantic publication is provisional after the delivery recheck identified
+actually printed child quotations missing from the graded source inventory.
+Completed child host readback, parent model-visible text and grading replay
+are separate boundaries; each must be verified before a final conclusion.

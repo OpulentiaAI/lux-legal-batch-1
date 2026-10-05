@@ -2,8 +2,10 @@ import ast
 import asyncio
 import builtins
 import contextvars
+import hashlib
 import inspect
 import json
+import math
 import os
 import shutil
 import sys
@@ -83,6 +85,94 @@ class Rlm:
 
     async def cancel(self, child_id):
         return await host('cancel', {'child_id': child_id})
+
+
+class Handoff:
+    def __init__(self):
+        self.values = {}
+
+    async def capture(self, *, child_id=None, value=inspect.Parameter.empty, name=None):
+        if (child_id is None) == (value is inspect.Parameter.empty):
+            raise TypeError('capture requires exactly one of child_id or value')
+        args = {'action': 'capture', 'name': name}
+        path = None
+        if child_id is not None:
+            args['child_id'] = child_id
+        else:
+            def validate(item):
+                kind = type(item)
+                if kind in (str, bool, type(None)):
+                    return
+                if kind is int:
+                    if abs(item) > 9007199254740991:
+                        raise ValueError('Handoff integers must be JavaScript-safe')
+                    return
+                if kind is float:
+                    if not math.isfinite(item) or item.is_integer() and abs(item) > 9007199254740991:
+                        raise ValueError('Handoff numbers must be finite and integers must be JavaScript-safe')
+                    return
+                if kind is list:
+                    for member in item:
+                        validate(member)
+                    return
+                if kind is dict:
+                    for key, member in item.items():
+                        if type(key) is not str:
+                            raise TypeError('Handoff object keys must be strings')
+                        validate(member)
+                    return
+                raise TypeError('Handoff values require plain JSON types')
+            validate(value)
+            active = cell_id.get()
+            if active is None:
+                raise RuntimeError('Host tools require an active ipython cell')
+            text = json.dumps(value, ensure_ascii=False, allow_nan=False)
+            sha256 = hashlib.sha256(text.encode('utf-8')).hexdigest()
+            directory = Path(handoff_directory)
+            directory.mkdir(parents=True, exist_ok=True)
+            path = directory / (active + '-' + os.urandom(12).hex() + '.capture.json')
+            try:
+                with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'w', encoding='utf-8') as stream:
+                    stream.write(text)
+            except BaseException:
+                path.unlink(missing_ok=True)
+                raise
+            args.update(value_file=path.name, value_sha256=sha256)
+        try:
+            response = await host('handoff', args)
+            ref = response['descriptor']['snapshot_id']
+            self.values[ref] = response['resident_value']
+            return ref
+        finally:
+            if path is not None:
+                path.unlink(missing_ok=True)
+
+    async def read(self, ref, *, view='raw', cursor=None):
+        return await host('handoff', {'action': 'read', 'ref': ref, 'view': view, 'cursor': cursor})
+
+    async def decide(self, ref, *, decisions, acknowledge_limitations=()):
+        return await host('handoff', {'action': 'decide', 'ref': ref, 'decisions': decisions,
+                                      'acknowledge_limitations': list(acknowledge_limitations)})
+
+    async def exclude(self, child_id=None, *, ref=None, reason):
+        return await host('handoff', {'action': 'exclude', 'child_id': child_id, 'ref': ref, 'reason': reason})
+
+    async def finish(self):
+        return await host('handoff', {'action': 'finish'})
+
+
+class HandoffRlm(Rlm):
+    def __init__(self):
+        self.handoff = Handoff()
+
+    async def spawn(self, prompt, *, name, model=None, report_schema=None):
+        args = {'prompt': prompt, 'name': name, 'model': model}
+        if report_schema is not None:
+            args['report_schema'] = report_schema
+        return await host('spawn', args)
+
+
+handoff_directory = None
 
 
 async def bash(command, *, workdir=None, timeout=None):
@@ -269,11 +359,13 @@ class Capture:
         self.file = open(path, 'w', encoding='utf-8')
         self.prefix = ''
         self.chars = 0
+        self.sha256 = hashlib.sha256()
 
     def write(self, value):
         value = str(value)
         self.file.write(value)
         self.chars += len(value)
+        self.sha256.update(value.encode('utf-8'))
         if len(self.prefix) < 12000:
             self.prefix += value[:12000 - len(self.prefix)]
         return len(value)
@@ -286,10 +378,15 @@ class Capture:
 
 
 async def execute(message):
-    global namespace, namespace_initialized
+    global namespace, namespace_initialized, handoff_directory
     ident = message['id']
     report_state = message.get('report_state') is True
+    handoff = message.get('handoff_policy') == 'rlm-handoff-v1'
+    if handoff:
+        handoff_directory = message['handoff_dir']
     if not namespace_initialized:
+        if handoff:
+            namespace['rlm'] = HandoffRlm()
         if report_state:
             namespace = StateNamespace(namespace)
         namespace_initialized = True
@@ -308,6 +405,7 @@ async def execute(message):
     token = cell_id.set(ident)
     existing_tasks = asyncio.all_tasks()
     result = None
+    result_output = None
     ok = True
     try:
         tree = ast.parse(message['code'], filename='<ipython-cell>')
@@ -326,6 +424,11 @@ async def execute(message):
                 value = await value
             if value is not None:
                 result = repr(value)
+                if handoff:
+                    result_path = directory / (ident + '.result')
+                    result_path.write_text(result, encoding='utf-8')
+                    result_output = {'path': str(result_path), 'characters': len(result),
+                                     'sha256': hashlib.sha256(result.encode('utf-8')).hexdigest()}
                 if len(result) > 12000:
                     stdout.write(result)
                     result = result[:12000] + '… [full repr in stdout overflow file]'
@@ -367,7 +470,10 @@ async def execute(message):
     emit({'type': 'done', 'id': ident, 'ok': ok, 'stdout': stdout.prefix, 'stderr': stderr.prefix,
           'stdout_chars': stdout.chars, 'stderr_chars': stderr.chars,
           'stdout_path': str(stdout_path), 'stderr_path': str(stderr_path),
-          'overflow_path': str(combined_path), 'result': result, **state})
+          'overflow_path': str(combined_path), 'result': result, **state,
+          **({'handoff_outputs': {'stdout': {'path': str(stdout_path), 'characters': stdout.chars, 'sha256': stdout.sha256.hexdigest()},
+                                  'stderr': {'path': str(stderr_path), 'characters': stderr.chars, 'sha256': stderr.sha256.hexdigest()},
+                                  'result': result_output}} if handoff else {})})
 
 
 async def main():

@@ -116,7 +116,8 @@ function verifyArtifact(record) {
 
 // Only bodies of recorded successful tool responses count. The row's source inventory and
 // canonical corpus supply identity checks, never visibility or missing-answer inference.
-export function extractVisibleSources(row) {
+export function extractVisibleSourceEvidence(row, { replayVersionOverride } = {}) {
+  if (replayVersionOverride !== undefined && replayVersionOverride !== 'parent-visible-findings-v3') throw new Error('Unknown evidence replay override')
   if (!row.bundle || !['harvey', 'broad'].includes(row.mode) ||
       !Array.isArray(row.artifactPaths) || !row.artifactPaths.length ||
       !Array.isArray(row.audit?.originalArtifacts) || !row.audit.originalArtifacts.length) {
@@ -167,9 +168,15 @@ export function extractVisibleSources(row) {
     if (typeof source.text !== 'string' || typeof source.id !== 'string' || typeof source.doc !== 'string') throw new Error('Invalid recorded source inventory')
     return { id: source.id, doc: source.doc, chars: source.text.length, sha256: sha256(source.text) }
   })
-  const replay = evidenceV4({ workspace, artifacts: artifactRoot }).replay({
+  const replay = evidenceV4({ workspace, artifacts: artifactRoot, ...(replayVersionOverride ? { replayVersionOverride } : {}) }).replay({
     mode: row.mode, answer: row.answer, audit: row.audit, sources: inventory, metrics: row.metrics })
-  return replay.sources.map(item => ({ id: item.id, role: 'visible', text: item.text, sha256: sha256(item.text) }))
+  return { sources: replay.sources.map(item => ({ id: item.id, role: 'visible', text: item.text, sha256: sha256(item.text) })),
+    proof: replay.proof, ...(replay.quoteAudit ? { quoteAudit: replay.quoteAudit } : {}),
+    ...(replayVersionOverride ? { sourceOrigins: replay.sources.map(item => ({ id: item.id, sha256: sha256(item.text), origin: item.origin })) } : {}) }
+}
+
+export function extractVisibleSources(row, options) {
+  return extractVisibleSourceEvidence(row, options).sources
 }
 
 function verifyRow(row, bundle) {

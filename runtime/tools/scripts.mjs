@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { redact } from '../security.mjs';
 
+export const SCRIPT_TOP_LEVEL_AWAIT_DESCRIPTION = ' This opt-in runtime also supports top-level await in fresh scripts; normal asyncio.run(main()) scripts remain supported. Variables do not persist between scripts. Broker permissions and static call-site checks remain unchanged.';
+
 const blocked = new Set(['scripted_tools', 'message_user', 'stop', 'report_blocker', 'test_mode', 'list_secrets', 'request_secret', 'suggest_save_secret', 'recording_start', 'recording_stop', 'annotate_recording', 'run_workflow']);
 const shim = String.raw`import ast, asyncio, inspect, json, os, re, sys, urllib.request, urllib.error, concurrent.futures, types
 class ToolCallError(Exception): pass
@@ -187,7 +189,12 @@ module=types.ModuleType('opulent_tools')
 module.__dict__.update(tools=tools,call_tool=call_tool,call_tool_sync=call_tool_sync,list_tools=list_tools,search_tools=search_tools,describe=describe,ToolCallError=ToolCallError)
 sys.modules['opulent_tools']=module
 sys.modules['devin_tools']=module
-exec(compile(tree,script_path,'exec'),{'__name__':'__main__','__file__':script_path})
+scope={'__name__':'__main__','__file__':script_path}
+if os.environ.get('RUNTIME_SCRIPT_TOP_LEVEL_AWAIT')=='1':
+    result=eval(compile(tree,script_path,'exec',flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT),scope)
+    if inspect.isawaitable(result): asyncio.run(result)
+else:
+    exec(compile(tree,script_path,'exec'),scope)
 `;
 
 export function createTools(ctx) {
@@ -208,7 +215,7 @@ export function createTools(ctx) {
     let abort;
     try {
       await ctx.sandbox.files.write([{ path: script, data: args.script }, { path: launcher, data: shim }, { path: catalogPath, data: JSON.stringify(ctx.scriptCatalog ?? []) }]);
-      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, timeoutMs: seconds * 1000, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_SCRIPT_TIMEOUT_SECS: String(seconds), RUNTIME_BLOCKED_TOOLS: JSON.stringify(ctx.config.unrestrictedTools === true ? ['scripted_tools', 'ipython'] : [...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath }, cwd: ctx.workspace, signal: ctx.signal });
+      handle = await ctx.sandbox.commands.run(`python3 ${launcher} ${script}`, { background: true, timeoutMs: seconds * 1000, envs: { RUNTIME_BROKER_URL: broker.href, RUNTIME_SCRIPT_TOKEN: execution?.token ?? scriptToken, RUNTIME_SCRIPT_TIMEOUT_SECS: String(seconds), RUNTIME_BLOCKED_TOOLS: JSON.stringify(ctx.config.unrestrictedTools === true ? ['scripted_tools', 'ipython'] : [...blocked]), RUNTIME_SCRIPT_CATALOG: catalogPath, ...(ctx.config.scriptTopLevelAwait === true ? { RUNTIME_SCRIPT_TOP_LEVEL_AWAIT: '1' } : {}) }, cwd: ctx.workspace, signal: ctx.signal });
       const run = handle.wait().catch(error => { if (typeof error.exitCode !== 'number') throw error; return error; });
       const result = await Promise.race([run, new Promise((_, reject) => {
         const timer = setTimeout(() => reject(new Error('Script timed out')), seconds * 1000);

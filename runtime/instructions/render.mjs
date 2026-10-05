@@ -57,6 +57,28 @@ export const instructionManifest = Object.freeze(manifest)
 export const DEFAULT_INSTRUCTION_PROMPT = base
 
 export function renderInstructions({ appendix = '', variant, profile = 'standalone-v1' } = {}) {
+  if (profile === 'opulent-delivery-v9') {
+    const manifestText = readFileSync(new URL('./manifest-opulent-delivery-v9.json', import.meta.url), 'utf8')
+    const manifest = JSON.parse(manifestText)
+    const addendum = readFileSync(new URL('./opulent-delivery-v9.md', import.meta.url), 'utf8').trimEnd()
+    const inherited = renderInstructions({ profile: 'opulent-capability-v8' })
+    const foundation = renderInstructions({ profile: 'opulent-context-v6' })
+    if (manifest.version !== profile || manifest.profile !== profile || manifest.inheritedVersion !== inherited.provenance.version ||
+        manifest.inheritedManifestSha256 !== inherited.provenance.manifestSha256 ||
+        manifest.inheritedEffectivePromptSha256 !== inherited.provenance.effectivePromptSha256 ||
+        manifest.foundationProfile !== foundation.provenance.profile || manifest.foundationManifestSha256 !== foundation.provenance.manifestSha256 ||
+        manifest.addendumSha256 !== sha256(addendum)) throw new Error('Delivery v9 instructions differ from the audited manifest')
+    variant ??= profile
+    const prompt = `${foundation.systemPrompt}\n\n${addendum}`
+    const systemPrompt = appendix ? `${prompt}\n\n## Evaluation-specific instructions (${variant})\n${appendix.trim()}` : prompt
+    return { systemPrompt, provenance: { ...foundation.provenance, variant, version: profile, profile,
+      inheritedVersion: manifest.inheritedVersion, inheritedV8ManifestSha256: manifest.inheritedManifestSha256,
+      inheritedV8EffectivePromptSha256: manifest.inheritedEffectivePromptSha256,
+      composition: manifest.composition, foundationProfile: manifest.foundationProfile,
+      foundationManifestSha256: manifest.foundationManifestSha256, addendumSha256: manifest.addendumSha256,
+      handoffPolicy: manifest.handoffPolicy, scriptPolicy: manifest.scriptPolicy,
+      manifestSha256: sha256(manifestText), effectivePromptSha256: sha256(systemPrompt) } }
+  }
   if (profile !== 'standalone-v1' && profile !== 'opulent-prepared-v2' && profile !== 'opulent-knowledge-v3' && profile !== 'opulent-rlm-v4' && profile !== 'opulent-rlm-unrestricted-v5' && profile !== 'opulent-context-v6' && profile !== 'opulent-capability-v7' && profile !== 'opulent-capability-v8') throw new Error(`Unknown instruction profile: ${profile}`)
   if (profile === 'opulent-capability-v8') {
     variant ??= profile
