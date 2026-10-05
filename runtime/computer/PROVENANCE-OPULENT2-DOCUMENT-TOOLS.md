@@ -33,18 +33,28 @@ The developer's isolated Ubuntu 24.04 machine completed the real installer from 
 
 Generated local files covered PyMuPDF text/render/English OCR; pypdf/pdfplumber; local Tesseract/pytesseract; Poppler text/raster; Pandoc DOCX round-trip; LibreOffice DOCX/XLSX/PPTX-to-PDF and DOCX-to-ODT; qpdf page merge; Ghostscript `-dSAFER` raster; FFmpeg/ImageMagick image transforms; rga PDF/DOCX/nested-ZIP/gzip search; anydoc PDF/DOCX/XLSX/PPTX/ODT/EPUB/RTF/CSV-to-Markdown; LiteParse native PDF/office spatial text, screenshot and offline English OCR; Sharp resize/JPEG; and the selected office/HTML/XML/CSV/Parquet/EPUB libraries. Actual PATH commands verified offline scan OCR, rejected batch OCR, successful explicit no-OCR batches, screenshots and the complexity command's expected exit-1 OCR-needed verdict. Guarded `opulent-document` returned bounded `status: ok` JSON for anydoc DOCX parsing, LiteParse English scan OCR, rga search and PyMuPDF rendering. A separate opt-in test used a 24-page PDF to verify selected pages 2 and 24, incomplete-source search reporting and dimension-capped rendering. These are actual conversions, not mocked handlers or `--version`-only evidence. Availability probes are explicitly labeled separately.
 
-The two helper hashes match a fresh read of the source agent's stabilized files and the installed files. Final local input/installed evidence is:
+The first local candidate, before parent cancellation integration, passed the 44 scoped tests with native coverage enabled. Its original installed payload and logs are preserved separately. These historical digests certify that earlier payload only, not the current source:
+
+| Historical artifact, before cancellation integration | SHA-256 |
+| --- | --- |
+| Original `document.py` | `d3f023c1c0e0f1f8d0d52bb5412d886bff2fce1aa998a61d3cbfdbc12bd98f67` |
+| Original source/dependency bundle plus installer | `2b338c8996f4a49b07a46a5d84b18bbd56e892f6b5962201b04b04499f519414` |
+| Original local installed manifest | `7ffe4749bde476bf07f60922b270350740125713d751c02fef102b5a1dac760d` |
+
+The latest local proof uses the explicitly parent-owned cancellation-safe Python payload: its SIGTERM/SIGINT handlers unwind `run_process` and terminate the owned worker process group. The original stabilized MJS bytes are unchanged, and this installer task did not edit either supplied helper, the supplied 19-case test or the parent-owned file adapter. Installer, dependency locks and inventory coverage also remain byte-identical to the first handoff. Rebinding to this approved new Python payload is not a claim that the original helper hash remained unchanged. Current final source/installed evidence is:
 
 | Artifact | SHA-256 |
 | --- | --- |
 | `document.mjs` | `cb7202fed117a99294227d092da12918177a9768b6bf35c9b7fe30ff11ff2b72` |
-| `document.py` | `d3f023c1c0e0f1f8d0d52bb5412d886bff2fce1aa998a61d3cbfdbc12bd98f67` |
+| `document.py` | `fd1a08873bbd28dfd61692b1c4c09f16f5b6ff8989b7ceb849fe0616ae225eac` |
 | Document recipe | `8cb54a8f2a7c409c9682b0de767ea67829cff82432dca99b0bebaa8fe9223585` |
-| Source/dependency bundle plus installer | `2b338c8996f4a49b07a46a5d84b18bbd56e892f6b5962201b04b04499f519414` |
+| Source/dependency bundle plus installer | `ee5ea2da596ca53649f08c5878da9acdfef3afc46565a0dcc5c39a4574c7e1b0` |
 | Installer | `8e79b9a1ca67b499def2a36be1669becf76a39e0b51a4f9c7252d6ef8901577f` |
-| Local `/opt/opulent/document-tools/installed.json` | `7ffe4749bde476bf07f60922b270350740125713d751c02fef102b5a1dac760d` |
+| Local `/opt/opulent/document-tools/installed.json` | `eb69c62b61721c5788f23fe6a8d617aff5ab8795b1242e240137c4c3ae1f0c64` |
 
 The local installed-manifest digest is evidence for this isolated machine only. The parent must use the actual newly built E2B image's emitted installed-manifest digest; inherited package inventory and build evidence can differ.
+
+The current native-enabled helper/computer suites passed all 63 tests with zero skips, including the real cancellation process-group regression and all 19 supplied document tests. The parent-supplied context-fixture generator was also run in two independent Python processes/output directories. All three PDF/scan/DOCX files were byte-identical; both PDFs have no trailer ID and every DOCX ZIP timestamp is fixed to 1980-01-01. The generator SHA-256 is `0f6a1cd0605d7126e5caf834941bd803e77e3a80d81f74a80d06516a78319cb5`; fixture hashes are `90e9b67693a1b423ae118207dcb3c07e53f49114d35a2c000de87548803c34f1` (24-page PDF), `392f3ea7fb2a54ef42054af9f593ef249b19011dbc839368d5850a0fd96bce10` (scan PDF), and `6ebe6465a7e5b5ccd4f80ede27ad804d54ba8784e40b17c2ed98d526bc3a8a85` (DOCX). Guarded parse/OCR/search/render calls on these same fixtures returned `status: ok` and recorded the updated Python helper hash.
 
 Observed limitations remain visible:
 
