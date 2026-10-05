@@ -507,7 +507,7 @@ export function createRuntime(options = {}) {
       const row = store.get('sessions', id);
       const delivered = new Set(store.get('conversations', id)?.delivered ?? []);
       const queued = store.list('orchestration_messages').some(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
-      if (quiescing || !requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || opulent2 && row.status === 'stopped' || row.status === 'sleeping' && !wakeFromSleep) return;
+      if (quiescing || !requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || opulent2 && ['stopped', 'failed'].includes(row.status) || row.status === 'sleeping' && !wakeFromSleep) return;
       if ((row.steps ?? 0) >= config.maxSteps) {
         update(id, { status: 'failed', error: 'Agent step budget exhausted; queued messages remain undelivered.' });
         return;
