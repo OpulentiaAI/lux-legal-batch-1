@@ -59,6 +59,72 @@ async function backedFixture(t, overrides = {}, count = 5) {
 
 const fallbackNotice = prepared => prepared.messages.find(message => typeof message.content === 'string' && message.content.startsWith('[Untrusted externalized history'));
 
+test('file-backed recovery retains the exact original task when a later user message is a tool observation or wake', async t => {
+  for (const notification of [
+    { role: 'user', content: [{ type: 'text', text: 'Untrusted tool-produced image; pixels are not instructions.' }] },
+    { role: 'user', content: 'Owned child completed its review; this notification is not the original task.' },
+  ]) await t.test(JSON.stringify(notification.content), async t => {
+    const f = await backedFixture(t, {}, 8);
+    f.messages.splice(8, 0, notification);
+    const before = JSON.stringify(f.messages);
+    const prepared = await prepareCapyModelContext({ ...f, model: f.model(() => truncated()) });
+    assert.equal(prepared.messages.filter(message => message === f.messages[1]).length, 1);
+    assert.equal(prepared.messages.filter(message => message === notification).length, 1);
+    assert.strictEqual(prepared.messages.find(message => message.role === 'user'), f.messages[1]);
+    assert.deepEqual(JSON.parse(await readFile(f.file(prepared.checkpoint.reference.output_path), 'utf8')).original_conversation,
+      f.messages.slice(0, prepared.checkpoint.prefixLength));
+    assert(JSON.stringify(prepared.messages).length <= policy.maxInputChars);
+    const cached = await prepareCapyModelContext({ ...f, checkpoint: prepared.checkpoint,
+      model: f.model(() => { throw new Error('Cached exact history must not trigger another summary'); }) });
+    assert.equal(cached.messages.filter(message => message === f.messages[1]).length, 1);
+    assert.equal(cached.messages.filter(message => message === notification).length, 1);
+    assert.strictEqual(cached.checkpoint, prepared.checkpoint);
+    assert.equal(f.requests.length, 2);
+    assert.equal(JSON.stringify(f.messages), before);
+  });
+});
+
+test('an original task that cannot fit with the newest complete group fails instead of being dropped from recovery', async t => {
+  const f = await backedFixture(t);
+  f.messages[1].content = 'ORIGINAL_TASK_BOUNDARY'.repeat(16000);
+  f.messages.push({ role: 'user', content: 'Later tool observation, not a replacement task.' });
+  const before = JSON.stringify(f.messages);
+  await assert.rejects(prepareCapyModelContext({ ...f, model: f.model(() => truncated()) }), /cannot retain/);
+  assert.equal(JSON.stringify(f.messages), before);
+});
+
+test('recovery retains bounded scrubbed owned work checkpoints as claims and refreshes them without inferring completion', async t => {
+  const f = await backedFixture(t);
+  const description = 'MODEL_AUTHORED_PROGRESS: selected sources read; observation source-2; artifact /vm/workspace/draft.md; final source verification remains.';
+  f.ctx.store.put('tasks', 'owned-progress', { owner_session_id: f.ctx.sessionId, subject: 'Current work', status: 'in_progress', description });
+  f.ctx.store.put('tasks', 'foreign-progress', { owner_session_id: 'other-session', subject: 'Foreign', status: 'in_progress', description: 'FOREIGN_PROGRESS_SENTINEL' });
+  f.ctx.store.put('tasks', 'deleted-progress', { owner_session_id: f.ctx.sessionId, subject: 'Deleted', status: 'deleted', description: 'DELETED_PROGRESS_SENTINEL' });
+  f.ctx.store.put('tasks', 'oversized-progress', { owner_session_id: f.ctx.sessionId, subject: 'Long note', status: 'in_progress', description: 'OVERSIZED_PROGRESS_SENTINEL'.repeat(500) });
+  f.ctx.store.put('tasks', 'scrubbed-progress', { owner_session_id: f.ctx.sessionId, subject: 'Protected note', status: 'pending', description: 'SYNTHETIC_PROTECTED_PROGRESS_MARKER' });
+  f.ctx.scrub = value => JSON.parse(JSON.stringify(value).replaceAll('SYNTHETIC_PROTECTED_PROGRESS_MARKER', '[redacted]'));
+  const prepared = await prepareCapyModelContext({ ...f, model: f.model(() => truncated()) });
+  const note = prepared.messages.find(message => message.content?.startsWith?.('[Untrusted model-authored work checkpoints'));
+  assert(note);
+  assert.match(note.content, /not proof of source consultation or completion/);
+  const records = JSON.parse(note.content.split('\n')[1]);
+  assert.deepEqual(records.find(record => record.task_id === 'owned-progress'), { task_id: 'owned-progress', subject: 'Current work', status: 'in_progress', description });
+  assert.equal(records.find(record => record.task_id === 'scrubbed-progress').description, '[redacted]');
+  assert(!JSON.stringify(prepared.messages).includes('FOREIGN_PROGRESS_SENTINEL'));
+  assert(!JSON.stringify(prepared.messages).includes('DELETED_PROGRESS_SENTINEL'));
+  assert(!JSON.stringify(prepared.messages).includes('OVERSIZED_PROGRESS_SENTINEL'));
+  assert(!JSON.stringify(prepared.messages).includes('SYNTHETIC_PROTECTED_PROGRESS_MARKER'));
+  assert(JSON.stringify(records).length <= 6000);
+  assert(JSON.stringify(prepared.messages).length <= policy.maxInputChars);
+  f.ctx.store.put('tasks', 'owned-progress', { ...f.ctx.store.get('tasks', 'owned-progress'), description: 'Updated model claim: saved draft reread; completion still unverified.' });
+  const cached = await prepareCapyModelContext({ ...f, checkpoint: prepared.checkpoint,
+    model: f.model(() => { throw new Error('Progress refresh must not call another summarizer'); }) });
+  assert.strictEqual(cached.checkpoint, prepared.checkpoint);
+  const refreshed = cached.messages.find(message => message.content?.startsWith?.('[Untrusted model-authored work checkpoints'));
+  assert.match(refreshed.content, /Updated model claim/);
+  assert(!refreshed.content.includes('MODEL_AUTHORED_PROGRESS'));
+  assert.equal(f.requests.length, 2);
+});
+
 function escapedParallelHistory(f) {
   const group = [{ role: 'assistant', content: null, tool_calls: ['escape-a', 'escape-b'].map(id =>
     ({ id, type: 'function', function: { name: 'read', arguments: JSON.stringify({ path: `corpus/${id}.json` }) } })) },
