@@ -4,6 +4,7 @@ import { documentReadSource } from './document-tools/document.mjs';
 
 const MAX_READ_CHARS = 60000;
 const quote = value => `'${value.replaceAll("'", "'\\''")}'`;
+const encodedReadSource = Buffer.from(documentReadSource).toString('base64');
 const resolvePath = (ctx, value) => {
   if (typeof value !== 'string' || !value || value.includes('\0')) throw new TypeError('A nonempty VM path is required');
   return value === '~' || value.startsWith('~/') ? path.join('/home/user', value.slice(1)) : path.resolve(ctx.workspace, value);
@@ -29,7 +30,7 @@ export function createCapyFileTools(ctx) {
       }
       const options = { user: 'user', rlmNoSecrets: true, signal: ctx.signal, timeoutMs: 65000 };
       const request = Buffer.from(JSON.stringify({ path: file, offset, limit, character_offset })).toString('base64');
-      const probe = await ctx.sandbox.commands.run(`/usr/bin/python3 -I -c ${quote(documentReadSource)} --read ${quote(request)}`, options);
+      const probe = await ctx.sandbox.commands.run(`/usr/bin/python3 -I -c ${quote(`import base64; exec(compile(base64.b64decode('${encodedReadSource}'), '<opulent-document-read>', 'exec'))`)} --read ${quote(request)}`, options);
       const parse = result => {
         if (typeof result.stdout !== 'string' || result.stdout.length > 750000) throw new Error('VM read helper returned an invalid or unbounded response');
         let value;
