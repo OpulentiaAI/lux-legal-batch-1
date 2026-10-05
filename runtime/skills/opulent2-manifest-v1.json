@@ -32,7 +32,7 @@
     {
       "name": "opulent2-data-analysis",
       "description": "Extract and analyze supplied local documents and tables with bounded, reproducible, source-backed outputs.",
-      "artifactSha256": "b2ef60f77c653513b1a7cc4794ea5a88622ed2f4c75f5e5aa02462366c1ad0d8",
+      "artifactSha256": "7cbacc06fcb671fc791a05eae72ff8a67ae673f5bbe7eb968ff203e1b1e38df0",
       "source": {
         "kind": "local-data-adaptation",
         "path": "runtime/skills/data-analysis/SKILL.md",

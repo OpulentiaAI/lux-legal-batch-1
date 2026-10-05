@@ -13,7 +13,7 @@ const exec = promisify(execFile);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const args = process.argv.slice(2);
 const root = args.includes('--root') ? resolve(args[args.indexOf('--root') + 1]) : dirname(fileURLToPath(import.meta.url));
-const env = { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: process.env.HOME ?? tmpdir(), LANG: 'C.UTF-8',
+const env = { PATH: `${root}/node/bin:/usr/bin:/bin`, HOME: process.env.HOME ?? tmpdir(), LANG: 'C.UTF-8',
   TESSDATA_PREFIX: '/usr/share/tesseract-ocr/5/tessdata', PYTHONDONTWRITEBYTECODE: '1' };
 const run = async (file, argv = []) => {
   const result = await exec(file, argv, { env, timeout: 120_000, maxBuffer: 4 * 1024 * 1024 });
@@ -42,14 +42,14 @@ async function permissions(installed) {
     } else assert.ok(info.isFile(), `Special file in document layer: ${path}`);
   };
   await inspect(root);
-  for (const ancestor of ['/opt', '/opt/opulent', '/usr/local/bin']) {
+  for (const ancestor of ['/opt', '/opt/opulent', '/usr/bin']) {
     const info = await stat(ancestor);
     assert.equal(info.uid, 0);
     assert.equal(info.mode & 0o022, 0, `Writable document-tool ancestor: ${ancestor}`);
   }
   for (const item of installed.files) assert.equal(sha256(await readFile(join(root, item.path))), item.sha256, `Document payload changed: ${item.path}`);
   for (const name of ['opulent-document', 'anydoc', 'lit', 'liteparse', 'rga', 'rga-preproc']) {
-    const file = join('/usr/local/bin', name);
+    const file = join('/usr/bin', name);
     const info = await lstat(file);
     assert.ok(info.isFile());
     assert.equal(info.uid, 0);
@@ -87,7 +87,7 @@ try {
     assert.ok(output.includes(version), `Unexpected native ${name} version`);
     cliVersions[name] = output.split('\n').find(Boolean);
   }
-  const rga = join(root, 'rga/rga');
+  const rga = '/usr/bin/rga';
   assert.ok((await run(rga, ['--version'])).includes(recipe.rga.version));
   const adapters = await run(rga, ['--rga-list-adapters']);
   for (const adapter of ['pandoc', 'poppler', 'ffmpeg', 'zip', 'decompress', 'tar', 'sqlite']) assert.ok(adapters.includes(adapter), `Missing rga adapter: ${adapter}`);

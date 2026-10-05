@@ -18,7 +18,7 @@ def digest(path):
 
 def run(argv, **kwargs):
     return subprocess.run(argv, check=True, env={
-        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
         "HOME": "/root", "LANG": "C.UTF-8", "DEBIAN_FRONTEND": "noninteractive",
         "TESSDATA_PREFIX": "/usr/share/tesseract-ocr/5/tessdata",
         "PYTHONDONTWRITEBYTECODE": "1",
@@ -42,7 +42,7 @@ def install(payload):
     if root.exists() or root.is_symlink():
         raise RuntimeError("Refusing to replace an installed document layer")
     root.mkdir(mode=0o755, parents=True)
-    for path in (pathlib.Path("/opt"), root.parent, pathlib.Path("/usr/local/bin")):
+    for path in (pathlib.Path("/opt"), root.parent, pathlib.Path("/usr/bin")):
         if path.is_symlink() or not path.is_dir() or path.stat().st_uid != 0:
             raise RuntimeError("Untrusted document-tool ancestor: " + str(path))
         path.chmod(0o755)
@@ -128,13 +128,13 @@ def install(payload):
         if digest(pathlib.Path(recipe["tessdata"]["path"]) / filename) != expected:
             raise RuntimeError("Offline traineddata differs from lock")
     for name in ("opulent-document", "anydoc", "lit", "liteparse"):
-        path = pathlib.Path("/usr/local/bin") / name
+        path = pathlib.Path("/usr/bin") / name
         if path.exists() or path.is_symlink():
             raise RuntimeError("Refusing to replace an existing CLI: " + name)
         path.write_text('#!/bin/sh\nexec /usr/bin/python3.12 /opt/opulent/document-tools/local-cli.py ' + name + ' "$@"\n')
         path.chmod(0o555)
     for name in ("rga", "rga-preproc"):
-        path = pathlib.Path("/usr/local/bin") / name
+        path = pathlib.Path("/usr/bin") / name
         if path.exists() or path.is_symlink():
             raise RuntimeError("Refusing to replace an existing CLI: " + name)
         shutil.copyfile(root / "rga" / name, path)

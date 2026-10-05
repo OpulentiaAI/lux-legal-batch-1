@@ -25,6 +25,7 @@ test('image payload pins all source, dependency, native and offline OCR inputs',
   const sourceDirectory = await sources(t);
   const layer = await prepareDocumentToolsLayer({ sourceDirectory });
   assert.equal(layer.recipe.destinationRoot, '/opt/opulent/document-tools');
+  assert.equal(layer.recipe.cli, '/usr/bin/opulent-document');
   assert.equal(layer.recipe.node.version, '24.18.0');
   assert.equal(layer.recipe.rga.version, '0.10.10');
   assert.equal(layer.recipe.tessdata.runtimeDownloads, false);
@@ -72,6 +73,20 @@ test('default source directory binds the actual two runtime helper files', async
     const source = await readFile(new URL(`../document-tools/${name}`, import.meta.url));
     assert.equal(layer.files.find(file => file.path === name).sha256, hash(source));
   }
+});
+
+test('source and recipe authority exclude mutable launcher paths without relaxing ownership checks', async () => {
+  const layer = await prepareDocumentToolsLayer();
+  assert.equal(layer.recipe.cli, '/usr/bin/opulent-document');
+  for (const name of ['install.py', 'local-cli.py', 'probe-installed.mjs', 'fixtures-python.py', 'fixtures-node.mjs']) {
+    assert.ok(!(await readFile(new URL(`../computer/document-tools/${name}`, import.meta.url), 'utf8')).includes('/usr/local/bin'), name);
+  }
+  const permissions = await readFile(new URL('../computer/document-tools/probe-installed.mjs', import.meta.url), 'utf8');
+  assert.match(permissions, /\['\/opt', '\/opt\/opulent', '\/usr\/bin'\]/);
+  assert.match(permissions, /join\('\/usr\/bin', name\)/);
+  assert.match(permissions, /assert\.equal\(info\.uid, 0\)/);
+  assert.match(permissions, /assert\.equal\(info\.mode & 0o222, 0\)/);
+  assert.match(permissions, /sha256\(await readFile\(file\)\), sha256\(await readFile\(join\(root, 'rga', name\)\)\)\)/);
 });
 
 test('inventory coverage preserves every reference and explicitly excludes non-document scope', async () => {
@@ -123,9 +138,11 @@ test('runtime readiness requires digest-bound immutable nonroot availability, no
   } } };
   const actual = await probePreparedDocumentTools(sandbox, expected);
   assert.equal(actual.permissions.verified, true);
-  assert.match(command, /setpriv --no-new-privs/);
+  assert.match(command, /\/usr\/bin\/setpriv --no-new-privs/);
   assert.match(command, /--permissions/);
-  assert.match(command, /sha256sum/);
+  assert.match(command, /\/usr\/bin\/sha256sum/);
+  assert.match(command, /\/usr\/bin\/cut/);
+  assert.ok(!command.includes('/usr/local/bin'));
   await assert.rejects(probePreparedDocumentTools({ commands: { async run() { return { exitCode: 1 }; } } }, expected), /probe failed/);
   await assert.rejects(probePreparedDocumentTools({ commands: { async run() { return { exitCode: 0, stdout: '{}' }; } } }, expected), /differs from/);
   await assert.rejects(probePreparedDocumentTools(sandbox, { ...expected, installedManifestSha256: '' }), TypeError);
@@ -147,14 +164,20 @@ test('actual prepared native fixture probe is an explicit local opt-in, not an E
   assert.equal(proof.nativeFixtures.node.checks['liteparse-offline-english-ocr'], true);
   assert.equal(proof.nativeFixtures.node.checks['sharp-native-resize-compress'], true);
   const directory = await sources(t);
+  const shadow = join(directory, 'shadow');
+  const shadowMarker = join(directory, 'shadow-executed');
+  await mkdir(shadow);
+  for (const name of ['node', 'rga', 'rga-preproc', 'libreoffice', 'opulent-document', 'anydoc', 'lit', 'liteparse']) {
+    await writeFile(join(shadow, name), `#!/bin/sh\nprintf '%s' shadow > '${shadowMarker}'\nexit 97\n`, { mode: 0o700 });
+  }
   const create = 'import pathlib,sys,pymupdf; from docx import Document; r=pathlib.Path(sys.argv[1]); d=pymupdf.open(); ' +
     '[d.new_page().insert_text((72,72),"OPULENT DOCUMENT FIXTURE page "+str(i)) for i in range(1,25)]; ' +
     'd.save(r/"fixture.pdf"); w=Document(); w.add_paragraph("OPULENT DOCUMENT FIXTURE"); w.save(r/"fixture.docx")';
   await exec(`${root}/venv/bin/python`, ['-I', '-c', create, directory]);
   const cli = async (operation, input, backend, extra = []) => {
-    const output = await exec('/usr/bin/setpriv', ['--no-new-privs', '--', '/usr/local/bin/opulent-document', operation,
+    const output = await exec('/usr/bin/setpriv', ['--no-new-privs', '--', '/usr/bin/opulent-document', operation,
       '--input', join(directory, input), '--workspace', directory, '--backend', backend, '--preview-chars', '160', ...extra],
-    { env: { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', HOME: process.env.HOME, NODE_OPTIONS: '--invalid-test-only-option' }, timeout: 60_000 });
+    { env: { PATH: `${shadow}:/usr/bin:/bin`, LANG: 'C.UTF-8', HOME: process.env.HOME, NODE_OPTIONS: '--invalid-test-only-option' }, timeout: 60_000 });
     const actual = JSON.parse(output.stdout);
     assert.equal(actual.status, 'ok');
     return actual;
@@ -163,6 +186,9 @@ test('actual prepared native fixture probe is an explicit local opt-in, not an E
   assert.equal(anydoc.backend.name, '@firecrawl/anydoc');
   assert.equal(anydoc.backend.version, '0.2.4');
   assert.ok(anydoc.snippets.some(item => item.text.includes('OPULENT DOCUMENT FIXTURE')));
+  const office = await cli('parse', 'fixture.docx', 'liteparse', ['--pages', '1']);
+  assert.equal(office.converter.name, 'libreoffice');
+  assert.ok(office.snippets.some(item => item.text.includes('OPULENT DOCUMENT FIXTURE')));
   const paginated = await cli('parse', 'fixture.pdf', 'liteparse', ['--pages', '2,24']);
   assert.equal(paginated.backend.name, '@llamaindex/liteparse');
   assert.deepEqual(paginated.coverage.selected_pages, [2, 24]);
@@ -170,7 +196,10 @@ test('actual prepared native fixture probe is an explicit local opt-in, not an E
   const searched = await cli('search', 'fixture.pdf', 'pymupdf', ['--pages', '2,24', '--pattern', 'OPULENT DOCUMENT FIXTURE']);
   assert.equal(searched.snippets.length, 2);
   assert.equal(searched.source_search_complete, false);
+  assert.equal(searched.search_backend.name, 'rga');
+  assert.equal(searched.search_backend.file_sha256, hash(await readFile('/usr/bin/rga')));
   const rendered = await cli('render', 'fixture.pdf', 'pymupdf', ['--pages', '24', '--max-dimension', '500']);
   assert.equal(rendered.images.length, 1);
   assert.ok(rendered.images[0].width <= 500 && rendered.images[0].height <= 500);
+  await assert.rejects(readFile(shadowMarker), { code: 'ENOENT' });
 });

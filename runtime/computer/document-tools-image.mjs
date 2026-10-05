@@ -12,7 +12,7 @@ export async function prepareDocumentToolsLayer({ sourceDirectory = resolve(file
   if (typeof sourceDirectory !== 'string' || !sourceDirectory.startsWith('/') || resolve(sourceDirectory) !== sourceDirectory) throw new TypeError('Document source directory must be an absolute canonical path');
   const manifest = await readFile(join(directory, 'install-manifest.json'));
   const recipe = JSON.parse(manifest);
-  if (recipe.schema !== 1 || recipe.name !== 'opulent2-document-tools-v1' || recipe.architecture !== 'amd64' || recipe.ubuntu !== '24.04' || recipe.destinationRoot !== '/opt/opulent/document-tools' || recipe.cli !== '/usr/local/bin/opulent-document' || JSON.stringify(recipe.helperSources) !== JSON.stringify(['document.mjs', 'document.py'])) throw new Error('Invalid document-tool install recipe');
+  if (recipe.schema !== 1 || recipe.name !== 'opulent2-document-tools-v1' || recipe.architecture !== 'amd64' || recipe.ubuntu !== '24.04' || recipe.destinationRoot !== '/opt/opulent/document-tools' || recipe.cli !== '/usr/bin/opulent-document' || JSON.stringify(recipe.helperSources) !== JSON.stringify(['document.mjs', 'document.py'])) throw new Error('Invalid document-tool install recipe');
   for (const artifact of [recipe.node, recipe.rga, recipe.pdfium, ...recipe.sourceLicenses]) {
     if (!hex(artifact.sha256) || !https(artifact.url) || (artifact.archiveRoot && !/^[a-zA-Z0-9._-]+$/.test(artifact.archiveRoot))) throw new Error('Invalid pinned document artifact');
   }
@@ -61,7 +61,7 @@ export async function prepareDocumentToolsLayer({ sourceDirectory = resolve(file
 
 export async function probePreparedDocumentTools(sandbox, expected) {
   if (!sandbox?.commands?.run || expected?.name !== 'opulent2-document-tools-v1' || expected.installedManifestPath !== '/opt/opulent/document-tools/installed.json' || !hex(expected.installedManifestSha256) || !hex(expected.recipeSha256) || !hex(expected.bundleSha256)) throw new TypeError('A connected sandbox and digest-bound document image are required');
-  const command = `set -eu; test "$(sha256sum /opt/opulent/document-tools/installed.json | cut -d' ' -f1)" = '${expected.installedManifestSha256}'; setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions`;
+  const command = `set -eu; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${expected.installedManifestSha256}'; /usr/bin/setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions`;
   const result = await sandbox.commands.run(command, { timeoutMs: 60_000, rlmNoSecrets: true });
   if (result.exitCode !== 0) throw new Error('Prepared document-tool availability/integrity probe failed');
   let actual;

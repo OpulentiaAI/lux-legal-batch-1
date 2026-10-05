@@ -40,7 +40,7 @@ def command(name, args, root=pathlib.Path("/opt/opulent/document-tools")):
 if __name__ == "__main__":
     try:
         argv = command(sys.argv[1], sys.argv[2:])
-        os.environ["PATH"] = "/opt/opulent/document-tools/node/bin:/usr/local/bin:/usr/bin:/bin"
+        os.environ["PATH"] = "/opt/opulent/document-tools/node/bin:/usr/bin:/bin"
         os.environ["TESSDATA_PREFIX"] = "/usr/share/tesseract-ocr/5/tessdata"
         for name in ("FIRECRAWL_API_KEY", "FIRECRAWL_API_URL", "NODE_OPTIONS", "NODE_PATH"):
             os.environ.pop(name, None)

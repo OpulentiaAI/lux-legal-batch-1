@@ -114,11 +114,25 @@ test('read rejects binary, excessive input, unsafe symlinks and invalid ranges i
 test('document reads never decode a PDF as text and explicitly report an absent installed helper', async t => {
   const root = await fixture(t);
   await writeFile(join(root, 'source.pdf'), '%PDF-1.7\nSECRET BINARY MARKER\0\n');
-  const { tools, calls } = readTools(root);
+  const { tools, calls } = readTools(root, join(root, 'no-helper-path'));
   await assert.rejects(tools.read({ path: 'source.pdf' }), /missing_dependency.*opulent-document/);
   assert.equal(calls.length, 2);
   assert(calls[1].includes("'--page-start' '1' '--page-count' '4'"));
   assert(!calls[1].includes('SECRET BINARY MARKER'));
+});
+
+test('document reads reject PATH-shadowed launchers before executing untrusted code', async t => {
+  const root = await fixture(t);
+  const bin = join(root, 'bin');
+  await mkdir(bin);
+  const marker = join(root, 'shadow-executed');
+  await writeFile(join(bin, 'opulent-document'), `#!/bin/sh\nprintf executed > ${JSON.stringify(marker)}\n`, { mode: 0o700 });
+  await writeFile(join(root, 'source.pdf'), '%PDF-1.7\n');
+  const { tools, calls } = readTools(root, `${bin}:/usr/bin:/bin`);
+  await assert.rejects(tools.read({ path: 'source.pdf' }), /missing_dependency.*trusted \/usr\/bin path/);
+  await assert.rejects(stat(marker), { code: 'ENOENT' });
+  assert.equal(calls.length, 2);
+  assert(calls[1].includes("'/usr/bin/opulent-document'"));
 });
 
 test('historical profiles retain the original files.read contract without requiring commands.run', async () => {
@@ -284,7 +298,7 @@ try:
  print(json.dumps({'status':'ok','output':open(p).read()}))
 except Exception as e: print(json.dumps({'status':'error','code':getattr(e,'code',None),'message':str(e)}))`;
   const { stdout } = await exec('/usr/bin/python3', ['-c', program, pythonHelper, root, code, String(timeout), String(stdoutLimit)], {
-    env: { PATH: '/usr/bin:/bin', OPULENT_DOCUMENT_TEST_SECRET: 'must-not-reach-worker' }, timeout: 20000,
+    env: { PATH: '/untrusted-bin:/usr/local/bin:/usr/bin:/bin', OPULENT_DOCUMENT_TEST_SECRET: 'must-not-reach-worker' }, timeout: 20000,
   });
   return JSON.parse(stdout);
 }
@@ -293,6 +307,7 @@ test('real worker isolation strips secrets and denies IP networking without a fa
   const root = await fixture(t);
   const result = await isolatedProcess(root, `import errno,os,socket
 assert 'OPULENT_DOCUMENT_TEST_SECRET' not in os.environ
+assert os.environ['PATH']==${JSON.stringify(join(dirname(pythonHelper), 'node/bin') + ':/usr/bin:/bin')}
 try: socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 except OSError as e: assert e.errno==errno.EPERM; print('network-denied')
 else: raise RuntimeError('network unexpectedly permitted')`);
@@ -467,10 +482,7 @@ test('live pinned rga searches bounded extraction with byte/character/page prove
 
 test('live document-aware read clips pages, preserves ranges and rejects a source changed after its probe', { skip: !liveHelper, timeout: 120000 }, async t => {
   const root = await liveFixture(t);
-  const bin = join(root, 'bin');
-  await mkdir(bin);
-  await writeFile(join(bin, 'opulent-document'), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(liveHelper)} "$@"\n`, { mode: 0o700 });
-  const { tools, calls } = readTools(root, `${bin}:${livePath}`);
+  const { tools, calls } = readTools(root, livePath);
   const result = await tools.read({ path: 'fixture.pdf', offset: 2 });
   assert.equal(result.document, true);
   assert.equal(result.kind, 'read');
@@ -480,6 +492,7 @@ test('live document-aware read clips pages, preserves ranges and rejects a sourc
   assert.equal(result.next_offset, null);
   assert(!result.content.includes('First local page'));
   assert.equal(calls.length, 2);
+  assert(calls[1].includes("'/usr/bin/opulent-document'"));
   for (const document_backend of ['pymupdf', 'anydoc', 'liteparse']) {
     const explicit = await tools.read({ path: 'fixture.pdf', offset: 2, limit: 1, document_backend });
     assert.equal(explicit.requested_backend, document_backend);
@@ -495,7 +508,7 @@ test('live document-aware read clips pages, preserves ranges and rejects a sourc
   const source = join(root, 'fixture.pdf');
   const tamper = createCapyFileTools({ workspace: root, config: { instructionProfile: 'opulent2-fixed-v1' }, sandbox: { commands: { async run(command, options) {
     if (command.startsWith('command -v')) await writeFile(source, await readFile(join(root, 'encrypted.pdf')));
-    return await exec('/bin/sh', ['-c', command], { env: { PATH: `${bin}:${livePath}` }, timeout: options.timeoutMs, maxBuffer: 1000000 })
+    return await exec('/bin/sh', ['-c', command], { env: { PATH: livePath }, timeout: options.timeoutMs, maxBuffer: 1000000 })
       .then(result => ({ ...result, exitCode: 0 }), error => ({ stdout: error.stdout, stderr: error.stderr, exitCode: error.code }));
   } } } });
   await assert.rejects(tamper.read({ path: 'fixture.pdf' }), /source_changed/);

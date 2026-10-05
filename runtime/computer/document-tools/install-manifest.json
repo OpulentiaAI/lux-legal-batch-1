@@ -6,7 +6,7 @@
   "destinationRoot": "/opt/opulent/document-tools",
   "helperSources": ["document.mjs", "document.py"],
   "helperSourceDirectory": "runtime/document-tools",
-  "cli": "/usr/local/bin/opulent-document",
+  "cli": "/usr/bin/opulent-document",
   "node": {
     "version": "24.18.0",
     "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz",

@@ -76,27 +76,27 @@ assert.ok((await toMarkdown(join(work, 'pptxgenjs.pptx'))).includes(marker));
 proof['pptxgenjs-pptx-write'] = true;
 assert.equal(parse(await readFile(join(work, 'fixture.csv')), { columns: true })[0].label, marker);
 proof['csv-parse-table-read'] = true;
-const anydocCli = await exec('/usr/local/bin/anydoc', [join(work, 'fixture.docx')], { env: cliEnv, timeout: 60_000 });
+const anydocCli = await exec('/usr/bin/anydoc', [join(work, 'fixture.docx')], { env: cliEnv, timeout: 60_000 });
 assert.ok(anydocCli.stdout.includes(marker));
 proof['prepared-anydoc-path-cli'] = true;
-const liteparseCli = await exec('/usr/local/bin/lit', ['parse', join(work, 'scan.pdf'), '--format', 'json', '--quiet'], { env: cliEnv, timeout: 60_000 });
+const liteparseCli = await exec('/usr/bin/lit', ['parse', join(work, 'scan.pdf'), '--format', 'json', '--quiet'], { env: cliEnv, timeout: 60_000 });
 assert.ok(JSON.parse(liteparseCli.stdout).pages.some(page => page.text.includes(marker)));
 proof['prepared-liteparse-offline-path-cli'] = true;
-await assert.rejects(exec('/usr/local/bin/lit', ['batch-parse', work, join(work, 'batch-output')], { env: cliEnv }),
+await assert.rejects(exec('/usr/bin/lit', ['batch-parse', work, join(work, 'batch-output')], { env: cliEnv }),
   error => error.code === 2 && error.stderr.includes('batch-parse requires --no-ocr'));
 proof['prepared-liteparse-batch-ocr-rejected'] = true;
 await mkdir(join(work, 'batch-input'));
 for (const name of ['fixture.pdf', 'scan.pdf']) await copyFile(join(work, name), join(work, 'batch-input', name));
-await exec('/usr/local/bin/lit', ['batch-parse', join(work, 'batch-input'), join(work, 'batch-output'), '--no-ocr', '--format', 'json', '--quiet'],
+await exec('/usr/bin/lit', ['batch-parse', join(work, 'batch-input'), join(work, 'batch-output'), '--no-ocr', '--format', 'json', '--quiet'],
   { env: cliEnv, timeout: 60_000 });
 assert.ok(JSON.parse(await readFile(join(work, 'batch-output/fixture.json'))).pages.some(page => page.text.includes(marker)));
 assert.ok(JSON.parse(await readFile(join(work, 'batch-output/scan.json'))).pages.every(page => page.text.trim() === ''));
 proof['prepared-liteparse-no-ocr-batch'] = true;
-await exec('/usr/local/bin/lit', ['screenshot', join(work, 'scan.pdf'), '--target-pages', '1', '--output-dir', join(work, 'passive-render'), '--quiet'],
+await exec('/usr/bin/lit', ['screenshot', join(work, 'scan.pdf'), '--target-pages', '1', '--output-dir', join(work, 'passive-render'), '--quiet'],
   { env: cliEnv, timeout: 60_000 });
 assert.equal((await sharp(join(work, 'passive-render/page_1.png')).metadata()).format, 'png');
 proof['prepared-liteparse-screenshot-no-ocr'] = true;
-await assert.rejects(exec('/usr/local/bin/lit', ['is-complex', join(work, 'scan.pdf'), '--quiet'], { env: cliEnv, timeout: 60_000 }), error => {
+await assert.rejects(exec('/usr/bin/lit', ['is-complex', join(work, 'scan.pdf'), '--quiet'], { env: cliEnv, timeout: 60_000 }), error => {
   assert.equal(error.code, 1);
   const page = JSON.parse(error.stdout)[0];
   assert.equal(page.needsOcr, true);
@@ -110,7 +110,7 @@ if (process.geteuid() !== 0) {
     ['search', 'fixture.pdf', 'pymupdf', ['--pattern', marker, '--pages', '1']],
     ['render', 'fixture.pdf', 'pymupdf', ['--pages', '1', '--max-dimension', '500']],
   ]) {
-    const output = await exec('/usr/bin/setpriv', ['--no-new-privs', '--', '/usr/local/bin/opulent-document', operation,
+    const output = await exec('/usr/bin/setpriv', ['--no-new-privs', '--', '/usr/bin/opulent-document', operation,
       '--input', join(work, file), '--workspace', work, '--backend', backend, '--preview-chars', '160', ...extra],
     { env: cliEnv, timeout: 60_000 });
     const result = JSON.parse(output.stdout);
