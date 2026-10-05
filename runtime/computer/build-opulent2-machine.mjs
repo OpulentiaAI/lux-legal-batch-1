@@ -108,7 +108,7 @@ pathlib.Path('/opt/computer-use/opulent2-machine.json').chmod(0o444)
 print('OPULENT2_IMAGE_SHA256='+hashlib.sha256(marker.read_bytes()).hexdigest())
 PY`);
   image = image.runCmd('rm -rf /opt/opulent2-document-build');
-  image = image.setUser('user').runCmd('set -eu; test "$(id -u)" != 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/computer-use/opulent2-machine.json; test ! -w /usr/bin/tre-agrep; /usr/local/bin/agrep --version; setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions --fixtures');
+  image = image.setUser('user').runCmd('set -eu; test "$(id -u)" != 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/computer-use/opulent2-machine.json; test ! -w /usr/bin/tre-agrep; /usr/local/bin/agrep --version; /usr/bin/setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions --fixtures');
   await mkdir(outputDirectory, { recursive: true, mode: 0o700 });
   const logs = [];
   const built = await TemplateImpl.build(image, alias, { apiKey, cpuCount: 2, memoryMB: 4096,

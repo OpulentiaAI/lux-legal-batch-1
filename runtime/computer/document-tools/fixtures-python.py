@@ -28,7 +28,7 @@ import yaml
 root, work = map(pathlib.Path, sys.argv[1:3])
 marker = "OPULENT DOCUMENT FIXTURE"
 tessdata = "/usr/share/tesseract-ocr/5/tessdata"
-env = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": str(work), "LANG": "C.UTF-8",
+env = {"PATH": "/usr/bin:/bin", "HOME": str(work), "LANG": "C.UTF-8",
        "TESSDATA_PREFIX": tessdata}
 proof = {}
 
@@ -149,7 +149,7 @@ with gzip.open(work / "fixture.txt.gz", "wt") as compressed:
     compressed.write(marker)
 for path, name in [(pdf, "rga-poppler-pdf"), (docx, "rga-pandoc-docx"),
                    (work / "fixture.zip", "rga-nested-zip"), (work / "fixture.txt.gz", "rga-gzip")]:
-    contains(run(str(root / "rga/rga"), ["--rga-cache-path=" + str(work / "rga-cache"), marker, path]), name)
+    contains(run("/usr/bin/rga", ["--rga-cache-path=" + str(work / "rga-cache"), marker, path]), name)
 book = epub.EpubBook()
 book.set_identifier("opulent-local-fixture")
 book.set_title(marker)

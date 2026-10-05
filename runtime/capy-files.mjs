@@ -44,11 +44,11 @@ export function createCapyFileTools(ctx) {
         return inspected;
       }
       const count = Math.min(limit, 4);
-      const args = ['opulent-document', 'parse', '--input', file, '--workspace', ctx.workspace, '--backend', document_backend,
+      const args = ['/usr/bin/opulent-document', 'parse', '--input', file, '--workspace', ctx.workspace, '--backend', document_backend,
         '--expected-sha256', inspected.source_sha256, '--preview-chars', '16000', '--character-offset', String(character_offset)];
       if (inspected.format === '.pdf') args.push('--page-start', String(offset), '--page-count', String(count));
       else args.push('--chunk-start', String(offset - 1), '--max-chunks', String(count));
-      const extracted = parse(await ctx.sandbox.commands.run(`command -v opulent-document >/dev/null 2>&1 && exec ${args.map(quote).join(' ')} || { printf '%s\\n' '${JSON.stringify({ error: { code: 'missing_dependency', message: 'The VM document helper opulent-document is unavailable' } })}'; exit 1; }`, options));
+      const extracted = parse(await ctx.sandbox.commands.run(`command -v opulent-document >/dev/null 2>&1 && test "$(command -v opulent-document)" = '/usr/bin/opulent-document' && exec ${args.map(quote).join(' ')} || { printf '%s\\n' '${JSON.stringify({ error: { code: 'missing_dependency', message: 'The VM document helper opulent-document is unavailable at its trusted /usr/bin path' } })}'; exit 1; }`, options));
       const selected = extracted.coverage?.selected_pages;
       return { ...extracted, kind: 'read', document: true, path: file, content: extracted.snippets.map(item => item.text).join('\n'),
         offset, limit: count, requested_limit: limit, offset_semantics: inspected.format === '.pdf' ? '1-based source page' : '1-based logical chunk',

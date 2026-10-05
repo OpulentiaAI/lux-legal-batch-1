@@ -364,7 +364,7 @@ def run_process(command, directory, deadline, output=None, allowed_codes=(0,), n
     stderr_path = os.path.join(directory, 'stderr-' + token + '.log')
     home = os.path.join(directory, 'worker-home')
     os.makedirs(home, mode=0o700, exist_ok=True)
-    env = {'PATH': os.environ.get('PATH', '/usr/local/bin:/usr/bin:/bin'), 'HOME': home, 'TMPDIR': home,
+    env = {'PATH': os.path.join(ROOT, 'node/bin') + ':/usr/bin:/bin', 'HOME': home, 'TMPDIR': home,
            'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'SAL_USE_VCLPLUGIN': 'svp', 'OMP_NUM_THREADS': '1', 'RAYON_NUM_THREADS': '1'}
     process = None
     try:
@@ -423,7 +423,9 @@ def node_worker(request, directory, deadline):
     request = {**request, 'output': os.path.join(directory, token + '.json')}
     request_path = os.path.join(directory, token + '.request.json')
     save_json(request_path, request)
-    node = shutil.which('node')
+    node = os.path.join(ROOT, 'node/bin/node')
+    if not os.path.isfile(node):
+        node = shutil.which('node', path='/usr/bin:/bin')
     if not node:
         fail('missing_dependency', 'Node.js is required for this local document backend')
     return run_process([node, '--max-old-space-size=256', '--disable-wasm-trap-handler', os.path.join(ROOT, 'document.mjs'), '--worker', request_path],
@@ -565,7 +567,7 @@ def execute_python_worker(request):
 def convert_office(input_path, kind, directory, deadline):
     if kind not in {'.docx', '.pptx', '.ppsx', '.xlsx', '.odt', '.ods', '.odp', '.rtf', '.csv'}:
         fail('unsupported', 'This format has no permitted local pagination/render conversion; use anydoc logical chunks')
-    executable = shutil.which('libreoffice') or shutil.which('soffice')
+    executable = shutil.which('libreoffice', path='/usr/bin:/bin') or shutil.which('soffice', path='/usr/bin:/bin')
     if not executable:
         fail('missing_dependency', 'LibreOffice is required for local Office pagination/rendering')
     if kind in ZIP_FORMATS:
@@ -691,7 +693,7 @@ def preview(text, sections, options):
 
 
 def search_text(text, sections, text_path, directory, options, deadline):
-    rga = shutil.which('rga')
+    rga = shutil.which('rga', path='/usr/bin:/bin')
     if not rga:
         fail('missing_dependency', 'ripgrep-all (rga) is not installed')
     if not options.pattern or len(options.pattern) > 512 or any(char in options.pattern for char in '\0\n\r'):
@@ -874,8 +876,8 @@ def operate(options):
 def cli():
     availability = 'Dependency discovery (not a provider health test): PyMuPDF import=%s; anydoc package=%s; liteparse package=%s; rga PATH=%s; LibreOffice PATH=%s; offline English tessdata=%s.' % (
         bool(importlib.util.find_spec('pymupdf')), os.path.isfile(os.path.join(ROOT, 'node_modules/@firecrawl/anydoc/package.json')),
-        os.path.isfile(os.path.join(ROOT, 'node_modules/@llamaindex/liteparse/package.json')), bool(shutil.which('rga')),
-        bool(shutil.which('libreoffice') or shutil.which('soffice')), os.path.isfile('/usr/share/tesseract-ocr/5/tessdata/eng.traineddata'))
+        os.path.isfile(os.path.join(ROOT, 'node_modules/@llamaindex/liteparse/package.json')), bool(shutil.which('rga', path='/usr/bin:/bin')),
+        bool(shutil.which('libreoffice', path='/usr/bin:/bin') or shutil.which('soffice', path='/usr/bin:/bin')), os.path.isfile('/usr/share/tesseract-ocr/5/tessdata/eng.traineddata'))
     parser = argparse.ArgumentParser(prog='opulent-document', description='Bounded local parse/search/render. Complete artifacts stay private in the VM; stdout contains only selected snippets and recoverable hashes/offsets. No remote sources or cloud OCR.',
         epilog='Hard bounds: input 32 MiB; container expansion 64 MiB / 2000 entries / 200:1 ratio; source 1000 pages; selection 16 pages; render/OCR 4 pages; preview 16000 Unicode code points; logical chunks 4000 characters; 100 search matches; render edge 2560 pixels / 4 million pixels / 5 MiB per image; workers 120 seconds / 256 files / 96 MiB disk. PDF pagination and all rendering need PyMuPDF. Native anydoc office/ODF/EPUB/CSV parsing has logical chunks, not invented page numbers. Office pagination additionally needs local LibreOffice; active objects/external relationships are rejected. rga searches the private extraction with archive adapters disabled. Workers require Linux libseccomp and run without credentials or IP networking. ' + availability)
     parser.add_argument('operation', choices=['parse', 'search', 'render'])
