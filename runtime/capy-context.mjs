@@ -8,6 +8,22 @@ const BOUNDS = ['maxInputChars', 'maxSummaryInputChars', 'maxSummaryChars', 'max
 const SUMMARY_ATTEMPTS = 2;
 const FALLBACK_VERSION = 'opulent2-file-backed-context-v1';
 const FALLBACK_REASONS = new Set(['forbidden_tool_call', 'truncated', 'invalid_message', 'empty', 'oversized', 'input_oversized']);
+const SUMMARY_VIEW_VERSION = 'opulent2-summary-evidence-view-v1';
+
+function summaryEvidenceView(message) {
+  if (message.role !== 'assistant') return message;
+  const projected = { ...message };
+  if (Array.isArray(message.reasoning_details)) projected.reasoning_details = message.reasoning_details.map(detail => {
+    if (detail?.type !== 'reasoning.encrypted' || detail.format !== 'openai-responses-v1' || typeof detail.data !== 'string') return detail;
+    return { ...detail, data: '[Opaque provider reasoning omitted from summary text; exact bytes remain in the original transcript.]',
+      data_sha256: createHash('sha256').update(detail.data).digest('hex'), data_characters: detail.data.length };
+  });
+  if (message.provider_metadata && typeof message.provider_metadata === 'object' && !Array.isArray(message.provider_metadata)) {
+    const { gateway, ...metadata } = message.provider_metadata;
+    projected.provider_metadata = metadata;
+  }
+  return projected;
+}
 
 function digest(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -122,7 +138,7 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
   signal?.throwIfAborted();
   if (JSON.stringify(messages).length <= policy.maxInputChars) return { messages, checkpoint, usage: {}, compacted: false };
   const summaryRepairPolicy = config.instructionProfile === 'opulent2-fixed-v1' ? {
-    version: 'opulent2-summary-repair-v2', attempts: SUMMARY_ATTEMPTS,
+    version: 'opulent2-summary-repair-v3', attempts: SUMMARY_ATTEMPTS, summaryView: SUMMARY_VIEW_VERSION,
     preferredMaximumCharacters: Math.max(1, Math.floor(policy.maxSummaryChars / 2)),
     targetCharacters: Math.max(1, Math.floor(policy.maxSummaryChars / 4)),
     instruction: 'Preserve decisive alternatives, conditions, explicit conflicts and uncertainty. Unknown facts must remain unknown, not become negative facts. Prefer evidence references and unresolved source questions to invented resolutions.',
@@ -138,6 +154,7 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
       + (summaryRepairPolicy ? ' Aim for targetCharacters and prefer staying within preferredMaximumCharacters. These are preferences, not hard limits; maximumCharacters remains the hard limit. Preserve decisive alternatives, conditions, conflicts and uncertainty even if doing so exceeds the preference.' : '') } : null,
   });
   const emptyBatch = { previousSummary: null, transcript: [] };
+  const summaryView = summaryRepairPolicy ? { version: SUMMARY_VIEW_VERSION, project: summaryEvidenceView } : undefined;
   const inputChars = value => JSON.stringify({ role: 'user', content: JSON.stringify(value) }).length;
   const summaryInputLimit = policy.maxSummaryInputChars - (inputChars({ ...emptyBatch, capySummaryContract: contract('forbidden_tool_call') }) - inputChars(emptyBatch));
   const effectivePolicy = { ...policy, maxSummaryInputChars: summaryInputLimit };
@@ -184,7 +201,8 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
   const latestUser = groups.findLastIndex(group => group.role === 'user');
   const prefixGroup = groups.findIndex(group => group.end === checkpoint?.prefixLength);
   const provenance = { version: 1, ...Object.fromEntries(BOUNDS.map(name => [name, name === 'recentGroups' ? checkpoint?.provenance?.recentGroups : effectivePolicy[name]])),
-    policyFingerprintDigest: policy.policyFingerprint ? digest(policy.policyFingerprint) : null, modelDigest: digest(config.model),
+    policyFingerprintDigest: policy.policyFingerprint ? digest(policy.policyFingerprint) : null,
+    ...(summaryView ? { summaryViewDigest: digest(summaryView.version) } : {}), modelDigest: digest(config.model),
     policyDigest: digest({ allowedTools: config.allowedTools, initialTools: config.initialTools, providerOnly: config.providerOnly, corpusWorkspace: config.corpusWorkspace, systemPrompt: config.systemPrompt }) };
   const compatible = checkpoint?.version === 1 && checkpoint.capyPolicyDigest === policyDigest
     && prefixGroup >= 0 && prefixGroup < groups.length - 1
@@ -221,7 +239,7 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
   let exhausted;
   let exhaustedReason;
   try {
-    const prepared = await prepareModelContext({ messages: projected, checkpoint: reusable, config: { ...config, contextCompaction: { ...effectivePolicy, recentGroups } }, model: async (input, request) => {
+    const prepared = await prepareModelContext({ messages: projected, checkpoint: reusable, summaryView, config: { ...config, contextCompaction: { ...effectivePolicy, recentGroups } }, model: async (input, request) => {
       let reason;
       for (let attempt = 0; attempt < SUMMARY_ATTEMPTS; attempt++) {
         signal?.throwIfAborted();

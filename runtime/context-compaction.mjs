@@ -54,17 +54,19 @@ function groupsOf(messages) {
   return { offset, groups };
 }
 
-function summaryMessages(previous, batch) {
+function summaryMessages(previous, batch, summaryView) {
   return [
     { role: 'system', content: SUMMARY_INSTRUCTIONS },
-    { role: 'user', content: JSON.stringify({ previousSummary: previous, transcript: batch }) },
+    { role: 'user', content: JSON.stringify({ previousSummary: previous, transcript: summaryView ? batch.map(summaryView.project) : batch }) },
   ];
 }
 
-export async function prepareModelContext({ messages, checkpoint, config, model, signal }) {
+export async function prepareModelContext({ messages, checkpoint, config, model, signal, summaryView }) {
   if (!Array.isArray(messages)) throw new Error('Context messages must be an array');
   const bounds = settings(config);
   if (!bounds) return { messages, checkpoint, usage: {}, compacted: false };
+  if (summaryView !== undefined && (!summaryView || typeof summaryView.version !== 'string' || !summaryView.version
+    || typeof summaryView.project !== 'function')) throw new Error('Context summary view requires a version and projector');
   signal?.throwIfAborted();
   if (JSON.stringify(messages).length <= bounds.maxInputChars) return { messages, checkpoint, usage: {}, compacted: false };
   if (typeof model !== 'function') throw new Error('Context compaction requires an injected model callable');
@@ -74,7 +76,8 @@ export async function prepareModelContext({ messages, checkpoint, config, model,
   const keepFrom = Math.max(0, groups.length - bounds.recentGroups);
   if (!keepFrom) throw new Error('Context exceeds maxInputChars with no older coherent groups to compact');
   const prefixEnd = groups[keepFrom].start;
-  const provenance = { version: VERSION, ...Object.fromEntries(Object.entries(bounds).filter(([key]) => key !== 'model')), modelDigest: digest(bounds.model), policyDigest: digest({
+  const provenance = { version: VERSION, ...Object.fromEntries(Object.entries(bounds).filter(([key]) => key !== 'model')),
+    ...(summaryView ? { summaryViewDigest: digest(summaryView.version) } : {}), modelDigest: digest(bounds.model), policyDigest: digest({
     allowedTools: config.allowedTools, initialTools: config.initialTools, providerOnly: config.providerOnly,
     corpusWorkspace: config.corpusWorkspace, systemPrompt: config.systemPrompt,
   }) };
@@ -97,7 +100,7 @@ export async function prepareModelContext({ messages, checkpoint, config, model,
       let next = cursor;
       let input;
       while (next < keepFrom) {
-        const candidate = summaryMessages(summary, messages.slice(groups[cursor].start, groups[next].end));
+        const candidate = summaryMessages(summary, messages.slice(groups[cursor].start, groups[next].end), summaryView);
         if (JSON.stringify(candidate).length > bounds.maxSummaryInputChars) break;
         input = candidate;
         next++;
