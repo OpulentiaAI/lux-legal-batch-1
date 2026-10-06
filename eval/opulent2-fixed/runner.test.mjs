@@ -8,7 +8,7 @@ import { MODEL, NATIVE_MODEL, ENDPOINT, PROFILE, PROVING_TASKS, STATE_POLICY, va
 import { trackedSandboxProvider, verifyOwnedAbsence } from './cleanup.mjs'
 import { aggregateNative, attemptContext, createNativeCapture, readCapture, reconcileNative, wireMeasurements } from './native.mjs'
 import { digest, immutable, LAUNCH, privateDirectory, sha } from './io.mjs'
-import { runExperiment, runSequential, seedCheckpoint } from './runner.mjs'
+import { main, runExperiment, runSequential, seedCheckpoint } from './runner.mjs'
 import { freezeComparison, publicFingerprint, requireProvingAcceptance, validateFreshSelection } from './tasks.mjs'
 import { validateInitialAssembly, validatePreparedReceipt, verifyCarryForward, verifyNestedWork } from './validate.mjs'
 import { reconcileHarvey } from './live.mjs'
@@ -91,6 +91,32 @@ test('preparation and wrong release bytes cannot authorize native execution', ()
   assert.throws(() => requireLiveAuthorization(file, release, unapproved.path), /cannot authorize/)
   const wrong = immutable(join(directory(), 'authorization.json'), { ...approval, launchReady: true, releaseSha256: hash('different bytes') })
   assert.throws(() => requireLiveAuthorization(file, release, wrong.path))
+})
+
+test('optional host-only stage timing uses the same release authorization guard and rejects unknown launch flags', async () => {
+  const release = releaseFixture()
+  const file = immutable(join(directory(), 'release.json'), release)
+  const authorization = immutable(join(directory(), 'authorization.json'), { version: 'opulent2-fixed-live-authorization-v1',
+    issuer: 'parent', stage: release.stage, runId: release.runId, releaseSha256: file.sha256, launchReady: false,
+    reference: 'Synthetic offline unapproved fixture, never live authorization' })
+  for (const flags of [[], ['--provision-stage-timing']]) {
+    await assert.rejects(main(['--launch', file.path, authorization.path, ...flags]), /cannot authorize/)
+  }
+  for (const flags of [['--provision-stage-timing=1'], ['--unknown'], ['--provision-stage-timing', '--unknown']]) {
+    await assert.rejects(main(['--launch', file.path, authorization.path, ...flags]), /Usage:/)
+  }
+})
+
+test('changing selected stage diagnostics cannot resume a checkpoint under different run provenance', () => {
+  const release = releaseFixture()
+  const base = { release }
+  const selected = { ...base, provisionStageTiming: { version: 'opulent2-provision-stage-timing-v1', enabled: true,
+    visibility: 'host-only monotonic stage events; not model observation or coverage acceptance',
+    unavailable: 'Missing records or unmatched begin events remain diagnostic gaps, never zero elapsed or completed stages' } }
+  for (const [first, next] of [[base, selected], [selected, base]]) {
+    assert.throws(() => seedCheckpoint(next, seedCheckpoint(first)), /resume rejected/)
+  }
+  assert.equal(seedCheckpoint(selected, seedCheckpoint(selected)).provenance.provisionStageTiming.enabled, true)
 })
 
 function receiptFixture(release, messages) {

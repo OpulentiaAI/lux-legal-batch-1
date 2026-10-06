@@ -4,13 +4,16 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import Ajv from 'ajv';
 import { createCapyExecutor } from '../../runtime/capy-execute.mjs';
-import { CAPY_TOOL_DEFINITIONS } from '../../runtime/capy-policy.mjs';
-import { OPULENT2_TOOL_DEFINITIONS } from '../../runtime/opulent2-policy.mjs';
-import { persistCapyResult, recoverCapyResultBacking, OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs';
+import { CAPY_TOOL_DEFINITIONS, capyInitialToolDefinitions, capyCodemodeListing } from '../../runtime/capy-policy.mjs';
+import { OPULENT2_TOOL_DEFINITIONS, OPULENT2_TOOL_POLICY } from '../../runtime/opulent2-policy.mjs';
+import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs';
+import { capyResultChars, persistCapyResult, recoverCapyResultBacking, OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs';
 import { createStore } from '../../runtime/store.mjs';
 import { observed } from './validate.mjs';
 
 const material = readFileSync(new URL('./coverage-documents/materials/connected-runtime.txt', import.meta.url), 'utf8');
+const plan = readFileSync(new URL('./coverage-documents/materials/coverage-plan.md', import.meta.url), 'utf8');
+const opening = JSON.parse(plan.match(/### First response\n[\s\S]*?```json\n([\s\S]*?)\n```/)[1]);
 const phases = new Map([...material.matchAll(/^### ([a-z-]+)\n```js\n([\s\S]*?)\n```/gm)].map(match => [match[1], match[2]]));
 const ajv = new Ajv({ strict: false, allErrors: true });
 const validators = new Map();
@@ -41,6 +44,141 @@ function transmissions(h, outputs) {
   return [{ row: { phase: 'answerer', sessionId: h.id, usageUnknown: false }, prepared: {
     messages: outputs.map(output => ({ role: 'tool', content: JSON.stringify(output) })) } }];
 }
+
+test('public opening batches the opener and all independent complete observations using real initial definitions and codemode paths', () => {
+  const task = JSON.parse(readFileSync(new URL('./coverage-documents/task.json', import.meta.url), 'utf8'));
+  const initial = capyInitialToolDefinitions(OPULENT2_TOOL_DEFINITIONS, OPULENT2_TOOL_POLICY.initialTools);
+  const listing = capyCodemodeListing(OPULENT2_TOOL_DEFINITIONS, OPULENT2_TOOL_POLICY.initialTools);
+  assert.equal(initial.length, 15);
+  assert(initial.some(definition => definition.name === 'subagent_create'));
+  assert(initial.every(definition => !['skill_list', 'skill_read', 'task_create', 'subagent_start'].includes(definition.name)));
+  for (const call of opening) {
+    const definition = initial.find(definition => definition.name === call.name);
+    assert(definition, `${call.name} is not initially visible`);
+    const validate = ajv.compile(definition.inputSchema);
+    assert(validate(call.arguments), `${call.name}: ${ajv.errorsText(validate.errors)}`);
+  }
+  assert.equal(opening[0].name, 'message_user');
+  assert.equal(opening[0].arguments.state, 'working');
+  assert.deepEqual(opening.filter(call => call.name === 'read').map(call => call.arguments), [
+    { path: '/tmp/broad-legal-workspace/task/materials/coverage-plan.md' },
+    { path: '/tmp/broad-legal-workspace/task/materials/create-fixtures.txt' },
+    { path: '/tmp/broad-legal-workspace/task/materials/connected-runtime.txt' },
+    { path: '/tmp/broad-legal-workspace/task/task.json' },
+  ]);
+  assert.match(listing, /skill\.list\(\{\}\)/);
+  assert.match(listing, /skill\.read\(\{name: string\}\)/);
+  assert.match(listing, /task\.create\(\{tasks: \{\}\[\]\}\)/);
+  assert.match(listing, /subagent\.start\(\{paths: string\[\], machine: "fresh"\}\)/);
+  assert.deepEqual(opening.filter(call => call.name === 'execute').map(call => call.arguments.code), [
+    phases.get('skills'),
+    'return await tools.skill.read({name: "opulent2-child-sessions"});',
+    'return await tools.skill.read({name: "opulent2-data-analysis"});',
+    'return await tools.skill.read({name: "opulent2-computer-use"});',
+    'return await describe("task.create");',
+    'return await describe("capy.computer", "actions");',
+  ]);
+  const commands = opening.filter(call => call.name === 'bash').map(call => call.arguments.command);
+  assert.match(commands[0], /PATH=\/usr\/bin:\/bin command -v/);
+  for (const utility of ['opulent-document', 'libreoffice', 'pdftotext', 'tesseract', 'unzip', 'rg']) assert(commands[0].includes(utility));
+  assert.deepEqual(commands.slice(1), [
+    '/usr/bin/opulent-document --help', '/usr/bin/opulent-document parse --help',
+    '/usr/bin/opulent-document search --help', '/usr/bin/opulent-document render --help', '/usr/bin/rga --help',
+  ]);
+  assert(commands.every(command => !/\b(?:head|tail|cut|sed|install|curl|wget)\b/.test(command)));
+  const helper = readFileSync(new URL('../../runtime/document-tools/document.py', import.meta.url), 'utf8');
+  assert.match(helper, /choices=\['parse', 'search', 'render'\]/);
+  assert.match(helper, /Dependency discovery \(not a provider health test\)/);
+  assert.match(task.instructions, /SAME FIRST assistant response/);
+  for (const code of opening.filter(call => call.name === 'execute').map(call => call.arguments.code)) {
+    assert(task.instructions.includes(code) || /skill\.read/.test(code));
+  }
+  for (const command of commands.slice(1)) assert(task.instructions.includes(command));
+  assert.match(task.instructions, /no lone-opener, materials-only or schema-only response/);
+  assert.match(plan, /completed input BEFORE using their workflow: do not append creation, fixture generation or pixels to this first response/);
+  assert.match(plan, /checkpoint\/branch program FIRST in the next assistant response/);
+  assert.match(plan, /parsing still waits for observed fixture success/);
+  assert.match(plan, /actual declared mounted memory index\/relevant existing topics before using or changing notes/);
+  assert.match(plan, /once fully observed, that phase is satisfied and must not be replayed/);
+  assert.match(plan, /All other programs, original returns and later dependency\/recovery gates remain mandatory/);
+});
+
+test('synthetic offline opening individually delivers full source guides and observations before schema-valid useful creation; bundled guides are not consultation', async t => {
+  const { skills } = opulent2SkillRegistry();
+  const guides = skills.map(skill => ({ ...skill, synthetic: true, content: readFileSync(new URL(`../../runtime/skills/${skill.name}/SKILL.md`, import.meta.url), 'utf8') }));
+  const sources = new Map([
+    ['/tmp/broad-legal-workspace/task/materials/coverage-plan.md', plan],
+    ['/tmp/broad-legal-workspace/task/materials/connected-runtime.txt', material],
+    ['/tmp/broad-legal-workspace/task/materials/create-fixtures.txt', readFileSync(new URL('./coverage-documents/materials/create-fixtures.txt', import.meta.url), 'utf8')],
+    ['/tmp/broad-legal-workspace/task/task.json', readFileSync(new URL('./coverage-documents/task.json', import.meta.url), 'utf8')],
+  ]);
+  const files = new Map(), taskId = `synthetic-task-${randomUUID()}`;
+  let inputs = [], creations = 0;
+  const h = synthetic(t, {
+    message_user: args => { assert.equal(args.state, 'working'); return { audience: 'user', ...args, synthetic: true }; },
+    read: args => {
+      assert(sources.has(args.path));
+      const content = sources.get(args.path);
+      assert(content.length < 60000 && content.split('\n').length < 2000);
+      return { kind: 'read', path: args.path, content, next_offset: null, next_character_offset: null, synthetic: true };
+    },
+    skill_list: () => ({ installed: skills, unavailable: [], synthetic: true }),
+    skill_read: args => { const guide = guides.find(guide => guide.name === args.name); assert(guide); return guide; },
+    bash: args => { assert(opening.some(call => call.name === 'bash' && call.arguments.command === args.command)); return {
+      exit_code: 0, stdout: `Synthetic offline full command-output fixture for ${args.command}\nComplete synthetic tail\n`, stderr: '', synthetic: true,
+    }; },
+    task_create: () => {
+      for (const call of h.calls) assert(observed({ session_id: h.id, returned_result: call.returned_result }, inputs));
+      assert(inputs.length, 'Creation requires a completed model input containing the opening observations');
+      return { tasks: [{ id: taskId, status: 'pending' }], synthetic: true };
+    },
+    subagent_create: args => ({ tasks: [{ path: String(++creations), status: args.start ? 'running' : 'draft' }], rejected: [], synthetic: true }),
+    subagent_start: args => { assert.deepEqual(args, { paths: ['2'], machine: 'fresh' }); return { tasks: [{ path: '2', status: 'running' }], rejected: [], synthetic: true }; },
+  }, {}, { workspace: '/synthetic-not-live', config: { instructionProfile: 'opulent2-fixed-v1', opulent2ResultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY.version },
+    ensureSandbox: async () => {}, sandbox: { files: { write: async (path, content) => files.set(path, content), read: async path => files.get(path) } } });
+  h.ctx.persistCapyResult = (value, limit) => persistCapyResult(h.ctx, value, limit);
+  const outputs = [];
+  for (const [index, call] of opening.entries()) {
+    const result = call.name === 'execute' ? await h.executor.execute(call.arguments)
+      : await h.ctx.invoke(call.name, call.arguments, { capyRunId: 'synthetic-offline-native-opening', capyCallId: index });
+    const visible = await persistCapyResult(h.ctx, result, capyResultChars(h.ctx, call.name));
+    assert.notEqual(visible.kind, 'file_backed_result', call.arguments.code ?? call.name);
+    if (call.name === 'execute') assert.equal(visible.status, 'completed');
+    outputs.push(visible);
+  }
+  assert.equal(files.size, 0);
+  assert.equal(h.calls.filter(call => call.name === 'skill_list').length, 1);
+  assert.equal(h.calls.filter(call => call.name === 'skill_read').length, 3);
+  assert(!h.calls.some(call => ['task_create', 'subagent_create', 'subagent_start', 'computer', 'browser'].includes(call.name)));
+  for (const guide of guides) assert(outputs.some(output => JSON.stringify(output.value) === JSON.stringify(guide)));
+  const descriptions = outputs.filter(output => output.value?.inputSchema || output.value?.key === 'actions');
+  assert.equal(descriptions.length, 2);
+  assert.deepEqual(descriptions[0].value.inputSchema, OPULENT2_TOOL_DEFINITIONS.task_create.inputSchema);
+  assert.deepEqual(descriptions[1].value.schema, OPULENT2_TOOL_DEFINITIONS.computer.inputSchema.properties.actions);
+  assert(h.calls.every(call => !observed({ session_id: h.id, returned_result: call.returned_result }, inputs)));
+  inputs = transmissions(h, outputs);
+  assert(h.calls.every(call => observed({ session_id: h.id, returned_result: call.returned_result }, inputs)));
+  const unknown = inputs.map(input => ({ ...input, row: { ...input.row, usageUnknown: true } }));
+  assert(h.calls.every(call => !observed({ session_id: h.id, returned_result: call.returned_result }, unknown)));
+  const bootstrap = [...plan.matchAll(/```js\n([\s\S]*?)\n```/g)][2][1];
+  const created = await h.executor.execute({ code: bootstrap });
+  assert.equal(created.status, 'completed');
+  assert.equal(created.value.checkpoint.tasks[0].id, taskId);
+  assert.equal(created.value.delegation.tasks[0].status, 'running');
+  assert.equal(created.value.controlStart.tasks[0].status, 'running');
+  assert.deepEqual(h.calls.slice(-4).map(call => call.name), ['task_create', 'subagent_create', 'subagent_create', 'subagent_start']);
+  const calls = h.calls.length;
+  h.store.put('capy_bindings', h.id, { bindings: { openingGuides: guides } });
+  const bundled = await h.executor.execute({ code: 'return openingGuides;' });
+  assert.equal(bundled.kind, 'file_backed_result');
+  const records = h.calls.filter(call => call.name === 'skill_read').map(call => ({ session_id: h.id, returned_result: call.returned_result }));
+  assert(records.every(record => !observed(record, transmissions(h, [bundled]))));
+  const recovered = await recoverCapyResultBacking(h.ctx, bundled);
+  assert.deepEqual(recovered.value, guides);
+  const fullRead = { kind: 'read', path: bundled.output_path, content: files.get(bundled.output_path), next_offset: null, next_character_offset: null };
+  assert(records.every(record => observed(record, transmissions(h, [fullRead]))));
+  assert.equal(h.calls.length, calls);
+});
 
 test('public plan links the early connected recipe without turning pending phases or unseen outcomes into completion', () => {
   const plan = readFileSync(new URL('./coverage-documents/materials/coverage-plan.md', import.meta.url), 'utf8');

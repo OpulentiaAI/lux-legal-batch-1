@@ -6,9 +6,9 @@ The 300-second host ceiling includes preflight and VM preparation. The 250-reque
 
 Reuse source/schema-checked recipes; describe only genuinely missing shapes. Preserve complete returned results rather than replacing them with counts or summaries. Observe dependencies in completed answerer inputs; defer incomplete dependencies only.
 
-1. Keep the required opening `message_user` declaration. Directly read this plan, `materials/create-fixtures.txt` AND `materials/connected-runtime.txt` together, completely and individually.
-2. Batch COMPLETE guides, main/parse/search/render/rga help and missing schemas as separate `execute` tool calls in the same assistant response. For startup, read only the child-session guide and the schemas needed to create and start that child as prerequisites; still read each completely before using its workflow. Observe the complete data-analysis guide and actual prepared CLI help before fixture generation or the first parse. Start the useful child before fixture generation or document parsing.
-3. Generate the supplied fixtures after the checkpoint/branch program. Explicitly start both fresh-VM preparations early. Also run `skills`/`notes` after existing-topic reads, then `processes`, `process-start-readback`, `process-wait` LAST: durable wait ends the turn.
+1. Keep the required opening `message_user` declaration. Directly read this plan, `materials/create-fixtures.txt` AND `materials/connected-runtime.txt` together, completely and individually. The SAME FIRST assistant response also includes the public task read, actual skill inventory, all three complete guides, utility inventory, all five complete helps and genuinely missing next schemas. No lone-opener, materials-only or schema-only response; use the literal opening calls below, not an ahead-of-time planning round.
+2. Batch COMPLETE guides, main/parse/search/render/rga help and missing schemas as separate `execute` tool calls in the same assistant response. For startup, read only the child-session guide and the schemas needed to create and start that child as prerequisites; still read each completely before using its workflow. Observe the complete data-analysis guide and actual prepared CLI help before fixture generation or the first parse. Start the useful child before fixture generation or document parsing. Once those required complete returns have actually reached the model, run the checkpoint/branch program FIRST in the next assistant response. The other opening observations are independent, not extra child-creation prerequisites. Fixture generation may follow that program as a separate call in that response after both actual starts; parsing still waits for observed fixture success. Do not insert another help/status/planning round.
+3. Generate the supplied fixtures after the checkpoint/branch program. Explicitly start both fresh-VM preparations early. Also run `skills`/`notes` after existing-topic reads, then `processes`, `process-start-readback`, `process-wait` LAST: durable wait ends the turn. Reuse the complete opening `skills` outcome; the existing-topic reads still precede `notes`.
 4. After fixture success, return the six-helper batch/original selectors; run `early`, `corpus`, note readbacks, `process-resume` after wake and steering once while pending. Execute independent task, scratch, corpus, persistence and operation work while useful delegation runs.
 5. Batch selected-page checkpoint/report updates WITH document reads, `checkpoint`, `scratch`, `corpus-approximate`, `drive-cleanup`, `process-control` and `preview-html`/server. Build concise `coverage.md` from observed receipts: no manual hashes/speculative success. `approximate-search` follows scratch reread; lifecycle/useful/session checks follow callbacks.
 6. Then connect the observed corpus excerpt and actual rendered identity to the image workflow. Observe preview/server, browser DOM+screenshot and computer pixels; reopen the decisive source next RESPONSE. Close only when all required observations are actually complete. No working-only narration/report-only round before independent work.
@@ -16,6 +16,38 @@ Reuse source/schema-checked recipes; describe only genuinely missing shapes. Pre
 Incomplete-startup recovery ONLY: After the first selected-page result and its actual checkpoint update, read `materials/connected-runtime.txt` via actual offsets before dependent phases. Never duplicate a complete read; a pending child, unread backing, successful render without pixels, or provisional checkpoint cannot justify a completed report.
 
 ## Connected startup
+
+### First response
+
+These are separate native `name`/`arguments` calls in ONE assistant response, not a new batch API or an array to submit to `execute`. The initial definitions already expose the full `message_user`, `read`, `bash` and `subagent_create` schemas. The declared codemode listing supplies `skill.list({})`, `skill.read({name: string})` and `subagent.start({paths: string[], machine: "fresh"})`; no guessed aliases or redundant discovery of those shapes. Describe `task.create`'s missing task-object shape and the computer guide's required action shape individually. Omit a describe only when its exact required schema is already observed; changed schemas win. Add any genuinely missing next shape as a separate call in this same response, not a catalogue dump.
+
+```json
+[
+  {"name":"message_user","arguments":{"state":"working","text":"I’m checking the public coverage materials, installed guides and prepared tool interfaces, then starting the independent source check."}},
+  {"name":"read","arguments":{"path":"/tmp/broad-legal-workspace/task/materials/coverage-plan.md"}},
+  {"name":"read","arguments":{"path":"/tmp/broad-legal-workspace/task/materials/create-fixtures.txt"}},
+  {"name":"read","arguments":{"path":"/tmp/broad-legal-workspace/task/materials/connected-runtime.txt"}},
+  {"name":"read","arguments":{"path":"/tmp/broad-legal-workspace/task/task.json"}},
+  {"name":"execute","arguments":{"code":"return await tools.skill.list({});"}},
+  {"name":"execute","arguments":{"code":"return await tools.skill.read({name: \"opulent2-child-sessions\"});"}},
+  {"name":"execute","arguments":{"code":"return await tools.skill.read({name: \"opulent2-data-analysis\"});"}},
+  {"name":"execute","arguments":{"code":"return await tools.skill.read({name: \"opulent2-computer-use\"});"}},
+  {"name":"execute","arguments":{"code":"return await describe(\"task.create\");"}},
+  {"name":"execute","arguments":{"code":"return await describe(\"capy.computer\", \"actions\");"}},
+  {"name":"bash","arguments":{"command":"for utility in opulent-document pdftotext pdftoppm pdfinfo pandoc libreoffice soffice tesseract rga rg grep unzip tar file; do printf '%s: ' \"$utility\"; PATH=/usr/bin:/bin command -v \"$utility\" || printf '%s\\n' 'unavailable'; done","description":"Observing prepared document office PDF OCR archive and text utilities"}},
+  {"name":"bash","arguments":{"command":"/usr/bin/opulent-document --help","description":"Reading complete prepared document help"}},
+  {"name":"bash","arguments":{"command":"/usr/bin/opulent-document parse --help","description":"Reading complete prepared parse help"}},
+  {"name":"bash","arguments":{"command":"/usr/bin/opulent-document search --help","description":"Reading complete prepared search help"}},
+  {"name":"bash","arguments":{"command":"/usr/bin/opulent-document render --help","description":"Reading complete prepared render help"}},
+  {"name":"bash","arguments":{"command":"/usr/bin/rga --help","description":"Reading complete prepared ripgrep-all help"}}
+]
+```
+
+Return each whole original separately, never a combined guide/help array, selected fields or truncated shell preview. An oversized individual result is pending until its actual backing/offsets are fully read and hash-validated; a return inside a program is not yet model consultation. Inspect inventory unavailability and all failures. The model must receive the complete applicable guide, source and schema returns in a completed input BEFORE using their workflow: do not append creation, fixture generation or pixels to this first response. Recover only missing prerequisites; unrelated pending observations do not postpone useful creation. Read the actual declared mounted memory index/relevant existing topics before using or changing notes; use observed paths, not guessed mounts. The opening inventory call is connected-runtime's unchanged `skills` program: once fully observed, that phase is satisfied and must not be replayed just because A lists it. All other programs, original returns and later dependency/recovery gates remain mandatory.
+
+### After opening observations
+
+The following guide/schema programs are recovery examples only when the opening did not already return them completely; they are not additional discovery turns.
 
 Also return `opulent2-data-analysis` and `opulent2-computer-use` separately:
 ```js

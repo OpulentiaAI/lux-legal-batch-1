@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
-import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
+import { appendFileSync, closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readdirSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { MODEL, PROFILE, verifyCommittedRelease } from './contract.mjs'
@@ -17,6 +17,52 @@ import { verifyToolCoverage } from './coverage-verification.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
 
 const safe = value => JSON.parse(sanitize(Buffer.from(JSON.stringify(value))))
+
+export function createProvisionStageRecorder({ directory, context, registry, releaseSha256, sourceBindingsSha256 }) {
+  privateDirectory(directory)
+  assert(/^[a-f0-9]{64}$/.test(releaseSha256) && /^[a-f0-9]{64}$/.test(sourceBindingsSha256))
+  assert(context.arm === 'opulent2' && ['preflight', 'answerer'].includes(context.phase))
+  assert(Number.isSafeInteger(context.attempt) && context.attempt >= 0)
+  assert([context.taskId, context.attemptId].every(value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value)))
+  const binding = { releaseSha256, sourceBindingsSha256, arm: 'opulent2', taskId: context.taskId,
+    attempt: context.attempt, attemptId: context.attemptId, phase: context.phase }
+  const stages = new Map()
+  return event => {
+    assert(['sandbox-create', 'sandbox-reconnect', 'corpus-material-staging', 'skill-staging', 'skill-install',
+      'corpus-protection', 'prepared-skill-verification', 'authenticated-machine-readiness'].includes(event.stage))
+    assert(['create', 'reconnect'].includes(event.operation))
+    assert(typeof event.stageId === 'string' && /^[a-f0-9-]{36}$/.test(event.stageId))
+    assert(Number.isFinite(event.startedAtMs) && event.startedAtMs >= 0)
+    assert(['started', 'completed', 'failed'].includes(event.status))
+    if (event.status === 'started') {
+      assert(!stages.has(event.stageId))
+      assert(event.endedAtMs === null && event.elapsedMs === null && event.errorClass === null)
+    } else {
+      const begin = stages.get(event.stageId)
+      assert(begin && begin.status === 'started' && begin.stage === event.stage && begin.operation === event.operation && begin.startedAtMs === event.startedAtMs)
+      assert(begin.sandboxId === null || begin.sandboxId === event.sandboxId)
+      assert(Number.isFinite(event.endedAtMs) && event.endedAtMs >= event.startedAtMs && event.elapsedMs === event.endedAtMs - event.startedAtMs)
+      assert(event.status === 'failed' ? ['AggregateError', 'TypeError', 'RangeError', 'SyntaxError', 'ReferenceError', 'URIError', 'EvalError', 'Error', 'NonError'].includes(event.errorClass) : event.errorClass === null)
+    }
+    assert(event.sandboxId !== null || event.stage === 'sandbox-create' && event.status !== 'completed')
+    assert(event.sandboxId === null || typeof event.sandboxId === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(event.sandboxId))
+    const owned = event.sandboxId === null ? null : registry.find(row => row.sandboxId === event.sandboxId && row.source === 'actual factory creation' &&
+      row.bindingSha256 === releaseSha256 && row.arm === binding.arm && row.taskId === binding.taskId && row.attempt === binding.attempt &&
+      row.attemptId === binding.attemptId && row.phase === binding.phase)
+    assert(event.sandboxId === null || owned, 'Provision diagnostics require actual factory ownership')
+    const row = { version: 'opulent2-provision-stage-timing-v1', ...binding, source: owned?.source ?? null, stageId: event.stageId,
+      stage: event.stage, operation: event.operation, sandboxId: owned?.sandboxId ?? null, startedAtMs: event.startedAtMs,
+      endedAtMs: event.endedAtMs, elapsedMs: event.elapsedMs, status: event.status, errorClass: event.errorClass }
+    privateDirectory(directory)
+    const fd = openSync(join(directory, 'provision-stage-timing.jsonl'), constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW, 0o600)
+    try {
+      const stat = fstatSync(fd)
+      assert(stat.isFile() && stat.uid === process.getuid() && (stat.mode & 0o777) === 0o600 && stat.nlink === 1)
+      appendFileSync(fd, `${JSON.stringify(row)}\n`)
+    } finally { closeSync(fd) }
+    stages.set(event.stageId, row)
+  }
+}
 
 export async function runWithLivePreflight({ startupPolicy = OPULENT2_SERIAL_STARTUP, preflight, execute }) {
   assert([OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(startupPolicy), 'Unknown startup policy')
@@ -109,7 +155,8 @@ export async function loadRuntimeModules(release) {
     importAt(release.stateContract.module), import('e2b')])
 }
 
-export async function launch({ release, file, authorization, source }) {
+export async function launch({ release, file, authorization, source, provisionStageTiming = false }) {
+  assert.equal(typeof provisionStageTiming, 'boolean')
   const luna = lunaPolicy(release.experiment)
   const startupPolicy = release.startupPolicy === undefined ? OPULENT2_SERIAL_STARTUP : release.startupPolicy
   const overlapStartup = startupPolicy === OPULENT2_OVERLAP_STARTUP
@@ -145,6 +192,9 @@ export async function launch({ release, file, authorization, source }) {
     attemptPolicy: 'Unfinished-only resume; failed attempts cannot advance the successful memory/Drive chain; preserve failures without semantic score penalties',
     schedulingPolicy: 'Sequential Opulent2 carry-forward; fresh per-task Harvey with concurrent arms; no answer/grade feedback exchanged', grading: 'Independent parent Jev/Capy only' }
   if (overlapStartup) provenance.startupPolicy = startupPolicy
+  if (provisionStageTiming) provenance.provisionStageTiming = { version: 'opulent2-provision-stage-timing-v1', enabled: true,
+    visibility: 'host-only monotonic stage events; not model observation or coverage acceptance',
+    unavailable: 'Missing records or unmatched begin events remain diagnostic gaps, never zero elapsed or completed stages' }
   const checkpoint = seedCheckpoint(provenance, existsSync(checkpointPath) ? json(checkpointPath) : null)
   const unchanged = () => {
     verifyCommittedRelease(release)
@@ -166,6 +216,8 @@ export async function launch({ release, file, authorization, source }) {
     const handoff = { chainId: release.chainId, taskId: context.taskId, attemptId: context.attemptId,
       inlineByteLimit: release.stateContract.inlineByteLimit, ...(previousSnapshot ? { previousSnapshot, expectedPreviousSha256: previousSnapshot.sha256 } : {}) }
     return broadModule.createBroadHarness({ ...release.harnessOptions, workspace: release.workspace, corpus,
+      ...(provisionStageTiming ? { onProvisionStage: createProvisionStageRecorder({ directory: artifactDirectory,
+        context: { ...context, arm: 'opulent2', phase: context.phase ?? 'answerer' }, registry, ...releaseBinding }) } : {}),
       ...(overlapStartup ? { opulent2StartupPolicy: startupPolicy, opulent2ReleaseBinding: releaseBinding } : {}),
       ...(luna ? { experiment: release.experiment, budgetDisclosure: release.prompts.budgetDisclosure } : {}),
       instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: release.semanticSurface, nativeMcp: false,

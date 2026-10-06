@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -196,17 +196,43 @@ function corpusArchive(corpus, workspace) {
   return execFileSync('tar', ['-czf', '-', '-C', directory, '.'], { maxBuffer: 256 * 1024 * 1024 })
 }
 
-export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet, startupPolicy = OPULENT2_SERIAL_STARTUP) {
-  const archive = corpusArchive(corpus, workspace)
-  const sandbox = await sandboxFactory(config)
+async function observeProvisionStage(callback, stage, operation, sandboxId, run) {
+  if (!callback) return run()
+  const stageId = randomUUID(), startedAtMs = performance.now()
+  const emit = event => {
+    try { Promise.resolve(callback(Object.freeze(event))).catch(() => {}) } catch {}
+  }
+  const event = { stageId, stage, operation, sandboxId: sandboxId ?? null, startedAtMs, endedAtMs: null, elapsedMs: null, status: 'started', errorClass: null }
+  emit(event)
   try {
-    await sandbox.files.write('/tmp/broad-legal-corpus.tar.gz', archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength))
-    if (packet) {
-      const prepared = await sandbox.commands.run(`sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE} && sudo -n install -d -m 0777 ${TASK_PATH} ${TASK_PATH}/materials && install -d -m 0777 ${OUTPUT_PATH}`)
-      if (prepared.exitCode !== 0) throw new Error('Work-product directories preparation failed')
-      await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
-      for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
-    }
+    const result = await run()
+    const endedAtMs = performance.now()
+    emit({ ...event, sandboxId: ['sandbox-create', 'sandbox-reconnect'].includes(stage) ? result?.sandboxId ?? null : event.sandboxId,
+      endedAtMs, elapsedMs: endedAtMs - startedAtMs, status: 'completed' })
+    return result
+  } catch (error) {
+    const endedAtMs = performance.now()
+    let errorClass = 'NonError'
+    try { errorClass = [AggregateError, TypeError, RangeError, SyntaxError, ReferenceError, URIError, EvalError, Error].find(type => error instanceof type)?.name ?? 'NonError' } catch {}
+    emit({ ...event, endedAtMs, elapsedMs: endedAtMs - startedAtMs, status: 'failed', errorClass })
+    throw error
+  }
+}
+
+export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet, startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage) {
+  const archive = corpusArchive(corpus, workspace)
+  const sandbox = await observeProvisionStage(onProvisionStage, 'sandbox-create', 'create', null, () => sandboxFactory(config))
+  const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, 'create', sandbox.sandboxId, run)
+  try {
+    await observe('corpus-material-staging', async () => {
+      await sandbox.files.write('/tmp/broad-legal-corpus.tar.gz', archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength))
+      if (packet) {
+        const prepared = await sandbox.commands.run(`sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE} && sudo -n install -d -m 0777 ${TASK_PATH} ${TASK_PATH}/materials && install -d -m 0777 ${OUTPUT_PATH}`)
+        if (prepared.exitCode !== 0) throw new Error('Work-product directories preparation failed')
+        await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
+        for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
+      }
+    })
     // Built-in skills are installed from the hash-verified control-plane source
     // at provisioning time: template aliases can resolve to snapshots that predate
     // the skill bundle, so image contents are never assumed. Root-owned read-only
@@ -214,22 +240,28 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     // verification below.
     const skillsManifest = JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8'))
     const staged = '/tmp/opulent-skill-staging'
-    const skillUploads = []
-    for (const { name, artifactSha256 } of skillsManifest.skills) {
-      const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
-      if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
-      if (startupPolicy === OPULENT2_OVERLAP_STARTUP) skillUploads.push({ path: `${staged}/${name}.md`, data: bytes })
-      else await sandbox.files.write(`${staged}/${name}.md`, bytes)
-    }
-    if (skillUploads.length) await sandbox.files.write(skillUploads, { useOctetStream: false })
+    await observe('skill-staging', async () => {
+      const skillUploads = []
+      for (const { name, artifactSha256 } of skillsManifest.skills) {
+        const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
+        if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
+        if (startupPolicy === OPULENT2_OVERLAP_STARTUP) skillUploads.push({ path: `${staged}/${name}.md`, data: bytes })
+        else await sandbox.files.write(`${staged}/${name}.md`, bytes)
+      }
+      if (skillUploads.length) await sandbox.files.write(skillUploads, { useOctetStream: false })
+    })
     const skillDirs = skillsManifest.skills.map(({ name }) => `${skillsManifest.destinationRoot}/${name}`).join(' ')
     const skillFiles = skillsManifest.skills.map(({ name }) =>
       `sudo -n install -o root -g root -m 0444 ${staged}/${name}.md ${skillsManifest.destinationRoot}/${name}/SKILL.md`).join('; ')
-    const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
-    if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
-    const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
-    if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
-    return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
+    await observe('skill-install', async () => {
+      const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
+      if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
+    })
+    return await observe('corpus-protection', async () => {
+      const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
+      if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
+      return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
+    })
   } catch (error) {
     await sandbox.kill().catch(() => {})
     throw error
@@ -413,12 +445,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface, instructionProfile, experiment, budgetDisclosure,
-  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, onPreparedModelRequest,
+  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, onPreparedModelRequest, onProvisionStage,
   opulent2StartupPolicy = OPULENT2_SERIAL_STARTUP, opulent2ReleaseBinding,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly, inferenceProvider)
   const opulent2 = instructionProfile === OPULENT2_PROFILE
+  if (onProvisionStage !== undefined && (!opulent2 || typeof onProvisionStage !== 'function')) throw new Error('Provision stage diagnostics require an Opulent2 host callback')
   const overlapStartup = opulent2StartupPolicy === OPULENT2_OVERLAP_STARTUP
   if (![OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(opulent2StartupPolicy) || overlapStartup && !opulent2) throw new Error('Unknown or misplaced Opulent2 startup policy')
   if (overlapStartup) {
@@ -609,7 +642,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
   function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors, archiveSandbox) {
-    async function trackSandbox(sandbox, { bootstrap = true } = {}) {
+    async function trackSandbox(sandbox, { bootstrap = true, operation = 'create' } = {}) {
       if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
       provisionedSandboxes.add(sandbox)
       const originalKill = sandbox.kill.bind(sandbox)
@@ -648,9 +681,10 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           return originalPause(...args)
         }
       }
-      if (skills) await verifyPreparedSkills(sandbox, skills, opulent2StartupPolicy)
+      const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run)
+      if (skills) await observe('prepared-skill-verification', () => verifyPreparedSkills(sandbox, skills, opulent2StartupPolicy))
       if (deliveryV9 || opulent2) {
-        const { readiness } = await (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig, { bootstrap })
+        const { readiness } = await observe('authenticated-machine-readiness', () => (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig, { bootstrap }))
         sandbox[DESKTOP_READINESS] = readiness
       }
       return sandbox
@@ -684,16 +718,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       storage: {},
       ...(opulent2 ? { onPreparedModelRequest } : {}),
       provision: async config => {
-        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet, opulent2StartupPolicy))
+        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet, opulent2StartupPolicy, onProvisionStage))
         provisionedSandboxes.add(sandbox)
-        if (provision && fullCorpusVms) await protectCorpusSandbox(sandbox, undefined, true)
+        if (provision && fullCorpusVms) await observeProvisionStage(onProvisionStage, 'corpus-protection', 'create', sandbox.sandboxId, () => protectCorpusSandbox(sandbox, undefined, true))
         return await trackSandbox(sandbox)
       },
       connect: async (id, config) => {
         const previous = [...provisionedSandboxes].find(sandbox => sandbox.sandboxId === id)
-        const sandbox = await sandboxConnect(id, config)
+        const sandbox = await observeProvisionStage(onProvisionStage, 'sandbox-reconnect', 'reconnect', id, () => sandboxConnect(id, config))
         provisionedSandboxes.add(sandbox)
-        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], fullCorpusVms), { bootstrap: false })
+        return trackSandbox(await observeProvisionStage(onProvisionStage, 'corpus-protection', 'reconnect', sandbox.sandboxId,
+          () => protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], fullCorpusVms)), { bootstrap: false, operation: 'reconnect' })
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${capy ? 'native RunAnywhere MiMo v2.6 Pro' : evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
