@@ -1,5 +1,14 @@
 # Real document and approved-tool coverage
 
+## Start substantive work before broad discovery
+
+This infrastructure trial has a 300-second host ceiling, including preflight and VM preparation. It does not restart when the first answerer request begins. The 250-request safeguard is not a wall-time allowance. Complete every required check before claiming success; leave gaps explicit if execution is interrupted.
+
+1. Read this plan and return each relevant installed guide individually, rather than combining multiple complete guides into a file-backed aggregate that requires another recovery round.
+2. Create the owned task checkpoint and draft **and explicitly start** the useful fresh-VM child in a connected workflow using its actual returned identity. Read the start outcome. An idle draft is not running delegation; descendants still need actual completed useful findings.
+3. Generate the supplied fixtures and begin the first document workflow while delegated work runs. Discover only a missing input shape for that operation, execute it, inspect its actual result and update the checkpoint and incremental `coverage.md` before discovering more shapes.
+4. Continue through all document and connected-runtime checks below. Use completion callbacks for owned work, preserve complete required readbacks, and finish only after the useful delegation and all required observations are actually complete.
+
 The lead owns the report. Exercise these 40 approved tools across the lead and its owned descendants:
 
 `bash`, `read`, `write`, `edit`, `apply_patch`, `execute`, `wait`, `todo_write`, `message_agent`, `message_user`, `task_create`, `task_update`, `task_get`, `task_list`, `subagent_create`, `subagent_start`, `subagent_get`, `subagent_list`, `subagent_message`, `subagent_stop`, `subagent_events`, `session_get`, `session_events`, `session_stop`, `operation_get`, `operation_list`, `operation_cancel`, `skill_list`, `skill_read`, `memory_save`, `browser`, `computer`, `lx_search`, `lx_chunk`, `lx_documents`, `agrep`, `drive_list`, `drive_read`, `drive_write`, `drive_delete`.
