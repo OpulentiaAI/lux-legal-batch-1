@@ -119,6 +119,7 @@ async function historyRecoveryMessage(ctx, conversation, reference, signal) {
   const fits = JSON.stringify({ ...safeRecovery, history_navigation: navigation }).length <= 6000;
   const metadata = fits ? safeRecovery : { version: WORK_RECOVERY_VERSION, bindings: [], processes: [], owned_recovery_omitted: true };
   let calls = new Map();
+  const descriptors = [];
   for (const [message_index, message] of conversation.entries()) {
     signal?.throwIfAborted();
     let descriptor = { message_index, role: message.role };
@@ -147,8 +148,12 @@ async function historyRecoveryMessage(ctx, conversation, reference, signal) {
         ...(note.read_path && safe.read_path === note.read_path ? { read_path: note.read_path } : {}),
         ...(note.skill_name && safe.skill_name === note.skill_name ? { skill_name: note.skill_name } : {}) };
     } else if (!['system', 'user', 'assistant'].includes(message.role)) continue;
+    descriptors.push(descriptor);
+  }
+  for (const descriptor of descriptors.reverse()) {
+    signal?.throwIfAborted();
     const candidate = { ...navigation, described_messages: navigation.described_messages + 1,
-      omitted_messages: conversation.length - navigation.described_messages - 1, descriptors: [...navigation.descriptors, descriptor] };
+      omitted_messages: conversation.length - navigation.described_messages - 1, descriptors: [descriptor, ...navigation.descriptors] };
     if (JSON.stringify({ ...metadata, history_navigation: candidate }).length <= 6000) navigation = candidate;
   }
   signal?.throwIfAborted();
