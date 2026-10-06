@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
 import { probePreparedDocumentTools } from './document-tools-image.mjs';
+import { sandboxAccessProtection } from '../sandbox-file-access.mjs';
 
 export { probePreparedComputer } from './probe.mjs';
 export { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
@@ -45,9 +46,28 @@ export function createComputer(sandbox, config = {}) {
       throw new Error('Invalid computer daemon response', { cause: error });
     }
   };
-  const verifyPreparedImage = async bridge => {
+  const preparedState = () => {
     if (!/^[a-f0-9]{64}$/.test(config.computerImageSha256 ?? '')) throw new TypeError('Prepared computer image SHA-256 is required');
-    await run(`set -eu; test -r /opt/computer-use/image.json; test -x ${python}; test -d /opt/modal-computer-use/src; command -v chromium >/dev/null; test "$(id -u)" != 0; test "$(stat -c %u /opt/computer-use/image.json)" = 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/modal-computer-use/src; test ! -w /opt/computer-use/venv; mkdir -m 700 -p /tmp/computer-use`);
+    const state = preparedSandboxes.get(sandbox);
+    if (state && state.digest !== config.computerImageSha256) throw new Error('Prepared computer image differs from active desktop');
+    if (state && state.browserPrewarm !== (config.computerBrowserPrewarm === true)) throw new Error('Prepared computer configuration differs from active desktop');
+    return state;
+  };
+  const verifyPreparedImage = async bridge => {
+    const state = preparedState();
+    const protection = sandboxAccessProtection(sandbox);
+    if (state && state.protection !== protection) state.documentToolsSha256 = undefined;
+    if (protection) {
+      try {
+        const privilege = await run(`/usr/bin/python3 -I -c 'import os,pathlib,sys; sys.exit(0 if os.geteuid() > 0 and int(pathlib.Path("/proc/self/status").read_text().split("NoNewPrivs:")[1].splitlines()[0].strip()) == 1 else 1)'`);
+        if (privilege.exitCode !== 0) throw new Error('Missing live sandbox hardening');
+      } catch {
+        if (state) { state.documentToolsSha256 = undefined; state.protection = undefined; }
+        throw new Error('Prepared desktop requires protected nonroot no-new-privileges execution');
+      }
+    }
+    const prerequisites = await run(`set -eu; test -r /opt/computer-use/image.json; test -x ${python}; test -d /opt/modal-computer-use/src; command -v chromium >/dev/null; test "$(id -u)" != 0; test "$(stat -c %u /opt/computer-use/image.json)" = 0; test ! -w /opt/computer-use/image.json; test ! -w /opt/modal-computer-use/src; test ! -w /opt/computer-use/venv; mkdir -m 700 -p /tmp/computer-use`);
+    if (prerequisites.exitCode !== undefined && prerequisites.exitCode !== 0) throw new Error('Prepared computer image prerequisites failed');
     const manifestText = (await run('cat /opt/computer-use/image.json')).stdout;
     if (createHash('sha256').update(manifestText).digest('hex') !== config.computerImageSha256) throw new Error('Prepared computer image manifest differs from expected build');
     let manifest;
@@ -56,10 +76,22 @@ export function createComputer(sandbox, config = {}) {
     if (manifest.schema !== 1 || manifest.python_package !== PACKAGE || manifest.bridge_sha256 !== createHash('sha256').update(bridge).digest('hex')) {
       throw new Error('Prepared computer image is incompatible with this adapter');
     }
-    if (manifest.opulent2_machine?.documentTools) await probePreparedDocumentTools(sandbox, manifest.opulent2_machine.documentTools);
+    const documentTools = manifest.opulent2_machine?.documentTools;
+    if (documentTools) {
+      if (protection && state?.documentToolsSha256 && state.documentToolsSha256 === documentTools.installedManifestSha256) {
+        const identity = await run(`set -eu; for path in /opt /opt/opulent /usr/bin; do test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 022))" = 0; test ! -w "$path"; done; for path in /opt/opulent/document-tools /opt/opulent/document-tools/installed.json; do test ! -L "$path"; test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 0222))" = 0; test ! -w "$path"; done; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${documentTools.installedManifestSha256}'`);
+        if (identity.exitCode !== undefined && identity.exitCode !== 0) throw new Error('Prepared document-tool identity/permissions check failed');
+      } else {
+        await probePreparedDocumentTools(sandbox, documentTools);
+        if (state && protection) state.documentToolsSha256 = documentTools.installedManifestSha256;
+      }
+    }
+    if (sandboxAccessProtection(sandbox) !== protection) throw new Error('Sandbox protections changed during prepared validation');
+    if (state) state.protection = protection;
+    return { documentToolsSha256: protection ? documentTools?.installedManifestSha256 : undefined, protection };
   };
   const ready = async () => {
-    if (prepared) await verifyPreparedImage();
+    const validation = prepared ? await verifyPreparedImage() : undefined;
     const health = await request('GET', '/readyz');
     if (!health.ready) throw new Error('Computer daemon is not ready');
     const capabilities = await request('GET', '/v1/capabilities');
@@ -67,7 +99,7 @@ export function createComputer(sandbox, config = {}) {
       throw new Error('Computer daemon is missing required capabilities');
     }
     if (prepared) {
-      if (!preparedSandboxes.has(sandbox)) preparedSandboxes.set(sandbox, { digest: config.computerImageSha256 });
+      if (!preparedSandboxes.has(sandbox)) preparedSandboxes.set(sandbox, { digest: config.computerImageSha256, browserPrewarm: config.computerBrowserPrewarm === true, ...validation });
     }
     return capabilities;
   };
@@ -104,14 +136,13 @@ export function createComputer(sandbox, config = {}) {
     ready,
     async bootstrap() {
       if (!prepared) return bootstrap();
-      if (!/^[a-f0-9]{64}$/.test(config.computerImageSha256 ?? '')) throw new TypeError('Prepared computer image SHA-256 is required');
-      const previous = preparedSandboxes.get(sandbox);
+      const previous = preparedState();
       if (previous) {
-        if (previous.digest !== config.computerImageSha256) throw new Error('Prepared computer image differs from active desktop');
         if (previous.starting) await previous.starting;
-        return ready();
+        try { return await ready(); }
+        catch (error) { previous.documentToolsSha256 = undefined; throw error; }
       }
-      const state = { digest: config.computerImageSha256, starting: undefined };
+      const state = { digest: config.computerImageSha256, browserPrewarm: config.computerBrowserPrewarm === true, documentToolsSha256: undefined, starting: undefined };
       preparedSandboxes.set(sandbox, state);
       state.starting = bootstrap();
       try { return await state.starting; }

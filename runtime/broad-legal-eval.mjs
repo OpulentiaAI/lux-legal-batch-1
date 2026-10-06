@@ -7,7 +7,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { connectSandbox, createSandbox } from './e2b.mjs'
-import { protectSandboxFileAccess } from './sandbox-file-access.mjs'
+import { createNoNewPrivilegesRunner, protectSandboxFileAccess } from './sandbox-file-access.mjs'
 import { createModel } from './model.mjs'
 import { modelTransport } from './model-provider.mjs'
 import { LUNA_MODEL, MIMO_MODEL, validateEvalModel } from './eval-model-profile.mjs'
@@ -239,10 +239,7 @@ async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = 
   if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
   if (expectedDigest && baseline !== expectedDigest) throw new Error('Corpus integrity changed while sandbox was paused')
   sandbox[CORPUS_DIGEST] = baseline
-  sandbox.commands.run = (command, options = {}) => {
-    if (typeof command !== 'string') throw new Error('Sandbox command must be text')
-    return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
-  }
+  sandbox.commands.run = createNoNewPrivilegesRunner(originalRun)
   if (sandbox.pty?.create) {
     const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
     sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
@@ -437,6 +434,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const fullCorpusVms = capabilityV8 || capy
   const scheduledChildren = capabilityV7 || capy
   const desktopConfig = deliveryV9 || opulent2 ? { computerPreparedImage: true, computerImageSha256,
+    ...(opulent2 ? { computerBrowserPrewarm: true } : {}),
     browserAllowedOrigins: ['http://127.0.0.1:8765'], browserUploadRoots: [`${BROAD_SANDBOX_WORKSPACE}/analysis`, OUTPUT_PATH] } : null
   if ((deliveryV9 || opulent2) && (!sandboxTemplate || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Desktop profile requires the approved prepared desktop template and image SHA-256')
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted

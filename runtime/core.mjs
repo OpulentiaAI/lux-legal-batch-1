@@ -35,7 +35,7 @@ import { createCapyProcesses } from './capy-processes.mjs';
 import { createCapySkillTools, opulent2SkillRegistry } from './capy-skills.mjs';
 import { capyResultChars, persistCapyResult, materializeCapyResults, OPULENT2_RESULT_DELIVERY_POLICY } from './capy-results.mjs';
 import { createCapyMemoryTools, materializeCapyMemory, capyMemoryDescriptors } from './tools/capy-memory.mjs';
-import { protectSandboxFileAccess } from './sandbox-file-access.mjs';
+import { createNoNewPrivilegesRunner, protectSandboxFileAccess } from './sandbox-file-access.mjs';
 import { prepareCapyModelContext, CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs';
 import { prepareOpulent2ModelContext, OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs';
 import { OPULENT2_PROFILE, opulent2ChildInstructions } from './instructions/opulent2.mjs';
@@ -405,15 +405,6 @@ export function createRuntime(options = {}) {
           ctx.signal.throwIfAborted();
           ctx.sandbox = sandbox;
           if (!opulent2) ctx.sandboxDeadlineAt = sandboxDeadlineAt;
-          if (capyEnabled) {
-            const run = sandbox.commands.run.bind(sandbox.commands);
-            sandbox.commands.run = (command, opts = {}) => run(`setpriv --no-new-privs -- /bin/sh -c '${command.replaceAll("'", "'\\''")}'`, { ...opts, user: 'user' });
-            if (sandbox.pty?.create) {
-              const create = sandbox.pty.create.bind(sandbox.pty);
-              sandbox.pty.create = opts => create({ ...opts, user: 'user' });
-            }
-            protectSandboxFileAccess(sandbox);
-          }
           for (const [api, method] of [[sandbox.commands, 'run'], [sandbox.pty, 'create']]) {
             if (!api?.[method]) continue;
             const original = api[method].bind(api);
@@ -423,6 +414,14 @@ export function createRuntime(options = {}) {
                 return original(command, { ...rest, envs: { ...(rlmNoSecrets ? {} : Object.fromEntries(ctx.secrets)), ...rest.envs } });
               }
               : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
+          }
+          if (capyEnabled) {
+            sandbox.commands.run = createNoNewPrivilegesRunner(sandbox.commands.run.bind(sandbox.commands));
+            if (sandbox.pty?.create) {
+              const create = sandbox.pty.create.bind(sandbox.pty);
+              sandbox.pty.create = opts => create({ ...opts, user: 'user' });
+            }
+            protectSandboxFileAccess(sandbox);
           }
           if (opulent2) {
             ctx.sandboxLease = createOpulent2SandboxLease(ctx);
