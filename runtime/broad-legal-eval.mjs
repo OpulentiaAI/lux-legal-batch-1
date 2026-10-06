@@ -1055,7 +1055,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           preparation.endedAt = new Date().toISOString()
           preparation.elapsedMs = Math.round(performance.now() - start)
         }
-        if (preparation && !preparation.releasedAt) { preparation.status = 'failed'; savePreparation() }
+        if (preparation && !preparation.releasedAt) {
+          preparation.status = 'failed'
+          preparation.failure = {
+            errorClass: redactAudit(typeof cause?.name === 'string' ? cause.name : 'Error').slice(0, 128),
+            message: redactAudit(cause instanceof Error ? cause.message : 'Startup preparation failed').slice(0, 2048),
+          }
+          savePreparation()
+        }
         await stopScheduler()
         if (scheduledChildren) {
           try { await runtime?.quiesce?.() }

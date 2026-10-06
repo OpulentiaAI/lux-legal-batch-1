@@ -298,6 +298,34 @@ test('factory, upload, hardening and readiness failures retain and clean only in
   }
 })
 
+test('unreleased startup retains the actual failure class and safely redacted message without admitting inference', async t => {
+  const secret = 'synthetic-startup-secret-not-a-credential'
+  const previous = process.env.OPULENT2_STARTUP_TEST_SECRET
+  process.env.OPULENT2_STARTUP_TEST_SECRET = secret
+  t.after(() => {
+    if (previous === undefined) delete process.env.OPULENT2_STARTUP_TEST_SECRET
+    else process.env.OPULENT2_STARTUP_TEST_SECRET = previous
+  })
+  const f = fixture(t, { upload: async role => {
+    if (role === 'answerer') throw new TypeError(`Synthetic preparation transport failure ${secret}; Bearer synthetic-bearer-value; https://test-user:synthetic-password@example.com/readyz?token=synthetic-query-value; password=synthetic-password-value`)
+  } })
+  await assert.rejects(f.run())
+  const preparation = JSON.parse(readFileSync(join(f.runtime.config.stateDir, 'startup-preparation.json'))).provenance.startupPreparation
+  assert.equal(preparation.status, 'failed')
+  assert.equal(preparation.releasedAt, null)
+  assert.equal(preparation.failure.errorClass, 'TypeError')
+  assert.match(preparation.failure.message, /Synthetic preparation transport failure/)
+  assert.match(preparation.failure.message, /\[redacted\]/)
+  for (const value of [secret, 'synthetic-bearer-value', 'test-user', 'synthetic-password', 'synthetic-query-value']) {
+    assert(!JSON.stringify(preparation).includes(value))
+  }
+  assert.equal(f.requests.length, 0)
+  assert.equal(f.modelFactories, 0)
+  assert.equal(f.snapshot.capy_model_requests.length, 0)
+  assert.equal(f.cleanup.allOwnedAbsent, true)
+  assert.equal(f.cleanup.sandboxes.length, 2)
+})
+
 test('wrong release, source, public packet, handoff, session and sandbox release receipts fail closed', async t => {
   for (const field of ['releaseSha256', 'sourceBindingsSha256', 'packetSha256', 'inputSnapshotSha256', 'configSha256', 'chainId', 'taskId', 'attemptId', 'sessionId', 'sandboxId', 'policy']) {
     const f = fixture(t)
