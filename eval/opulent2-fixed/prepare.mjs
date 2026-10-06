@@ -11,6 +11,7 @@ import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_HANDOFF_VERSION } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TOOL_POLICY } from '../../runtime/opulent2-policy.mjs'
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
 import { LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
 import { ENDPOINT, LUNA_CORPUS_BOUNDARY, LUNA_PROTOCOL, MODEL, NATIVE_MODEL, PROFILE, PROVING_TASKS, STATE_POLICY, validateGatewayCatalogue, WORKSPACE } from './contract.mjs'
@@ -57,6 +58,8 @@ export async function draftRelease(spec) {
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, 'voyage', 'Select Voyage for source-only constructor inspection')
   assert(/^[a-zA-Z0-9_-]+$/.test(spec.runId ?? '') && /^[a-zA-Z0-9_-]+$/.test(spec.chainId ?? ''))
   const luna = lunaPolicy(spec.experiment)
+  const startupPolicy = spec.startupPolicy === undefined ? OPULENT2_SERIAL_STARTUP : spec.startupPolicy
+  assert([OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(startupPolicy), 'Unknown startup policy')
   assert((luna ? ['coverage', 'proving', 'comparison'] : ['proving', 'comparison']).includes(spec.stage), 'Coverage is separate and Luna-only')
   const gatewayCatalogue = luna ? validateGatewayCatalogue(spec.gatewayCatalogue) : null
   const inference = luna ? { experiment: luna.experiment, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
@@ -133,7 +136,7 @@ export async function draftRelease(spec) {
     ...(luna ? ['runtime/opulent2-luna-policy.mjs', 'eval/opulent2-fixed/model-budget.mjs'] : []),
     ...tasks.flatMap(task => [task.taskPath, task.rubricPath, ...Object.keys(task.materials).map(path => join(dirname(task.taskPath), path))])]
   const bindings = sourceBindings(WORKSPACE, ['runtime', 'src/harness', 'src/tp', 'eval/opulent2-fixed'], extraFiles)
-  return { version: 'opulent2-fixed-release-v1', name: 'Opulent2 fixed', stage: spec.stage,
+  return { version: 'opulent2-fixed-release-v1', name: 'Opulent2 fixed', stage: spec.stage, startupPolicy,
     workspace: WORKSPACE, commit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: WORKSPACE, encoding: 'utf8' }).trim(),
     runId: spec.runId, chainId: spec.chainId, output: join(LAUNCH, 'runs', spec.runId),
     ...inference,
