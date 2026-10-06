@@ -4,6 +4,7 @@ import { digest, sha } from './io.mjs'
 import { aggregateNative, readCapture, reconcileNative, sanitize, wireMeasurements } from './native.mjs'
 import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX } from '../../runtime/instructions/opulent2.mjs'
 import { LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs'
 
 const same = (left, right) => digest(left) === digest(right)
 const nonempty = value => value !== undefined && value !== null && (typeof value !== 'string' || !!value.trim())
@@ -32,6 +33,7 @@ export function validateGrants(release, grants) {
   assert.deepEqual(grants.allowed_repos, [], 'Repository deny scope must remain enforced')
   assert.equal(grants.corpus_workspace, release.workspace)
   assert.equal(grants.computer_image_sha256, release.harnessOptions.computerImageSha256)
+  if (release.harnessOptions.opulent2ResultDeliveryPolicy) assert.deepEqual(grants.result_delivery_policy, OPULENT2_RESULT_DELIVERY_POLICY)
 }
 
 export function validatePreparedReceipt(release, receipt) {

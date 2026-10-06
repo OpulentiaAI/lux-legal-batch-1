@@ -5,6 +5,7 @@ import { isAbsolute, join } from 'node:path'
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime/instructions/opulent2.mjs'
 import { LUNA_BUDGETS, LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs'
 import { digest, json, LAUNCH, ordinary, proof, sha, within } from './io.mjs'
 
 export const WORKSPACE = '/home/user/.capy/work/opulent2-fixed-eval'
@@ -150,7 +151,8 @@ export function validateRelease(release) {
     assert(release.harvey.sourceBindings && Object.entries(release.harvey.sourceBindings).every(([path, hash]) => relativeFile(path) && hex(hash)))
   }
   assert(release.harnessOptions && typeof release.harnessOptions === 'object' && !Array.isArray(release.harnessOptions))
-  assert(Object.keys(release.harnessOptions).every(key => ['sandboxTemplate', 'computerImageSha256', 'contextCompaction'].includes(key)), 'Cannot inject factories, prompts, stores or models through harness options')
+  assert(Object.keys(release.harnessOptions).every(key => ['sandboxTemplate', 'computerImageSha256', 'contextCompaction', 'opulent2ResultDeliveryPolicy'].includes(key)), 'Cannot inject factories, prompts, stores or models through harness options')
+  if (release.harnessOptions.opulent2ResultDeliveryPolicy !== undefined) assert.equal(release.harnessOptions.opulent2ResultDeliveryPolicy, OPULENT2_RESULT_DELIVERY_POLICY.version)
   assert(text(release.harnessOptions.sandboxTemplate) && hex(release.harnessOptions.computerImageSha256))
   assert.equal(release.harnessOptions.contextCompaction?.enabled, true)
   assert.equal(release.harnessOptions.contextCompaction.maxSummaryTokens, 8192)

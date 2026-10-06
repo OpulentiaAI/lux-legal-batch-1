@@ -33,7 +33,7 @@ import { createCapyControlTools, capyDescendants, capyOwnedChild, capyChildPath,
 import { createCapyFileTools } from './capy-files.mjs';
 import { createCapyProcesses } from './capy-processes.mjs';
 import { createCapySkillTools, opulent2SkillRegistry } from './capy-skills.mjs';
-import { persistCapyResult, materializeCapyResults } from './capy-results.mjs';
+import { capyResultChars, persistCapyResult, materializeCapyResults, OPULENT2_RESULT_DELIVERY_POLICY } from './capy-results.mjs';
 import { createCapyMemoryTools, materializeCapyMemory, capyMemoryDescriptors } from './tools/capy-memory.mjs';
 import { protectSandboxFileAccess } from './sandbox-file-access.mjs';
 import { prepareCapyModelContext, CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs';
@@ -71,6 +71,9 @@ function modelVisibleToolResult(result, overflow) {
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
   const opulent2 = config.instructionProfile === OPULENT2_PROFILE;
+  if (config.opulent2ResultDeliveryPolicy !== undefined && (!opulent2 || config.opulent2ResultDeliveryPolicy !== OPULENT2_RESULT_DELIVERY_POLICY.version)) {
+    throw new Error('Unknown or misplaced Opulent2 result delivery policy');
+  }
   const toolPolicy = opulent2 ? OPULENT2_TOOL_POLICY : CAPY_TOOL_POLICY;
   const capyDefinitions = opulent2 ? OPULENT2_TOOL_DEFINITIONS : CAPY_TOOL_DEFINITIONS;
   const codemodeListing = () => capyCodemodeListing(capyDefinitions, toolPolicy.initialTools);
@@ -166,7 +169,8 @@ export function createRuntime(options = {}) {
       phase, messages: structuredClone(messages), tools: structuredClone(tools),
       prepared_sha256: createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
       grants: { tool_policy: toolPolicy.version, allowed_tools: [...allowed], initial_tools: [...initial], allowed_repos: [...config.allowedRepos],
-        corpus_workspace: config.corpusWorkspace ?? null, computer_image_sha256: config.computerImageSha256 ?? null },
+        corpus_workspace: config.corpusWorkspace ?? null, computer_image_sha256: config.computerImageSha256 ?? null,
+        ...(config.opulent2ResultDeliveryPolicy ? { result_delivery_policy: OPULENT2_RESULT_DELIVERY_POLICY } : {}) },
       visibility: 'host-only; compares preparation to transport capture, not proof of meaningful use' };
     store.put('opulent2_model_assemblies', requestRecord, receipt);
     await options.onPreparedModelRequest?.(structuredClone(receipt));
@@ -365,7 +369,7 @@ export function createRuntime(options = {}) {
           ctx.capyImageUsage.images += images.usage.images;
           ctx.capyImageUsage.bytes += images.usage.bytes;
         }
-        const result = capyEnabled ? await ctx.persistCapyResult(returned) : returned;
+        const result = capyEnabled ? await ctx.persistCapyResult(returned, capyResultChars(ctx, name)) : returned;
         if (capyEnabled) store.put('capy_tool_results', randomUUID(), { session_id: id, name, ...correlation, complete_result: complete, returned_result: result, created_at: new Date().toISOString() });
         const actionFailed = (name === 'computer' || name === 'browser') && (output?.ok === false || !!output?.failure);
         event(id, 'tool_finished', actionFailed ? { name, ...correlation, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ...correlation, ok: true });
@@ -740,7 +744,7 @@ export function createRuntime(options = {}) {
           const scrubbed = scrub(id, extracted.result);
           const overflow = capyEnabled ? null : await persistToolResultOverflow({ ctx, store, ensureSandbox,
             scrubbedSerialized: JSON.stringify(scrubbed) ?? 'null', canRead: (!allowed || allowed.has('read')) && !!ctx.tools.read });
-          const toolContent = modelVisibleToolResult(capyEnabled ? await ctx.persistCapyResult(scrubbed) : scrubbed, overflow);
+          const toolContent = modelVisibleToolResult(capyEnabled ? await ctx.persistCapyResult(scrubbed, capyResultChars(ctx, requestedName)) : scrubbed, overflow);
           messages.push({ role: 'tool', tool_call_id: call.id, content: toolContent });
           if (config.rlmHandoffPolicy && requestedName === 'ipython') ctx.rlm.confirmModelVisibleOutput({ toolCallId: call.id, content: toolContent });
           imageObservations.push(...extracted.observations);
@@ -1041,7 +1045,9 @@ export function createRuntime(options = {}) {
     runtimeCapabilityProvenance: extensionProvenance,
     ...(capyEnabled ? { capyToolProvenance: { ...toolPolicy.provenance, version: toolPolicy.version, allowedTools: [...allowed], initialTools: [...initial],
       codemodeListingSha256: createHash('sha256').update(codemodeListing()).digest('hex'), systemPromptSha256: createHash('sha256').update(config.systemPrompt).digest('hex'),
-      memory: config.capyMemory ? capyMemoryDescriptors({ config }) : { available: false }, contextCompaction: { ...config.contextCompaction, version: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION } } } : {}),
+      memory: config.capyMemory ? capyMemoryDescriptors({ config }) : { available: false },
+      ...(config.opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+      contextCompaction: { ...config.contextCompaction, version: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION } } } : {}),
     tools: () => Object.values(definitions).filter(tool => (!allowed || allowed.has(tool.name)) && (!initial || initial.has(tool.name))),
     coverage(id) { const names = new Set(Object.keys(context(id).tools)), expected = capyEnabled ? Object.keys(capyDefinitions) : Object.keys(catalog.tools); return { required: expected.length, registered: expected.filter(name => names.has(name)), missing: expected.filter(name => !names.has(name)), excluded: catalog.excluded }; },
     async invoke(id, name, args) { return context(id).invoke(name, args); },

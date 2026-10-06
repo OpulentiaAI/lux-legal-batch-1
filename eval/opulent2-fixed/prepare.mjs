@@ -102,6 +102,7 @@ export async function draftRelease(spec) {
   assert.equal(corpus.count, native.corpusCount)
   const stopped = new Error('OFFLINE_CONSTRUCTOR_STOP: no VM, retrieval or model calls')
   const harness = createBroadHarness({ workspace: WORKSPACE, corpus, artifactsDir: join(inspection, 'adapter'),
+    ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}),
     instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
     maxSteps: inference.budgets.maxSteps, model: inference.model, inferenceProvider: inference.inferenceProvider,
     ...(luna ? { experiment: luna.experiment, budgetDisclosure: luna.disclosure, reasoningEffort: 'max' } : { providerModel: NATIVE_MODEL }),
@@ -113,7 +114,8 @@ export async function draftRelease(spec) {
   if (luna) assert.equal(harness.opulent2SystemPrompt.split(luna.disclosure).length, 2, 'Configured disclosure must be delivered once')
   const capturedConfig = { instructionProfile: PROFILE, systemPrompt: harness.opulent2SystemPrompt, model: inference.model,
     runtimeCapabilities: [...OPULENT2_TOOL_POLICY.runtimeCapabilities], allowedTools: [...OPULENT2_TOOL_POLICY.allowedTools],
-    initialTools: [...OPULENT2_TOOL_POLICY.initialTools], corpusWorkspace: WORKSPACE, contextCompaction: harness.provenance.capy.contextCompaction }
+    initialTools: [...OPULENT2_TOOL_POLICY.initialTools], corpusWorkspace: WORKSPACE, contextCompaction: harness.provenance.capy.contextCompaction,
+    ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}) }
   const stateDir = join(inspection, 'empty-schema-runtime')
   privateDirectory(stateDir)
   const runtime = createRuntime({ config: { ...capturedConfig, stateDir }, model: () => { throw stopped }, provision: () => { throw stopped } })
@@ -153,7 +155,8 @@ export async function draftRelease(spec) {
     protocol: { path: protocolPath, sha256: bindings[protocolPath] }, sourceBindings: bindings,
     tasks, initialSnapshot, comparisonFreeze: spec.comparisonFreeze ?? null,
     harvey: spec.stage === 'comparison' ? spec.harvey : null,
-    harnessOptions: { sandboxTemplate: spec.sandboxTemplate, computerImageSha256: spec.computerImageSha256, contextCompaction: capturedConfig.contextCompaction },
+    harnessOptions: { sandboxTemplate: spec.sandboxTemplate, computerImageSha256: spec.computerImageSha256, contextCompaction: capturedConfig.contextCompaction,
+      ...(capturedConfig.opulent2ResultDeliveryPolicy ? { opulent2ResultDeliveryPolicy: capturedConfig.opulent2ResultDeliveryPolicy } : {}) },
     evidencePolicy: 'exact-native-wire-prepared-instructions-returned-observations-v1', gradingPolicy: 'separate-parent-jev-capy-no-answerer-feedback-v1',
     parentVerification: { sourceAndPolicyReady: false, reference: 'UNAPPROVED draft; parent must review and freeze after the final source commit' } }
 }

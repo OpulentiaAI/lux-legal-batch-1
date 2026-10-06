@@ -148,7 +148,8 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
   if (!Number.isSafeInteger(budget) || budget < 2000) throw new Error('Capy context bounds leave no coherent history budget');
   const projected = [...system];
   const policyDigest = digest({ version: CAPY_CONTEXT_POLICY_VERSION, policy, allowedTools: config.allowedTools, initialTools: config.initialTools, model: config.model,
-    providerOnly: config.providerOnly, corpusWorkspace: config.corpusWorkspace, systemPrompt: config.systemPrompt, ...(summaryRepairPolicy ? { summaryRepairPolicy } : {}) });
+    providerOnly: config.providerOnly, corpusWorkspace: config.corpusWorkspace, systemPrompt: config.systemPrompt, ...(summaryRepairPolicy ? { summaryRepairPolicy } : {}),
+    ...(config.opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: config.opulent2ResultDeliveryPolicy } : {}) });
   const fallbackProvenance = summaryRepairPolicy ? { version: FALLBACK_VERSION, sessionId: ctx.sessionId, workspace: ctx.workspace,
     policyDigest, originalTaskRetention: 'exact-first-user-v1', taskProgressRetention: 'owned-model-authored-bounded-v1' } : null;
   if (fallbackProvenance && checkpoint?.version === FALLBACK_VERSION && checkpoint.kind === 'file_backed_context'

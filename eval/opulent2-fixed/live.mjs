@@ -168,6 +168,7 @@ export async function launch({ release, file, authorization, source }) {
         assert.deepEqual(config.allowedRepos, [])
         assert.deepEqual(config.allowedTools.slice().sort(), release.surface.allowedTools.slice().sort())
         assert.deepEqual(config.contextCompaction, release.harnessOptions.contextCompaction)
+        assert.equal(config.opulent2ResultDeliveryPolicy, release.harnessOptions.opulent2ResultDeliveryPolicy)
         assert.deepEqual(config.opulent2Handoff, handoff)
         const stateDir = context.phase === 'preflight' ? join(artifactDirectory, 'runtime-state') : config.stateDir
         if (context.phase === 'preflight') privateDirectory(stateDir)
