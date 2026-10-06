@@ -8,8 +8,39 @@ This infrastructure trial has a 300-second host ceiling, including preflight and
 2. Create the owned task checkpoint and draft **and explicitly start** the useful fresh-VM child in a connected workflow using its actual returned identity. Read the start outcome. An idle draft is not running delegation; descendants still need actual completed useful findings.
    For this startup step, read only the child-session guide and the schemas needed to create and start that child. Defer the data-analysis and computer guides until their operations require them; still read each completely before using its workflow. Start the useful child before fixture generation or document parsing, so its fresh-VM preparation overlaps the lead's document work.
    Create and start the useful child together with `subagent_create` and `start: {machine: "fresh"}`; inspect the actual creation and start response. Exercise the separate `subagent_start` tool on the disposable lifecycle branch below, rather than delaying useful research with an unnecessary draft/discovery/start round trip. A connected `execute` workflow can create the task checkpoint and then create/start the useful child, returning both complete outcomes. Discover only any genuinely missing schema first; do not infer or guess argument shapes.
-3. Generate the supplied fixtures and begin the first document workflow while delegated work runs. Discover only a missing input shape for that operation, execute it, inspect its actual result and update the checkpoint and incremental `coverage.md` before discovering more shapes.
+3. Generate the supplied fixtures and begin the first document workflow while delegated work runs, only after the guide and help have been observed. Read the complete data-analysis guide and actual prepared CLI help before fixture generation or the first parse. Discover only a missing input shape for that operation, execute it, inspect its actual result and update the checkpoint and incremental `coverage.md` before discovering more shapes.
 4. Continue through all document and connected-runtime checks below. Use completion callbacks for owned work, preserve complete required readbacks, and finish only after the useful delegation and all required observations are actually complete.
+
+### Concrete connected startup
+
+The initial required public-material reads can be separate direct `read` calls in one assistant response; finish both before the first `execute`. The public request and those complete materials already declare this infrastructure assignment. Do not add another root `task.json` discovery round merely to repeat them; read it if an actual missing fact requires it.
+
+After the required opener, the following two independent `execute` programs can be separate calls in the same assistant response. Return the complete child-session guide on its own; discover the two missing startup shapes together. The installed registry already gives the exact guide name. `skill_list` is still required later, but an extra inventory round is not a prerequisite to reading that known guide.
+
+```js
+return await tools.skill.read({name: "opulent2-child-sessions"});
+```
+
+```js
+return await Promise.all([describe("task.create"), describe("subagent.create")]);
+```
+
+Once the complete guide and actual current schemas have been observed, create the checkpoint and start useful work in one connected program. This is a schema-checked example, not permission to ignore a different actual schema or replace an actual response. Preserve both complete outcomes and inspect any rejected start; use the actual returned task and child identities for later updates. Do not split checkpoint creation, child-schema discovery and useful creation into three additional inference rounds.
+
+```js
+const checkpoint = await tools.task.create({tasks: [{
+  subject: "Complete real document and approved-tool coverage",
+  active_form: "Verifying source-backed workflows",
+  description: "Public materials read. Remaining document, delegation, image, lifecycle, operation, memory and Drive checks are pending.",
+}]});
+const delegation = await tools.subagent.create({tasks: [{
+  title: "Verify one corpus excerpt and obtain a narrower source review",
+  prompt: "Source-only assignment: read the complete child-session guide, then choose and actually read one corpus source and its relevant context through the approved corpus tools. The lead's task.json, coverage plan, fixture generator and CLI help are not part of this assignment. After reading the source, immediately start a real fresh-VM grandchild to challenge your narrow proposition with actual nearby text, exceptions and scope limits. Receive and check its completed findings. Send your actual source IDs, quotations, checked findings and limits directly to your parent with message_agent, to=parent, state=final. Do not propagate this nesting mandate or create task-wide deliverables.",
+}], start: {machine: "fresh"}});
+return {checkpoint, delegation};
+```
+
+Then read the complete data-analysis guide and actual CLI help before running the supplied fixture program or parsing. Those independent observations can be separate calls in one assistant response. Keep the incremental report concise: record completed evidence and explicit pending checks, not a speculative final report or a lengthy repeated inventory. Copy exact identities from actual receipts; do not guess hashes or manually invent successful observations.
 
 The lead owns the report. Exercise these 40 approved tools across the lead and its owned descendants:
 
