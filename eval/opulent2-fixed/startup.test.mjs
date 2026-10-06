@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import test from 'node:test'
 import './offline-guard.mjs'
-import { runWithLivePreflight } from './live.mjs'
+import { assertPrivateRuntimeState, runWithLivePreflight } from './live.mjs'
 import { trackedSandboxProvider, verifyOwnedAbsence } from './cleanup.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
 import { OPULENT2_PROFILE, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
@@ -33,7 +33,7 @@ const deferred = () => {
   return { promise, resolve, reject }
 }
 
-function fixture(t, { startupPolicy = OPULENT2_OVERLAP_STARTUP, upload, failure, runtimeFactory, handoff, model, publicPacket = packet } = {}) {
+function fixture(t, { startupPolicy = OPULENT2_OVERLAP_STARTUP, upload, failure, beforeRuntimeFactory, runtimeFactory, handoff, model, publicPacket = packet } = {}) {
   const effectiveStartup = startupPolicy === 'default' ? OPULENT2_SERIAL_STARTUP : startupPolicy
   const publicRequest = { question: publicPacket.task.instructions, mode: 'broad', workProduct: publicPacket }
   mkdirSync(scratch, { recursive: true })
@@ -151,6 +151,7 @@ function fixture(t, { startupPolicy = OPULENT2_OVERLAP_STARTUP, upload, failure,
         return requests.length % 2 ? callsResponse(['write', { path: 'output/memo.md', content: 'Synthetic offline completed memo.' }]) : completion('Synthetic offline final.')
       }
     }, runtimeFactory: options => {
+      beforeRuntimeFactory?.(options)
       runtime = createRuntime(options)
       const close = runtime.close.bind(runtime)
       runtime.close = async (...args) => {
@@ -186,6 +187,40 @@ function fixture(t, { startupPolicy = OPULENT2_OVERLAP_STARTUP, upload, failure,
     get runtime() { return runtime }, get modelFactories() { return modelFactories }, get cleanup() { return cleanup },
     get snapshot() { return snapshot }, get carryForward() { return carryForward } }
 }
+
+test('serial and overlap validate genuinely empty private state before writing their current startup metadata', async t => {
+  for (const startupPolicy of [OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP]) {
+    const checked = new Set()
+    const f = fixture(t, { startupPolicy, beforeRuntimeFactory: options => {
+      assertPrivateRuntimeState(options.config.stateDir, f.directory, checked)
+    } })
+    const result = await f.run()
+    assert.equal(checked.size, 1)
+    assert.equal(f.requests.length, 2)
+    assert.equal(f.modelFactories, 1)
+    assert.equal(f.cleanup.allOwnedAbsent, true)
+    if (startupPolicy === OPULENT2_OVERLAP_STARTUP) {
+      const startup = JSON.parse(readFileSync(result.audit.startupPreparationArtifact))
+      assert.equal(startup.provenance.startupPreparation.status, 'released')
+      assert.equal(result.audit.startupPreparationSha256, hash(readFileSync(result.audit.startupPreparationArtifact)))
+    }
+  }
+})
+
+test('overlap still rejects nonempty predecessor state before constructing a runtime or inference provider', async t => {
+  let checked = false
+  const f = fixture(t, { beforeRuntimeFactory: options => {
+    writeFileSync(join(options.config.stateDir, 'synthetic-foreign-state.json'), '{"synthetic":"foreign predecessor"}')
+    checked = true
+    assertPrivateRuntimeState(options.config.stateDir, f.directory, new Set())
+  } })
+  await assert.rejects(f.run())
+  assert.equal(checked, true)
+  assert.equal(f.runtime, undefined)
+  assert.equal(f.modelFactories, 0)
+  assert.equal(f.requests.length, 0)
+  assert.equal(f.cleanup.allOwnedAbsent, true)
+})
 
 test('real corpus/material/hardening/readiness preparation overlaps a separate owned preflight VM without starting a worker or provider', async t => {
   const uploadStarted = deferred(), releaseUpload = deferred(), prepared = deferred()

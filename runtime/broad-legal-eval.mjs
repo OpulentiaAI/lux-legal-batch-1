@@ -910,7 +910,6 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         await scheduler
       }
       try {
-        savePreparation()
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
         const makeModel = () => modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
@@ -927,6 +926,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           return onPreparedModelRequest?.(receipt)
         }
         runtime = runtimeFactory(options)
+        savePreparation()
         if (broker) detachBroker = broker.attach(runtime)
         const initial = { title: 'Broad legal evaluation',
           prompt: opulent2 ? opulent2TaskPrompt({ question, taskPath: TASK_PATH, outputPath: OUTPUT_PATH }) : capy ? `Complete the public request in ${TASK_PATH}/task.json and ${TASK_PATH}/materials. Save each declared file in ${OUTPUT_PATH}; verify it before reporting completion. Use the tools and delegation that genuinely help this work, without a required child count or formal handoff loop.\n\nRequest: ${question}` : workProduct
