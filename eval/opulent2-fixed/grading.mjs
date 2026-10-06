@@ -11,6 +11,7 @@ import { OPULENT2_HANDOFF_VERSION, parseOpulent2Handoff } from '../../runtime/op
 import { OPULENT2_TASK_APPENDIX, opulent2TaskPrompt } from '../../runtime/instructions/opulent2.mjs'
 import { lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs'
+import { OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from '../../runtime/capy-context.mjs'
 import { redact } from '../../runtime/security.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { PROFILE, requireLiveAuthorization, validateRelease } from './contract.mjs'
@@ -110,6 +111,7 @@ function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   assert.deepEqual(policy.allowedTools.slice().sort(), release.surface.allowedTools.slice().sort())
   assert.deepEqual(policy.capy.contextCompaction, release.harnessOptions.contextCompaction)
   if (release.harnessOptions.opulent2ResultDeliveryPolicy) assert.deepEqual(policy.capy.resultDeliveryPolicy, OPULENT2_RESULT_DELIVERY_POLICY)
+  assert.deepEqual(policy.capy.contextContinuationPolicy, release.harnessOptions.opulent2ContextContinuationPolicy ? OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY : undefined, 'Artifact context continuation differs from the frozen policy')
   for (const [key, value] of Object.entries({ profile: 'voyage', embeddingModel: 'voyage/voyage-4-large', rerankModel: 'voyage/rerank-2.5',
     dimensions: 1024, searchBackend: 'turbopuffer', chunkNamespace: 'lx-corpus-voyage4-1024', documentNamespace: 'lx-documents-voyage4-1024' })) assert.equal(policy.retrieval[key], value)
   assert.equal(policy.taskSha256, digest(bundle.task))

@@ -20,7 +20,7 @@ import { OPULENT2_TOOL_POLICY, OPULENT2_TOOL_DEFINITIONS } from './opulent2-poli
 import { OPULENT2_PROFILE, opulent2TaskPrompt } from './instructions/opulent2.mjs'
 import { probeOpulent2Machine } from './opulent2-machine.mjs'
 import { parseOpulent2Handoff, serializeOpulent2Handoff } from './opulent2-handoff.mjs'
-import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
+import { CAPY_CONTEXT_POLICY_VERSION, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from './opulent2-startup-policy.mjs'
@@ -391,7 +391,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface, instructionProfile, experiment, budgetDisclosure,
-  opulent2Handoff, opulent2ResultDeliveryPolicy, onPreparedModelRequest,
+  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, onPreparedModelRequest,
   opulent2StartupPolicy = OPULENT2_SERIAL_STARTUP, opulent2ReleaseBinding,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
@@ -406,6 +406,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     opulent2Handoff = structuredClone(opulent2Handoff)
   } else if (opulent2ReleaseBinding !== undefined) throw new Error('Release-gated preparation requires the overlap startup policy')
   if (opulent2ResultDeliveryPolicy !== undefined && (!opulent2 || opulent2ResultDeliveryPolicy !== OPULENT2_RESULT_DELIVERY_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 result delivery policy')
+  if (opulent2ContextContinuationPolicy !== undefined && (!opulent2 || opulent2ContextContinuationPolicy !== OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 context continuation policy')
   const luna = lunaPolicy(experiment)
   if (luna && (!opulent2 || model !== LUNA_MODEL || inferenceProvider !== 'gateway' || providerModel != null || providerOnly != null || reasoningEffort !== 'max' ||
       maxSteps !== luna.budgets.maxSteps || workProduct?.maxCompletionTokens !== luna.budgets.maxCompletionTokens || budgetDisclosure !== luna.disclosure)) throw new Error('Luna experiment requires the exact disclosed model and budget policy')
@@ -493,7 +494,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,
     contextPolicyVersion: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION, capyRuntimeSources, corpus: corpus.hash,
-    ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}) })) } : null
+    ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+    ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) })) } : null
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
@@ -512,7 +514,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         missingFiles: 'explicit missing, unsafe, oversized or unreadable entries; never synthesized' },
       resultPolicy: 'bounded model-visible returns with complete private file-backed results; no unread-result credit',
       ...(opulent2 ? { resultPreviewPolicy: OPULENT2_RESULT_PREVIEW_POLICY } : {}),
-      ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}) },
+      ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+      ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) },
       runtimeCapabilities: [...capyPolicy.runtimeCapabilities], networkPolicy: network } : {}),
     ...(opulent2 ? { opulent2: { version: OPULENT2_PROFILE, chainId: opulent2Handoff.chainId, taskId: opulent2Handoff.taskId, attemptId: opulent2Handoff.attemptId,
       predecessorSnapshotSha256: predecessor?.sha256 ?? null,
@@ -644,6 +647,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(capy ? { runtimeCapabilities: [...capyPolicy.runtimeCapabilities], contextCompaction,
           ...(opulent2ResultDeliveryPolicy ? { opulent2ResultDeliveryPolicy } : {}),
+          ...(opulent2ContextContinuationPolicy ? { opulent2ContextContinuationPolicy } : {}),
           capyMemory: { organizationId: 'complex-v1-evaluation', userId: opulent2 ? OPULENT2_PROFILE : 'opulent-capy-v1', projectId: opulent2 ? opulent2Handoff.chainId : basename(stateDir),
             scopes: ['project'], root: '/home/user/.capy/memory' } }
           : unrestricted ? { runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION], unrestrictedTools: true }

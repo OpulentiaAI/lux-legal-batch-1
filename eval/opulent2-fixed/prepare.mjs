@@ -11,6 +11,7 @@ import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_HANDOFF_VERSION } from '../../runtime/opulent2-handoff.mjs'
 import { OPULENT2_TOOL_POLICY } from '../../runtime/opulent2-policy.mjs'
+import { OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from '../../runtime/capy-context.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
 import { LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { prepareCorpus } from '../comparison-corpus.mjs'
@@ -60,6 +61,7 @@ export async function draftRelease(spec) {
   const luna = lunaPolicy(spec.experiment)
   const startupPolicy = spec.startupPolicy === undefined ? OPULENT2_SERIAL_STARTUP : spec.startupPolicy
   assert([OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(startupPolicy), 'Unknown startup policy')
+  if (spec.opulent2ContextContinuationPolicy !== undefined) assert.equal(spec.opulent2ContextContinuationPolicy, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version, 'Unknown context continuation policy')
   assert((luna ? ['coverage', 'proving', 'comparison'] : ['proving', 'comparison']).includes(spec.stage), 'Coverage is separate and Luna-only')
   const gatewayCatalogue = luna ? validateGatewayCatalogue(spec.gatewayCatalogue) : null
   const inference = luna ? { experiment: luna.experiment, model: LUNA_MODEL, inferenceProvider: 'gateway', providerModel: LUNA_MODEL,
@@ -80,6 +82,7 @@ export async function draftRelease(spec) {
     const checkpointFile = proof(freeze.proving.checkpoint.path, freeze.proving.checkpoint.sha256)
     const checkpoint = json(checkpointFile.path)
     requireProvingAcceptance({ checkpoint, checkpointFile, acceptance: json(freeze.acceptance.path) })
+    assert.equal(checkpoint.provenance.release.harnessOptions.opulent2ContextContinuationPolicy, spec.opulent2ContextContinuationPolicy, 'Cannot carry successful state across context continuation policies')
     if (luna) {
       const proving = checkpoint.provenance.release
       assert.equal(proving.experiment, luna.experiment, 'Luna comparison requires its own accepted proving experiment')
@@ -109,6 +112,7 @@ export async function draftRelease(spec) {
       opulent2ReleaseBinding: { releaseSha256: sha('UNAPPROVED offline constructor only; not a release receipt'),
         sourceBindingsSha256: sha('UNAPPROVED offline constructor only; final source verification is separate') } } : {}),
     ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}),
+    ...(spec.opulent2ContextContinuationPolicy !== undefined ? { opulent2ContextContinuationPolicy: spec.opulent2ContextContinuationPolicy } : {}),
     instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
     maxSteps: inference.budgets.maxSteps, model: inference.model, inferenceProvider: inference.inferenceProvider,
     ...(luna ? { experiment: luna.experiment, budgetDisclosure: luna.disclosure, reasoningEffort: 'max' } : { providerModel: NATIVE_MODEL }),
@@ -121,7 +125,8 @@ export async function draftRelease(spec) {
   const capturedConfig = { instructionProfile: PROFILE, systemPrompt: harness.opulent2SystemPrompt, model: inference.model,
     runtimeCapabilities: [...OPULENT2_TOOL_POLICY.runtimeCapabilities], allowedTools: [...OPULENT2_TOOL_POLICY.allowedTools],
     initialTools: [...OPULENT2_TOOL_POLICY.initialTools], corpusWorkspace: WORKSPACE, contextCompaction: harness.provenance.capy.contextCompaction,
-    ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}) }
+    ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}),
+    ...(spec.opulent2ContextContinuationPolicy !== undefined ? { opulent2ContextContinuationPolicy: spec.opulent2ContextContinuationPolicy } : {}) }
   const stateDir = join(inspection, 'empty-schema-runtime')
   privateDirectory(stateDir)
   const runtime = createRuntime({ config: { ...capturedConfig, stateDir }, model: () => { throw stopped }, provision: () => { throw stopped } })
@@ -162,7 +167,8 @@ export async function draftRelease(spec) {
     tasks, initialSnapshot, comparisonFreeze: spec.comparisonFreeze ?? null,
     harvey: spec.stage === 'comparison' ? spec.harvey : null,
     harnessOptions: { sandboxTemplate: spec.sandboxTemplate, computerImageSha256: spec.computerImageSha256, contextCompaction: capturedConfig.contextCompaction,
-      ...(capturedConfig.opulent2ResultDeliveryPolicy ? { opulent2ResultDeliveryPolicy: capturedConfig.opulent2ResultDeliveryPolicy } : {}) },
+      ...(capturedConfig.opulent2ResultDeliveryPolicy ? { opulent2ResultDeliveryPolicy: capturedConfig.opulent2ResultDeliveryPolicy } : {}),
+      ...(capturedConfig.opulent2ContextContinuationPolicy ? { opulent2ContextContinuationPolicy: capturedConfig.opulent2ContextContinuationPolicy } : {}) },
     evidencePolicy: 'exact-native-wire-prepared-instructions-returned-observations-v1', gradingPolicy: 'separate-parent-jev-capy-no-answerer-feedback-v1',
     parentVerification: { sourceAndPolicyReady: false, reference: 'UNAPPROVED draft; parent must review and freeze after the final source commit' } }
 }
