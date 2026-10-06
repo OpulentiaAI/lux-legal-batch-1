@@ -39,7 +39,8 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     new_string: { description: 'Replacement text; an empty string deletes the matched text.' },
     replace_all: { description: 'Replace every occurrence instead of requiring exactly one match.', default: false },
   }),
-  execute: withParameters(CAPY_TOOL_DEFINITIONS.execute, {
+  execute: withParameters({ ...CAPY_TOOL_DEFINITIONS.execute,
+    description: `${CAPY_TOOL_DEFINITIONS.execute.description} Direct tool calls in one assistant response are dispatched sequentially in their listed order. Put an execute batch that creates persistent bindings first, separate execute selectors returning those bindings next, and independent calls in that same response rather than adding a response between each selector. Execution order does not prove prerequisite success or source consultation: inspect the actual returned outcomes, and keep dependent writes guarded against failed or missing results. A waitFor program ends the turn; put actually ready independent work and full readbacks before it.` }, {
     code: { description: 'JavaScript or TypeScript program with top-level await/return; only declared codemode tools and plain-data bindings are available. Top-level plain-data bindings persist across programs within 256000 serialized characters. Keep large transient results in a block scope or assign saved bindings to undefined. A persistence failure does not undo completed effects; inspect the actual returned value/effects instead of repeating writes.' },
     timeout_seconds: { description: 'Program wall-clock limit in seconds, independent of the existing tool-call, concurrency and CPU bounds.', default: 600 },
   }),
