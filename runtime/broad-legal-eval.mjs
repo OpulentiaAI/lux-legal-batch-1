@@ -24,6 +24,7 @@ import { CAPY_CONTEXT_POLICY_VERSION, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from './opulent2-startup-policy.mjs'
+import { OPULENT2_PARALLEL_DOCUMENT_VALIDATION } from './computer/document-tools-image.mjs'
 import { observeProvisionStage } from './provision-stage.mjs'
 import { lunaPolicy } from './opulent2-luna-policy.mjs'
 import { OPULENT2_RESULT_PREVIEW_POLICY, OPULENT2_RESULT_DELIVERY_POLICY, recoverCapyResultBacking } from './capy-results.mjs'
@@ -423,7 +424,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface, instructionProfile, experiment, budgetDisclosure,
-  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, onPreparedModelRequest, onProvisionStage,
+  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, opulent2DocumentValidationPolicy, onPreparedModelRequest, onProvisionStage,
   opulent2StartupPolicy = OPULENT2_SERIAL_STARTUP, opulent2ReleaseBinding,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
@@ -440,6 +441,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   } else if (opulent2ReleaseBinding !== undefined) throw new Error('Release-gated preparation requires the overlap startup policy')
   if (opulent2ResultDeliveryPolicy !== undefined && (!opulent2 || opulent2ResultDeliveryPolicy !== OPULENT2_RESULT_DELIVERY_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 result delivery policy')
   if (opulent2ContextContinuationPolicy !== undefined && (!opulent2 || opulent2ContextContinuationPolicy !== OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 context continuation policy')
+  if (opulent2DocumentValidationPolicy !== undefined && (!opulent2 || !overlapStartup || opulent2DocumentValidationPolicy !== OPULENT2_PARALLEL_DOCUMENT_VALIDATION)) throw new Error('Unknown or misplaced Opulent2 document validation policy')
   const luna = lunaPolicy(experiment)
   if (luna && (!opulent2 || model !== LUNA_MODEL || inferenceProvider !== 'gateway' || providerModel != null || providerOnly != null || reasoningEffort !== 'max' ||
       maxSteps !== luna.budgets.maxSteps || workProduct?.maxCompletionTokens !== luna.budgets.maxCompletionTokens || budgetDisclosure !== luna.disclosure)) throw new Error('Luna experiment requires the exact disclosed model and budget policy')
@@ -479,6 +481,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const scheduledChildren = capabilityV7 || capy
   const desktopConfig = deliveryV9 || opulent2 ? { computerPreparedImage: true, computerImageSha256,
     ...(opulent2 ? { computerBrowserPrewarm: true } : {}),
+    ...(opulent2DocumentValidationPolicy ? { opulent2DocumentValidationPolicy } : {}),
     browserAllowedOrigins: ['http://127.0.0.1:8765'], browserUploadRoots: [`${BROAD_SANDBOX_WORKSPACE}/analysis`, OUTPUT_PATH] } : null
   if ((deliveryV9 || opulent2) && (!sandboxTemplate || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Desktop profile requires the approved prepared desktop template and image SHA-256')
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
@@ -522,13 +525,15 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
     'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', 'provision-stage.mjs', '../package-lock.json',
     ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'instructions/opulent2-reference-update-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : []),
-    ...(luna ? ['opulent2-luna-policy.mjs'] : [])]
+    ...(luna ? ['opulent2-luna-policy.mjs'] : []),
+    ...(opulent2DocumentValidationPolicy ? ['computer/document-tools-image.mjs', 'computer/document-tools-permissions.mjs'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,
     contextPolicyVersion: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION, capyRuntimeSources, corpus: corpus.hash,
     ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
-    ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) })) } : null
+    ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
+    ...(opulent2DocumentValidationPolicy ? { documentValidationPolicy: opulent2DocumentValidationPolicy } : {}) })) } : null
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {

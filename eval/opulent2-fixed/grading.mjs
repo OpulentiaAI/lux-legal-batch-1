@@ -112,6 +112,7 @@ function verifyArtifactPolicy(release, result, bundle, previousSnapshot) {
   assert.deepEqual(policy.capy.contextCompaction, release.harnessOptions.contextCompaction)
   if (release.harnessOptions.opulent2ResultDeliveryPolicy) assert.deepEqual(policy.capy.resultDeliveryPolicy, OPULENT2_RESULT_DELIVERY_POLICY)
   assert.deepEqual(policy.capy.contextContinuationPolicy, release.harnessOptions.opulent2ContextContinuationPolicy ? OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY : undefined, 'Artifact context continuation differs from the frozen policy')
+  assert.equal(policy.opulent2.computer.opulent2DocumentValidationPolicy, release.harnessOptions.opulent2DocumentValidationPolicy, 'Artifact document validation differs from the frozen policy')
   for (const [key, value] of Object.entries({ profile: 'voyage', embeddingModel: 'voyage/voyage-4-large', rerankModel: 'voyage/rerank-2.5',
     dimensions: 1024, searchBackend: 'turbopuffer', chunkNamespace: 'lx-corpus-voyage4-1024', documentNamespace: 'lx-documents-voyage4-1024' })) assert.equal(policy.retrieval[key], value)
   assert.equal(policy.taskSha256, digest(bundle.task))

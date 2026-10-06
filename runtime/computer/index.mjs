@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
-import { probePreparedDocumentTools } from './document-tools-image.mjs';
+import { OPULENT2_PARALLEL_DOCUMENT_VALIDATION, probePreparedDocumentTools } from './document-tools-image.mjs';
 import { sandboxAccessProtection } from '../sandbox-file-access.mjs';
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../opulent2-startup-policy.mjs';
 import { observeProvisionStage } from '../provision-stage.mjs';
@@ -21,11 +21,14 @@ const preparedSandboxes = new WeakMap();
 export function createComputer(sandbox, config = {}, { startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage, operation = 'create' } = {}) {
   if (!sandbox?.commands?.run) throw new TypeError('connected E2B sandbox required');
   if (config.computerBrowserPrewarm !== undefined && typeof config.computerBrowserPrewarm !== 'boolean') throw new TypeError('computerBrowserPrewarm must be a boolean');
+  const documentValidationPolicy = config.opulent2DocumentValidationPolicy;
+  if (documentValidationPolicy !== undefined && documentValidationPolicy !== OPULENT2_PARALLEL_DOCUMENT_VALIDATION) throw new TypeError('Unknown prepared document-tool validation policy');
   const prepared = config.computerPreparedImage === true;
   const overlapStartup = prepared && startupPolicy === OPULENT2_OVERLAP_STARTUP;
   const protection = overlapStartup ? sandboxAccessProtection(sandbox) : undefined;
   const digest = overlapStartup ? config.computerImageSha256 : undefined, browserPrewarm = overlapStartup ? config.computerBrowserPrewarm : undefined;
   let boundaryInvalidated = false;
+  let documentValidationInvalidated = false;
   const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run);
   const python = prepared ? '/opt/computer-use/venv/bin/python' : '/tmp/computer-use/venv/bin/python';
   const run = async (command, timeoutMs = 120_000) => {
@@ -53,14 +56,24 @@ export function createComputer(sandbox, config = {}, { startupPolicy = OPULENT2_
       throw new Error('Invalid computer daemon response', { cause: error });
     }
   };
+  const assertDocumentValidationPolicy = state => {
+    if (!prepared) return;
+    if (documentValidationInvalidated || config.opulent2DocumentValidationPolicy !== documentValidationPolicy || state && state.documentValidationPolicy !== documentValidationPolicy) {
+      documentValidationInvalidated = true;
+      if (state) state.documentToolsSha256 = undefined;
+      throw new Error('Prepared document-tool validation policy changed during startup');
+    }
+  };
   const preparedState = () => {
-    if (!/^[a-f0-9]{64}$/.test(config.computerImageSha256 ?? '')) throw new TypeError('Prepared computer image SHA-256 is required');
     const state = preparedSandboxes.get(sandbox);
+    assertDocumentValidationPolicy(state);
+    if (!/^[a-f0-9]{64}$/.test(config.computerImageSha256 ?? '')) throw new TypeError('Prepared computer image SHA-256 is required');
     if (state && state.digest !== config.computerImageSha256) throw new Error('Prepared computer image differs from active desktop');
     if (state && state.browserPrewarm !== (config.computerBrowserPrewarm === true)) throw new Error('Prepared computer configuration differs from active desktop');
     return state;
   };
   const assertStartupBoundary = () => {
+    assertDocumentValidationPolicy(preparedSandboxes.get(sandbox));
     if (!overlapStartup) return;
     if (boundaryInvalidated || sandboxAccessProtection(sandbox) !== protection || config.computerPreparedImage !== true ||
         config.computerImageSha256 !== digest || config.computerBrowserPrewarm !== browserPrewarm) {
@@ -100,13 +113,13 @@ export function createComputer(sandbox, config = {}, { startupPolicy = OPULENT2_
         const identity = await run(`set -eu; for path in /opt /opt/opulent /usr/bin; do test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 022))" = 0; test ! -w "$path"; done; for path in /opt/opulent/document-tools /opt/opulent/document-tools/installed.json; do test ! -L "$path"; test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 0222))" = 0; test ! -w "$path"; done; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${documentTools.installedManifestSha256}'`);
         if (identity.exitCode !== undefined && identity.exitCode !== 0) throw new Error('Prepared document-tool identity/permissions check failed');
       } else {
-        await probePreparedDocumentTools(sandbox, documentTools);
+        await probePreparedDocumentTools(sandbox, documentTools, { startupPolicy, opulent2DocumentValidationPolicy: documentValidationPolicy, assertStartupBoundary });
         if (state && protection) state.documentToolsSha256 = documentTools.installedManifestSha256;
       }
     });
     if (sandboxAccessProtection(sandbox) !== protection) throw new Error('Sandbox protections changed during prepared validation');
     if (state) state.protection = protection;
-    return { documentToolsSha256: protection ? documentTools?.installedManifestSha256 : undefined, protection };
+    return { documentToolsSha256: protection ? documentTools?.installedManifestSha256 : undefined, protection, documentValidationPolicy };
   });
   const ready = async () => {
     const validation = prepared ? await verifyPreparedImage() : undefined;
@@ -180,7 +193,7 @@ export function createComputer(sandbox, config = {}, { startupPolicy = OPULENT2_
         try { return await ready(); }
         catch (error) { previous.documentToolsSha256 = undefined; throw error; }
       }
-      const state = { digest: config.computerImageSha256, browserPrewarm: config.computerBrowserPrewarm === true, documentToolsSha256: undefined, starting: undefined };
+      const state = { digest: config.computerImageSha256, browserPrewarm: config.computerBrowserPrewarm === true, documentValidationPolicy, documentToolsSha256: undefined, starting: undefined };
       preparedSandboxes.set(sandbox, state);
       state.starting = bootstrap();
       try { return await state.starting; }
