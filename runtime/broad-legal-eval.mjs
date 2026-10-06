@@ -270,6 +270,25 @@ async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = 
   return sandbox
 }
 
+async function checkPreparedSkills(skills, verify, startupPolicy) {
+  if (startupPolicy !== OPULENT2_OVERLAP_STARTUP) {
+    for (const skill of skills) await verify(skill)
+    return
+  }
+  const checks = await Promise.allSettled(skills.map(verify))
+  const failures = checks.filter(check => check.status === 'rejected').map(check => check.reason)
+  if (failures.length) throw new AggregateError(failures, failures.map(error => error?.message ?? String(error)).join('; '))
+}
+
+export async function verifyPreparedSkills(sandbox, skills, startupPolicy = OPULENT2_SERIAL_STARTUP) {
+  await checkPreparedSkills(skills.skills, async ({ name, artifactSha256 }) => {
+    const path = `${skills.destinationRoot}/${name}/SKILL.md`
+    if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
+    const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
+    if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
+  }, startupPolicy)
+}
+
 function visibleSources(value, corpusSources) {
   const found = new Map()
   const byId = new Map(corpusSources.map(source => [source.id, source]))
@@ -626,14 +645,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           return originalPause(...args)
         }
       }
-      if (skills) {
-        for (const { name, artifactSha256 } of skills.skills) {
-          const path = `${skills.destinationRoot}/${name}/SKILL.md`
-          if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
-          const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
-          if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
-        }
-      }
+      if (skills) await verifyPreparedSkills(sandbox, skills, opulent2StartupPolicy)
       if (deliveryV9 || opulent2) {
         const { readiness } = await (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig, { bootstrap })
         sandbox[DESKTOP_READINESS] = readiness
@@ -795,10 +807,10 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         }
         if (skills) {
           stage = 'builtin-skills'
-          for (const { name, artifactSha256 } of skills.skills) {
+          await checkPreparedSkills(skills.skills, async ({ name, artifactSha256 }) => {
             const result = await invoke(opulent2 ? 'skill_read' : 'skill', opulent2 ? { name } : { command: 'invoke', skill: name })
             if (result.path !== `${skills.destinationRoot}/${name}/SKILL.md` || sha256(result.content) !== artifactSha256) throw new Error(`Built-in skill invocation mismatch: ${name}`)
-          }
+          }, opulent2StartupPolicy)
         }
         if (opulent2) {
           stage = 'opulent2-genuine-agrep'
