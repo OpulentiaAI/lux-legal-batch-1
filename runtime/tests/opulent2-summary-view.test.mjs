@@ -94,3 +94,29 @@ test('a summary transport failure remains fatal instead of becoming an externali
   await assert.rejects(prepareCapyModelContext({ ctx: fixture().ctx, messages: messages(), config,
     model: async () => { throw failure; } }), error => error === failure);
 });
+
+test('metadata-free histories retain their original cache policy and changed evidence views reject those checkpoints', async () => {
+  const { ctx, model, inputs } = fixture();
+  const original = messages();
+  for (const message of original) {
+    if (message.role === 'assistant') {
+      message.reasoning_details = message.reasoning_details.filter(detail => detail.type !== 'reasoning.encrypted');
+      delete message.provider_metadata.gateway;
+    }
+    if (message.role === 'tool') message.content = message.content.padEnd(55000, '.');
+  }
+  const bytes = JSON.stringify(original);
+  const first = await prepareCapyModelContext({ ctx, messages: original, config, model });
+  assert.equal(first.checkpoint.provenance.summaryViewDigest, undefined);
+  const count = inputs.length;
+  const cached = await prepareCapyModelContext({ ctx, messages: original, config, model, checkpoint: first.checkpoint });
+  assert.strictEqual(cached.checkpoint, first.checkpoint);
+  assert.equal(inputs.length, count);
+  assert.equal(JSON.stringify(original), bytes);
+  original[2].reasoning_details.push({ type: 'reasoning.encrypted', format: 'openai-responses-v1', data: 'new-provider-opaque-data' });
+  const changed = await prepareCapyModelContext({ ctx, messages: original, config, model, checkpoint: first.checkpoint });
+  assert.notEqual(changed.checkpoint.capyPolicyDigest, first.checkpoint.capyPolicyDigest);
+  assert.equal(changed.checkpoint.provenance.summaryViewDigest, hash(JSON.stringify('opulent2-summary-evidence-view-v1')));
+  assert.equal(JSON.parse(inputs[count][1].content).previousSummary, null);
+  assert(inputs.length > count);
+});

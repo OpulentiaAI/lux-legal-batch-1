@@ -12,15 +12,18 @@ const SUMMARY_VIEW_VERSION = 'opulent2-summary-evidence-view-v1';
 
 function summaryEvidenceView(message) {
   if (message.role !== 'assistant') return message;
-  const projected = { ...message };
-  if (Array.isArray(message.reasoning_details)) projected.reasoning_details = message.reasoning_details.map(detail => {
-    if (detail?.type !== 'reasoning.encrypted' || detail.format !== 'openai-responses-v1' || typeof detail.data !== 'string') return detail;
-    return { ...detail, data: '[Opaque provider reasoning omitted from summary text; exact bytes remain in the original transcript.]',
-      data_sha256: createHash('sha256').update(detail.data).digest('hex'), data_characters: detail.data.length };
-  });
-  if (message.provider_metadata && typeof message.provider_metadata === 'object' && !Array.isArray(message.provider_metadata)) {
+  let projected = message;
+  if (Array.isArray(message.reasoning_details)) {
+    const details = message.reasoning_details.map(detail => {
+      if (detail?.type !== 'reasoning.encrypted' || detail.format !== 'openai-responses-v1' || typeof detail.data !== 'string') return detail;
+      return { ...detail, data: '[Opaque provider reasoning omitted from summary text; exact bytes remain in the original transcript.]',
+        data_sha256: createHash('sha256').update(detail.data).digest('hex'), data_characters: detail.data.length };
+    });
+    if (details.some((detail, index) => detail !== message.reasoning_details[index])) projected = { ...projected, reasoning_details: details };
+  }
+  if (message.provider_metadata && typeof message.provider_metadata === 'object' && !Array.isArray(message.provider_metadata) && Object.hasOwn(message.provider_metadata, 'gateway')) {
     const { gateway, ...metadata } = message.provider_metadata;
-    projected.provider_metadata = metadata;
+    projected = { ...projected, provider_metadata: metadata };
   }
   return projected;
 }
@@ -137,8 +140,11 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
   if (!Array.isArray(messages)) throw new Error('Context messages must be an array');
   signal?.throwIfAborted();
   if (JSON.stringify(messages).length <= policy.maxInputChars) return { messages, checkpoint, usage: {}, compacted: false };
+  const summaryView = config.instructionProfile === 'opulent2-fixed-v1' && messages.some(message => summaryEvidenceView(message) !== message)
+    ? { version: SUMMARY_VIEW_VERSION, project: summaryEvidenceView } : undefined;
   const summaryRepairPolicy = config.instructionProfile === 'opulent2-fixed-v1' ? {
-    version: 'opulent2-summary-repair-v3', attempts: SUMMARY_ATTEMPTS, summaryView: SUMMARY_VIEW_VERSION,
+    version: summaryView ? 'opulent2-summary-repair-v3' : 'opulent2-summary-repair-v2', attempts: SUMMARY_ATTEMPTS,
+    ...(summaryView ? { summaryView: summaryView.version } : {}),
     preferredMaximumCharacters: Math.max(1, Math.floor(policy.maxSummaryChars / 2)),
     targetCharacters: Math.max(1, Math.floor(policy.maxSummaryChars / 4)),
     instruction: 'Preserve decisive alternatives, conditions, explicit conflicts and uncertainty. Unknown facts must remain unknown, not become negative facts. Prefer evidence references and unresolved source questions to invented resolutions.',
@@ -154,7 +160,6 @@ export async function prepareCapyModelContext({ ctx, messages, checkpoint, confi
       + (summaryRepairPolicy ? ' Aim for targetCharacters and prefer staying within preferredMaximumCharacters. These are preferences, not hard limits; maximumCharacters remains the hard limit. Preserve decisive alternatives, conditions, conflicts and uncertainty even if doing so exceeds the preference.' : '') } : null,
   });
   const emptyBatch = { previousSummary: null, transcript: [] };
-  const summaryView = summaryRepairPolicy ? { version: SUMMARY_VIEW_VERSION, project: summaryEvidenceView } : undefined;
   const inputChars = value => JSON.stringify({ role: 'user', content: JSON.stringify(value) }).length;
   const summaryInputLimit = policy.maxSummaryInputChars - (inputChars({ ...emptyBatch, capySummaryContract: contract('forbidden_tool_call') }) - inputChars(emptyBatch));
   const effectivePolicy = { ...policy, maxSummaryInputChars: summaryInputLimit };
