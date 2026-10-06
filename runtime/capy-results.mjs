@@ -67,3 +67,16 @@ export async function materializeCapyResults(ctx) {
     ctx.store.put('capy_results', result.id, { ...result, status: 'available' });
   }
 }
+
+export async function recoverCapyResultBacking(ctx, result) {
+  if (result?.kind !== 'file_backed_result') return result;
+  const backing = ctx.store.get('capy_results', result.result_id);
+  if (!backing || backing.session_id !== ctx.sessionId || backing.status !== 'available' || result.file_error ||
+      backing.output_path !== result.output_path || backing.sha256 !== result.sha256 || backing.characters !== result.characters) {
+    throw new Error('Unverified Capy result backing');
+  }
+  const serialized = await ctx.sandbox.files.read(backing.output_path);
+  if (typeof serialized !== 'string' || serialized !== backing.serialized || serialized.length !== backing.characters ||
+      createHash('sha256').update(serialized).digest('hex') !== backing.sha256) throw new Error('Capy result backing integrity mismatch');
+  return JSON.parse(serialized);
+}

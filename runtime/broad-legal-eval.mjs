@@ -24,7 +24,7 @@ import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
 import { lunaPolicy } from './opulent2-luna-policy.mjs'
-import { OPULENT2_RESULT_PREVIEW_POLICY, OPULENT2_RESULT_DELIVERY_POLICY } from './capy-results.mjs'
+import { OPULENT2_RESULT_PREVIEW_POLICY, OPULENT2_RESULT_DELIVERY_POLICY, recoverCapyResultBacking } from './capy-results.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
 import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
@@ -718,24 +718,35 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           stage = 'capy-vm-provision'
           await runtime.context(session.id).ensureSandbox()
         }
+        const invoke = async (name, args) => {
+          const result = await runtime.invoke(session.id, name, args)
+          if (!capy) return result
+          const ctx = runtime.context(session.id)
+          const recovered = await recoverCapyResultBacking(ctx, result)
+          if (result?.kind === 'file_backed_result') ctx.emit?.('preflight_result_recovered', {
+            name, result_id: result.result_id, sha256: result.sha256, characters: result.characters,
+            scope: 'operator-preflight-only; not model-consulted evidence',
+          })
+          return recovered
+        }
         stage = 'native-catalog'
         if (!nativeMcp) {
           stage = 'toolbox-direct-corpus'
           const source = corpus.sources[0]
-          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          const direct = await invoke('lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Native toolbox chunk response differs from prepared source')
-          const search = await runtime.invoke(session.id, 'lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
+          const search = await invoke('lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
           if (!Array.isArray(search?.results) || !search.results.length) throw new Error('Native toolbox semantic search returned no results')
         }
         if (nativeMcp) {
-          const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
+          const listed = await invoke('mcp_list_tools', { server: mcp.server })
           const names = listed.tools?.map(tool => tool.name)
           if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
             JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
           for (const name of NATIVE_LX_TOOLS) {
             stage = `native-${name}`
             const probe = mcp.probes.find(item => item.name === name)
-            const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
+            const result = await invoke('mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
             if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
             if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
           }
@@ -744,18 +755,18 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           stage = 'direct-corpus-access'
           const source = corpus.sources[0]
           if (!source) throw new Error('Prepared corpus source required for direct-corpus verification')
-          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          const direct = await invoke('lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Direct corpus chunk response differs from prepared source')
         } else if (nativeMcp) {
           stage = 'direct-corpus-denial'
           let directDenied = false
-          try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
+          try { await invoke('lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
           if (!directDenied) throw new Error('Direct corpus dispatch remains accessible')
         }
         stage = capy ? 'capy-codemode' : 'broker-callback'
-        const brokerCall = capy ? await runtime.invoke(session.id, 'execute', {
+        const brokerCall = capy ? await invoke('execute', {
           code: 'const tasks = await tools.task.list({}); const process = await tools.capy.bash({command: "printf capy-vm-preflight", description: "Verifying isolated workspace execution"}); return {tasks,process}', timeout_seconds: 30,
-        }) : await runtime.invoke(session.id, 'scripted_tools', {
+        }) : await invoke('scripted_tools', {
           script: 'import asyncio\nfrom opulent_tools import tools\nasync def main():\n    print(await tools.noop())\nasyncio.run(main())', timeout_secs: 30,
         })
         if (capy ? brokerCall?.status !== 'completed' || brokerCall.error || !Array.isArray(brokerCall.value?.tasks?.tasks) ||
@@ -765,14 +776,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (capy) {
           stage = 'capy-vm-canonical-read'
           const source = corpus.sources[0]
-          const read = await runtime.invoke(session.id, 'read', { path: `${SANDBOX_CORPUS}/chunks/${source.id}.txt`, offset: 1, limit: 2 })
+          const read = await invoke('read', { path: `${SANDBOX_CORPUS}/chunks/${source.id}.txt`, offset: 1, limit: 2 })
           const expected = (`[${source.id}]\n${source.text}\n`.match(/[^\n]*\n|[^\n]+$/g) ?? []).slice(0, 2).join('').slice(0, 60000)
           if (read?.kind !== 'read' || read.content !== expected) throw new Error('Capy VM corpus read differs from the approved canonical source')
         }
         if (skills) {
           stage = 'builtin-skills'
           for (const { name, artifactSha256 } of skills.skills) {
-            const result = await runtime.invoke(session.id, opulent2 ? 'skill_read' : 'skill', opulent2 ? { name } : { command: 'invoke', skill: name })
+            const result = await invoke(opulent2 ? 'skill_read' : 'skill', opulent2 ? { name } : { command: 'invoke', skill: name })
             if (result.path !== `${skills.destinationRoot}/${name}/SKILL.md` || sha256(result.content) !== artifactSha256) throw new Error(`Built-in skill invocation mismatch: ${name}`)
           }
         }
@@ -781,15 +792,15 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const source = corpus.sources[0]
           const pattern = source.text.split(/\r?\n/).find(line => line.trim() && !/[\x00-\x1f\x7f]/.test(line))?.slice(0, 80)
           if (!pattern) throw new Error('A searchable public corpus line is required for approximate-search preflight')
-          const found = await runtime.invoke(session.id, 'agrep', { pattern, path: `corpus/chunks/${source.id}.txt`, max_errors: 0 })
+          const found = await invoke('agrep', { pattern, path: `corpus/chunks/${source.id}.txt`, max_errors: 0 })
           if (found.kind !== 'agrep' || !found.matches?.length) throw new Error('Genuine approximate-search preflight did not return the known corpus line')
           stage = 'opulent2-computer-observation'
-          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          const screenshot = await invoke('computer', { actions: [{ action: 'screenshot' }] })
           if (!screenshot?.ok || !runtime.context(session.id).capyToolImages.length) throw new Error('Opulent2 computer did not produce a replayable image observation')
         }
         if (nativeMcp || deliveryV9) {
           stage = 'desktop-screenshot'
-          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          const screenshot = await invoke('computer', { actions: [{ action: 'screenshot' }] })
           if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
           stage = 'local-browser-open'
           await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, deliveryV9
@@ -804,15 +815,15 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
           if (local?.ok === false) throw new Error('Local browser failed to open')
           stage = 'local-browser-console'
-          const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
+          const location = await invoke('browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
           if (location?.result !== true) throw new Error('Local browser verification failed')
           if (deliveryV9) {
             stage = 'browser-dom-snapshot'
-            const snapshot = await runtime.invoke(session.id, 'browser', { actions: [{ action: 'navigate', url: 'http://127.0.0.1:8765/preflight.html' }, { action: 'snapshot' }] })
+            const snapshot = await invoke('browser', { actions: [{ action: 'navigate', url: 'http://127.0.0.1:8765/preflight.html' }, { action: 'snapshot' }] })
             const ref = snapshot.observation?.tree?.match(/(e\d+) button Confirm preflight/)?.[1]
             if (snapshot.failure || !ref || !Number.isSafeInteger(snapshot.observation?.epoch)) throw new Error('Browser DOM snapshot failed')
             stage = 'browser-ref-action'
-            const clicked = await runtime.invoke(session.id, 'browser', { actions: [{ action: 'click', ref, epoch: snapshot.observation.epoch }, { action: 'read' }] })
+            const clicked = await invoke('browser', { actions: [{ action: 'click', ref, epoch: snapshot.observation.epoch }, { action: 'read' }] })
             if (clicked.failure || clicked.executed !== 2 || !clicked.results?.[1]?.text?.includes('legal-comparison-confirmed')) throw new Error('Browser ref action failed')
           }
         }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createStore } from '../store.mjs';
 import { createCapyExecutor } from '../capy-execute.mjs';
-import { capyResultChars, CAPY_RESULT_CHARS, OPULENT2_RESULT_DELIVERY_POLICY, persistCapyResult } from '../capy-results.mjs';
+import { capyResultChars, CAPY_RESULT_CHARS, OPULENT2_RESULT_DELIVERY_POLICY, persistCapyResult, recoverCapyResultBacking } from '../capy-results.mjs';
 import { prepareOpulent2ModelContext } from '../opulent2-context.mjs';
 import { createRuntime } from '../core.mjs';
 import { capyFixture, completion } from './capy-runtime-fixture.mjs';
@@ -56,6 +56,36 @@ test('escaped JSON and supplementary Unicode stay within the visible envelope wi
   assert.equal(head.length + Number(omitted) + tail.length, serialized.length);
   assert.equal(await ctx.sandbox.files.read(result.output_path), serialized);
 });
+
+test('operator recovery reads verified full backing without changing the model-visible reference', async t => {
+  const { ctx } = fixture(t);
+  const value = { results: [{ text: 'source '.repeat(2000), tail: 'unpreviewed deciding source' }] };
+  const result = await ctx.persistCapyResult(value);
+  const returned = JSON.stringify(result);
+  assert.deepEqual(await recoverCapyResultBacking(ctx, result), value);
+  assert.equal(JSON.stringify(result), returned);
+  assert.match(result.consultation, /Unreturned file content is not consulted evidence/);
+  assert.deepEqual(await recoverCapyResultBacking({}, { results: [] }), { results: [] });
+});
+
+for (const failure of ['foreign-session', 'unknown-id', 'foreign-path', 'wrong-hash', 'wrong-length', 'unavailable', 'changed-file']) {
+  test(`operator recovery rejects ${failure} backing before accepting a provider result`, async t => {
+    const { ctx, files, store } = fixture(t);
+    const result = await ctx.persistCapyResult({ text: 'source '.repeat(2000) });
+    if (failure === 'foreign-session') ctx.sessionId = 'another-session';
+    if (failure === 'unknown-id') result.result_id = 'unknown';
+    if (failure === 'foreign-path') result.output_path = '/another/path';
+    if (failure === 'wrong-hash') result.sha256 = '0'.repeat(64);
+    if (failure === 'wrong-length') result.characters++;
+    if (failure === 'unavailable') store.put('capy_results', result.result_id, { ...store.get('capy_results', result.result_id), status: 'persisted' });
+    if (failure === 'changed-file') files.set(result.output_path, JSON.stringify({ results: ['forged'] }));
+    const read = ctx.sandbox.files.read;
+    let reads = 0;
+    ctx.sandbox.files.read = async path => { reads++; return read(path); };
+    await assert.rejects(recoverCapyResultBacking(ctx, result), /backing/);
+    assert.equal(reads, failure === 'changed-file' ? 1 : 0);
+  });
+}
 
 test('historical profiles and explicit larger or metadata-only backing budgets remain available', async t => {
   const old = fixture(t, 'opulent-capy-v1'), fixed = fixture(t);
