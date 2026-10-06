@@ -11,6 +11,7 @@ import { createComputer } from '../computer/index.mjs';
 import { createNoNewPrivilegesRunner, protectSandboxFileAccess, sandboxAccessProtection } from '../sandbox-file-access.mjs';
 import { probeOpulent2Machine } from '../opulent2-machine.mjs';
 import { OPULENT2_PROFILE } from '../instructions/opulent2.mjs';
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../opulent2-startup-policy.mjs';
 
 const exec = promisify(execFile);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -47,6 +48,7 @@ async function fixture(t, { protectedAccess = true } = {}) {
   const server = createServer((request, response) => {
     const authenticated = request.headers.authorization === `Bearer ${token}`;
     state.requests.push({ path: request.url, authenticated });
+    state.onRequest?.(request.url);
     response.setHeader('Content-Type', 'application/json');
     if (!authenticated) {
       response.writeHead(401);
@@ -89,6 +91,7 @@ async function fixture(t, { protectedAccess = true } = {}) {
         command = command.slice(prefix.length, -1).replaceAll("'\\''", "'");
       }
       state.commands.push(command);
+      await state.onCommand?.(command);
       if (command.startsWith("python3 - <<'PY'")) return { exitCode: 0, stdout: JSON.stringify([{ uid: process.getuid(), noNewPrivs: 1 }]) };
       if (command.includes('Untrusted approximate-grep executable')) return { exitCode: 0, stdout: JSON.stringify({
         executable: '/usr/local/bin/agrep', resolvedExecutable: '/usr/bin/tre-agrep', executableSha256: 'f'.repeat(64),
@@ -200,6 +203,266 @@ test('generic prepared callers keep full audits even when protection is claimed 
   assert.equal(calls(state, '/v1/capabilities'), 3);
   assert.equal(state.launches, 1);
   assert.equal(state.tokenWrites, 1);
+});
+
+test('selected overlap keeps the first ordered readiness attempt and polls authenticated health on retries before all original final gates', async t => {
+  const delays = [];
+  t.mock.method(globalThis, 'setTimeout', (resolve, delay) => { delays.push(delay); return setImmediate(resolve); });
+  const { sandbox, config, state } = await fixture(t);
+  state.notReady = 3;
+  const stages = [];
+  const result = await createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP, onProvisionStage: event => stages.push(event) }).bootstrap();
+  assert.deepEqual(result.primitives, ['actions', 'recordings']);
+  assert.deepEqual(delays, [2000, 2000, 2000]);
+  assert.equal(state.audits, 1);
+  assert.equal(state.identities, 2);
+  assert.equal(state.prerequisites, 3);
+  assert.equal(state.privilegeChecks, 3);
+  assert.equal(calls(state, '/readyz'), 5);
+  assert.equal(calls(state, '/v1/capabilities'), 1);
+  assert(state.requests.every(request => request.authenticated));
+  assert.equal(state.launches, 1);
+  assert.equal(state.tokenWrites, 1);
+  assert.equal(state.bridgeWrites, 1);
+  assert.deepEqual(stages.filter(event => event.status === 'started').map(event => event.stage), [
+    'readiness-prepared-validation', 'readiness-prepared-document-validation', 'readiness-daemon-launch-disconnect',
+    'readiness-prepared-validation', 'readiness-prepared-document-validation',
+    'readiness-ready-polling', 'readiness-ready-polling', 'readiness-ready-polling', 'readiness-ready-polling',
+    'readiness-prepared-validation', 'readiness-prepared-document-validation', 'readiness-ready-polling',
+  ]);
+  assert.deepEqual(stages.filter(event => event.stage === 'readiness-ready-polling' && event.status !== 'started').map(event => event.status),
+    ['failed', 'failed', 'failed', 'completed', 'completed']);
+  const commands = state.commands;
+  assert(commands.findIndex(command => command.includes('probe-installed.mjs --permissions')) < commands.findIndex(command => command.includes('secrets.token_urlsafe')));
+  assert(commands.findIndex(command => command.includes('probe-installed.mjs --permissions')) < commands.findIndex(command => command.includes('modal_computer_use.daemon')));
+  assert(commands.findIndex(command => command.includes('probe-installed.mjs --permissions')) < commands.findIndex(command => command.startsWith('python3 /tmp/computer-use/bridge.py')));
+  const finalRequest = commands.findLastIndex(command => command.startsWith('python3 /tmp/computer-use/bridge.py'));
+  const finalIdentity = commands.findLastIndex(command => command.includes('/opt/opulent/document-tools/installed.json'));
+  assert(finalIdentity > commands.findIndex(command => command.startsWith('python3 /tmp/computer-use/bridge.py')));
+  assert(finalIdentity < finalRequest);
+});
+
+test('default and explicit serial polling keep historical validation order, and claimed protection never enables overlap health retries', async t => {
+  t.mock.method(globalThis, 'setTimeout', resolve => setImmediate(resolve));
+  for (const options of [{}, { startupPolicy: OPULENT2_SERIAL_STARTUP }, { startupPolicy: OPULENT2_OVERLAP_STARTUP, unprotected: true }]) {
+    const { sandbox, config, state } = await fixture(t, { protectedAccess: !options.unprotected });
+    state.notReady = 3;
+    await createComputer(sandbox, config, options).bootstrap();
+    assert.equal(calls(state, '/readyz'), 4);
+    assert.equal(calls(state, '/v1/capabilities'), 1);
+    assert.equal(state.prerequisites, 5);
+    assert.equal(state.audits, options.unprotected ? 5 : 1);
+    assert.equal(state.identities, options.unprotected ? 0 : 4);
+    assert.equal(state.privilegeChecks, options.unprotected ? 0 : 5);
+    assert(state.requests.every(request => request.authenticated));
+  }
+});
+
+test('unprotected selected overlap still runs every full document audit and prepared gate on all 45 polls despite a secure configuration claim', async t => {
+  const delays = [];
+  t.mock.method(globalThis, 'setTimeout', (resolve, delay) => { delays.push(delay); return setImmediate(resolve); });
+  const { sandbox, config, state } = await fixture(t, { protectedAccess: false });
+  assert.equal(config.secureSandboxFileAccess, true);
+  assert.equal(sandboxAccessProtection(sandbox), undefined);
+  state.notReady = 45;
+  const stages = [];
+  await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP, onProvisionStage: event => stages.push(event) }).bootstrap(), /did not become ready/);
+  assert.deepEqual(delays, Array(45).fill(2000));
+  assert.equal(state.audits, 46);
+  assert.equal(state.identities, 0);
+  assert.equal(state.prerequisites, 46);
+  assert.equal(state.privilegeChecks, 0);
+  assert.equal(calls(state, '/readyz'), 45);
+  assert.equal(calls(state, '/v1/capabilities'), 0);
+  assert(state.requests.every(request => request.authenticated));
+  assert.equal(state.launches, 1);
+  assert.equal(state.tokenWrites, 1);
+  assert.equal(state.bridgeWrites, 1);
+  assert.equal(stages.filter(event => event.stage === 'readiness-prepared-validation' && event.status === 'completed').length, 46);
+  assert.equal(stages.filter(event => event.stage === 'readiness-prepared-document-validation' && event.status === 'completed').length, 46);
+});
+
+test('selected overlap retains the full initial hardening, image and document gates before bridge, token or daemon startup', async t => {
+  for (const failure of ['hardeningValid', 'prerequisitesValid', 'manifest', 'auditFailures']) {
+    const { sandbox, config, state } = await fixture(t);
+    if (failure === 'manifest') state.manifest = '{}';
+    else if (failure === 'auditFailures') state.auditFailures = 1;
+    else state[failure] = false;
+    await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(),
+      /protected nonroot|image prerequisites|manifest differs|availability\/integrity probe failed/);
+    assert.equal(state.requests.length, 0);
+    assert.equal(state.bridgeWrites, 0);
+    assert.equal(state.tokenWrites, 0);
+    assert.equal(state.launches, 0);
+  }
+});
+
+test('selected overlap exhausts the original 45 authenticated polls and 2000ms delays and discards its initial attestation', async t => {
+  const delays = [];
+  t.mock.method(globalThis, 'setTimeout', (resolve, delay) => { delays.push(delay); return setImmediate(resolve); });
+  const { sandbox, config, state } = await fixture(t);
+  state.notReady = 45;
+  await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(), /did not become ready/);
+  assert.deepEqual(delays, Array(45).fill(2000));
+  assert.equal(calls(state, '/readyz'), 45);
+  assert.equal(calls(state, '/v1/capabilities'), 0);
+  assert.equal(state.audits, 1);
+  assert.equal(state.identities, 1);
+  assert.equal(state.prerequisites, 2);
+  await createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap();
+  assert.equal(state.audits, 2);
+  assert.equal(state.launches, 2);
+  assert.equal(state.tokenWrites, 2);
+  assert.equal(state.bridgeWrites, 2);
+  assert.equal(calls(state, '/readyz'), 46);
+  assert.equal(calls(state, '/v1/capabilities'), 1);
+  assert(state.requests.every(request => request.authenticated));
+});
+
+test('selected overlap cannot pass final readiness with changed live privilege, image, document identity, prerequisites, token or capabilities', async t => {
+  t.mock.method(globalThis, 'setTimeout', resolve => setImmediate(resolve));
+  for (const failure of ['hardeningValid', 'prerequisitesValid', 'identityValid', 'manifest', 'token', 'capabilities']) {
+    const { sandbox, config, state, changeClientToken } = await fixture(t);
+    state.notReady = 1;
+    state.onCommand = async command => {
+      if (!command.startsWith('python3 /tmp/computer-use/bridge.py') || calls(state, '/readyz') !== 1) return;
+      state.onCommand = undefined;
+      if (failure === 'token') await changeClientToken('offline-invalid-authentication');
+      else if (failure === 'manifest') state.manifest = '{}';
+      else if (failure === 'capabilities') state.primitives = ['actions'];
+      else state[failure] = false;
+    };
+    await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(), /did not become ready/);
+    assert.equal(state.launches, 1);
+    assert.equal(state.tokenWrites, 1);
+    assert.equal(calls(state, '/v1/capabilities'), failure === 'capabilities' ? 44 : 0);
+    if (failure === 'token') assert(state.requests.slice(1).every(request => request.authenticated === false));
+    else assert(state.requests.every(request => request.authenticated));
+  }
+});
+
+test('selected overlap rejects replaced protected wrappers and prepared configuration before success, even after restoration on a later poll', async t => {
+  for (const failure of ['run', 'commands', 'files', 'write', 'rename', 'remove', 'writeFiles', 'digest', 'prewarm', 'prepared']) {
+    const { sandbox, config, state, rawRun, rawWrite } = await fixture(t);
+    const original = { commands: sandbox.commands, files: sandbox.files, run: sandbox.commands.run,
+      write: sandbox.files.write, rename: sandbox.files.rename, remove: sandbox.files.remove, writeFiles: sandbox.files.writeFiles,
+      digest: config.computerImageSha256 };
+    state.notReady = 1;
+    let restore;
+    state.onRequest = path => {
+      if (path !== '/readyz' || calls(state, '/readyz') !== 2) return;
+      if (failure === 'run') { sandbox.commands.run = rawRun; restore = () => { sandbox.commands.run = original.run; }; }
+      else if (failure === 'commands' || failure === 'files') { sandbox[failure] = { ...sandbox[failure] }; restore = () => { sandbox[failure] = original[failure]; }; }
+      else if (failure === 'digest') { config.computerImageSha256 = 'd'.repeat(64); restore = () => { config.computerImageSha256 = original.digest; }; }
+      else if (failure === 'prewarm') { config.computerBrowserPrewarm = true; restore = () => { delete config.computerBrowserPrewarm; }; }
+      else if (failure === 'prepared') { config.computerPreparedImage = false; restore = () => { config.computerPreparedImage = true; }; }
+      else { sandbox.files[failure] = rawWrite; restore = () => { sandbox.files[failure] = original[failure]; }; }
+    };
+    const delays = [];
+    t.mock.method(globalThis, 'setTimeout', (resolve, delay) => { delays.push(delay); restore?.(); return setImmediate(resolve); });
+    await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(), /did not become ready/);
+    assert.deepEqual(delays, Array(45).fill(2000));
+    assert.equal(calls(state, '/readyz'), 2);
+    assert.equal(calls(state, '/v1/capabilities'), 0);
+    assert.equal(state.audits, 1);
+    state.onRequest = undefined;
+    await createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap();
+    assert.equal(state.audits, 2);
+    assert.equal(state.launches, 2);
+    assert.equal(state.tokenWrites, 2);
+    assert.equal(state.bridgeWrites, 2);
+    t.mock.restoreAll();
+  }
+});
+
+test('selected overlap also rejects boundary or configuration changes during the final authenticated capability request', async t => {
+  t.mock.method(globalThis, 'setTimeout', resolve => setImmediate(resolve));
+  for (const failure of ['wrapper', 'digest', 'prewarm', 'prewarm-invalid', 'prewarm-equivalent', 'prepared']) {
+    const { sandbox, config, state, rawRun } = await fixture(t);
+    state.onRequest = path => {
+      if (path !== '/v1/capabilities') return;
+      if (failure === 'wrapper') sandbox.commands.run = rawRun;
+      else if (failure === 'digest') config.computerImageSha256 = 'd'.repeat(64);
+      else if (failure === 'prewarm') config.computerBrowserPrewarm = true;
+      else if (failure === 'prewarm-invalid') config.computerBrowserPrewarm = 'invalid';
+      else if (failure === 'prewarm-equivalent') config.computerBrowserPrewarm = false;
+      else config.computerPreparedImage = false;
+    };
+    await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(), /did not become ready/);
+    assert.equal(calls(state, '/readyz'), 1);
+    assert.equal(calls(state, '/v1/capabilities'), 1);
+    assert.equal(state.launches, 1);
+    assert.equal(state.tokenWrites, 1);
+  }
+});
+
+test('selected overlap stays single-flight and reacquired or reconnect-only handles still run complete validation before authenticated readiness', async t => {
+  t.mock.method(globalThis, 'setTimeout', resolve => setImmediate(resolve));
+  const { sandbox, config, state, protect } = await fixture(t);
+  state.notReady = 2;
+  const options = { startupPolicy: OPULENT2_OVERLAP_STARTUP };
+  await Promise.all(Array.from({ length: 4 }, () => createComputer(sandbox, { ...config }, options).bootstrap()));
+  assert.equal(state.audits, 1);
+  assert.equal(state.launches, 1);
+  assert.equal(state.tokenWrites, 1);
+  assert.equal(state.bridgeWrites, 1);
+  assert.equal(calls(state, '/readyz'), 7);
+  assert.equal(calls(state, '/v1/capabilities'), 4);
+  const before = state.prerequisites;
+  await createComputer(sandbox, { ...config }, options).bootstrap();
+  assert.equal(state.prerequisites, before + 1);
+  const reconnected = { ...sandbox, commands: { ...sandbox.commands }, files: { ...sandbox.files } };
+  protect(reconnected);
+  await createComputer(reconnected, { ...config }, options).ready();
+  assert.equal(state.audits, 2);
+  assert.equal(state.launches, 1);
+  assert.equal(state.tokenWrites, 1);
+  assert.equal(state.bridgeWrites, 1);
+  assert(state.requests.every(request => request.authenticated));
+});
+
+test('selected overlap rechecks authenticated readiness after final prepared validation rather than trusting an earlier ready health response', async t => {
+  const delays = [];
+  t.mock.method(globalThis, 'setTimeout', (resolve, delay) => { delays.push(delay); return setImmediate(resolve); });
+  const { sandbox, config, state } = await fixture(t);
+  state.notReady = 1;
+  state.onRequest = path => { if (path === '/readyz' && calls(state, '/readyz') === 3) state.notReady = 1000; };
+  await assert.rejects(createComputer(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }).bootstrap(), /did not become ready/);
+  assert.deepEqual(delays, Array(45).fill(2000));
+  assert.equal(calls(state, '/readyz'), 46);
+  assert.equal(calls(state, '/v1/capabilities'), 0);
+  assert.equal(state.prerequisites, 3);
+  assert.equal(state.identities, 2);
+  assert(state.requests.every(request => request.authenticated));
+});
+
+test('selected Opulent2 readiness cannot return after a boundary changes during daemon hardening, screenshot or browser status', async t => {
+  for (const path of ['daemon', '/v1/screenshots/full', '/v1/browser/status']) {
+    const { sandbox, config, state, rawWrite } = await fixture(t);
+    if (path === 'daemon') state.onCommand = command => { if (command.startsWith("python3 - <<'PY'")) sandbox.files.write = rawWrite; };
+    else state.onRequest = current => { if (current === path) sandbox.files.write = rawWrite; };
+    await assert.rejects(probeOpulent2Machine(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }), error =>
+      /protections or configuration changed/.test(error.message) || /protections or configuration changed/.test(error.cause?.message));
+    assert.equal(state.launches, 1);
+    assert.equal(state.tokenWrites, 1);
+    assert(state.requests.every(request => request.authenticated));
+  }
+});
+
+test('selected Opulent2 readiness rejects a live prepared configuration change during screenshot or browser status before returning', async t => {
+  for (const [path, failure] of ['/v1/screenshots/full', '/v1/browser/status'].flatMap(path => ['digest', 'prewarm', 'prepared'].map(failure => [path, failure]))) {
+    const { sandbox, config, state } = await fixture(t);
+    state.onRequest = current => {
+      if (current !== path) return;
+      if (failure === 'digest') config.computerImageSha256 = 'd'.repeat(64);
+      else if (failure === 'prewarm') config.computerBrowserPrewarm = false;
+      else config.computerPreparedImage = false;
+    };
+    await assert.rejects(probeOpulent2Machine(sandbox, config, { startupPolicy: OPULENT2_OVERLAP_STARTUP }), /protections or configuration changed/);
+    assert.equal(state.launches, 1);
+    assert.equal(state.tokenWrites, 1);
+    assert(state.requests.every(request => request.authenticated));
+  }
 });
 
 test('a fresh full audit is required after the protected command and SDK file boundary is established', async t => {

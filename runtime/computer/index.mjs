@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
 import { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
 import { probePreparedDocumentTools } from './document-tools-image.mjs';
 import { sandboxAccessProtection } from '../sandbox-file-access.mjs';
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../opulent2-startup-policy.mjs';
+import { observeProvisionStage } from '../provision-stage.mjs';
 
 export { probePreparedComputer } from './probe.mjs';
 export { LINUX_DESKTOP_OBSERVATION } from './observations.mjs';
@@ -16,10 +18,15 @@ const PACKAGE = 'modal-computer-use==2.0.2';
 const archive = promisify(execFile);
 const preparedSandboxes = new WeakMap();
 
-export function createComputer(sandbox, config = {}) {
+export function createComputer(sandbox, config = {}, { startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage, operation = 'create' } = {}) {
   if (!sandbox?.commands?.run) throw new TypeError('connected E2B sandbox required');
   if (config.computerBrowserPrewarm !== undefined && typeof config.computerBrowserPrewarm !== 'boolean') throw new TypeError('computerBrowserPrewarm must be a boolean');
   const prepared = config.computerPreparedImage === true;
+  const overlapStartup = prepared && startupPolicy === OPULENT2_OVERLAP_STARTUP;
+  const protection = overlapStartup ? sandboxAccessProtection(sandbox) : undefined;
+  const digest = overlapStartup ? config.computerImageSha256 : undefined, browserPrewarm = overlapStartup ? config.computerBrowserPrewarm : undefined;
+  let boundaryInvalidated = false;
+  const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run);
   const python = prepared ? '/opt/computer-use/venv/bin/python' : '/tmp/computer-use/venv/bin/python';
   const run = async (command, timeoutMs = 120_000) => {
     try {
@@ -53,7 +60,18 @@ export function createComputer(sandbox, config = {}) {
     if (state && state.browserPrewarm !== (config.computerBrowserPrewarm === true)) throw new Error('Prepared computer configuration differs from active desktop');
     return state;
   };
-  const verifyPreparedImage = async bridge => {
+  const assertStartupBoundary = () => {
+    if (!overlapStartup) return;
+    if (boundaryInvalidated || sandboxAccessProtection(sandbox) !== protection || config.computerPreparedImage !== true ||
+        config.computerImageSha256 !== digest || config.computerBrowserPrewarm !== browserPrewarm) {
+      boundaryInvalidated = true;
+      const state = preparedSandboxes.get(sandbox);
+      if (state) state.documentToolsSha256 = undefined;
+      throw new Error('Prepared computer protections or configuration changed during startup');
+    }
+    preparedState();
+  };
+  const verifyPreparedImage = bridge => observe('readiness-prepared-validation', async () => {
     const state = preparedState();
     const protection = sandboxAccessProtection(sandbox);
     if (state && state.protection !== protection) state.documentToolsSha256 = undefined;
@@ -77,7 +95,7 @@ export function createComputer(sandbox, config = {}) {
       throw new Error('Prepared computer image is incompatible with this adapter');
     }
     const documentTools = manifest.opulent2_machine?.documentTools;
-    if (documentTools) {
+    if (documentTools) await observe('readiness-prepared-document-validation', async () => {
       if (protection && state?.documentToolsSha256 && state.documentToolsSha256 === documentTools.installedManifestSha256) {
         const identity = await run(`set -eu; for path in /opt /opt/opulent /usr/bin; do test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 022))" = 0; test ! -w "$path"; done; for path in /opt/opulent/document-tools /opt/opulent/document-tools/installed.json; do test ! -L "$path"; test "$(/usr/bin/stat -c %u "$path")" = 0; mode=$(/usr/bin/stat -c %a "$path"); test "$((0$mode & 0222))" = 0; test ! -w "$path"; done; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${documentTools.installedManifestSha256}'`);
         if (identity.exitCode !== undefined && identity.exitCode !== 0) throw new Error('Prepared document-tool identity/permissions check failed');
@@ -85,19 +103,26 @@ export function createComputer(sandbox, config = {}) {
         await probePreparedDocumentTools(sandbox, documentTools);
         if (state && protection) state.documentToolsSha256 = documentTools.installedManifestSha256;
       }
-    }
+    });
     if (sandboxAccessProtection(sandbox) !== protection) throw new Error('Sandbox protections changed during prepared validation');
     if (state) state.protection = protection;
     return { documentToolsSha256: protection ? documentTools?.installedManifestSha256 : undefined, protection };
-  };
+  });
   const ready = async () => {
     const validation = prepared ? await verifyPreparedImage() : undefined;
-    const health = await request('GET', '/readyz');
-    if (!health.ready) throw new Error('Computer daemon is not ready');
-    const capabilities = await request('GET', '/v1/capabilities');
-    if (!capabilities.primitives?.includes('actions') || !capabilities.primitives?.includes('recordings')) {
-      throw new Error('Computer daemon is missing required capabilities');
-    }
+    assertStartupBoundary();
+    const capabilities = await observe('readiness-ready-polling', async () => {
+      const health = await request('GET', '/readyz');
+      assertStartupBoundary();
+      if (!health.ready) throw new Error('Computer daemon is not ready');
+      const capabilities = await request('GET', '/v1/capabilities');
+      if (!capabilities.primitives?.includes('actions') || !capabilities.primitives?.includes('recordings')) {
+        throw new Error('Computer daemon is missing required capabilities');
+      }
+      assertStartupBoundary();
+      return capabilities;
+    });
+    assertStartupBoundary();
     if (prepared) {
       if (!preparedSandboxes.has(sandbox)) preparedSandboxes.set(sandbox, { digest: config.computerImageSha256, browserPrewarm: config.computerBrowserPrewarm === true, ...validation });
     }
@@ -107,6 +132,7 @@ export function createComputer(sandbox, config = {}) {
     const bridge = await readFile(fileURLToPath(new URL('./bridge.py', import.meta.url)), 'utf8');
     if (prepared) {
       await verifyPreparedImage(bridge);
+      assertStartupBoundary();
     } else {
       const apt = 'xvfb xfce4 openbox x11vnc novnc websockify xdotool libx11-6 libxcb1 libxcb-shm0 libxdamage1 libxtst6 wmctrl maim scrot ffmpeg xclip x11-utils x11-xserver-utils dbus-x11 curl util-linux python3 python3-venv';
       await run(`set -e; if [ "$(id -u)" = 0 ]; then apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; else sudo -n apt-get update -qq && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${apt}; fi`, 600_000);
@@ -121,14 +147,26 @@ export function createComputer(sandbox, config = {}) {
     await run('umask 077; python3 -c "import pathlib,secrets; p=pathlib.Path(\'/tmp/computer-use/token\'); p.write_text(secrets.token_urlsafe(48))"');
     const browserArgs = ['--remote-debugging-port=9222', '--remote-debugging-address=127.0.0.1', '--remote-allow-origins=http://127.0.0.1:9222'];
     if (prepared) browserArgs.push('--no-first-run', '--no-default-browser-check');
-    try {
-      const process = await sandbox.commands.run(`PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium ${config.computerBrowserPrewarm === true ? 'COMPUTER_USE_BROWSER_PREWARM=1 ' : ''}${prepared ? 'COMPUTER_USE_WINDOW_MANAGER=openbox COMPUTER_USE_BROWSER_GPU_MODE=off ' : ''}COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS='${JSON.stringify(browserArgs)}' ${python} -m modal_computer_use.daemon`, { background: true, timeoutMs: 120_000, rlmNoSecrets: true });
-      await process.disconnect();
-    } catch {
-      throw new Error('Computer daemon could not start');
-    }
+    await observe('readiness-daemon-launch-disconnect', async () => {
+      try {
+        const process = await sandbox.commands.run(`PYTHONPATH=/opt/modal-computer-use/src COMPUTER_USE_LOCAL_TOKEN="$(cat /tmp/computer-use/token)" COMPUTER_USE_REQUIRE_CONNECT_USER=0 COMPUTER_USE_DAEMON_HOST=127.0.0.1 COMPUTER_USE_BROWSER=chromium ${config.computerBrowserPrewarm === true ? 'COMPUTER_USE_BROWSER_PREWARM=1 ' : ''}${prepared ? 'COMPUTER_USE_WINDOW_MANAGER=openbox COMPUTER_USE_BROWSER_GPU_MODE=off ' : ''}COMPUTER_USE_ARTIFACTS_DIR=/tmp/computer-use/artifacts COMPUTER_USE_RECORDINGS_DIR=/tmp/computer-use/recordings COMPUTER_USE_TRACE_DIR=/tmp/computer-use/artifacts/traces COMPUTER_USE_BROWSER_PROFILE_DIR=/tmp/computer-use/profile COMPUTER_USE_BROWSER_LAUNCH_ARGS='${JSON.stringify(browserArgs)}' ${python} -m modal_computer_use.daemon`, { background: true, timeoutMs: 120_000, rlmNoSecrets: true });
+        await process.disconnect();
+      } catch {
+        throw new Error('Computer daemon could not start');
+      }
+    });
     for (let attempt = 0; attempt < 45; attempt++) {
-      try { return await ready(); } catch { await new Promise(resolve => setTimeout(resolve, 2000)); }
+      try {
+        if (overlapStartup && protection && attempt > 0) {
+          assertStartupBoundary();
+          await observe('readiness-ready-polling', async () => {
+            const health = await request('GET', '/readyz');
+            assertStartupBoundary();
+            if (!health.ready) throw new Error('Computer daemon is not ready');
+          });
+        }
+        return await ready();
+      } catch { await new Promise(resolve => setTimeout(resolve, 2000)); }
     }
     throw new Error('Computer daemon did not become ready');
   };

@@ -15,6 +15,7 @@ import { LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { verifyToolCoverage } from './coverage-verification.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
+import { PROVISION_STAGES } from '../../runtime/provision-stage.mjs'
 
 const safe = value => JSON.parse(sanitize(Buffer.from(JSON.stringify(value))))
 
@@ -28,8 +29,7 @@ export function createProvisionStageRecorder({ directory, context, registry, rel
     attempt: context.attempt, attemptId: context.attemptId, phase: context.phase }
   const stages = new Map()
   return event => {
-    assert(['sandbox-create', 'sandbox-reconnect', 'corpus-material-staging', 'skill-staging', 'skill-install',
-      'corpus-protection', 'prepared-skill-verification', 'authenticated-machine-readiness'].includes(event.stage))
+    assert(PROVISION_STAGES.includes(event.stage))
     assert(['create', 'reconnect'].includes(event.operation))
     assert(typeof event.stageId === 'string' && /^[a-f0-9-]{36}$/.test(event.stageId))
     assert(Number.isFinite(event.startedAtMs) && event.startedAtMs >= 0)

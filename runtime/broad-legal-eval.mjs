@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -24,6 +24,7 @@ import { CAPY_CONTEXT_POLICY_VERSION, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
 import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from './opulent2-startup-policy.mjs'
+import { observeProvisionStage } from './provision-stage.mjs'
 import { lunaPolicy } from './opulent2-luna-policy.mjs'
 import { OPULENT2_RESULT_PREVIEW_POLICY, OPULENT2_RESULT_DELIVERY_POLICY, recoverCapyResultBacking } from './capy-results.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
@@ -194,29 +195,6 @@ function corpusArchive(corpus, workspace) {
   }
   if (actual.length !== expected.size || actual.some(name => !expected.has(name) || !lstatSync(join(directory, name)).isFile())) throw new Error('Corpus export contains unexpected files')
   return execFileSync('tar', ['-czf', '-', '-C', directory, '.'], { maxBuffer: 256 * 1024 * 1024 })
-}
-
-async function observeProvisionStage(callback, stage, operation, sandboxId, run) {
-  if (!callback) return run()
-  const stageId = randomUUID(), startedAtMs = performance.now()
-  const emit = event => {
-    try { Promise.resolve(callback(Object.freeze(event))).catch(() => {}) } catch {}
-  }
-  const event = { stageId, stage, operation, sandboxId: sandboxId ?? null, startedAtMs, endedAtMs: null, elapsedMs: null, status: 'started', errorClass: null }
-  emit(event)
-  try {
-    const result = await run()
-    const endedAtMs = performance.now()
-    emit({ ...event, sandboxId: ['sandbox-create', 'sandbox-reconnect'].includes(stage) ? result?.sandboxId ?? null : event.sandboxId,
-      endedAtMs, elapsedMs: endedAtMs - startedAtMs, status: 'completed' })
-    return result
-  } catch (error) {
-    const endedAtMs = performance.now()
-    let errorClass = 'NonError'
-    try { errorClass = [AggregateError, TypeError, RangeError, SyntaxError, ReferenceError, URIError, EvalError, Error].find(type => error instanceof type)?.name ?? 'NonError' } catch {}
-    emit({ ...event, endedAtMs, elapsedMs: endedAtMs - startedAtMs, status: 'failed', errorClass })
-    throw error
-  }
 }
 
 export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet, startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage) {
@@ -542,7 +520,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
     variant: opulent2 ? OPULENT2_PROFILE : capy ? 'broad-legal-native-capy-v1' : deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
   const capyRuntimeSources = capy ? Object.fromEntries([...(overlapStartup ? ['opulent2-startup-policy.mjs'] : []), 'core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
-    'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', '../package-lock.json',
+    'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', 'provision-stage.mjs', '../package-lock.json',
     ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'instructions/opulent2-reference-update-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : []),
     ...(luna ? ['opulent2-luna-policy.mjs'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
@@ -684,7 +662,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run)
       if (skills) await observe('prepared-skill-verification', () => verifyPreparedSkills(sandbox, skills, opulent2StartupPolicy))
       if (deliveryV9 || opulent2) {
-        const { readiness } = await observe('authenticated-machine-readiness', () => (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig, { bootstrap }))
+        const { readiness } = await observe('authenticated-machine-readiness', () => (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig,
+          { bootstrap, ...(opulent2 ? { startupPolicy: opulent2StartupPolicy, onProvisionStage, operation } : {}) }))
         sandbox[DESKTOP_READINESS] = readiness
       }
       return sandbox

@@ -5,8 +5,9 @@ import test from 'node:test'
 import './offline-guard.mjs'
 import { createProvisionStageRecorder } from './live.mjs'
 import { trackedSandboxProvider } from './cleanup.mjs'
-import { LAUNCH, digest } from './io.mjs'
+import { LAUNCH, digest, sha } from './io.mjs'
 import { OPULENT2_OVERLAP_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
+import { probeOpulent2Machine } from '../../runtime/opulent2-machine.mjs'
 
 const { provisionCorpus } = await import('../../runtime/broad-legal-eval.mjs')
 const workspace = resolve(import.meta.dirname, '../..')
@@ -187,3 +188,76 @@ test('synthetic offline native recorder refuses a public, symlinked or hard-link
   assert.throws(() => f.record(event))
   assert(readFileSync(linked).equals(before))
 })
+
+for (const phase of ['preflight', 'answerer']) {
+  test(`synthetic offline native ${phase} recorder persists every actual readiness substep with unchanged ownership, provenance and private fields`, async t => {
+    const f = fixture(t, { phase })
+    await f.run()
+    const bridge = readFileSync(new URL('../../runtime/computer/bridge.py', import.meta.url))
+    const documentImage = { name: 'opulent2-document-tools-v1', recipeSha256: 'a'.repeat(64), bundleSha256: 'b'.repeat(64),
+      installedManifestPath: '/opt/opulent/document-tools/installed.json', installedManifestSha256: 'c'.repeat(64) }
+    const marker = JSON.stringify({ schema: 1, python_package: 'modal-computer-use==2.0.2', bridge_sha256: sha(bridge),
+      opulent2_machine: { documentTools: documentImage } })
+    const screenshot = { format: 'png', width: 1, height: 1,
+      data_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/vXcAAAAASUVORK5CYII=' }
+    const requests = [], calls = []
+    t.mock.method(f.sandbox.commands, 'run', async (command, options) => {
+      calls.push({ command, options })
+      if (command.includes('Unsupported approximate-grep version')) return { exitCode: 0, stdout: '{"functionalProbe":true}' }
+      if (command.includes('print(json.dumps({"uid":')) return { exitCode: 0, stdout: '{"uid":1000,"noNewPrivs":1}' }
+      if (command === 'cat /opt/computer-use/image.json') return { exitCode: 0, stdout: marker }
+      if (command.includes('probe-installed.mjs --permissions')) return { exitCode: 0, stdout: JSON.stringify({ schema: 1,
+        name: documentImage.name, recipeSha256: documentImage.recipeSha256, permissions: { verified: true }, availability: { verified: true } }) }
+      if (command.startsWith("python3 - <<'PY'")) return { exitCode: 0, stdout: '[{"uid":1000,"noNewPrivs":1}]' }
+      if (options.background) return { disconnect: async () => { calls.push({ disconnect: true }) } }
+      if (command.startsWith('python3 /tmp/computer-use/bridge.py')) {
+        const request = JSON.parse(Buffer.from(command.match(/'([^']+)'$/)[1], 'base64'))
+        requests.push(request)
+        const body = request.path === '/readyz' ? { ready: true }
+          : request.path === '/v1/capabilities' ? { primitives: ['actions', 'recordings'] }
+            : request.path === '/v1/browser/status' ? { configured_browser: 'chromium', prewarm_result: { ok: true }, windows: 1, token: secret }
+              : screenshot
+        return { exitCode: 0, stdout: JSON.stringify({ status: 200, data: Buffer.from(JSON.stringify(body)).toString('base64') }) }
+      }
+      return { exitCode: 0, stdout: secret, stderr: secret }
+    })
+    const prefix = readFileSync(f.path)
+    const result = await probeOpulent2Machine(f.sandbox, { computerPreparedImage: true, computerImageSha256: sha(marker) }, {
+      onProvisionStage: event => f.record({ ...event, command: secret, payload: secret, outputs: secret, url: `https://${secret}/`,
+        headers: { authorization: secret }, credentials: secret, errorName: secret, errorMessage: secret }),
+    })
+    assert.equal(result.readiness.status, 'ready')
+    assert(readFileSync(f.path).subarray(0, prefix.length).equals(prefix))
+    const rows = f.rows().slice(10)
+    const prepared = ['readiness-prepared-validation', 'readiness-prepared-document-validation',
+      'readiness-prepared-document-validation', 'readiness-prepared-validation']
+    assert.deepEqual(rows.map(row => row.stage), [
+      ...['readiness-agrep-functional-probe', 'readiness-kernel-hardening'].flatMap(stage => [stage, stage]),
+      ...prepared, 'readiness-daemon-launch-disconnect', 'readiness-daemon-launch-disconnect', ...prepared,
+      ...['readiness-ready-polling', 'readiness-daemon-hardening', 'readiness-screenshot', 'readiness-browser-status'].flatMap(stage => [stage, stage]),
+    ])
+    const pending = new Map()
+    for (const row of rows) {
+      assert.deepEqual(Object.keys(row).sort(), fields)
+      assert.equal(row.status, pending.has(row.stageId) ? 'completed' : 'started')
+      assert.equal(row.errorClass, null)
+      assert.equal(row.sandboxId, f.registry[0].sandboxId)
+      assert.equal(row.source, 'actual factory creation')
+      for (const [name, value] of Object.entries(f.binding)) assert.equal(row[name], value)
+      assert.equal(row.releaseSha256, releaseSha256)
+      assert.equal(row.sourceBindingsSha256, sourceBindingsSha256)
+      if (row.status === 'completed') {
+        assert.equal(row.startedAtMs, pending.get(row.stageId).startedAtMs)
+        assert.equal(row.elapsedMs, row.endedAtMs - row.startedAtMs)
+        pending.delete(row.stageId)
+      } else pending.set(row.stageId, row)
+    }
+    assert.equal(pending.size, 0)
+    assert.equal(calls.filter(call => call.command?.includes('probe-installed.mjs --permissions')).length, 2)
+    assert.equal(calls.filter(call => call.disconnect).length, 1)
+    assert.deepEqual(requests.map(request => request.path), ['/readyz', '/v1/capabilities', '/v1/screenshots/full', '/v1/browser/status'])
+    assert.equal(lstatSync(f.directory).mode & 0o777, 0o700)
+    assert.equal(lstatSync(f.path).mode & 0o777, 0o600)
+    assert(!readFileSync(f.path, 'utf8').includes(secret))
+  })
+}

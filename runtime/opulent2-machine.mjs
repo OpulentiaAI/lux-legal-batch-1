@@ -1,5 +1,8 @@
 import { posix as path } from 'node:path';
 import { probePreparedComputer } from './computer/index.mjs';
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from './opulent2-startup-policy.mjs';
+import { observeProvisionStage } from './provision-stage.mjs';
+import { sandboxAccessProtection } from './sandbox-file-access.mjs';
 
 export const OPULENT2_MACHINE_VERSION = 'opulent2-machine-v1';
 export const OPULENT2_AGREP_DEFINITION = {
@@ -244,10 +247,15 @@ export function createOpulent2MachineTools(ctx) {
   };
 }
 
-export async function probeOpulent2Machine(sandbox, config = {}, { bootstrap = true } = {}) {
-  const executable = normalizedAbsolute(config.agrepExecutable ?? '/usr/local/bin/agrep', 'agrepExecutable');
-  const payload = Buffer.from(JSON.stringify({ executable })).toString('base64');
-  const inspection = await sandbox.commands.run(String.raw`python3 - '${payload}' <<'PY'
+export async function probeOpulent2Machine(sandbox, config = {}, { bootstrap = true, startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage, operation = 'create' } = {}) {
+  const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run);
+  const overlapStartup = startupPolicy === OPULENT2_OVERLAP_STARTUP;
+  const protection = overlapStartup ? sandboxAccessProtection(sandbox) : undefined, digest = overlapStartup ? config.computerImageSha256 : undefined;
+  const browserPrewarm = overlapStartup ? config.computerBrowserPrewarm : undefined;
+  const agrep = await observe('readiness-agrep-functional-probe', async () => {
+    const executable = normalizedAbsolute(config.agrepExecutable ?? '/usr/local/bin/agrep', 'agrepExecutable');
+    const payload = Buffer.from(JSON.stringify({ executable })).toString('base64');
+    const inspection = await sandbox.commands.run(String.raw`python3 - '${payload}' <<'PY'
 import base64,hashlib,json,os,pathlib,stat,subprocess,sys
 executable=pathlib.Path(json.loads(base64.b64decode(sys.argv[1]))['executable'])
 resolved=executable.resolve(strict=True)
@@ -259,12 +267,18 @@ sample=subprocess.run([str(executable),'-k','-E','1','-n','-e','assemblée gén�
 if sample.stdout!='1:assemblée générale\n':raise RuntimeError('Approximate-grep functional probe failed')
 print(json.dumps({'executable':str(executable),'resolvedExecutable':str(resolved),'executableSha256':hashlib.sha256(resolved.read_bytes()).hexdigest(),'version':version.stdout.strip(),'uid':info.st_uid,'writable':False,'functionalProbe':True}))
 PY`, { timeoutMs: 15_000, rlmNoSecrets: true });
-  if (inspection.exitCode !== 0 || typeof inspection.stdout !== 'string' || inspection.stdout.length > 8192) throw new Error('Prepared approximate-grep probe failed');
-  let agrep;
-  try { agrep = JSON.parse(inspection.stdout); } catch { throw new Error('Prepared approximate-grep probe returned invalid JSON'); }
-  const desktop = await probePreparedComputer(sandbox, { ...config, computerBrowserPrewarm: true }, { bootstrap });
-  const browser = await desktop.computer.browser.status();
-  if (browser?.configured_browser !== 'chromium' || browser?.prewarm_result?.ok !== true || !Number.isSafeInteger(browser.windows) || browser.windows < 1) throw new Error('Prepared desktop could not launch the local document browser');
+    if (inspection.exitCode !== 0 || typeof inspection.stdout !== 'string' || inspection.stdout.length > 8192) throw new Error('Prepared approximate-grep probe failed');
+    try { return JSON.parse(inspection.stdout); } catch { throw new Error('Prepared approximate-grep probe returned invalid JSON'); }
+  });
+  const desktop = await probePreparedComputer(sandbox, { ...config, computerBrowserPrewarm: true }, { bootstrap, startupPolicy, onProvisionStage, operation });
+  await observe('readiness-browser-status', async () => {
+    const browser = await desktop.computer.browser.status();
+    if (browser?.configured_browser !== 'chromium' || browser?.prewarm_result?.ok !== true || !Number.isSafeInteger(browser.windows) || browser.windows < 1) throw new Error('Prepared desktop could not launch the local document browser');
+  });
+  if (overlapStartup && (sandboxAccessProtection(sandbox) !== protection ||
+      config.computerPreparedImage !== true || config.computerImageSha256 !== digest || config.computerBrowserPrewarm !== browserPrewarm)) {
+    throw new Error('Prepared computer protections or configuration changed during startup');
+  }
   return { ...desktop, readiness: { ...desktop.readiness, machineVersion: OPULENT2_MACHINE_VERSION, agrep,
     browserPrewarmed: true, verified: { ...desktop.readiness.verified, browserLaunched: true } } };
 }

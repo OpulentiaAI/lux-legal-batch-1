@@ -511,3 +511,30 @@ test('synthetic offline queued scratch search stays pending after an unexpected 
     assert(h.calls.every(call => observed({ session_id: h.id, returned_result: call.returned_result }, transmissions(h, outputs))));
   }
 });
+
+test('public follow-through keeps useful starts before fixtures and returns every helper with independent runtime work', () => {
+  assert.match(plan, /NEXT response contains TWO ordered native calls/);
+  assert.match(plan, /first the checkpoint\/branch `execute` program below, then the fixture-generation `bash` command/);
+  assert.match(plan, /Parsing still requires an actually observed successful fixture result/);
+  assert.match(plan, /six-helper `execute` batch AND all five separate original selectors/);
+  assert.match(plan, /Include independent connected-runtime A work in this SAME response/);
+  assert.match(plan, /Defer `notes` and dependent source\/pixel work until the actual complete source has reached the model/);
+  assert.match(plan, /B response BEFORE its final processes\/start-readback\/wait sequence/);
+  assert.match(plan, /only in a later response AFTER actual pixels reached the model/);
+  assert.equal(phases.size, 39);
+});
+
+test('public checkpoint cursor is schema-valid, bounded and preserves every pending workflow without claiming consultation', () => {
+  const section = plan.slice(plan.indexOf('### Required follow-through and checkpoint cursor'), plan.indexOf('### First response'));
+  const cursor = JSON.parse(section.match(/```json\n([\s\S]*?)\n```/)[1]);
+  const validate = ajv.compile(CAPY_TOOL_DEFINITIONS.task_create.inputSchema);
+  assert(validate({ tasks: [cursor] }), JSON.stringify(validate.errors));
+  assert(JSON.stringify([{ task_id: 'synthetic-cursor-not-a-live-task', ...cursor, status: 'in_progress' }]).length < 4500);
+  assert.match(cursor.description, /PENDING cursor only, not consultation\/completion evidence/);
+  for (const name of phases.keys()) assert(cursor.description.toLowerCase().includes(name), name);
+  assert.match(cursor.description, /Source-reread ONLY in a later response after actual pixels/);
+  assert.match(cursor.description, /Recover actual unread backing before dependencies/);
+  assert.match(cursor.description, /inspect rather than assume missing bindings/);
+  assert.match(cursor.description, /This cursor never proves source consultation or native acceptance/);
+  assert.match(section, /Whole original returned-result recovery and decisive source rereads remain mandatory/);
+});
