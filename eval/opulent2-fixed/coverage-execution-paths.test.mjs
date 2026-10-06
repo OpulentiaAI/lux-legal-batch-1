@@ -26,6 +26,13 @@ test('coverage instructions batch independent observations without aggregating a
   assert.match(plan, /Complete every required check before claiming success/);
 });
 
+test('the initial public request asks for complete direct materials before schema discovery', () => {
+  const task = JSON.parse(readFileSync(new URL('./coverage-documents/task.json', import.meta.url), 'utf8'));
+  assert.match(task.instructions, /^Execution order: first read materials\/coverage-plan\.md and materials\/create-fixtures\.txt directly with read/);
+  assert.match(task.instructions, /not by concatenating them into a bounded bash preview/);
+  assert.match(task.instructions, /independent complete reads can be separate tool calls in one assistant response/);
+});
+
 test('delegation instructions use actual bounded corpus responses instead of exhaustive short-file discovery', () => {
   assert.match(plan, /canonical VM corpus exports text chunks, not the original PDF binaries/);
   assert.match(plan, /bounded `lx_search` and `lx_chunk` results/);
