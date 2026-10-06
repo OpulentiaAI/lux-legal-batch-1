@@ -105,6 +105,9 @@ export async function draftRelease(spec) {
   assert.equal(corpus.count, native.corpusCount)
   const stopped = new Error('OFFLINE_CONSTRUCTOR_STOP: no VM, retrieval or model calls')
   const harness = createBroadHarness({ workspace: WORKSPACE, corpus, artifactsDir: join(inspection, 'adapter'),
+    ...(startupPolicy === OPULENT2_OVERLAP_STARTUP ? { opulent2StartupPolicy: startupPolicy,
+      opulent2ReleaseBinding: { releaseSha256: sha('UNAPPROVED offline constructor only; not a release receipt'),
+        sourceBindingsSha256: sha('UNAPPROVED offline constructor only; final source verification is separate') } } : {}),
     ...(spec.opulent2ResultDeliveryPolicy !== undefined ? { opulent2ResultDeliveryPolicy: spec.opulent2ResultDeliveryPolicy } : {}),
     instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
     maxSteps: inference.budgets.maxSteps, model: inference.model, inferenceProvider: inference.inferenceProvider,

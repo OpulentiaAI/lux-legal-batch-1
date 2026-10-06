@@ -524,3 +524,24 @@ test('cumulative native provenance retains exact totals even when observed usage
   assert.deepEqual(partial.knownUsageSubtotal, expected)
   assert.deepEqual(JSON.parse(JSON.stringify(partial)), partial)
 })
+
+test('draft compaction fingerprints match the actual selected startup constructor without releasing any offline fixture', async () => {
+  let factories = 0
+  const stopped = () => { factories++; throw new Error('Offline constructor must not execute') }
+  for (const startupPolicy of [OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP]) {
+    const release = await draftRelease({ ...preparationSpec(LUNA_CONTEXT_EXPERIMENT), stage: 'coverage', startupPolicy })
+    const harness = createBroadHarness({ ...release.harnessOptions, workspace: WORKSPACE, corpus, artifactsDir: join(directory, `actual-${startupPolicy}`),
+      instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
+      maxSteps: release.budgets.maxSteps, model: release.model, inferenceProvider: release.inferenceProvider,
+      experiment: release.experiment, budgetDisclosure: release.prompts.budgetDisclosure, reasoningEffort: release.reasoningEffort,
+      workProduct: { maxCompletionTokens: release.budgets.maxCompletionTokens },
+      ...(startupPolicy === OPULENT2_OVERLAP_STARTUP ? { opulent2StartupPolicy: startupPolicy,
+        opulent2ReleaseBinding: { releaseSha256: digest(release), sourceBindingsSha256: digest(release.sourceBindings) } } : {}),
+      opulent2Handoff: { chainId: release.chainId, taskId: release.tasks[0].id, attemptId: 'offline-live-shape' },
+      runtimeFactory: stopped, sandboxFactory: stopped, modelFactory: stopped })
+    assert.deepEqual(harness.provenance.capy.contextCompaction, release.harnessOptions.contextCompaction)
+    assert.equal('opulent2-startup-policy.mjs' in harness.provenance.capy.runtimeSourcesSha256, startupPolicy === OPULENT2_OVERLAP_STARTUP)
+    assert.equal(release.parentVerification.sourceAndPolicyReady, false)
+  }
+  assert.equal(factories, 0)
+})
