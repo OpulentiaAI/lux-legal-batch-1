@@ -56,7 +56,8 @@ test('synthetic selected document scheduling reaches runtime config and provenan
     modelFactory: () => { models++; assert.fail('No model expected') },
     sandboxFactory: () => { vms++; assert.fail('No VM expected') },
     runtimeFactory: ({ config }) => { captured = config; throw new Error('SYNTHETIC_OFFLINE_CONSTRUCTOR_STOP') } })
-  await assert.rejects(selected.run({ mode: 'broad', question: packet.task.instructions, workProduct: packet }), /Broad legal session failed/)
+  await assert.rejects(selected.run({ mode: 'broad', question: packet.task.instructions, workProduct: packet,
+    awaitPreflight: async () => { assert.fail('The constructor must stop before the release gate') } }), /Broad legal session failed/)
   assert(captured)
   assert.equal(captured.opulent2DocumentValidationPolicy, OPULENT2_PARALLEL_DOCUMENT_VALIDATION)
   assert.equal(selected.provenance.opulent2.computer.opulent2DocumentValidationPolicy, OPULENT2_PARALLEL_DOCUMENT_VALIDATION)
