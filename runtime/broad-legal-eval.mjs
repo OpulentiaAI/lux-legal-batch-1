@@ -196,7 +196,7 @@ function corpusArchive(corpus, workspace) {
   return execFileSync('tar', ['-czf', '-', '-C', directory, '.'], { maxBuffer: 256 * 1024 * 1024 })
 }
 
-export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet) {
+export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet, startupPolicy = OPULENT2_SERIAL_STARTUP) {
   const archive = corpusArchive(corpus, workspace)
   const sandbox = await sandboxFactory(config)
   try {
@@ -214,11 +214,14 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     // verification below.
     const skillsManifest = JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8'))
     const staged = '/tmp/opulent-skill-staging'
+    const skillUploads = []
     for (const { name, artifactSha256 } of skillsManifest.skills) {
       const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
       if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
-      await sandbox.files.write(`${staged}/${name}.md`, bytes)
+      if (startupPolicy === OPULENT2_OVERLAP_STARTUP) skillUploads.push({ path: `${staged}/${name}.md`, data: bytes })
+      else await sandbox.files.write(`${staged}/${name}.md`, bytes)
     }
+    if (skillUploads.length) await sandbox.files.write(skillUploads, { useOctetStream: false })
     const skillDirs = skillsManifest.skills.map(({ name }) => `${skillsManifest.destinationRoot}/${name}`).join(' ')
     const skillFiles = skillsManifest.skills.map(({ name }) =>
       `sudo -n install -o root -g root -m 0444 ${staged}/${name}.md ${skillsManifest.destinationRoot}/${name}/SKILL.md`).join('; ')
@@ -681,7 +684,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       storage: {},
       ...(opulent2 ? { onPreparedModelRequest } : {}),
       provision: async config => {
-        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
+        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet, opulent2StartupPolicy))
         provisionedSandboxes.add(sandbox)
         if (provision && fullCorpusVms) await protectCorpusSandbox(sandbox, undefined, true)
         return await trackSandbox(sandbox)

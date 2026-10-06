@@ -299,3 +299,77 @@ test('synthetic offline preview uses observed metadata and escaped corpus text; 
   assert.match(material, /all 40 approved-tool gates/);
   assert(![...phases.values()].some(code => /tools\.subagent\.(?:create|start)\(/.test(code)));
 });
+
+test('compact recipe schedules all existing programs without per-phase discovery or speculative hash transcription', () => {
+  assert(material.length <= 12000, `Connected recipe is ${material.length} characters`);
+  assert.equal(phases.size, 39);
+  const schedule = [...material.matchAll(/^[A-D] .+$/gm)].map(match => match[0]);
+  assert.equal(schedule.length, 4);
+  for (const name of phases.keys()) {
+    const boundary = new RegExp(`(?<![a-z-])${name}(?![a-z-])`);
+    assert.equal(schedule.filter(line => boundary.test(line.slice(line.indexOf(':') + 1))).length, 1, name);
+  }
+  assert.match(material, /Known schema-backed programs: describe only missing schemas; changed schema wins/);
+  assert([...phases.values()].every(code => !/\bdescribe\s*\(/.test(code)));
+  assert.match(material, /independent groups\/help share response/);
+  assert.match(schedule[1], /LAST processes→process-start-readback→process-wait immediately, no other work; waitFor ends turn\/program/);
+  assert.match(schedule[2], /^C after scheduler wake: process-resume→process-control→process-disposable→process-list→process-cancel→process-verification/);
+  assert.match(schedule[3], /preview-server if listener absent→preview-browser→preview-computer→source-reread/);
+  assert.match(material, /validate characters\/sha256 against retained reference/);
+  assert.match(material, /Incremental coverage\.md: concise receipts\/gaps/);
+  assert.match(material, /hashes programmatically from receipts, never manually transcribe hash guesses/);
+});
+
+test('synthetic offline same-response independent groups use known schemas and individually return every original without replay', async t => {
+  const taskId = `synthetic-task-${randomUUID()}`, docId = `synthetic-doc-${randomUUID()}`, chunkId = `synthetic-chunk-${randomUUID()}`;
+  const childPath = '8', scratchPath = `/synthetic-not-live/${randomUUID()}/connected-scratch.txt`, files = new Map();
+  const full = value => ({ ...value, synthetic: true, opaque: 'Complete synthetic offline original tail ' + 'x'.repeat(2300) });
+  const document = { doc_id: docId, title: 'Synthetic offline inventory query' };
+  const h = synthetic(t, {
+    task_get: args => { assert.equal(args.task_id, taskId); return full({ id: taskId, status: 'pending' }); },
+    write: () => full({ kind: 'write', path: scratchPath }),
+    todo_write: args => full({ todos: args.todos }),
+    skill_list: () => full({ installed: [], unavailable: [{ name: 'synthetic-offline-missing', error: 'Synthetic offline unavailable guide' }] }),
+    message_agent: args => { assert.equal(args.to, childPath); assert.equal(args.state, 'working'); return full({ path: childPath, status: 'running' }); },
+    subagent_message: args => { assert.equal(args.path, childPath); return full({ path: childPath, status: 'running' }); },
+    lx_documents: () => full({ documents: [document] }),
+    lx_search: args => { assert.deepEqual(args, { query: document.title, doc_id: docId, mode: 'bm25', limit: 1 }); return full({ results: [{ chunk_id: chunkId }] }); },
+    lx_chunk: args => { assert.equal(args.chunk_id, chunkId); return full({ id: chunkId, text: 'Synthetic offline corpus text, not legal evidence' }); },
+    memory_save: () => full({ topicPath: '/synthetic-not-live/memory/connected-runtime-workflow.md' }),
+    drive_write: args => full({ scope: args.scope, path: args.path }),
+  }, { checkpoint: { tasks: [{ id: taskId }] }, delegation: { tasks: [{ path: childPath }] } },
+  { workspace: '/synthetic-not-live', config: { instructionProfile: 'opulent2-fixed-v1', opulent2ResultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY.version },
+    ensureSandbox: async () => {}, sandbox: { files: { write: async (path, content) => files.set(path, content), read: async path => files.get(path) } } });
+  h.ctx.persistCapyResult = (value, limit) => persistCapyResult(h.ctx, value, limit);
+  const line = material.match(/^A .+$/m)[0];
+  const names = line.slice(line.indexOf(':') + 1).trim().replace(/\.$/, '').split(/[;→]/).map(name => name.trim());
+  const outputs = await Promise.all(names.map(h.run));
+  assert(outputs.every(result => result.status === 'completed' && result.kind !== 'file_backed_result'));
+  assert.equal(h.calls.length, 12);
+  assert.equal(h.calls.filter(call => call.name === 'write').length, 1);
+  assert.equal(h.calls.filter(call => call.name === 'drive_write').length, 2);
+  assert(h.calls.every(call => observed({ session_id: h.id, returned_result: call.returned_result }, transmissions(h, outputs))));
+  assert.equal((await h.executor.execute({ code: 'return typeof search;' })).value, 'function');
+  const aggregate = await h.executor.execute({ code: 'return [runtimeEarly,steering,documents,runtimeSearch,runtimeSource,saves];' });
+  assert.equal(aggregate.kind, 'file_backed_result');
+  assert(h.calls.every(call => !observed({ session_id: h.id, returned_result: call.returned_result }, transmissions(h, [aggregate]))));
+  assert.equal(h.calls.length, 12);
+});
+
+test('synthetic offline queued scratch search stays pending after an unexpected draft or unconfirmed patched reread', async t => {
+  for (const unexpectedDraft of [true, false]) {
+    const path = `/synthetic-not-live/${randomUUID()}/scratch.txt`;
+    let reads = 0;
+    const h = synthetic(t, {
+      read: args => { assert.equal(args.path, path); return { kind: 'read', path, content: ++reads === 1 && !unexpectedDraft ? 'Runtime scratch draft\n' : 'Synthetic unexpected scratch\n' }; },
+      edit: args => { assert.equal(args.path, path); return { kind: 'edit', path, replacements: 1 }; },
+      apply_patch: () => ({ applied: [path] }),
+    }, { runtimeEarly: [{}, { status: 'fulfilled', value: { path } }] });
+    const outputs = await Promise.all(['scratch', 'approximate-search'].map(h.run));
+    assert(outputs.every(result => result.status === 'completed'));
+    assert.equal(outputs.at(-1).value.pending, 'Patched reread required');
+    assert(!h.calls.some(call => call.name === 'agrep'));
+    assert.deepEqual(h.calls.map(call => call.name), unexpectedDraft ? ['read'] : ['read', 'edit', 'apply_patch', 'read']);
+    assert(h.calls.every(call => observed({ session_id: h.id, returned_result: call.returned_result }, transmissions(h, outputs))));
+  }
+});
