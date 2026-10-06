@@ -70,7 +70,8 @@ function fixture(t, { startupPolicy = OPULENT2_OVERLAP_STARTUP, upload, failure,
             if (failure === `${role}-upload`) throw new Error('Synthetic upload failure')
             await upload?.(role)
           }
-          files.set(path, Buffer.from(value))
+          const entries = Array.isArray(path) ? path : [{ path, data: value }]
+          for (const entry of entries) files.set(entry.path, Buffer.from(entry.data))
         },
       }, commands: { async run(wrapped, options = {}) {
         let command = wrapped
@@ -401,6 +402,24 @@ test('named and default serial baselines still preflight before runtime creation
     assert.deepEqual(f.requests[0], f.assemblies[0].messages)
     assert.deepEqual(f.requests[0], overlap.requests[0], 'Opt-in startup must not change the actual initial system/user assembly')
     assert.equal(f.cleanup.allOwnedAbsent, true)
+  }
+})
+
+test('selected overlap sends one exact skill batch while the independently owned preflight and serial baseline retain scalar uploads', async t => {
+  for (const startupPolicy of [OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP]) {
+    const f = fixture(t, { startupPolicy })
+    await f.run()
+    const batches = f.events.filter(event => event.stage === 'sdk-write' && Array.isArray(event.path))
+    assert.equal(batches.length, startupPolicy === OPULENT2_OVERLAP_STARTUP ? 1 : 0)
+    for (const batch of batches) {
+      assert.equal(batch.role, 'answerer')
+      assert.equal(batch.path.length, skills.skills.length)
+      for (const [index, entry] of batch.path.entries()) {
+        assert.equal(entry.path, `/tmp/opulent-skill-staging/${skills.skills[index].name}.md`)
+        assert.equal(hash(entry.data), skills.skills[index].artifactSha256)
+      }
+    }
+    assert(f.cleanup.allOwnedAbsent)
   }
 })
 

@@ -45,7 +45,7 @@ const controlStart = await tools.subagent.start({paths: [controlDraft.tasks[0].p
 return {checkpoint, delegation, controlDraft, controlStart};
 ```
 
-Require completed useful findings and a completed useful grandchild review. A bounded excerpt from a larger observed chunk is valid; start the narrower grandchild review before optional further searches. Give the actual returned source identity and narrower question; the grandchild independently reads the assigned source and context. Completed findings must still be received and checked. Reports are direct `message_agent`, `to="parent"`, `state="final"`, never inside execute or to guessed ancestors.
+Require completed useful findings and a completed useful grandchild review. A bounded excerpt from a larger observed chunk is valid; start the narrower grandchild review before optional further searches. Give the actual returned source identity and a narrower contextual verification assignment; the grandchild likewise reads the actual assigned source and context. The grandchild must still consult the actual source and context; completed findings must still be received and checked. Reports are direct `message_agent`, `to="parent"`, `state="final"`, never inside execute or to guessed ancestors.
 
 Observe its sleeping state from its parent after disposable `session_stop`, park with `subagent_stop` and observe its stopped state. No forced stop/new probe. This branch is not the useful completed delegation.
 
