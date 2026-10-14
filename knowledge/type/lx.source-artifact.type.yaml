@@ -1,0 +1,7 @@
+extends: source::au-base-types
+fields:
+  source_path: String
+  git_blob_oid: String
+  byte_count: Number
+  artifact_role: [documentation, task, material, sealed-grading, implementation, test, result, publication, provenance]
+  audience: [evaluation-only, engineering]

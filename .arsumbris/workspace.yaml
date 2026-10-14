@@ -1,6 +1,7 @@
 type: au.engine.workspace::au-engine
 edit:
   - lux-legal-batch-1
+  - lux-evaluation-knowledge
 discover:
   - mcp-bundle
   - host-bundle
