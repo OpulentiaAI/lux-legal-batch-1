@@ -3,6 +3,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { parse } from 'acorn';
 import { getQuickJS } from 'quickjs-emscripten';
+import { capyResultChars } from './capy-results.mjs';
 
 const DEFAULT_LIMITS = Object.freeze({
   defaultTimeoutSeconds: 600, maxTimeoutSeconds: 3600, cpuMs: 30_000,
@@ -109,7 +110,8 @@ export function createCapyExecutor(ctx) {
     || typeof ctx.store?.get !== 'function' || typeof ctx.store?.put !== 'function') {
     throw new TypeError('Executor requires sessionId, store.get/put, and invoke');
   }
-  const limits = limitsFor(ctx.executeLimits);
+  const limits = limitsFor({ outputChars: capyResultChars(ctx), toolResultChars: capyResultChars(ctx),
+    ...ctx.executeLimits });
   catalogFor(ctx.capyCatalog);
   const sanitize = async data => clone(ctx.scrub ? await ctx.scrub(clone(data)) : protect(clone(data)));
   let closed = false, active, tail = Promise.resolve();
@@ -128,7 +130,7 @@ export function createCapyExecutor(ctx) {
     if (!ctx.persistCapyResult) return { original, value: bound(original, maxChars) };
     let timer;
     try {
-      const persisted = await sanitize(await Promise.race([Promise.resolve().then(() => ctx.persistCapyResult(original)),
+      const persisted = await sanitize(await Promise.race([Promise.resolve().then(() => ctx.persistCapyResult(original, maxChars)),
         new Promise((_, reject) => { timer = setTimeout(() => reject(fault('Timeout', 'Overflow persistence exceeded the execution deadline')),
           Math.max(1, deadline - Date.now())); })]));
       if (persisted == null) throw new Error('Overflow persistence returned no visible result');
@@ -205,7 +207,7 @@ export function createCapyExecutor(ctx) {
         entry.operation_ids = operationIds(original);
         for (const id of entry.operation_ids) operations.add(id);
         await ctx.store.put(CALLS, entry.id, { ...entry });
-        const result = await visible(original, limits.toolResultChars, deadline);
+        const result = await visible(original, ctx.executeLimits?.toolResultChars ?? capyResultChars(ctx, entry.name), deadline);
         entry.guest_visible_result = result.value;
         entry.finished_at = iso();
         await ctx.store.put(CALLS, entry.id, { ...entry });

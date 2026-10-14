@@ -137,6 +137,27 @@ const entryInfo = entry => ({
   ...entry, type: entry.type ?? undefined, modifiedTime: new Date(entry.modifiedTime),
   symlinkTarget: entry.symlinkTarget ?? undefined, metadata: entry.metadata ?? undefined,
 });
+const noNewPrivilegesRunners = new WeakSet();
+const protectedAccess = new WeakMap();
+const fileMethods = ['read', 'list', 'write', 'writeFiles', 'makeDir', 'remove', 'rename', 'exists', 'getInfo'];
+
+export function createNoNewPrivilegesRunner(run) {
+  if (typeof run !== 'function') throw new TypeError('Sandbox command runner is required');
+  const protectedRun = (command, options = {}) => {
+    if (typeof command !== 'string') throw new Error('Sandbox command must be text');
+    return run(`setpriv --no-new-privs -- /bin/sh -c '${command.replaceAll("'", "'\\''")}'`, { ...options, user: 'user' });
+  };
+  noNewPrivilegesRunners.add(protectedRun);
+  return protectedRun;
+}
+
+export function sandboxAccessProtection(sandbox) {
+  const protection = protectedAccess.get(sandbox);
+  if (!protection || sandbox.commands !== protection.commands || sandbox.commands?.run !== protection.run ||
+      !noNewPrivilegesRunners.has(protection.run) || sandbox.files !== protection.files ||
+      fileMethods.some(method => sandbox.files[method] !== protection.methods[method])) return undefined;
+  return protection.identity;
+}
 
 export function protectSandboxFileAccess(sandbox) {
   if (!sandbox?.files || typeof sandbox.commands?.run !== 'function') throw new TypeError('Sandbox files and commands are required');
@@ -253,5 +274,7 @@ export function protectSandboxFileAccess(sandbox) {
   sandbox.files.rename = async (path, destination, options) => entryInfo(await execute('rename', { path: validPath(path), destination: validPath(destination) }, options));
   sandbox.files.exists = async (path, options) => execute('exists', { path: validPath(path) }, options);
   sandbox.files.getInfo = async (path, options) => entryInfo(await execute('getInfo', { path: validPath(path) }, options));
+  protectedAccess.set(sandbox, { identity: Object.freeze({}), commands: sandbox.commands, run: sandbox.commands.run,
+    files: sandbox.files, methods: Object.fromEntries(fileMethods.map(method => [method, sandbox.files[method]])) });
   return sandbox;
 }

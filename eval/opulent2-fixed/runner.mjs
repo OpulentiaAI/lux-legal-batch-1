@@ -163,15 +163,15 @@ export async function main(args = process.argv.slice(2)) {
     if (loaded.release.stage === 'comparison') verifyComparisonFreeze(loaded.release)
     return { status: 'offline bindings verified; not launch permission or a live pass', release: loaded.file, source }
   }
-  if (args[0] === '--launch' && args.length === 3) {
+  if (args[0] === '--launch' && (args.length === 3 || args.length === 4 && args[3] === '--provision-stage-timing')) {
     const loaded = loadRelease(args[1])
     const authorization = requireLiveAuthorization(loaded.file, loaded.release, args[2])
     const source = verifyCommittedRelease(loaded.release)
     if (loaded.release.stage === 'comparison') verifyComparisonFreeze(loaded.release)
     const { launch } = await import('./live.mjs')
-    return launch({ ...loaded, authorization, source })
+    return launch({ ...loaded, authorization, source, provisionStageTiming: args[3] === '--provision-stage-timing' })
   }
-  throw new Error('Usage: runner.mjs --check-release RELEASE | --launch RELEASE PARENT_AUTHORIZATION | --history SPEC NEW_HISTORY | --freeze SPEC (only after proving passes)')
+  throw new Error('Usage: runner.mjs --check-release RELEASE | --launch RELEASE PARENT_AUTHORIZATION [--provision-stage-timing] | --history SPEC NEW_HISTORY | --freeze SPEC (only after proving passes)')
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

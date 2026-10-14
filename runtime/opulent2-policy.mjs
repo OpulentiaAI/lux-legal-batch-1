@@ -39,7 +39,8 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     new_string: { description: 'Replacement text; an empty string deletes the matched text.' },
     replace_all: { description: 'Replace every occurrence instead of requiring exactly one match.', default: false },
   }),
-  execute: withParameters(CAPY_TOOL_DEFINITIONS.execute, {
+  execute: withParameters({ ...CAPY_TOOL_DEFINITIONS.execute,
+    description: `${CAPY_TOOL_DEFINITIONS.execute.description} Direct tool calls in one assistant response are dispatched sequentially in their listed order. Put an execute batch that creates persistent bindings first, separate execute selectors returning those bindings next, and independent calls in that same response rather than adding a response between each selector. Emit the producer AND its original-value selectors in that SAME assistant response; do not end the response after the producer or add a planning round before its first selector. Dispatch order makes a successfully persisted binding available to the following selectors without first interpreting its unknown contents. Follow an already supplied schema-backed program when its required schemas are known; describe only actually missing fields or changed schemas. Do not add full schemas, copied task instructions or repeated checkpoint text around its original outcomes; if extra independent outcomes need retention, persist them and return each whole original value separately. Never replace required outcomes with summaries or selected fields. Execution order does not prove prerequisite success or source consultation: inspect the actual returned outcomes, and keep dependent writes guarded against failed or missing results. A waitFor program ends the turn; put actually ready independent work and full readbacks before it.` }, {
     code: { description: 'JavaScript or TypeScript program with top-level await/return; only declared codemode tools and plain-data bindings are available. Top-level plain-data bindings persist across programs within 256000 serialized characters. Keep large transient results in a block scope or assign saved bindings to undefined. A persistence failure does not undo completed effects; inspect the actual returned value/effects instead of repeating writes.' },
     timeout_seconds: { description: 'Program wall-clock limit in seconds, independent of the existing tool-call, concurrency and CPU bounds.', default: 600 },
   }),
@@ -57,6 +58,12 @@ export const OPULENT2_TOOL_DEFINITIONS = Object.freeze({ ...CAPY_TOOL_DEFINITION
     ],
     not: { required: ['duration_seconds', 'wake_at'] },
   }),
+  task_create: { ...CAPY_TOOL_DEFINITIONS.task_create,
+    description: `${CAPY_TOOL_DEFINITIONS.task_create.description} Keep a recovery cursor concise: the actually observed state, unresolved dependency, next pending phase and actual receipt IDs or persistent binding names. Do not copy task instructions, schemas, command recipes or the whole future execution schedule into it. A cursor is an untrusted recovery pointer, not consultation, completed work or permission to override the current task's response order.` },
+  task_update: { ...CAPY_TOOL_DEFINITIONS.task_update,
+    description: `${CAPY_TOOL_DEFINITIONS.task_update.description} Update a recovery cursor from actual returned receipts and the next unresolved dependency. Keep it concise rather than repeating task instructions, schemas, command recipes or future phase checklists. Preserve unknown or failed effects as pending; a cursor is not evidence of consultation, completed work or task acceptance.` },
+  message_user: { ...CAPY_TOOL_DEFINITIONS.message_user,
+    description: `${CAPY_TOOL_DEFINITIONS.message_user.description} A working update does not end the turn: when independent work is ready, emit its tool calls in that same assistant response rather than making a progress-only response. Routine context backing, schema discovery or rereading is not a user milestone and needs no narration. Actual blockers, changed conclusions and requested phase completions still need reporting; final and needs_you retain their direct terminal behavior.` },
   subagent_create: withParameters(CAPY_TOOL_DEFINITIONS.subagent_create, {
     tasks: { description: 'Bounded child assignments, each with a required prompt and optional title, approved repos and final-output JSON schema.' },
     start: { description: 'Omit to draft children without running them; supply machine="fresh" to start each on its own VM.' },

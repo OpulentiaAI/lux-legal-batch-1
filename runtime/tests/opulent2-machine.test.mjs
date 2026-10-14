@@ -33,7 +33,7 @@ async function fixture(t, executablePath = executable) {
       return { ...result, exitCode: 0 };
     } catch (error) { return { stdout: error.stdout ?? '', stderr: error.stderr ?? '', exitCode: error.code }; }
   } } };
-  return { directory, workspace, calls, tools: createOpulent2MachineTools({ workspace, sandbox, config: { agrepExecutable: executablePath } }) };
+  return { directory, workspace, calls, sandbox, tools: createOpulent2MachineTools({ workspace, sandbox, config: { agrepExecutable: executablePath } }) };
 }
 
 test('machine definition exposes a literal bounded approximate-grep tool', () => {
@@ -228,4 +228,20 @@ test('mock build contract preserves the prepared base and adds only pinned genui
   const file = join(directory, 'prepared-probe.py');
   await writeFile(file, probeCommand.split('\n').slice(1, -1).join('\n'));
   await exec('python3', ['-m', 'py_compile', file]);
+});
+
+test('real local TRE readiness timing observes the genuine functional probe once without sending command bytes to diagnostics', { skip: !available }, async t => {
+  const { sandbox, calls } = await fixture(t);
+  const events = [];
+  await assert.rejects(probeOpulent2Machine(sandbox, { agrepExecutable: executable }, { onProvisionStage: event => events.push(event) }),
+    error => error.code === 'PreparedDesktopUnavailable' && error.stage === 'configuration');
+  assert.equal(calls.length, 1);
+  assert.equal(events.length, 2);
+  assert(events.every(event => event.stage === 'readiness-agrep-functional-probe' && Object.isFrozen(event)));
+  assert.deepEqual(events.map(event => event.status), ['started', 'completed']);
+  assert.equal(events[0].stageId, events[1].stageId);
+  assert.equal(events[1].elapsedMs, events[1].endedAtMs - events[1].startedAtMs);
+  assert(!JSON.stringify(events).includes('python3'));
+  assert(!JSON.stringify(events).includes('assemblée'));
+  assert(!JSON.stringify(events).includes(executable));
 });

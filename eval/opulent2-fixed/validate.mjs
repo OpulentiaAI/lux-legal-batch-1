@@ -4,6 +4,8 @@ import { digest, sha } from './io.mjs'
 import { aggregateNative, readCapture, reconcileNative, sanitize, wireMeasurements } from './native.mjs'
 import { OPULENT2_REFERENCE_UPDATE, OPULENT2_TASK_APPENDIX } from '../../runtime/instructions/opulent2.mjs'
 import { LUNA_ENDPOINT, LUNA_EXPERIMENT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs'
+import { OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from '../../runtime/capy-context.mjs'
 
 const same = (left, right) => digest(left) === digest(right)
 const nonempty = value => value !== undefined && value !== null && (typeof value !== 'string' || !!value.trim())
@@ -32,6 +34,8 @@ export function validateGrants(release, grants) {
   assert.deepEqual(grants.allowed_repos, [], 'Repository deny scope must remain enforced')
   assert.equal(grants.corpus_workspace, release.workspace)
   assert.equal(grants.computer_image_sha256, release.harnessOptions.computerImageSha256)
+  if (release.harnessOptions.opulent2ResultDeliveryPolicy) assert.deepEqual(grants.result_delivery_policy, OPULENT2_RESULT_DELIVERY_POLICY)
+  assert.deepEqual(grants.context_continuation_policy, release.harnessOptions.opulent2ContextContinuationPolicy ? OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY : undefined, 'Context continuation grants differ from the frozen policy')
 }
 
 export function validatePreparedReceipt(release, receipt) {
@@ -56,6 +60,7 @@ export function validatePreparedReceipt(release, receipt) {
     }
   }
   if (receipt.phase === 'context_compaction') {
+    assert.equal(release.harnessOptions.opulent2ContextContinuationPolicy, undefined, 'History-first continuation must not request a model summary')
     assert.equal(receipt.tools.length, 0)
     assert.equal(digest(receipt.messages.filter(message => message.role === 'system')), release.prompts.summarySystemMessagesSha256)
   } else {
@@ -99,6 +104,7 @@ export function verifyPreparedTransmissions(release, snapshot, transmissions) {
     assert.equal(ledger.length, 1, 'Prepared receipt must match exactly one model-request ledger entry')
     assert.equal(ledger[0].session_id, receipt.session_id)
     assert.equal(ledger[0].phase, receipt.phase)
+    assert.deepEqual(ledger[0].context_continuation_policy, receipt.grants.context_continuation_policy, 'Model-request ledger differs from the selected context continuation policy')
     assert.equal(digest(ledger[0].messages), digest(receipt.messages), 'Raw model-request ledger differs from prepared assembly')
     const actual = transmissions.filter(item => item.row.capyRequestRecordId === receipt.request_record_id)
     assert(actual.length, 'Prepared model request has no native wire capture')

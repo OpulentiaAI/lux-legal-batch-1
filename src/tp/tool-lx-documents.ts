@@ -11,13 +11,14 @@ export function createPlugin(ctx: PluginContext): PluginRuntime {
     async invoke(input: unknown): Promise<CallableResult> {
       try {
         const { kind } = input as { kind?: string }
-        const docs = loadDocuments(ctx.workspace).filter((d) => !kind || d.kind === kind)
-        if (docs.length === 0) {
+        const inventory = loadDocuments(ctx.workspace)
+        if (inventory.length === 0) {
           return {
             content: 'corpus/index/documents.json is empty — run scripts/lx_pipeline.sh after placing the PDFs in corpus/raw/',
             isError: true,
           }
         }
+        const docs = inventory.filter((d) => !kind || d.kind === kind)
         return { content: { count: docs.length, documents: docs } }
       } catch (error) {
         return { content: String((error as Error)?.message ?? error), isError: true }

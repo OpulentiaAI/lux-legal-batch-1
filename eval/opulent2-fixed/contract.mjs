@@ -5,6 +5,10 @@ import { isAbsolute, join } from 'node:path'
 import { opulent2SkillRegistry } from '../../runtime/capy-skills.mjs'
 import { OPULENT2_TASK_APPENDIX, OPULENT2_REFERENCE_UPDATE } from '../../runtime/instructions/opulent2.mjs'
 import { LUNA_BUDGETS, LUNA_CONTEXT_EXPERIMENT, LUNA_ENDPOINT, LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
+import { OPULENT2_RESULT_DELIVERY_POLICY } from '../../runtime/capy-results.mjs'
+import { OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from '../../runtime/capy-context.mjs'
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
+import { OPULENT2_PARALLEL_DOCUMENT_VALIDATION } from '../../runtime/computer/document-tools-image.mjs'
 import { digest, json, LAUNCH, ordinary, proof, sha, within } from './io.mjs'
 
 export const WORKSPACE = '/home/user/.capy/work/opulent2-fixed-eval'
@@ -46,8 +50,11 @@ export function validateGatewayCatalogue(binding) {
 
 export function validateRelease(release) {
   assert.equal(release?.version, 'opulent2-fixed-release-v1')
+  assert.equal(release.opulent2ContextContinuationPolicy, undefined, 'Context continuation selector belongs in frozen harness options')
+  assert.equal(release.opulent2DocumentValidationPolicy, undefined, 'Document validation selector belongs in frozen harness options')
   const luna = lunaPolicy(release.experiment)
   assert.equal(release.name, NAME)
+  assert([OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(release.startupPolicy === undefined ? OPULENT2_SERIAL_STARTUP : release.startupPolicy), 'Unknown source-bound startup policy')
   assert((luna ? ['coverage', 'proving', 'comparison'] : ['proving', 'comparison']).includes(release.stage), 'Coverage is separate and Luna-only')
   assert.equal(release.workspace, WORKSPACE)
   assert(/^[a-f0-9]{40}$/.test(release.commit ?? '') && !/^0+$/.test(release.commit), 'Committed source is required')
@@ -116,6 +123,7 @@ export function validateRelease(release) {
   assert.equal(release.sourceBindings[release.protocol.path], release.protocol.sha256)
   assert.equal(release.sourceBindings[release.stateContract.module], release.stateContract.sha256)
   for (const path of ['runtime/core.mjs', 'runtime/broad-legal-eval.mjs', 'runtime/model.mjs', 'runtime/model-provider.mjs', 'eval/harvey-bridge.py', 'eval/harvey-modal-adapter.py', 'eval/opulent2-fixed/runner.mjs', 'eval/opulent2-fixed/native.mjs', 'eval/opulent2-fixed/harvey-worker.py']) assert(hex(release.sourceBindings[path]), `Source binding required: ${path}`)
+  if (release.startupPolicy === OPULENT2_OVERLAP_STARTUP) for (const path of ['runtime/opulent2-startup-policy.mjs', 'eval/opulent2-fixed/live.mjs', 'eval/opulent2-fixed/contract.mjs', 'eval/opulent2-fixed/prepare.mjs']) assert(hex(release.sourceBindings[path]), `Startup source binding required: ${path}`)
   if (luna) for (const path of ['runtime/opulent2-luna-policy.mjs', 'eval/opulent2-fixed/model-budget.mjs', 'eval/opulent2-fixed/budget-verification.mjs', 'eval/opulent2-fixed/coverage-verification.mjs']) assert(hex(release.sourceBindings[path]), `Luna source binding required: ${path}`)
   assert(text(release.parentVerification?.reference) && release.parentVerification.sourceAndPolicyReady === true, 'Preparation is not parent verification or launch permission')
   assert(Array.isArray(release.tasks) && new Set(release.tasks.map(task => task.id)).size === release.tasks.length)
@@ -150,7 +158,24 @@ export function validateRelease(release) {
     assert(release.harvey.sourceBindings && Object.entries(release.harvey.sourceBindings).every(([path, hash]) => relativeFile(path) && hex(hash)))
   }
   assert(release.harnessOptions && typeof release.harnessOptions === 'object' && !Array.isArray(release.harnessOptions))
-  assert(Object.keys(release.harnessOptions).every(key => ['sandboxTemplate', 'computerImageSha256', 'contextCompaction'].includes(key)), 'Cannot inject factories, prompts, stores or models through harness options')
+  assert(Object.keys(release.harnessOptions).every(key => ['sandboxTemplate', 'computerImageSha256', 'contextCompaction', 'opulent2ResultDeliveryPolicy', 'opulent2ContextContinuationPolicy', 'opulent2DocumentValidationPolicy'].includes(key)), 'Cannot inject factories, prompts, stores or models through harness options')
+  if (release.harnessOptions.opulent2ResultDeliveryPolicy !== undefined) assert.equal(release.harnessOptions.opulent2ResultDeliveryPolicy, OPULENT2_RESULT_DELIVERY_POLICY.version)
+  if (release.harnessOptions.opulent2ContextContinuationPolicy !== undefined) {
+    assert.equal(release.harnessOptions.opulent2ContextContinuationPolicy, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version, 'Unknown source-bound context continuation policy')
+    for (const path of ['runtime/core.mjs', 'runtime/broad-legal-eval.mjs', 'runtime/capy-context.mjs', 'runtime/opulent2-context.mjs', 'runtime/capy-results.mjs',
+      'eval/opulent2-fixed/live.mjs', 'eval/opulent2-fixed/contract.mjs', 'eval/opulent2-fixed/prepare.mjs', 'eval/opulent2-fixed/validate.mjs', 'eval/opulent2-fixed/grading.mjs']) {
+      assert(hex(release.sourceBindings[path]), `Context continuation source binding required: ${path}`)
+    }
+  }
+  if (release.harnessOptions.opulent2DocumentValidationPolicy !== undefined) {
+    assert.equal(release.harnessOptions.opulent2DocumentValidationPolicy, OPULENT2_PARALLEL_DOCUMENT_VALIDATION, 'Unknown source-bound document validation policy')
+    assert.equal(release.startupPolicy, OPULENT2_OVERLAP_STARTUP, 'Document validation policy requires protected overlap startup')
+    for (const path of ['runtime/broad-legal-eval.mjs', 'runtime/computer/index.mjs', 'runtime/computer/document-tools-image.mjs',
+      'runtime/computer/document-tools-permissions.mjs', 'runtime/computer/document-tools/probe-installed.mjs',
+      'eval/opulent2-fixed/live.mjs', 'eval/opulent2-fixed/contract.mjs', 'eval/opulent2-fixed/prepare.mjs', 'eval/opulent2-fixed/grading.mjs']) {
+      assert(hex(release.sourceBindings[path]), `Document validation source binding required: ${path}`)
+    }
+  }
   assert(text(release.harnessOptions.sandboxTemplate) && hex(release.harnessOptions.computerImageSha256))
   assert.equal(release.harnessOptions.contextCompaction?.enabled, true)
   assert.equal(release.harnessOptions.contextCompaction.maxSummaryTokens, 8192)

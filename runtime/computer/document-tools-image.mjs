@@ -2,11 +2,16 @@ import { createHash } from 'node:crypto';
 import { readFile, lstat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { probeDocumentToolPermissions } from './document-tools-permissions.mjs';
+import { sandboxAccessProtection } from '../sandbox-file-access.mjs';
+import { OPULENT2_OVERLAP_STARTUP } from '../opulent2-startup-policy.mjs';
 
 const directory = fileURLToPath(new URL('./document-tools/', import.meta.url));
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const hex = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const https = value => typeof value === 'string' && /^https:\/\/[a-z0-9.-]+\/[A-Za-z0-9_./%+@~-]+$/.test(value);
+
+export const OPULENT2_PARALLEL_DOCUMENT_VALIDATION = 'opulent2-parallel-document-validation-v1';
 
 export async function prepareDocumentToolsLayer({ sourceDirectory = resolve(fileURLToPath(new URL('../document-tools/', import.meta.url))) } = {}) {
   if (typeof sourceDirectory !== 'string' || !sourceDirectory.startsWith('/') || resolve(sourceDirectory) !== sourceDirectory) throw new TypeError('Document source directory must be an absolute canonical path');
@@ -59,8 +64,37 @@ export async function prepareDocumentToolsLayer({ sourceDirectory = resolve(file
   return { recipe, recipeSha256: sha256(manifest), bundleSha256, installerSha256, files, installSource };
 }
 
-export async function probePreparedDocumentTools(sandbox, expected) {
+export async function probePreparedDocumentTools(sandbox, expected, { startupPolicy, opulent2DocumentValidationPolicy, assertStartupBoundary } = {}) {
   if (!sandbox?.commands?.run || expected?.name !== 'opulent2-document-tools-v1' || expected.installedManifestPath !== '/opt/opulent/document-tools/installed.json' || !hex(expected.installedManifestSha256) || !hex(expected.recipeSha256) || !hex(expected.bundleSha256)) throw new TypeError('A connected sandbox and digest-bound document image are required');
+  if (opulent2DocumentValidationPolicy !== undefined && opulent2DocumentValidationPolicy !== OPULENT2_PARALLEL_DOCUMENT_VALIDATION) throw new TypeError('Unknown prepared document-tool validation policy');
+  const protection = sandboxAccessProtection(sandbox);
+  if (opulent2DocumentValidationPolicy === OPULENT2_PARALLEL_DOCUMENT_VALIDATION && startupPolicy === OPULENT2_OVERLAP_STARTUP && protection && typeof assertStartupBoundary === 'function') {
+    const identity = { ...expected };
+    const boundary = () => {
+      assertStartupBoundary?.();
+      if (sandboxAccessProtection(sandbox) !== protection || ['name', 'installedManifestPath', 'installedManifestSha256', 'recipeSha256', 'bundleSha256'].some(key => expected[key] !== identity[key])) throw new Error('Prepared document-tool protections or identity changed during validation');
+    };
+    boundary();
+    const anchor = `set -eu; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${identity.installedManifestSha256}';`;
+    const source = `(${probeDocumentToolPermissions.toString()})().then(result => console.log(JSON.stringify(result))).catch(() => { process.exitCode = 1; });`;
+    const results = await Promise.allSettled([
+      `${anchor} /usr/bin/setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs`,
+      `${anchor} /usr/bin/setpriv --no-new-privs -- /usr/bin/env -i PATH=/usr/bin:/bin LANG=C.UTF-8 /opt/opulent/document-tools/node/bin/node --input-type=module --eval '${source.replaceAll("'", "'\\''")}'`,
+    ].map(async command => {
+      boundary();
+      const result = await sandbox.commands.run(command, { timeoutMs: 60_000, rlmNoSecrets: true });
+      if (result?.exitCode !== 0) throw new Error('Prepared document-tool availability/integrity probe failed');
+      try { return JSON.parse(result.stdout); } catch { throw new Error('Prepared document-tool probe returned invalid JSON'); }
+    }));
+    boundary();
+    if (results.some(result => result.status === 'rejected')) throw new Error('Prepared document-tool availability/integrity probe failed');
+    const [availability, permissions] = results.map(result => result.value);
+    if (availability?.schema !== 1 || availability.name !== identity.name || availability.recipeSha256 !== identity.recipeSha256 || availability.availability?.verified !== true ||
+        permissions?.schema !== 1 || permissions.name !== identity.name || permissions.recipeSha256 !== availability.recipeSha256 || permissions.installedManifestSha256 !== identity.installedManifestSha256 ||
+        permissions.permissions?.verified !== true || !Number.isSafeInteger(permissions.permissions.uid) || permissions.permissions.uid <= 0 || permissions.permissions.noNewPrivileges !== true ||
+        !Number.isSafeInteger(permissions.permissions.checkedFilesAndDirectories) || permissions.permissions.checkedFilesAndDirectories < 1) throw new Error('Prepared document-tool probe differs from the approved image');
+    return { ...availability, permissions: permissions.permissions };
+  }
   const command = `set -eu; test "$(/usr/bin/sha256sum /opt/opulent/document-tools/installed.json | /usr/bin/cut -d' ' -f1)" = '${expected.installedManifestSha256}'; /usr/bin/setpriv --no-new-privs -- /opt/opulent/document-tools/node/bin/node /opt/opulent/document-tools/probe-installed.mjs --permissions`;
   const result = await sandbox.commands.run(command, { timeoutMs: 60_000, rlmNoSecrets: true });
   if (result.exitCode !== 0) throw new Error('Prepared document-tool availability/integrity probe failed');

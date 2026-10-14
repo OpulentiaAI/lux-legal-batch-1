@@ -13,6 +13,7 @@ import { CONTEXT_COVERAGE_TASK, COVERAGE_TASK, ENDPOINT, LUNA_CORPUS_BOUNDARY, L
 import { digest, LAUNCH, privateDirectory, proof, sha } from './io.mjs'
 import { aggregateNative, sanitize, wireMeasurements } from './native.mjs'
 import { seedCheckpoint } from './runner.mjs'
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
 import { loadPublicPacket, requireProvingAcceptance } from './tasks.mjs'
 import { nativeTransmissions, validateInitialAssembly, validatePreparedReceipt, verifyPreparedTransmissions } from './validate.mjs'
 
@@ -84,6 +85,26 @@ function releaseFixture(luna = false) {
     evidencePolicy: 'exact-native-wire-prepared-instructions-returned-observations-v1', gradingPolicy: 'separate-parent-jev-capy-no-answerer-feedback-v1',
     parentVerification: { sourceAndPolicyReady: true, reference: 'Synthetic fixture only; not live source verification or launch permission' } }
 }
+
+test('startup overlap is separately source-bound and rejects changed-policy resume without changing the serial default', async () => {
+  const serial = releaseFixture(true)
+  assert.equal(validateRelease(serial).startupPolicy, undefined)
+  assert.equal(validateRelease({ ...serial, startupPolicy: OPULENT2_SERIAL_STARTUP }).startupPolicy, OPULENT2_SERIAL_STARTUP)
+  const overlap = { ...structuredClone(serial), startupPolicy: OPULENT2_OVERLAP_STARTUP }
+  assert.throws(() => validateRelease(overlap), /Startup source binding required/)
+  for (const path of ['runtime/opulent2-startup-policy.mjs', 'eval/opulent2-fixed/live.mjs', 'eval/opulent2-fixed/contract.mjs', 'eval/opulent2-fixed/prepare.mjs']) overlap.sourceBindings[path] = sha(path)
+  assert.equal(validateRelease(overlap), overlap)
+  assert.throws(() => validateRelease({ ...overlap, startupPolicy: 'allocation-only-cache' }), /Unknown source-bound startup/)
+  assert.throws(() => validateRelease({ ...overlap, startupPolicy: null }), /Unknown source-bound startup/)
+  assert.throws(() => validateRelease({ ...overlap, harnessOptions: { ...overlap.harnessOptions, opulent2StartupPolicy: OPULENT2_OVERLAP_STARTUP } }), /Cannot inject/)
+  const checkpoint = seedCheckpoint({ release: serial })
+  assert.throws(() => seedCheckpoint({ release: overlap }, checkpoint), /resume rejected/)
+  assert.throws(() => seedCheckpoint({ release: { ...overlap, startupPolicy: OPULENT2_SERIAL_STARTUP } }, seedCheckpoint({ release: overlap })), /resume rejected/)
+  const drafted = await draftRelease({ ...preparationSpec(true), startupPolicy: OPULENT2_OVERLAP_STARTUP })
+  assert.equal(drafted.startupPolicy, OPULENT2_OVERLAP_STARTUP)
+  assert.equal(drafted.initialSnapshot, null)
+  for (const path of ['runtime/opulent2-startup-policy.mjs', 'eval/opulent2-fixed/live.mjs']) assert.equal(drafted.sourceBindings[path], proof(join(WORKSPACE, path)).sha256)
+})
 
 test('legacy native releases remain accepted without any Luna fields or added source requirements', () => {
   const release = releaseFixture()
@@ -502,4 +523,25 @@ test('cumulative native provenance retains exact totals even when observed usage
   assert.equal(partial.fullConsumptionUsage, null)
   assert.deepEqual(partial.knownUsageSubtotal, expected)
   assert.deepEqual(JSON.parse(JSON.stringify(partial)), partial)
+})
+
+test('draft compaction fingerprints match the actual selected startup constructor without releasing any offline fixture', async () => {
+  let factories = 0
+  const stopped = () => { factories++; throw new Error('Offline constructor must not execute') }
+  for (const startupPolicy of [OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP]) {
+    const release = await draftRelease({ ...preparationSpec(LUNA_CONTEXT_EXPERIMENT), stage: 'coverage', startupPolicy })
+    const harness = createBroadHarness({ ...release.harnessOptions, workspace: WORKSPACE, corpus, artifactsDir: join(directory, `actual-${startupPolicy}`),
+      instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: 'toolbox', nativeMcp: false,
+      maxSteps: release.budgets.maxSteps, model: release.model, inferenceProvider: release.inferenceProvider,
+      experiment: release.experiment, budgetDisclosure: release.prompts.budgetDisclosure, reasoningEffort: release.reasoningEffort,
+      workProduct: { maxCompletionTokens: release.budgets.maxCompletionTokens },
+      ...(startupPolicy === OPULENT2_OVERLAP_STARTUP ? { opulent2StartupPolicy: startupPolicy,
+        opulent2ReleaseBinding: { releaseSha256: digest(release), sourceBindingsSha256: digest(release.sourceBindings) } } : {}),
+      opulent2Handoff: { chainId: release.chainId, taskId: release.tasks[0].id, attemptId: 'offline-live-shape' },
+      runtimeFactory: stopped, sandboxFactory: stopped, modelFactory: stopped })
+    assert.deepEqual(harness.provenance.capy.contextCompaction, release.harnessOptions.contextCompaction)
+    assert.equal('opulent2-startup-policy.mjs' in harness.provenance.capy.runtimeSourcesSha256, startupPolicy === OPULENT2_OVERLAP_STARTUP)
+    assert.equal(release.parentVerification.sourceAndPolicyReady, false)
+  }
+  assert.equal(factories, 0)
 })

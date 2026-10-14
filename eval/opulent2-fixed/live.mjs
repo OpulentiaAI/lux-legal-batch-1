@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
-import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
+import { appendFileSync, closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readdirSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { MODEL, PROFILE, verifyCommittedRelease } from './contract.mjs'
@@ -14,8 +14,73 @@ import { nativeTransmissions, validateInitialAssembly, validatePreparedReceipt, 
 import { LUNA_MODEL, lunaPolicy } from '../../runtime/opulent2-luna-policy.mjs'
 import { verifyModelBudget } from './budget-verification.mjs'
 import { verifyToolCoverage } from './coverage-verification.mjs'
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from '../../runtime/opulent2-startup-policy.mjs'
+import { PROVISION_STAGES } from '../../runtime/provision-stage.mjs'
 
 const safe = value => JSON.parse(sanitize(Buffer.from(JSON.stringify(value))))
+
+export function createProvisionStageRecorder({ directory, context, registry, releaseSha256, sourceBindingsSha256 }) {
+  privateDirectory(directory)
+  assert(/^[a-f0-9]{64}$/.test(releaseSha256) && /^[a-f0-9]{64}$/.test(sourceBindingsSha256))
+  assert(context.arm === 'opulent2' && ['preflight', 'answerer'].includes(context.phase))
+  assert(Number.isSafeInteger(context.attempt) && context.attempt >= 0)
+  assert([context.taskId, context.attemptId].every(value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value)))
+  const binding = { releaseSha256, sourceBindingsSha256, arm: 'opulent2', taskId: context.taskId,
+    attempt: context.attempt, attemptId: context.attemptId, phase: context.phase }
+  const stages = new Map()
+  return event => {
+    assert(PROVISION_STAGES.includes(event.stage))
+    assert(['create', 'reconnect'].includes(event.operation))
+    assert(typeof event.stageId === 'string' && /^[a-f0-9-]{36}$/.test(event.stageId))
+    assert(Number.isFinite(event.startedAtMs) && event.startedAtMs >= 0)
+    assert(['started', 'completed', 'failed'].includes(event.status))
+    if (event.status === 'started') {
+      assert(!stages.has(event.stageId))
+      assert(event.endedAtMs === null && event.elapsedMs === null && event.errorClass === null)
+    } else {
+      const begin = stages.get(event.stageId)
+      assert(begin && begin.status === 'started' && begin.stage === event.stage && begin.operation === event.operation && begin.startedAtMs === event.startedAtMs)
+      assert(begin.sandboxId === null || begin.sandboxId === event.sandboxId)
+      assert(Number.isFinite(event.endedAtMs) && event.endedAtMs >= event.startedAtMs && event.elapsedMs === event.endedAtMs - event.startedAtMs)
+      assert(event.status === 'failed' ? ['AggregateError', 'TypeError', 'RangeError', 'SyntaxError', 'ReferenceError', 'URIError', 'EvalError', 'Error', 'NonError'].includes(event.errorClass) : event.errorClass === null)
+    }
+    assert(event.sandboxId !== null || event.stage === 'sandbox-create' && event.status !== 'completed')
+    assert(event.sandboxId === null || typeof event.sandboxId === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(event.sandboxId))
+    const owned = event.sandboxId === null ? null : registry.find(row => row.sandboxId === event.sandboxId && row.source === 'actual factory creation' &&
+      row.bindingSha256 === releaseSha256 && row.arm === binding.arm && row.taskId === binding.taskId && row.attempt === binding.attempt &&
+      row.attemptId === binding.attemptId && row.phase === binding.phase)
+    assert(event.sandboxId === null || owned, 'Provision diagnostics require actual factory ownership')
+    const row = { version: 'opulent2-provision-stage-timing-v1', ...binding, source: owned?.source ?? null, stageId: event.stageId,
+      stage: event.stage, operation: event.operation, sandboxId: owned?.sandboxId ?? null, startedAtMs: event.startedAtMs,
+      endedAtMs: event.endedAtMs, elapsedMs: event.elapsedMs, status: event.status, errorClass: event.errorClass }
+    privateDirectory(directory)
+    const fd = openSync(join(directory, 'provision-stage-timing.jsonl'), constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW, 0o600)
+    try {
+      const stat = fstatSync(fd)
+      assert(stat.isFile() && stat.uid === process.getuid() && (stat.mode & 0o777) === 0o600 && stat.nlink === 1)
+      appendFileSync(fd, `${JSON.stringify(row)}\n`)
+    } finally { closeSync(fd) }
+    stages.set(event.stageId, row)
+  }
+}
+
+export async function runWithLivePreflight({ startupPolicy = OPULENT2_SERIAL_STARTUP, preflight, execute }) {
+  assert([OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(startupPolicy), 'Unknown startup policy')
+  if (startupPolicy === OPULENT2_SERIAL_STARTUP) return execute(Promise.resolve(await preflight()))
+  let release, deny
+  const gate = new Promise((resolve, reject) => { release = resolve; deny = reject })
+  void gate.catch(() => {})
+  const execution = Promise.resolve().then(() => execute(gate, deny))
+  void execution.catch(deny)
+  try {
+    release(await preflight())
+    return await execution
+  } catch (error) {
+    deny(error)
+    await execution.catch(() => {})
+    throw error
+  }
+}
 
 export function assertPrivateRuntimeState(path, output, used) {
   assert(typeof path === 'string' && path !== output && within(output, path))
@@ -90,8 +155,12 @@ export async function loadRuntimeModules(release) {
     importAt(release.stateContract.module), import('e2b')])
 }
 
-export async function launch({ release, file, authorization, source }) {
+export async function launch({ release, file, authorization, source, provisionStageTiming = false }) {
+  assert.equal(typeof provisionStageTiming, 'boolean')
   const luna = lunaPolicy(release.experiment)
+  const startupPolicy = release.startupPolicy === undefined ? OPULENT2_SERIAL_STARTUP : release.startupPolicy
+  const overlapStartup = startupPolicy === OPULENT2_OVERLAP_STARTUP
+  const releaseBinding = { releaseSha256: digest(release), sourceBindingsSha256: digest(release.sourceBindings) }
   assert.equal(process.env.LX_RETRIEVAL_PROFILE, release.retrievalProfile, 'Select Voyage before runtime imports')
   for (const name of [...(luna ? [] : ['RUNA_CLOUD_KEY']), 'E2B_API_KEY', 'TURBOPUFFER_API_KEY', 'TURBOPUFFER_REGION', 'AI_GATEWAY_API_KEY']) assert(process.env[name], `Missing credential: ${name}`)
   const [broadModule, modelModule, coreModule, providerModule, e2bModule, corpusModule, instructionModule, handoffModule, sdk] = await loadRuntimeModules(release)
@@ -122,6 +191,10 @@ export async function launch({ release, file, authorization, source }) {
     name: 'Opulent2 fixed', sourceLineage: 'capy-v1 engine; copied/pinned native-capy-v1 capture and ownership infrastructure',
     attemptPolicy: 'Unfinished-only resume; failed attempts cannot advance the successful memory/Drive chain; preserve failures without semantic score penalties',
     schedulingPolicy: 'Sequential Opulent2 carry-forward; fresh per-task Harvey with concurrent arms; no answer/grade feedback exchanged', grading: 'Independent parent Jev/Capy only' }
+  if (overlapStartup) provenance.startupPolicy = startupPolicy
+  if (provisionStageTiming) provenance.provisionStageTiming = { version: 'opulent2-provision-stage-timing-v1', enabled: true,
+    visibility: 'host-only monotonic stage events; not model observation or coverage acceptance',
+    unavailable: 'Missing records or unmatched begin events remain diagnostic gaps, never zero elapsed or completed stages' }
   const checkpoint = seedCheckpoint(provenance, existsSync(checkpointPath) ? json(checkpointPath) : null)
   const unchanged = () => {
     verifyCommittedRelease(release)
@@ -143,6 +216,9 @@ export async function launch({ release, file, authorization, source }) {
     const handoff = { chainId: release.chainId, taskId: context.taskId, attemptId: context.attemptId,
       inlineByteLimit: release.stateContract.inlineByteLimit, ...(previousSnapshot ? { previousSnapshot, expectedPreviousSha256: previousSnapshot.sha256 } : {}) }
     return broadModule.createBroadHarness({ ...release.harnessOptions, workspace: release.workspace, corpus,
+      ...(provisionStageTiming ? { onProvisionStage: createProvisionStageRecorder({ directory: artifactDirectory,
+        context: { ...context, arm: 'opulent2', phase: context.phase ?? 'answerer' }, registry, ...releaseBinding }) } : {}),
+      ...(overlapStartup ? { opulent2StartupPolicy: startupPolicy, opulent2ReleaseBinding: releaseBinding } : {}),
       ...(luna ? { experiment: release.experiment, budgetDisclosure: release.prompts.budgetDisclosure } : {}),
       instructionProfile: PROFILE, toolSurface: PROFILE, semanticSurface: release.semanticSurface, nativeMcp: false,
       maxSteps: release.budgets.maxSteps, model: release.model, inferenceProvider: release.inferenceProvider,
@@ -168,6 +244,9 @@ export async function launch({ release, file, authorization, source }) {
         assert.deepEqual(config.allowedRepos, [])
         assert.deepEqual(config.allowedTools.slice().sort(), release.surface.allowedTools.slice().sort())
         assert.deepEqual(config.contextCompaction, release.harnessOptions.contextCompaction)
+        assert.equal(config.opulent2ResultDeliveryPolicy, release.harnessOptions.opulent2ResultDeliveryPolicy)
+        assert.equal(config.opulent2ContextContinuationPolicy, release.harnessOptions.opulent2ContextContinuationPolicy)
+        assert.equal(config.opulent2DocumentValidationPolicy, release.harnessOptions.opulent2DocumentValidationPolicy)
         assert.deepEqual(config.opulent2Handoff, handoff)
         const stateDir = context.phase === 'preflight' ? join(artifactDirectory, 'runtime-state') : config.stateDir
         if (context.phase === 'preflight') privateDirectory(stateDir)
@@ -205,13 +284,33 @@ export async function launch({ release, file, authorization, source }) {
       } })
   }
 
+  let preflightGate, denyPreflight
   const executeOpulent2 = context => attemptContext.run({ taskId: context.taskId, attempt: context.attempt, attemptId: context.attemptId, arm: 'opulent2', phase: 'answerer' }, async () => {
     const packet = loadPublicPacket(release.workspace, release.tasks.find(task => task.id === context.taskId))
     const directory = join(release.output, 'attempts', context.attemptId)
     privateDirectory(directory)
     const broad = makeBroad(context, context.previousSnapshot, join(directory, 'artifacts'))
     let result, failure, snapshot, handoff, candidateOutput = null
-    try { result = await broad.run({ question: packet.task.instructions, mode: 'broad', workProduct: packet }) } catch (error) { failure = error }
+    try { result = await broad.run({ question: packet.task.instructions, mode: 'broad', workProduct: packet,
+      ...(overlapStartup ? { awaitPreflight: async binding => {
+        const passed = await preflightGate
+        unchanged()
+        assert.equal(digest(release), releaseBinding.releaseSha256, 'Prepared startup release changed')
+        assert.equal(digest(release.sourceBindings), releaseBinding.sourceBindingsSha256)
+        assert.equal(binding.releaseSha256, releaseBinding.releaseSha256)
+        assert.equal(binding.sourceBindingsSha256, releaseBinding.sourceBindingsSha256)
+        assert.equal(binding.chainId, release.chainId)
+        assert.equal(binding.taskId, context.taskId)
+        assert.equal(binding.attemptId, context.attemptId)
+        assert.equal(binding.inputSnapshotSha256, context.previousSnapshot?.sha256 ?? null)
+        assert.equal(binding.packetSha256, digest({ question: packet.task.instructions, mode: 'broad', workProduct: packet }))
+        const owned = registry.filter(vm => vm.arm === 'opulent2' && vm.taskId === context.taskId && vm.attempt === context.attempt && vm.attemptId === context.attemptId)
+        assert.equal(owned.length, 1, 'Only one independently factory-owned answerer VM can be prepared')
+        assert.equal(owned[0].sandboxId, binding.sandboxId)
+        assert.equal(owned[0].source, 'actual factory creation')
+        assert(passed.preflightSandboxIds.every(id => id !== binding.sandboxId), 'Preflight and answerer VMs must be independent')
+        return { status: 'passed', binding, preflightSandboxIds: passed.preflightSandboxIds }
+      } } : {}) }) } catch (error) { failure = error; if (overlapStartup) denyPreflight(error) }
     try {
       if (result) candidateOutput = immutable(join(directory, 'unvalidated-result.json'), safe(result))
       await captures.flush()
@@ -275,6 +374,7 @@ export async function launch({ release, file, authorization, source }) {
   })
 
   const executeHarvey = context => attemptContext.run({ taskId: context.taskId, attempt: context.attempt, attemptId: context.attemptId, arm: 'harvey', phase: 'answerer' }, async () => {
+    if (overlapStartup) { await preflightGate; unchanged() }
     const directory = join(release.output, 'attempts', context.attemptId)
     privateDirectory(directory)
     const packet = loadPublicPacket(release.workspace, release.tasks.find(task => task.id === context.taskId))
@@ -380,23 +480,54 @@ export async function launch({ release, file, authorization, source }) {
     checkpoint.preflight = { status: 'running' }
     save(checkpoint)
     const broad = makeBroad(context, initialSnapshot, preflightDirectory)
-    const preflight = await attemptContext.run(context, () => broad.preflight())
-    checkpoint.preflight = { status: 'passed', integrations: safe(preflight), nativeCatalogue: native }
-    save(checkpoint)
-    await runExperiment({ checkpoint, initialSnapshot, executeOpulent2, executeHarvey, save, assertUnchanged: unchanged })
+    await runWithLivePreflight({ startupPolicy,
+      preflight: async () => {
+        const startedAt = new Date().toISOString(), start = performance.now()
+        try {
+          const preflight = await attemptContext.run(context, () => broad.preflight())
+          let preflightSandboxIds
+          if (overlapStartup) {
+            const owned = registry.filter(vm => vm.phase === 'preflight' && vm.attemptId === context.attemptId)
+            assert(owned.length, 'Actual independent preflight ownership is required')
+            const cleanup = await verifyOwnedAbsence(owned, sdk.Sandbox, sdk.SandboxNotFoundError)
+            atomic(join(preflightDirectory, 'owned-absence.json'), cleanup)
+            assert(cleanup.allOwnedAbsent, 'Preflight owned VM cleanup must pass before inference release')
+            preflightSandboxIds = owned.map(vm => vm.sandboxId)
+            unchanged()
+          }
+          checkpoint.preflight = { status: 'passed', integrations: safe(preflight), nativeCatalogue: native,
+            ...(overlapStartup ? { startupPolicy, startedAt, endedAt: new Date().toISOString(), elapsedMs: Math.round(performance.now() - start), preflightSandboxIds } : {}) }
+          save(checkpoint)
+          return { preflightSandboxIds }
+        } catch (error) {
+          if (overlapStartup) {
+            checkpoint.preflight = { status: 'failed', startupPolicy, startedAt, endedAt: new Date().toISOString(), elapsedMs: Math.round(performance.now() - start), errorClass: error.name }
+            save(checkpoint)
+          }
+          throw error
+        }
+      },
+      execute: (gate, deny) => {
+        preflightGate = gate
+        denyPreflight = deny
+        return runExperiment({ checkpoint, initialSnapshot, executeOpulent2, executeHarvey, save, assertUnchanged: unchanged })
+      } })
   } finally {
-    await captures.flush()
-    atomic(join(release.output, 'native-capture-index.json'), safe(captures.rows))
-    atomic(modelRecordsPath, safe(captures.records))
-    atomic(join(release.output, 'native-contract-failures.json'), captures.contractFailures)
-    const cleanup = await verifyOwnedAbsence(registry, sdk.Sandbox, sdk.SandboxNotFoundError)
-    atomic(join(release.output, 'owned-absence.json'), cleanup)
-    atomic(join(release.output, 'aggregate-native-accounting.json'), aggregateNative([...captures.rows, ...allHarveyRows]))
-    if (!cleanup.allOwnedAbsent) {
-      checkpoint.status = 'execution-failed'
-      checkpoint.cleanup = cleanup
-      save(checkpoint)
-      throw new Error('Final owned VM absence unresolved; fix before any retry')
+    try {
+      await captures.flush()
+      atomic(join(release.output, 'native-capture-index.json'), safe(captures.rows))
+      atomic(modelRecordsPath, safe(captures.records))
+      atomic(join(release.output, 'native-contract-failures.json'), captures.contractFailures)
+    } finally {
+      const cleanup = await verifyOwnedAbsence(registry, sdk.Sandbox, sdk.SandboxNotFoundError)
+      atomic(join(release.output, 'owned-absence.json'), cleanup)
+      atomic(join(release.output, 'aggregate-native-accounting.json'), aggregateNative([...captures.rows, ...allHarveyRows]))
+      if (!cleanup.allOwnedAbsent) {
+        checkpoint.status = 'execution-failed'
+        checkpoint.cleanup = cleanup
+        save(checkpoint)
+        throw new Error('Final owned VM absence unresolved; fix before any retry')
+      }
     }
   }
   return { status: checkpoint.status, name: 'Opulent2 fixed', checkpoint: proof(checkpointPath),

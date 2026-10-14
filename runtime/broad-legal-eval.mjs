@@ -7,7 +7,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { captureVisibleSources } from '../eval/comparison-corpus.mjs'
 import { catalog, createRuntime } from './core.mjs'
 import { connectSandbox, createSandbox } from './e2b.mjs'
-import { protectSandboxFileAccess } from './sandbox-file-access.mjs'
+import { createNoNewPrivilegesRunner, protectSandboxFileAccess, sandboxAccessProtection } from './sandbox-file-access.mjs'
 import { createModel } from './model.mjs'
 import { modelTransport } from './model-provider.mjs'
 import { LUNA_MODEL, MIMO_MODEL, validateEvalModel } from './eval-model-profile.mjs'
@@ -20,11 +20,14 @@ import { OPULENT2_TOOL_POLICY, OPULENT2_TOOL_DEFINITIONS } from './opulent2-poli
 import { OPULENT2_PROFILE, opulent2TaskPrompt } from './instructions/opulent2.mjs'
 import { probeOpulent2Machine } from './opulent2-machine.mjs'
 import { parseOpulent2Handoff, serializeOpulent2Handoff } from './opulent2-handoff.mjs'
-import { CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs'
+import { CAPY_CONTEXT_POLICY_VERSION, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from './capy-context.mjs'
 import { OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs'
 import { OPULENT2_SANDBOX_LEASE_POLICY } from './opulent2-sandbox-lease.mjs'
+import { OPULENT2_OVERLAP_STARTUP, OPULENT2_SERIAL_STARTUP } from './opulent2-startup-policy.mjs'
+import { OPULENT2_PARALLEL_DOCUMENT_VALIDATION } from './computer/document-tools-image.mjs'
+import { observeProvisionStage } from './provision-stage.mjs'
 import { lunaPolicy } from './opulent2-luna-policy.mjs'
-import { OPULENT2_RESULT_PREVIEW_POLICY } from './capy-results.mjs'
+import { OPULENT2_RESULT_PREVIEW_POLICY, OPULENT2_RESULT_DELIVERY_POLICY, recoverCapyResultBacking } from './capy-results.mjs'
 import { capySessionIsTerminal } from './capy-control.mjs'
 import { rlmInitialToolsFor, RLM_INITIAL_TOOL_POLICY, suppliedInitialToolsFor, SUPPLIED_INITIAL_TOOL_SOURCE_SHA256, SUPPLIED_INITIAL_TOOL_NORMALIZATION, unrestrictedInitialToolsFor, UNRESTRICTED_INITIAL_TOOL_POLICY } from './initial-tool-policy.mjs'
 import { EFFECTIVE_TOOL_OVERLAY, EFFECTIVE_TOOL_OVERLAY_PROVENANCE } from './effective-tool-definitions.mjs'
@@ -195,17 +198,20 @@ function corpusArchive(corpus, workspace) {
   return execFileSync('tar', ['-czf', '-', '-C', directory, '.'], { maxBuffer: 256 * 1024 * 1024 })
 }
 
-export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet) {
+export async function provisionCorpus(config, corpus, workspace, sandboxFactory, packet, startupPolicy = OPULENT2_SERIAL_STARTUP, onProvisionStage) {
   const archive = corpusArchive(corpus, workspace)
-  const sandbox = await sandboxFactory(config)
+  const sandbox = await observeProvisionStage(onProvisionStage, 'sandbox-create', 'create', null, () => sandboxFactory(config))
+  const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, 'create', sandbox.sandboxId, run)
   try {
-    await sandbox.files.write('/tmp/broad-legal-corpus.tar.gz', archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength))
-    if (packet) {
-      const prepared = await sandbox.commands.run(`sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE} && sudo -n install -d -m 0777 ${TASK_PATH} ${TASK_PATH}/materials && install -d -m 0777 ${OUTPUT_PATH}`)
-      if (prepared.exitCode !== 0) throw new Error('Work-product directories preparation failed')
-      await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
-      for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
-    }
+    await observe('corpus-material-staging', async () => {
+      await sandbox.files.write('/tmp/broad-legal-corpus.tar.gz', archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength))
+      if (packet) {
+        const prepared = await sandbox.commands.run(`sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE} && sudo -n install -d -m 0777 ${TASK_PATH} ${TASK_PATH}/materials && install -d -m 0777 ${OUTPUT_PATH}`)
+        if (prepared.exitCode !== 0) throw new Error('Work-product directories preparation failed')
+        await sandbox.files.write(`${TASK_PATH}/task.json`, JSON.stringify(packet.task))
+        for (const row of packet.materials) await sandbox.files.write(`${TASK_PATH}/${row.path}`, row.content)
+      }
+    })
     // Built-in skills are installed from the hash-verified control-plane source
     // at provisioning time: template aliases can resolve to snapshots that predate
     // the skill bundle, so image contents are never assumed. Root-owned read-only
@@ -213,19 +219,28 @@ export async function provisionCorpus(config, corpus, workspace, sandboxFactory,
     // verification below.
     const skillsManifest = JSON.parse(readFileSync(new URL('./skills/manifest-v1.json', import.meta.url), 'utf8'))
     const staged = '/tmp/opulent-skill-staging'
-    for (const { name, artifactSha256 } of skillsManifest.skills) {
-      const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
-      if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
-      await sandbox.files.write(`${staged}/${name}.md`, bytes)
-    }
+    await observe('skill-staging', async () => {
+      const skillUploads = []
+      for (const { name, artifactSha256 } of skillsManifest.skills) {
+        const bytes = readFileSync(new URL(`./skills/${name}/SKILL.md`, import.meta.url))
+        if (sha256(bytes) !== artifactSha256) throw new Error(`Prepared skill source mismatch: ${name}`)
+        if (startupPolicy === OPULENT2_OVERLAP_STARTUP) skillUploads.push({ path: `${staged}/${name}.md`, data: bytes })
+        else await sandbox.files.write(`${staged}/${name}.md`, bytes)
+      }
+      if (skillUploads.length) await sandbox.files.write(skillUploads, { useOctetStream: false })
+    })
     const skillDirs = skillsManifest.skills.map(({ name }) => `${skillsManifest.destinationRoot}/${name}`).join(' ')
     const skillFiles = skillsManifest.skills.map(({ name }) =>
       `sudo -n install -o root -g root -m 0444 ${staged}/${name}.md ${skillsManifest.destinationRoot}/${name}/SKILL.md`).join('; ')
-    const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
-    if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
-    const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
-    if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
-    return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
+    await observe('skill-install', async () => {
+      const installed = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 0555 /opt/opulent ${skillsManifest.destinationRoot} ${skillDirs}; ${skillFiles}; rm -rf ${staged}`)
+      if (installed.exitCode !== 0) throw new Error('Built-in skill installation failed')
+    })
+    return await observe('corpus-protection', async () => {
+      const result = await sandbox.commands.run(`set -eu; sudo -n install -d -o root -g root -m 1777 ${BROAD_SANDBOX_WORKSPACE}; sudo -n install -d -o root -g root -m 0755 ${SANDBOX_CORPUS}; sudo -n tar -xzf /tmp/broad-legal-corpus.tar.gz -C ${SANDBOX_CORPUS}; sudo -n chown -R root:root ${SANDBOX_CORPUS}; sudo -n find ${SANDBOX_CORPUS} -type f -exec chmod 0444 {} +; sudo -n find ${SANDBOX_CORPUS} -type d -exec chmod 0555 {} +; ${packet ? `sudo -n chown -R root:root ${TASK_PATH}; sudo -n find ${TASK_PATH} -type d -exec chmod 0555 {} +; sudo -n find ${TASK_PATH} -type f -exec chmod 0444 {} +;` : ''} rm /tmp/broad-legal-corpus.tar.gz; sudo -n find / -xdev -type f -perm /6000 -exec chmod a-s {} +`)
+      if (result.exitCode !== 0) throw new Error('Corpus extraction failed')
+      return await protectCorpusSandbox(sandbox, undefined, config.secureSandboxFileAccess === true)
+    })
   } catch (error) {
     await sandbox.kill().catch(() => {})
     throw error
@@ -239,10 +254,7 @@ async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = 
   if (!/^[a-f0-9]{64}$/.test(baseline)) throw new Error('Corpus integrity baseline unavailable')
   if (expectedDigest && baseline !== expectedDigest) throw new Error('Corpus integrity changed while sandbox was paused')
   sandbox[CORPUS_DIGEST] = baseline
-  sandbox.commands.run = (command, options = {}) => {
-    if (typeof command !== 'string') throw new Error('Sandbox command must be text')
-    return originalRun(`setpriv --no-new-privs -- /bin/sh -c ${quote(command)}`, { ...options, user: 'user' })
-  }
+  sandbox.commands.run = createNoNewPrivilegesRunner(originalRun)
   if (sandbox.pty?.create) {
     const originalPtyCreate = sandbox.pty.create.bind(sandbox.pty)
     sandbox.pty.create = options => originalPtyCreate({ ...options, user: 'user' })
@@ -270,6 +282,25 @@ async function protectCorpusSandbox(sandbox, expectedDigest, secureFileAccess = 
     return originalPause(...args)
   }
   return sandbox
+}
+
+async function checkPreparedSkills(skills, verify, startupPolicy) {
+  if (startupPolicy !== OPULENT2_OVERLAP_STARTUP) {
+    for (const skill of skills) await verify(skill)
+    return
+  }
+  const checks = await Promise.allSettled(skills.map(verify))
+  const failures = checks.filter(check => check.status === 'rejected').map(check => check.reason)
+  if (failures.length) throw new AggregateError(failures, failures.map(error => error?.message ?? String(error)).join('; '))
+}
+
+export async function verifyPreparedSkills(sandbox, skills, startupPolicy = OPULENT2_SERIAL_STARTUP) {
+  await checkPreparedSkills(skills.skills, async ({ name, artifactSha256 }) => {
+    const path = `${skills.destinationRoot}/${name}/SKILL.md`
+    if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
+    const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
+    if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
+  }, startupPolicy)
 }
 
 function visibleSources(value, corpusSources) {
@@ -393,11 +424,24 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   mcp, broker, sandboxTemplate, computerImageSha256, nativeMcp = false, nativeModuleHash, model = BROAD_MODEL, providerOnly = null,
   reasoningEffort = null, inferenceProvider = 'gateway', providerModel,
   toolSurface, instructionProfile, experiment, budgetDisclosure,
-  opulent2Handoff, onPreparedModelRequest,
+  opulent2Handoff, opulent2ResultDeliveryPolicy, opulent2ContextContinuationPolicy, opulent2DocumentValidationPolicy, onPreparedModelRequest, onProvisionStage,
+  opulent2StartupPolicy = OPULENT2_SERIAL_STARTUP, opulent2ReleaseBinding,
   semanticSurface = 'mcp',
   runtimeFactory = createRuntime, sandboxFactory = createSandbox, sandboxConnect = connectSandbox, modelFactory = createModel } = {}) {
   validateEvalModel(model, providerOnly, inferenceProvider)
   const opulent2 = instructionProfile === OPULENT2_PROFILE
+  if (onProvisionStage !== undefined && (!opulent2 || typeof onProvisionStage !== 'function')) throw new Error('Provision stage diagnostics require an Opulent2 host callback')
+  const overlapStartup = opulent2StartupPolicy === OPULENT2_OVERLAP_STARTUP
+  if (![OPULENT2_SERIAL_STARTUP, OPULENT2_OVERLAP_STARTUP].includes(opulent2StartupPolicy) || overlapStartup && !opulent2) throw new Error('Unknown or misplaced Opulent2 startup policy')
+  if (overlapStartup) {
+    if (!opulent2ReleaseBinding || Object.keys(opulent2ReleaseBinding).sort().join(',') !== 'releaseSha256,sourceBindingsSha256' ||
+        Object.values(opulent2ReleaseBinding).some(value => typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value))) throw new Error('Overlap startup requires an exact source-bound release identity')
+    opulent2ReleaseBinding = structuredClone(opulent2ReleaseBinding)
+    opulent2Handoff = structuredClone(opulent2Handoff)
+  } else if (opulent2ReleaseBinding !== undefined) throw new Error('Release-gated preparation requires the overlap startup policy')
+  if (opulent2ResultDeliveryPolicy !== undefined && (!opulent2 || opulent2ResultDeliveryPolicy !== OPULENT2_RESULT_DELIVERY_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 result delivery policy')
+  if (opulent2ContextContinuationPolicy !== undefined && (!opulent2 || opulent2ContextContinuationPolicy !== OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version)) throw new Error('Unknown or misplaced Opulent2 context continuation policy')
+  if (opulent2DocumentValidationPolicy !== undefined && (!opulent2 || !overlapStartup || opulent2DocumentValidationPolicy !== OPULENT2_PARALLEL_DOCUMENT_VALIDATION)) throw new Error('Unknown or misplaced Opulent2 document validation policy')
   const luna = lunaPolicy(experiment)
   if (luna && (!opulent2 || model !== LUNA_MODEL || inferenceProvider !== 'gateway' || providerModel != null || providerOnly != null || reasoningEffort !== 'max' ||
       maxSteps !== luna.budgets.maxSteps || workProduct?.maxCompletionTokens !== luna.budgets.maxCompletionTokens || budgetDisclosure !== luna.disclosure)) throw new Error('Luna experiment requires the exact disclosed model and budget policy')
@@ -436,6 +480,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const fullCorpusVms = capabilityV8 || capy
   const scheduledChildren = capabilityV7 || capy
   const desktopConfig = deliveryV9 || opulent2 ? { computerPreparedImage: true, computerImageSha256,
+    ...(opulent2 ? { computerBrowserPrewarm: true } : {}),
+    ...(opulent2DocumentValidationPolicy ? { opulent2DocumentValidationPolicy } : {}),
     browserAllowedOrigins: ['http://127.0.0.1:8765'], browserUploadRoots: [`${BROAD_SANDBOX_WORKSPACE}/analysis`, OUTPUT_PATH] } : null
   if ((deliveryV9 || opulent2) && (!sandboxTemplate || !/^[a-f0-9]{64}$/.test(computerImageSha256 ?? ''))) throw new Error('Desktop profile requires the approved prepared desktop template and image SHA-256')
   const rlm = instructionProfile === 'opulent-rlm-v4' || unrestricted
@@ -475,15 +521,19 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
   const instructions = renderInstructions({ appendix: luna ? `${initialAppendix}\n\n${budgetDisclosure}` : initialAppendix,
     profile: instructionProfile ?? (initialTools ? 'opulent-prepared-v2' : 'standalone-v1'),
     variant: opulent2 ? OPULENT2_PROFILE : capy ? 'broad-legal-native-capy-v1' : deliveryV9 ? `broad-legal-native-${instructionProfile.slice('opulent-'.length)}` : capabilityV8 ? 'broad-legal-native-capability-v8' : capabilityV7 ? 'broad-legal-native-capability-v7' : unrestricted ? 'broad-legal-native-rlm-unrestricted-v5' : rlm ? 'broad-legal-native-rlm-v4' : initialTools ? 'broad-legal-native-initial-scripted-v1' : nativeMcp ? 'broad-legal-native-mcp-v1' : 'broad-legal-direct-v1' })
-  const capyRuntimeSources = capy ? Object.fromEntries(['core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
+  const capyRuntimeSources = capy ? Object.fromEntries([...(overlapStartup ? ['opulent2-startup-policy.mjs'] : []), 'core.mjs', 'capy-policy.mjs', 'capy-context.mjs', 'context-compaction.mjs',
     'capy-control.mjs', 'capy-execute.mjs', 'capy-files.mjs', 'capy-patch.mjs', 'capy-processes.mjs', 'capy-results.mjs',
-    'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', '../package-lock.json',
+    'capy-skills.mjs', 'tools/capy-memory.mjs', 'tools/legal.mjs', 'security.mjs', 'e2b.mjs', 'broad-legal-eval.mjs', 'provision-stage.mjs', '../package-lock.json',
     ...(opulent2 ? ['opulent2-policy.mjs', 'opulent2-machine.mjs', 'opulent2-context.mjs', 'opulent2-completion.mjs', 'opulent2-handoff.mjs', 'opulent2-sandbox-lease.mjs', 'tools/opulent2-drive.mjs', 'instructions/opulent2.mjs', 'instructions/opulent2-fixed-v1.md', 'instructions/opulent2-reference-update-v1.md', 'model-images.mjs', 'computer/index.mjs', 'computer/probe.mjs', 'skills/opulent2-manifest-v1.json'] : []),
-    ...(luna ? ['opulent2-luna-policy.mjs'] : [])]
+    ...(luna ? ['opulent2-luna-policy.mjs'] : []),
+    ...(opulent2DocumentValidationPolicy ? ['computer/document-tools-image.mjs', 'computer/document-tools-permissions.mjs'] : [])]
     .map(path => [path, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))])) : null
   const contextCompaction = capy ? { ...CAPY_CONTEXT_COMPACTION, policyFingerprint: sha256(JSON.stringify({
     profile: instructionProfile, allowedTools, definitions: capyPolicy.provenance, instructions: instructions.provenance,
-    contextPolicyVersion: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION, capyRuntimeSources, corpus: corpus.hash })) } : null
+    contextPolicyVersion: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION, capyRuntimeSources, corpus: corpus.hash,
+    ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+    ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
+    ...(opulent2DocumentValidationPolicy ? { documentValidationPolicy: opulent2DocumentValidationPolicy } : {}) })) } : null
   const scriptLimits = ['opulent-knowledge-v3', 'opulent-rlm-v4'].includes(instructions.provenance.profile)
     ? { maxScriptToolCalls: 64, maxConcurrentScriptToolCalls: 8 } : null
   const provenance = {
@@ -501,10 +551,13 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         visibility: 'host-only; private exports never establish consultation', encoding: 'UTF-8 with secret redaction',
         missingFiles: 'explicit missing, unsafe, oversized or unreadable entries; never synthesized' },
       resultPolicy: 'bounded model-visible returns with complete private file-backed results; no unread-result credit',
-      ...(opulent2 ? { resultPreviewPolicy: OPULENT2_RESULT_PREVIEW_POLICY } : {}) },
+      ...(opulent2 ? { resultPreviewPolicy: OPULENT2_RESULT_PREVIEW_POLICY } : {}),
+      ...(opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+      ...(opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) },
       runtimeCapabilities: [...capyPolicy.runtimeCapabilities], networkPolicy: network } : {}),
     ...(opulent2 ? { opulent2: { version: OPULENT2_PROFILE, chainId: opulent2Handoff.chainId, taskId: opulent2Handoff.taskId, attemptId: opulent2Handoff.attemptId,
       predecessorSnapshotSha256: predecessor?.sha256 ?? null,
+      ...(overlapStartup ? { startupPolicy: opulent2StartupPolicy, releaseBinding: opulent2ReleaseBinding } : {}),
       sandboxLease: OPULENT2_SANDBOX_LEASE_POLICY,
       computer: { ...desktopConfig, readiness: 'validated after corpus and skill hardening in every root/child/reconnected VM' },
       carryForwardPolicy: 'successful-task-only-cumulative-memory-drive-v1', assemblyPolicy: 'opulent2-prepared-request-v1' } } : {}),
@@ -572,7 +625,7 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           ...(nativeModuleHash ? { moduleHash: nativeModuleHash } : {}) } : {}) } : 'available tools; no approved server state supplied; Arsumbris unconfigured; not MCP-certified' },
   }
   function runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors, archiveSandbox) {
-    async function trackSandbox(sandbox, { bootstrap = true } = {}) {
+    async function trackSandbox(sandbox, { bootstrap = true, operation = 'create' } = {}) {
       if (!sandbox?.sandboxId || typeof sandbox.kill !== 'function') throw new Error('Sandbox provision returned no terminable sandbox')
       provisionedSandboxes.add(sandbox)
       const originalKill = sandbox.kill.bind(sandbox)
@@ -611,16 +664,11 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           return originalPause(...args)
         }
       }
-      if (skills) {
-        for (const { name, artifactSha256 } of skills.skills) {
-          const path = `${skills.destinationRoot}/${name}/SKILL.md`
-          if (sha256(await sandbox.files.read(path)) !== artifactSha256) throw new Error(`Prepared skill content mismatch: ${name}`)
-          const permissions = await sandbox.commands.run(`test ! -w ${quote(path)} && test ! -w ${quote(`${skills.destinationRoot}/${name}`)} && test ! -w ${quote(skills.destinationRoot)} && test "$(stat -c %u ${quote(path)})" = 0`)
-          if (permissions.exitCode !== 0) throw new Error(`Prepared skill permissions invalid: ${name}`)
-        }
-      }
+      const observe = (stage, run) => observeProvisionStage(onProvisionStage, stage, operation, sandbox.sandboxId, run)
+      if (skills) await observe('prepared-skill-verification', () => verifyPreparedSkills(sandbox, skills, opulent2StartupPolicy))
       if (deliveryV9 || opulent2) {
-        const { readiness } = await (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig, { bootstrap })
+        const { readiness } = await observe('authenticated-machine-readiness', () => (opulent2 ? probeOpulent2Machine : probePreparedComputer)(sandbox, desktopConfig,
+          { bootstrap, ...(opulent2 ? { startupPolicy: opulent2StartupPolicy, onProvisionStage, operation } : {}) }))
         sandbox[DESKTOP_READINESS] = readiness
       }
       return sandbox
@@ -631,6 +679,8 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         ...(luna ? { experiment, modelBudget: luna.budgets, reasoningEffort } : {}),
         ...(initialTools ? { initialTools, requireWorkflowApproval: true } : {}),
         ...(capy ? { runtimeCapabilities: [...capyPolicy.runtimeCapabilities], contextCompaction,
+          ...(opulent2ResultDeliveryPolicy ? { opulent2ResultDeliveryPolicy } : {}),
+          ...(opulent2ContextContinuationPolicy ? { opulent2ContextContinuationPolicy } : {}),
           capyMemory: { organizationId: 'complex-v1-evaluation', userId: opulent2 ? OPULENT2_PROFILE : 'opulent-capy-v1', projectId: opulent2 ? opulent2Handoff.chainId : basename(stateDir),
             scopes: ['project'], root: '/home/user/.capy/memory' } }
           : unrestricted ? { runtimeCapabilities: ['browser-v1', 'operation-waits-v1', RLM_CAPABILITY_VERSION], unrestrictedTools: true }
@@ -652,16 +702,17 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       storage: {},
       ...(opulent2 ? { onPreparedModelRequest } : {}),
       provision: async config => {
-        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet))
+        const sandbox = await (provision ? provision(config, corpus, packet) : provisionCorpus(config, corpus, workspace, sandboxFactory, packet, opulent2StartupPolicy, onProvisionStage))
         provisionedSandboxes.add(sandbox)
-        if (provision && fullCorpusVms) await protectCorpusSandbox(sandbox, undefined, true)
+        if (provision && fullCorpusVms) await observeProvisionStage(onProvisionStage, 'corpus-protection', 'create', sandbox.sandboxId, () => protectCorpusSandbox(sandbox, undefined, true))
         return await trackSandbox(sandbox)
       },
       connect: async (id, config) => {
         const previous = [...provisionedSandboxes].find(sandbox => sandbox.sandboxId === id)
-        const sandbox = await sandboxConnect(id, config)
+        const sandbox = await observeProvisionStage(onProvisionStage, 'sandbox-reconnect', 'reconnect', id, () => sandboxConnect(id, config))
         provisionedSandboxes.add(sandbox)
-        return trackSandbox(await protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], fullCorpusVms), { bootstrap: false })
+        return trackSandbox(await observeProvisionStage(onProvisionStage, 'corpus-protection', 'reconnect', sandbox.sandboxId,
+          () => protectCorpusSandbox(sandbox, previous?.[CORPUS_DIGEST], fullCorpusVms)), { bootstrap: false, operation: 'reconnect' })
       },
       model: (messages, options = {}) => {
         if (options.model && options.model !== evalModel) throw new Error(`Broad evaluation model is pinned to ${capy ? 'native RunAnywhere MiMo v2.6 Pro' : evalModel === BROAD_MODEL ? 'Luna' : 'Modal DeepSeek'}`)
@@ -714,24 +765,35 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           stage = 'capy-vm-provision'
           await runtime.context(session.id).ensureSandbox()
         }
+        const invoke = async (name, args) => {
+          const result = await runtime.invoke(session.id, name, args)
+          if (!capy) return result
+          const ctx = runtime.context(session.id)
+          const recovered = await recoverCapyResultBacking(ctx, result)
+          if (result?.kind === 'file_backed_result') ctx.emit?.('preflight_result_recovered', {
+            name, result_id: result.result_id, sha256: result.sha256, characters: result.characters,
+            scope: 'operator-preflight-only; not model-consulted evidence',
+          })
+          return recovered
+        }
         stage = 'native-catalog'
         if (!nativeMcp) {
           stage = 'toolbox-direct-corpus'
           const source = corpus.sources[0]
-          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          const direct = await invoke('lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Native toolbox chunk response differs from prepared source')
-          const search = await runtime.invoke(session.id, 'lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
+          const search = await invoke('lx_search', { query: 'assemblée générale', mode: 'hybrid', limit: 3, rerank: true })
           if (!Array.isArray(search?.results) || !search.results.length) throw new Error('Native toolbox semantic search returned no results')
         }
         if (nativeMcp) {
-          const listed = await runtime.invoke(session.id, 'mcp_list_tools', { server: mcp.server })
+          const listed = await invoke('mcp_list_tools', { server: mcp.server })
           const names = listed.tools?.map(tool => tool.name)
           if (!Array.isArray(names) || names.length !== NATIVE_LX_TOOLS.length || new Set(names).size !== NATIVE_LX_TOOLS.length ||
             JSON.stringify([...names].sort()) !== JSON.stringify([...NATIVE_LX_TOOLS].sort())) throw new Error('Native MCP must expose exactly four approved lx tools')
           for (const name of NATIVE_LX_TOOLS) {
             stage = `native-${name}`
             const probe = mcp.probes.find(item => item.name === name)
-            const result = await runtime.invoke(session.id, 'mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
+            const result = await invoke('mcp_call_tool', { server: mcp.server, name, arguments: probe.arguments })
             if (result?.isError === true || !Array.isArray(result?.content) || !result.content.some(item => typeof item.text === 'string' && item.text.trim())) throw new Error(`Native MCP ${name} returned no usable result`)
             if (await mcp.verify(name, result, corpus) !== true) throw new Error(`Native MCP ${name} response verification failed`)
           }
@@ -740,18 +802,18 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           stage = 'direct-corpus-access'
           const source = corpus.sources[0]
           if (!source) throw new Error('Prepared corpus source required for direct-corpus verification')
-          const direct = await runtime.invoke(session.id, 'lx_chunk', { chunk_id: source.id })
+          const direct = await invoke('lx_chunk', { chunk_id: source.id })
           if (direct?.id !== source.id || direct?.doc !== source.doc || direct?.text !== source.text) throw new Error('Direct corpus chunk response differs from prepared source')
         } else if (nativeMcp) {
           stage = 'direct-corpus-denial'
           let directDenied = false
-          try { await runtime.invoke(session.id, 'lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
+          try { await invoke('lx_search', { query: 'test' }) } catch (error) { directDenied = /forbidden/i.test(error.message) }
           if (!directDenied) throw new Error('Direct corpus dispatch remains accessible')
         }
         stage = capy ? 'capy-codemode' : 'broker-callback'
-        const brokerCall = capy ? await runtime.invoke(session.id, 'execute', {
+        const brokerCall = capy ? await invoke('execute', {
           code: 'const tasks = await tools.task.list({}); const process = await tools.capy.bash({command: "printf capy-vm-preflight", description: "Verifying isolated workspace execution"}); return {tasks,process}', timeout_seconds: 30,
-        }) : await runtime.invoke(session.id, 'scripted_tools', {
+        }) : await invoke('scripted_tools', {
           script: 'import asyncio\nfrom opulent_tools import tools\nasync def main():\n    print(await tools.noop())\nasyncio.run(main())', timeout_secs: 30,
         })
         if (capy ? brokerCall?.status !== 'completed' || brokerCall.error || !Array.isArray(brokerCall.value?.tasks?.tasks) ||
@@ -761,31 +823,31 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         if (capy) {
           stage = 'capy-vm-canonical-read'
           const source = corpus.sources[0]
-          const read = await runtime.invoke(session.id, 'read', { path: `${SANDBOX_CORPUS}/chunks/${source.id}.txt`, offset: 1, limit: 2 })
+          const read = await invoke('read', { path: `${SANDBOX_CORPUS}/chunks/${source.id}.txt`, offset: 1, limit: 2 })
           const expected = (`[${source.id}]\n${source.text}\n`.match(/[^\n]*\n|[^\n]+$/g) ?? []).slice(0, 2).join('').slice(0, 60000)
           if (read?.kind !== 'read' || read.content !== expected) throw new Error('Capy VM corpus read differs from the approved canonical source')
         }
         if (skills) {
           stage = 'builtin-skills'
-          for (const { name, artifactSha256 } of skills.skills) {
-            const result = await runtime.invoke(session.id, opulent2 ? 'skill_read' : 'skill', opulent2 ? { name } : { command: 'invoke', skill: name })
+          await checkPreparedSkills(skills.skills, async ({ name, artifactSha256 }) => {
+            const result = await invoke(opulent2 ? 'skill_read' : 'skill', opulent2 ? { name } : { command: 'invoke', skill: name })
             if (result.path !== `${skills.destinationRoot}/${name}/SKILL.md` || sha256(result.content) !== artifactSha256) throw new Error(`Built-in skill invocation mismatch: ${name}`)
-          }
+          }, opulent2StartupPolicy)
         }
         if (opulent2) {
           stage = 'opulent2-genuine-agrep'
           const source = corpus.sources[0]
           const pattern = source.text.split(/\r?\n/).find(line => line.trim() && !/[\x00-\x1f\x7f]/.test(line))?.slice(0, 80)
           if (!pattern) throw new Error('A searchable public corpus line is required for approximate-search preflight')
-          const found = await runtime.invoke(session.id, 'agrep', { pattern, path: `corpus/chunks/${source.id}.txt`, max_errors: 0 })
+          const found = await invoke('agrep', { pattern, path: `corpus/chunks/${source.id}.txt`, max_errors: 0 })
           if (found.kind !== 'agrep' || !found.matches?.length) throw new Error('Genuine approximate-search preflight did not return the known corpus line')
           stage = 'opulent2-computer-observation'
-          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          const screenshot = await invoke('computer', { actions: [{ action: 'screenshot' }] })
           if (!screenshot?.ok || !runtime.context(session.id).capyToolImages.length) throw new Error('Opulent2 computer did not produce a replayable image observation')
         }
         if (nativeMcp || deliveryV9) {
           stage = 'desktop-screenshot'
-          const screenshot = await runtime.invoke(session.id, 'computer', { actions: [{ action: 'screenshot' }] })
+          const screenshot = await invoke('computer', { actions: [{ action: 'screenshot' }] })
           if (!screenshot?.ok || !screenshot.screenshot?.data_base64) throw new Error('Prepared desktop screenshot failed')
           stage = 'local-browser-open'
           await sandbox.files.write(`${BROAD_SANDBOX_WORKSPACE}/preflight.html`, deliveryV9
@@ -800,15 +862,15 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
           const local = await createComputer(sandbox, runtime.context(session.id).config).browser.open('http://127.0.0.1:8765/preflight.html')
           if (local?.ok === false) throw new Error('Local browser failed to open')
           stage = 'local-browser-console'
-          const location = await runtime.invoke(session.id, 'browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
+          const location = await invoke('browser_console', { content: 'location.hostname === "127.0.0.1" && document.body.textContent.includes("legal-comparison-preflight")' })
           if (location?.result !== true) throw new Error('Local browser verification failed')
           if (deliveryV9) {
             stage = 'browser-dom-snapshot'
-            const snapshot = await runtime.invoke(session.id, 'browser', { actions: [{ action: 'navigate', url: 'http://127.0.0.1:8765/preflight.html' }, { action: 'snapshot' }] })
+            const snapshot = await invoke('browser', { actions: [{ action: 'navigate', url: 'http://127.0.0.1:8765/preflight.html' }, { action: 'snapshot' }] })
             const ref = snapshot.observation?.tree?.match(/(e\d+) button Confirm preflight/)?.[1]
             if (snapshot.failure || !ref || !Number.isSafeInteger(snapshot.observation?.epoch)) throw new Error('Browser DOM snapshot failed')
             stage = 'browser-ref-action'
-            const clicked = await runtime.invoke(session.id, 'browser', { actions: [{ action: 'click', ref, epoch: snapshot.observation.epoch }, { action: 'read' }] })
+            const clicked = await invoke('browser', { actions: [{ action: 'click', ref, epoch: snapshot.observation.epoch }, { action: 'read' }] })
             if (clicked.failure || clicked.executed !== 2 || !clicked.results?.[1]?.text?.includes('legal-comparison-confirmed')) throw new Error('Browser ref action failed')
           }
         }
@@ -848,11 +910,15 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         rmSync(stateDir, { recursive: true, force: true })
       }
     },
-    async run({ question, mode, workProduct: packet }) {
+    async run({ question, mode, workProduct: packet, awaitPreflight }) {
       if (mode !== 'broad' || typeof question !== 'string' || !question.trim()) throw new Error('Broad mode and question are required')
       if (workProduct ? !packet : packet !== undefined) throw new Error('Work-product run mode mismatch')
       if (workProduct) validateWorkProduct(packet)
       if (opulent2 && packet.task.id !== opulent2Handoff.taskId) throw new Error('Opulent2 handoff task identity does not match the public task')
+      if (overlapStartup ? typeof awaitPreflight !== 'function' || question !== packet.task.instructions : awaitPreflight !== undefined) throw new Error('Startup gate and exact public request must match the selected policy')
+      if (overlapStartup) packet = structuredClone(packet)
+      const preparationStart = overlapStartup ? performance.now() : undefined
+      const preparation = overlapStartup ? { policy: opulent2StartupPolicy, status: 'preparing', startedAt: new Date().toISOString(), endedAt: null, elapsedMs: null, releasedAt: null } : null
       if (capy) {
         mkdirSync(artifactsDir, { recursive: true, mode: 0o700 })
         const outside = relative(realpathSync(workspace), realpathSync(artifactsDir))
@@ -862,10 +928,14 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       const stateDir = mkdtempSync(join(capy ? artifactsDir : tmpdir(), capy ? 'capy-attempt-state-' : 'broad-legal-state-'))
       const runProvenance = workProduct ? { ...provenance, taskSha256: sha256(JSON.stringify(packet.task)),
         materialHashes: Object.fromEntries(packet.materials.map(row => [row.path, sha256(row.content)])),
-        deliverables: [...packet.task.deliverables], ...(capy ? { state: { path: stateDir, mode: '0700', retained: true,
+        deliverables: [...packet.task.deliverables], ...(preparation ? { startupPreparation: preparation } : {}), ...(capy ? { state: { path: stateDir, mode: '0700', retained: true,
           memory: { scopes: ['project'], projectId: opulent2 ? opulent2Handoff.chainId : basename(stateDir), initializedFrom: opulent2 ? predecessor?.sha256 ?? 'fresh-empty-chain' : 'fresh-empty-attempt', descendants: 'same scoped durable backing' } } } : {}) } : provenance
       const evidenceDir = artifactsDir ? resolve(artifactsDir) : mkdtempSync(join(tmpdir(), 'broad-legal-evidence-'))
-      const start = performance.now()
+      const start = preparationStart ?? performance.now()
+      const preparationPath = preparation ? join(stateDir, 'startup-preparation.json') : null
+      const savePreparation = () => {
+        if (preparationPath) writeFileSync(preparationPath, JSON.stringify({ version: 'opulent2-startup-preparation-v1', provenance: runProvenance }) + '\n', { mode: 0o600 })
+      }
       const provisionedSandboxes = new Set()
       const collected = new Map()
       const collectors = new Map()
@@ -880,17 +950,68 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
       try {
         mkdirSync(evidenceDir, { recursive: true, mode: 0o700 })
         if (mcp) await mcp.provision(stateDir)
-        const model = modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
+        const makeModel = () => modelFactory({ model: provenance.model, ...(inferenceProvider !== 'gateway' ? { inferenceProvider } : {}), ...(providerModel ? { providerModel } : {}), ...(providerOnly ? { providerOnly } : {}),
           ...(luna ? { experiment } : {}),
           ...(reasoningEffort ? { reasoningEffort } : {}),
           ...(workProduct ? { modelRequestTimeoutMs: 600_000 } : {}) })
-        runtime = runtimeFactory(runtimeOptions(stateDir, model, provisionedSandboxes, packet, collected, providerRecords, collectors,
-          capy ? archiveSandbox : undefined))
+        let released = !overlapStartup, model = overlapStartup ? undefined : makeModel()
+        const options = runtimeOptions(stateDir, (...args) => {
+          if (!released) throw new Error('Inference is forbidden before successful live preflight release')
+          return model(...args)
+        }, provisionedSandboxes, packet, collected, providerRecords, collectors, capy ? archiveSandbox : undefined)
+        if (overlapStartup) options.onPreparedModelRequest = receipt => {
+          if (!released) throw new Error('Model preparation is forbidden before successful live preflight release')
+          return onPreparedModelRequest?.(receipt)
+        }
+        runtime = runtimeFactory(options)
+        savePreparation()
         if (broker) detachBroker = broker.attach(runtime)
-        session = await runtime.startSession({ title: 'Broad legal evaluation',
+        const initial = { title: 'Broad legal evaluation',
           prompt: opulent2 ? opulent2TaskPrompt({ question, taskPath: TASK_PATH, outputPath: OUTPUT_PATH }) : capy ? `Complete the public request in ${TASK_PATH}/task.json and ${TASK_PATH}/materials. Save each declared file in ${OUTPUT_PATH}; verify it before reporting completion. Use the tools and delegation that genuinely help this work, without a required child count or formal handoff loop.\n\nRequest: ${question}` : workProduct
             ? `Lis le dossier public ${TASK_PATH}/task.json et ses matériaux dans ${TASK_PATH}/materials. Produis chaque livrable déclaré dans ${OUTPUT_PATH}, en citant les sources [id] pour les affirmations juridiques. La réponse finale ne remplace pas ces fichiers. N’accède à aucun barème ou corrigé. ${capabilityV7 ? `Applique le protocole ${deliveryV9 ? instructionProfile.slice('opulent-'.length) : capabilityV8 ? 'capability-v8' : 'capability-v7'} au travail réel : invoque les procédures adaptées, utilise ipython comme espace persistant de recherche et de raisonnement, scripted_tools pour les appels programmatiques indépendants et rlm.spawn pour les questions de recherche séparables. Découvre les schémas, lis les réponses réellement terminées des enfants et vérifie toi-même leurs sources déterminantes avant la synthèse. Les autres outils autorisés restent disponibles ; aucun quota artificiel de profondeur, de fan-out ou d’appels Python n’est ajouté.` : 'Choisis les outils et la stratégie adaptés au travail : recherche de fichiers, shell, outils différés, connaissances locales, agents enfants et MCP sont utilisables sous leurs autorisations effectives. Découvre les schémas nécessaires ; aucune méthode de recherche ni séquence d’outils n’est imposée.'} Les workflows nécessitant une approbation restent soumis à cette approbation.\n\nDemande : ${question}${capabilityV7 ? '' : `\n\n${packet.task.instructions}`}`
-            : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` })
+            : `Réponds en français en 120 mots maximum à partir des sources du corpus et cite les chunks [id]. Si tu utilises les fichiers dans le bac à sable, seuls les textes réellement lus constituent une preuve.\n\nQuestion : ${question}` }
+        if (overlapStartup) {
+          const configSha256 = sha256(JSON.stringify(runtime.config))
+          session = runtime.allocate(initial)
+          const ctx = runtime.context(session.id)
+          try { await ctx.ensureSandbox() }
+          finally {
+            preparation.endedAt = new Date().toISOString()
+            preparation.elapsedMs = Math.round(performance.now() - start)
+            savePreparation()
+          }
+          const sandbox = ctx.sandbox
+          const protection = sandboxAccessProtection(sandbox)
+          if (!sandbox?.sandboxId || !provisionedSandboxes.has(sandbox) || !sandbox[DESKTOP_READINESS] ||
+              !protection || ctx.opulent2Task?.parentSha256 !== (predecessor?.sha256 ?? null)) throw new Error('Preparation requires the independently provisioned ready VM and exact accepted predecessor')
+          const binding = { ...opulent2ReleaseBinding, policy: opulent2StartupPolicy,
+            chainId: opulent2Handoff.chainId, taskId: packet.task.id, attemptId: opulent2Handoff.attemptId,
+            inputSnapshotSha256: predecessor?.sha256 ?? null,
+            packetSha256: sha256(JSON.stringify({ question, mode, workProduct: packet })), configSha256,
+            sessionId: session.id, sandboxId: sandbox.sandboxId }
+          preparation.binding = binding
+          preparation.status = 'prepared'
+          savePreparation()
+          const receipt = await awaitPreflight(structuredClone(binding))
+          if (receipt?.status !== 'passed' || sha256(JSON.stringify(receipt.binding)) !== sha256(JSON.stringify(binding)) ||
+              !Array.isArray(receipt.preflightSandboxIds) || !receipt.preflightSandboxIds.length ||
+              receipt.preflightSandboxIds.some(id => typeof id !== 'string' || !id || id === sandbox.sandboxId) ||
+              new Set(receipt.preflightSandboxIds).size !== receipt.preflightSandboxIds.length ||
+              sha256(JSON.stringify(runtime.config)) !== configSha256 || ctx.sandbox !== sandbox ||
+              sandboxAccessProtection(sandbox) !== protection ||
+              ctx.opulent2Task?.parentSha256 !== binding.inputSnapshotSha256 ||
+              runtime.store.get('sessions', session.id)?.sandbox_id !== sandbox.sandboxId ||
+              runtime.store.get('sessions', session.id)?.status !== 'idle' || runtime.store.list('sessions').length !== 1 ||
+              runtime.store.list('orchestration_messages').length || runtime.store.list('capy_model_requests').length ||
+              runtime.store.get('sessions', session.id)?.prompt !== initial.prompt) throw new Error('Live preflight release differs from the prepared packet, config, session or independent VM')
+          preparation.releasedAt = new Date().toISOString()
+          preparation.preflightSandboxIds = [...receipt.preflightSandboxIds]
+          preparation.status = 'released'
+          savePreparation()
+          model = makeModel()
+          released = true
+          await runtime.messageSession(session.id, initial.prompt)
+        } else session = await runtime.startSession(initial)
         if (scheduledChildren && typeof runtime.tick === 'function') {
           scheduler = (async () => {
             while (!schedulerController.signal.aborted) {
@@ -968,6 +1089,18 @@ export function createBroadHarness({ workspace, corpus, provision, artifactsDir,
         return { answer: completed.output, ...details, ...(opulent2 ? { opulent2Handoff: exportedHandoff } : {}), ...(workProduct ? { deliverables, missingDeliverables,
           artifactPaths: runDetails.artifactPaths } : {}) }
       } catch (cause) {
+        if (preparation && !preparation.endedAt) {
+          preparation.endedAt = new Date().toISOString()
+          preparation.elapsedMs = Math.round(performance.now() - start)
+        }
+        if (preparation && !preparation.releasedAt) {
+          preparation.status = 'failed'
+          preparation.failure = {
+            errorClass: redactAudit(typeof cause?.name === 'string' ? cause.name : 'Error').slice(0, 128),
+            message: redactAudit(cause instanceof Error ? cause.message : 'Startup preparation failed').slice(0, 2048),
+          }
+          savePreparation()
+        }
         await stopScheduler()
         if (scheduledChildren) {
           try { await runtime?.quiesce?.() }
@@ -1128,6 +1261,7 @@ except FileNotFoundError:
           ...(Number.isSafeInteger(completed.steps) && completed.steps >= 0 ? { steps: completed.steps } : {}) } : null
         if (terminal) trace.push({ stage: 'session_terminal', ...terminal })
         const audit = { provenance: runProvenance, terminalStatus: terminal?.status ?? null, terminal, calls: observed.calls.map(({ output, args, rawArguments, ...entry }) => entry),
+          ...(preparationPath ? { startupPreparationArtifact: preparationPath, startupPreparationSha256: sha256(readFileSync(preparationPath)) } : {}),
           ...(capy ? { capyDeliveries: capyDelivery.deliveries.map(({ body, ...entry }) => entry) } : {}),
           ...(deliveryV9 || opulent2 ? { desktopReadiness: [...provisionedSandboxes].filter(sandbox => sandbox[DESKTOP_READINESS]).map(sandbox => ({ sandboxId: sandbox.sandboxId, ...sandbox[DESKTOP_READINESS] })) } : {}),
           finalAnswerHash: typeof completed?.output === 'string' ? sha256(redactAudit(completed.output)) : null }
