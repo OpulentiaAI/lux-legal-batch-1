@@ -1,0 +1,13 @@
+# Typed evaluation and engineering knowledge
+
+The declared `lux-evaluation-knowledge` repository lives at `knowledge/` and follows [Arsumbris](https://github.com/arsumbris/arsumbris/)'s typed Markdown, YAML type definitions, qualified references and source → extraction → cut → weave structure. Open `knowledge/map - start here.md` for its home and `knowledge/README.md` for the detailed authoring and access contract.
+
+All Git-visible evaluation files and non-corpus Markdown receive metadata-only source wrappers. Existing originals, typed legal entities, legal corpus manifests, frozen tasks/rubrics and saved results are not rewritten. Git blob identities bind repository sources; SHA-256 identities bind whitelisted retained checkpoint/audit captures. File roles are fields, not one type per directory. Captured sources remain distinct from reviewed claims and from independent grades.
+
+Run `npm run knowledge:build` to regenerate the source/run notes and maps, and `npm run knowledge:check` to detect stale identities, missing notes and orphaned generated files. `npm run knowledge:import-runs -- /explicit/archive/runs` captures only supported metadata leaves from retained native runs, preserves failed/unfinished history and refuses to overwrite changed captures. It makes no inference, provider, grading or cleanup calls.
+
+Historical `running` is not evidence of live work. Preflight, execution, grading, accounting and stored cleanup attestations stay separate. Unknown usage/cost remains unknown, and recorded subtotals must not be summed across overlapping audit copies. Published result sources stay opaque; their different schemas, provisional labels and denominators are not silently converted into one success field.
+
+This graph is outside legal answerer retrieval. Existing `lx_*` tooling still reads only `corpus/index/` manifests, and evaluation-only source pointers do not authorize access to their originals. Do not mount this graph or sealed evaluator inputs into answerer sandboxes. This change does not broaden `config.allowedTools`, introduce model-visible tools, change any task or grading policy, launch an evaluation or authorize a model/reasoning experiment.
+
+For the optional structural integration check, supply `ARSUMBRIS_AU_BIN=/path/to/au` and `ARSUMBRIS_REFERENCE_ROOT=/path/to/coherent-release-packages`, then run `npm run knowledge:engine-check`. It uses the actual Arsumbris engine with generated graph files and metadata-only original-file existence targets, not source payloads. It validates types and references, not a live Electron application, legal quality or authenticated providers. Without those tools, report the engine check as unavailable rather than substituting YAML parsing for it.

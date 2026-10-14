@@ -1,0 +1,12 @@
+type: research-extraction::au-weave
+of: '[[sources/source - README.md - 200b06e6451b0ae1.md::lux-evaluation-knowledge]]'
+claims:
+  - surface:
+      - Preserve the closed-corpus protocol as a separate baseline rather than treating it as a runtime-wide requirement.
+    note: The evaluation guide makes the corpus-only restriction baseline-specific and requires an explicit policy override when a future evaluation needs broader capabilities.
+    salience: focal
+    passages:
+      - '[[sources/source - README.md - 200b06e6451b0ae1.md::lux-evaluation-knowledge^baseline-policy]]'
+    verdict: weave
+    why: The distinction governs protocol identity and prevents tool-policy changes from replacing historical baseline scores.
+    resolves_to: '[[claims/Baseline-specific tool restrictions are not runtime-wide requirements.md::lux-evaluation-knowledge]]'

@@ -1,0 +1,23 @@
+extends: source::au-base-types
+fields:
+  run_id: String
+  capture_sha256: String
+  checkpoint_sha256: String
+  supported: Boolean
+  recorded_status?: [execution-failed, running, planned, execution-completed, awaiting-independent-pair-grading]
+  grading_status?: [ungraded, pending, graded, grading-failed, unsupported]
+  preflight_status?: [passed, failed, running, pending, planned, unsupported]
+  disposition: [interrupted, cancelled, preflight-failed, recorded-failure, unresolved, unsupported]
+  source_commit?: String
+  configured_model?: String
+  configured_stage?: [proving, coverage, comparison]
+  configured_tools?: String[]
+  configured_max_steps?: Number
+  configured_max_completion_tokens?: Number
+  configured_input_cap_state?: [absent, null, value]
+  configured_max_input_tokens?: Number
+  configured_max_context_tokens?: Number
+  recorded_task_rows: Number
+  recorded_attempts: Number
+  post_run_cleanup_attestations: Number
+  accounting_attestations: Number

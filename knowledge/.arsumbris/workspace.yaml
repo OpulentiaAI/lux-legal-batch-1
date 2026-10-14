@@ -1,0 +1,5 @@
+type: au.engine.workspace::au-engine
+edit:
+  - lux-evaluation-knowledge
+discover:
+  - lux-legal-batch-1
