@@ -1,0 +1,12 @@
+{
+  "id": "luna-tool-coverage-01",
+  "title": "Model-driven Opulent2 approved-tool integration coverage",
+  "instructions": "This is an ungraded infrastructure integration task, not a legal comparison or a holdout. Read materials/coverage-plan.md and exercise every approved Opulent2 tool through your own native tool calls or your own execute programs. Use actual owned VMs and actual returned results; do not manufacture observations or count catalogue entries as calls. Produce coverage.md with the observed outcomes, relevant operation/session/file/source identifiers and explicit gaps. Perform useful root-child-grandchild work, have both parents receive actual completed findings, and separately use a disposable owned descendant for intentional turn stopping followed by explicit subtree parking. Inspect an actual corpus-backed local document with computer and browser, and reopen the decisive source. Save and fully read back a short infrastructure note using memory and Drive; these coverage artifacts must not seed later legal tasks. Preserve permissions, secrets and the read-only corpus. Group independent calls where useful and stay within the disclosed shared runaway-loop limits. Finish normally only after reporting every tool's actual outcome; an intentional stop test must not stop the lead or its useful delegation chain.",
+  "deliverables": ["coverage.md"],
+  "materials": ["materials/coverage-plan.md"],
+  "scope": {
+    "jurisdiction": "Infrastructure-only; corpus observations are not legal advice",
+    "companyForm": "Not applicable; isolated tool integration verification",
+    "asOf": "2026-10-04 approved Opulent2 tool policy"
+  }
+}

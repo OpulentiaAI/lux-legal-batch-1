@@ -1,0 +1,407 @@
+{
+  "schema": 1,
+  "architecture": "amd64",
+  "ubuntu": "24.04",
+  "snapshot": "20261003T000000Z",
+  "url": "https://snapshot.ubuntu.com/ubuntu/20261003T000000Z/",
+  "components": [
+    "main",
+    "universe"
+  ],
+  "inRelease": [
+    {
+      "suite": "noble",
+      "sha256": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0"
+    },
+    {
+      "suite": "noble-updates",
+      "sha256": "73e9ce9b343db391c104da5f3574adaccd0cd672c450801afa5e6a53de0f2b2c"
+    },
+    {
+      "suite": "noble-security",
+      "sha256": "3b358f744efb789bab437ac77209ac20be2c8665197ce274f65c5f812bd4d519"
+    }
+  ],
+  "noInstallRecommends": true,
+  "dependencyPolicy": "Dependencies are resolved only from the hash-pinned, archive-key-signed immutable snapshot against the digest-pinned source image. Installed versions are captured at image build time.",
+  "packages": [
+    {
+      "name": "bash",
+      "version": "5.2.21-2ubuntu4",
+      "architecture": "amd64",
+      "filename": "pool/main/b/bash/bash_5.2.21-2ubuntu4_amd64.deb",
+      "sha256": "73de311a21e094e29ac01527d2b52226cc87fde0a5b57032902251b426d92c66",
+      "source": "bash",
+      "licenseFile": "/usr/share/doc/bash/copyright"
+    },
+    {
+      "name": "coreutils",
+      "version": "9.4-3ubuntu6.3",
+      "architecture": "amd64",
+      "filename": "pool/main/c/coreutils/coreutils_9.4-3ubuntu6.3_amd64.deb",
+      "sha256": "e1e9a17892be0cc83b7cea747edf331ffeb6d6c010b4db296e60d888e8e9274c",
+      "source": "coreutils",
+      "licenseFile": "/usr/share/doc/coreutils/copyright"
+    },
+    {
+      "name": "findutils",
+      "version": "4.9.0-5build1",
+      "architecture": "amd64",
+      "filename": "pool/main/f/findutils/findutils_4.9.0-5build1_amd64.deb",
+      "sha256": "96490acdee09245bb47ff4684dc59a7ac3b29619da868ef3e9d8323c61a02ac4",
+      "source": "findutils",
+      "licenseFile": "/usr/share/doc/findutils/copyright"
+    },
+    {
+      "name": "diffutils",
+      "version": "1:3.10-1ubuntu0.1",
+      "architecture": "amd64",
+      "filename": "pool/main/d/diffutils/diffutils_3.10-1ubuntu0.1_amd64.deb",
+      "sha256": "c2acc7889f1d75986c40bee57c0875c02146a9c8833980abfb0a6c62c52301d3",
+      "source": "diffutils",
+      "licenseFile": "/usr/share/doc/diffutils/copyright"
+    },
+    {
+      "name": "grep",
+      "version": "3.11-4build1",
+      "architecture": "amd64",
+      "filename": "pool/main/g/grep/grep_3.11-4build1_amd64.deb",
+      "sha256": "fc0fdc5983ea3d3579ccf335e51dec69684a0dd9bb915734999c5733add9507a",
+      "source": "grep",
+      "licenseFile": "/usr/share/doc/grep/copyright"
+    },
+    {
+      "name": "sed",
+      "version": "4.9-2ubuntu0.24.04.1",
+      "architecture": "amd64",
+      "filename": "pool/main/s/sed/sed_4.9-2ubuntu0.24.04.1_amd64.deb",
+      "sha256": "5406c0950df2653be3d4acaf9f169c51d30cf4a617b63423e64d2853b0d72b5c",
+      "source": "sed",
+      "licenseFile": "/usr/share/doc/sed/copyright"
+    },
+    {
+      "name": "gawk",
+      "version": "1:5.2.1-2ubuntu0.1",
+      "architecture": "amd64",
+      "filename": "pool/main/g/gawk/gawk_5.2.1-2ubuntu0.1_amd64.deb",
+      "sha256": "baaf6853bea746485bff4ae0e506599b3c5093ebe6ec9b9584e4272f94f75b93",
+      "source": "gawk",
+      "licenseFile": "/usr/share/doc/gawk/copyright"
+    },
+    {
+      "name": "file",
+      "version": "1:5.45-3build1",
+      "architecture": "amd64",
+      "filename": "pool/main/f/file/file_5.45-3build1_amd64.deb",
+      "sha256": "17dae1d6e803d0304e318f451c8abf62cbd5bb2a0068300cdeea77c62075b895",
+      "source": "file",
+      "licenseFile": "/usr/share/doc/file/copyright"
+    },
+    {
+      "name": "less",
+      "version": "590-2ubuntu2.1",
+      "architecture": "amd64",
+      "filename": "pool/main/l/less/less_590-2ubuntu2.1_amd64.deb",
+      "sha256": "f26481c7f5e492e7536f9e75a9aa237f4772b637cdc933f356bc567e180b8a39",
+      "source": "less",
+      "licenseFile": "/usr/share/doc/less/copyright"
+    },
+    {
+      "name": "jq",
+      "version": "1.7.1-3ubuntu0.24.04.2",
+      "architecture": "amd64",
+      "filename": "pool/main/j/jq/jq_1.7.1-3ubuntu0.24.04.2_amd64.deb",
+      "sha256": "f59183392f84fe67b407b494d8ba6185e9b0e4a106ffcb369490bd20a83fd40e",
+      "source": "jq",
+      "licenseFile": "/usr/share/doc/jq/copyright"
+    },
+    {
+      "name": "sqlite3",
+      "version": "3.45.1-1ubuntu2.8",
+      "architecture": "amd64",
+      "filename": "pool/main/s/sqlite3/sqlite3_3.45.1-1ubuntu2.8_amd64.deb",
+      "sha256": "78493e56909614ec1d588c9fae1739a704d9e1a6ff65509b1f06c3e4d53ed0c3",
+      "source": "sqlite3",
+      "licenseFile": "/usr/share/doc/sqlite3/copyright"
+    },
+    {
+      "name": "zip",
+      "version": "3.0-13ubuntu0.2",
+      "architecture": "amd64",
+      "filename": "pool/main/z/zip/zip_3.0-13ubuntu0.2_amd64.deb",
+      "sha256": "30b325b542ef8e9a22a5e1e1cfce8c4f4b75db73e339e76bf405b635861f1f76",
+      "source": "zip",
+      "licenseFile": "/usr/share/doc/zip/copyright"
+    },
+    {
+      "name": "unzip",
+      "version": "6.0-28ubuntu4.1",
+      "architecture": "amd64",
+      "filename": "pool/main/u/unzip/unzip_6.0-28ubuntu4.1_amd64.deb",
+      "sha256": "a505b9d491386167bd8e14e3383315a4a7d6539e4406745901ccf009a7988271",
+      "source": "unzip",
+      "licenseFile": "/usr/share/doc/unzip/copyright"
+    },
+    {
+      "name": "tar",
+      "version": "1.35+dfsg-3ubuntu0.4",
+      "architecture": "amd64",
+      "filename": "pool/main/t/tar/tar_1.35+dfsg-3ubuntu0.4_amd64.deb",
+      "sha256": "fdf41a87936824e50c8ac11b0b22d1395aeb0754feef2dae5575b5d5a93793ec",
+      "source": "tar",
+      "licenseFile": "/usr/share/doc/tar/copyright"
+    },
+    {
+      "name": "gzip",
+      "version": "1.12-1ubuntu3.2",
+      "architecture": "amd64",
+      "filename": "pool/main/g/gzip/gzip_1.12-1ubuntu3.2_amd64.deb",
+      "sha256": "4067522fbffe22672e4cf683bfc32e4a304bc872cf76f10049ab36d1a9eedb91",
+      "source": "gzip",
+      "licenseFile": "/usr/share/doc/gzip/copyright"
+    },
+    {
+      "name": "bzip2",
+      "version": "1.0.8-5.1ubuntu0.1",
+      "architecture": "amd64",
+      "filename": "pool/main/b/bzip2/bzip2_1.0.8-5.1ubuntu0.1_amd64.deb",
+      "sha256": "60fb79214dd8366fa39d7e69911294e72b9f1a4425a3d22f211359c8626e4b9e",
+      "source": "bzip2",
+      "licenseFile": "/usr/share/doc/bzip2/copyright"
+    },
+    {
+      "name": "xz-utils",
+      "version": "5.6.1+really5.4.5-1ubuntu0.3",
+      "architecture": "amd64",
+      "filename": "pool/main/x/xz-utils/xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb",
+      "sha256": "778edae086bc8f34d80f36f301bc8fb3eff2d906c146dfb533ea6840b6d64e00",
+      "source": "xz-utils",
+      "licenseFile": "/usr/share/doc/xz-utils/copyright"
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.5+dfsg2-2build1.1",
+      "architecture": "amd64",
+      "filename": "pool/main/libz/libzstd/zstd_1.5.5+dfsg2-2build1.1_amd64.deb",
+      "sha256": "d7667f83e3a2caeaaecaca464d542ee6ccf537259a479622796c84afc96d6032",
+      "source": "libzstd",
+      "licenseFile": "/usr/share/doc/zstd/copyright"
+    },
+    {
+      "name": "7zip",
+      "version": "23.01+dfsg-11",
+      "architecture": "amd64",
+      "filename": "pool/universe/7/7zip/7zip_23.01+dfsg-11_amd64.deb",
+      "sha256": "0f79450d81e64326a862a8645ae1613890e486115101e51e41ca07d929388d87",
+      "source": "7zip",
+      "licenseFile": "/usr/share/doc/7zip/copyright"
+    },
+    {
+      "name": "csvtool",
+      "version": "2.4-3build1",
+      "architecture": "amd64",
+      "filename": "pool/universe/o/ocaml-csv/csvtool_2.4-3build1_amd64.deb",
+      "sha256": "a6a0493234d3ad194b5a5d54a342d3cd3c0a4257d93452810c46f6cd3c8d50e3",
+      "source": "ocaml-csv",
+      "licenseFile": "/usr/share/doc/csvtool/copyright"
+    },
+    {
+      "name": "poppler-utils",
+      "version": "24.02.0-1ubuntu9.9",
+      "architecture": "amd64",
+      "filename": "pool/main/p/poppler/poppler-utils_24.02.0-1ubuntu9.9_amd64.deb",
+      "sha256": "fb936375b183a9d8ecb5b1fc5665a44110ca130c445946fb575c0b800b1dc0f4",
+      "source": "poppler",
+      "licenseFile": "/usr/share/doc/poppler-utils/copyright"
+    },
+    {
+      "name": "tesseract-ocr",
+      "version": "5.3.4-1build5",
+      "architecture": "amd64",
+      "filename": "pool/universe/t/tesseract/tesseract-ocr_5.3.4-1build5_amd64.deb",
+      "sha256": "2dfac382d77215aee0c3de4a2a2205505d5f2195e72e79b54ad32154fc08da77",
+      "source": "tesseract",
+      "licenseFile": "/usr/share/doc/tesseract-ocr/copyright"
+    },
+    {
+      "name": "tesseract-ocr-eng",
+      "version": "1:4.1.0-2",
+      "architecture": "all",
+      "filename": "pool/universe/t/tesseract-lang/tesseract-ocr-eng_4.1.0-2_all.deb",
+      "sha256": "b1996b3113c78663f4dd16cf18aa1f288b07e9624f8d4a0ddbd7d9b52a234ba7",
+      "source": "tesseract-lang",
+      "licenseFile": "/usr/share/doc/tesseract-ocr-eng/copyright"
+    },
+    {
+      "name": "tesseract-ocr-osd",
+      "version": "1:4.1.0-2",
+      "architecture": "all",
+      "filename": "pool/universe/t/tesseract-lang/tesseract-ocr-osd_4.1.0-2_all.deb",
+      "sha256": "a266496b3268134493808c1595c9d16ac92c7e1c28e3e0bf46fdb322df95ca68",
+      "source": "tesseract-lang",
+      "licenseFile": "/usr/share/doc/tesseract-ocr-osd/copyright"
+    },
+    {
+      "name": "pandoc",
+      "version": "3.1.3+ds-2",
+      "architecture": "amd64",
+      "filename": "pool/universe/p/pandoc/pandoc_3.1.3+ds-2_amd64.deb",
+      "sha256": "021cf93191aea780c273e82ca3ab575b1522992705b6c28e350aa502573a27b5",
+      "source": "pandoc",
+      "licenseFile": "/usr/share/doc/pandoc/copyright"
+    },
+    {
+      "name": "libreoffice-writer",
+      "version": "4:24.2.7-0ubuntu0.24.04.6",
+      "architecture": "amd64",
+      "filename": "pool/main/libr/libreoffice/libreoffice-writer_24.2.7-0ubuntu0.24.04.6_amd64.deb",
+      "sha256": "404e989725d6b5a2e48f5b9967e6ca096d1d922f4a03725483bd6ebf4f7ac5f3",
+      "source": "libreoffice",
+      "licenseFile": "/usr/share/doc/libreoffice-writer/copyright"
+    },
+    {
+      "name": "libreoffice-calc",
+      "version": "4:24.2.7-0ubuntu0.24.04.6",
+      "architecture": "amd64",
+      "filename": "pool/main/libr/libreoffice/libreoffice-calc_24.2.7-0ubuntu0.24.04.6_amd64.deb",
+      "sha256": "492b7fe6b715057339f935b4cbfe513784d393505dde319793c33443c6b96c7e",
+      "source": "libreoffice",
+      "licenseFile": "/usr/share/doc/libreoffice-calc/copyright"
+    },
+    {
+      "name": "libreoffice-impress",
+      "version": "4:24.2.7-0ubuntu0.24.04.6",
+      "architecture": "amd64",
+      "filename": "pool/main/libr/libreoffice/libreoffice-impress_24.2.7-0ubuntu0.24.04.6_amd64.deb",
+      "sha256": "e1a818b9ef99bbffda1c83a87323fe0c2a84b53fe844680bbc23d43fb300fe24",
+      "source": "libreoffice",
+      "licenseFile": "/usr/share/doc/libreoffice-impress/copyright"
+    },
+    {
+      "name": "libreoffice-draw",
+      "version": "4:24.2.7-0ubuntu0.24.04.6",
+      "architecture": "amd64",
+      "filename": "pool/main/libr/libreoffice/libreoffice-draw_24.2.7-0ubuntu0.24.04.6_amd64.deb",
+      "sha256": "4681fd7c7672ed07e5e6b8503b484e4a84e25ed7ad04563fcb4cb1a0364a8734",
+      "source": "libreoffice",
+      "licenseFile": "/usr/share/doc/libreoffice-draw/copyright"
+    },
+    {
+      "name": "qpdf",
+      "version": "11.9.0-1.1ubuntu0.1",
+      "architecture": "amd64",
+      "filename": "pool/universe/q/qpdf/qpdf_11.9.0-1.1ubuntu0.1_amd64.deb",
+      "sha256": "b50d1aca530cd8f7b68214f8b19bdf348c6c01b7110ca1c335e6662cdb442af8",
+      "source": "qpdf",
+      "licenseFile": "/usr/share/doc/qpdf/copyright"
+    },
+    {
+      "name": "ghostscript",
+      "version": "10.02.1~dfsg1-0ubuntu7.9",
+      "architecture": "amd64",
+      "filename": "pool/main/g/ghostscript/ghostscript_10.02.1~dfsg1-0ubuntu7.9_amd64.deb",
+      "sha256": "eaa43b9e3ecdae3aa5b6fcfed5a4ca6a12275dd5d6a0c83b0d3360c7c2f9d530",
+      "source": "ghostscript",
+      "licenseFile": "/usr/share/doc/ghostscript/copyright"
+    },
+    {
+      "name": "ffmpeg",
+      "version": "7:6.1.1-3ubuntu5",
+      "architecture": "amd64",
+      "filename": "pool/universe/f/ffmpeg/ffmpeg_6.1.1-3ubuntu5_amd64.deb",
+      "sha256": "1a23baace5f2688a47e28119aedae6993cd638e6279a7227dfc52d9a337a1c17",
+      "source": "ffmpeg",
+      "licenseFile": "/usr/share/doc/ffmpeg/copyright"
+    },
+    {
+      "name": "ripgrep",
+      "version": "14.1.0-1",
+      "architecture": "amd64",
+      "filename": "pool/universe/r/rust-ripgrep/ripgrep_14.1.0-1_amd64.deb",
+      "sha256": "c5ae63c7bee915b1cfc9f0bd07c55b4ce7f2bcd1133cba4da56719aac26101a4",
+      "source": "rust-ripgrep",
+      "licenseFile": "/usr/share/doc/ripgrep/copyright"
+    },
+    {
+      "name": "antiword",
+      "version": "0.37-16",
+      "architecture": "amd64",
+      "filename": "pool/universe/a/antiword/antiword_0.37-16_amd64.deb",
+      "sha256": "b62117f65ccca2ececa9be365ab1276d94df37fa0635217c3ec068927cf17c83",
+      "source": "antiword",
+      "licenseFile": "/usr/share/doc/antiword/copyright"
+    },
+    {
+      "name": "catdoc",
+      "version": "1:0.95-5build1",
+      "architecture": "amd64",
+      "filename": "pool/universe/c/catdoc/catdoc_0.95-5build1_amd64.deb",
+      "sha256": "e28c43bf89546ed0927b9e132d869d973c7ef07265273dc900e0f9d29afe95ce",
+      "source": "catdoc",
+      "licenseFile": "/usr/share/doc/catdoc/copyright"
+    },
+    {
+      "name": "unrtf",
+      "version": "0.21.10-clean-1",
+      "architecture": "amd64",
+      "filename": "pool/universe/u/unrtf/unrtf_0.21.10-clean-1_amd64.deb",
+      "sha256": "6c985ac3d8a982b6efcc167e1d2a9d00b02cf68f3a217a594ed2be4c8f5ae9e9",
+      "source": "unrtf",
+      "licenseFile": "/usr/share/doc/unrtf/copyright"
+    },
+    {
+      "name": "libimage-exiftool-perl",
+      "version": "12.76+dfsg-1",
+      "architecture": "all",
+      "filename": "pool/universe/libi/libimage-exiftool-perl/libimage-exiftool-perl_12.76+dfsg-1_all.deb",
+      "sha256": "4e9c3d6c9804a4ffb19721be60f67ed9b58fb9807cc267f54223f3c05fd3c11f",
+      "source": "libimage-exiftool-perl",
+      "licenseFile": "/usr/share/doc/libimage-exiftool-perl/copyright"
+    },
+    {
+      "name": "fonts-dejavu-core",
+      "version": "2.37-8",
+      "architecture": "all",
+      "filename": "pool/main/f/fonts-dejavu/fonts-dejavu-core_2.37-8_all.deb",
+      "sha256": "40049660c194f3b8a2541fc7369efebb10e9f94bdac836a2f38fafedd10fa73a",
+      "source": "fonts-dejavu",
+      "licenseFile": "/usr/share/doc/fonts-dejavu-core/copyright"
+    },
+    {
+      "name": "fonts-liberation",
+      "version": "1:2.1.5-3",
+      "architecture": "all",
+      "filename": "pool/main/f/fonts-liberation/fonts-liberation_2.1.5-3_all.deb",
+      "sha256": "065c2ab1abc9108b17d401016dc594b79750904390f095845c93bb06e1153acc",
+      "source": "fonts-liberation",
+      "licenseFile": "/usr/share/doc/fonts-liberation/copyright"
+    },
+    {
+      "name": "imagemagick",
+      "version": "8:6.9.12.98+dfsg1-5.2build2",
+      "architecture": "amd64",
+      "filename": "pool/universe/i/imagemagick/imagemagick_6.9.12.98+dfsg1-5.2build2_amd64.deb",
+      "sha256": "8b072461337a6ed7f03feef46c9b68f7668ba7d625332c590785431676864c17",
+      "source": "imagemagick",
+      "licenseFile": "/usr/share/doc/imagemagick/copyright"
+    },
+    {
+      "name": "python3-venv",
+      "version": "3.12.3-0ubuntu2.1",
+      "architecture": "amd64",
+      "filename": "pool/universe/p/python3-defaults/python3-venv_3.12.3-0ubuntu2.1_amd64.deb",
+      "sha256": "16d50387b7656796b79e2c059d06774dfe9fe3f42808d8d50b332ceb780f508a",
+      "source": "python3-defaults",
+      "licenseFile": "/usr/share/doc/python3-venv/copyright"
+    },
+    {
+      "name": "libseccomp2",
+      "version": "2.5.5-1ubuntu3.1",
+      "architecture": "amd64",
+      "filename": "pool/main/libs/libseccomp/libseccomp2_2.5.5-1ubuntu3.1_amd64.deb",
+      "sha256": "33fc96f1e008d27c042a3db9bcd16f7f4d49e866f7a3141b758a799328dbdc3f",
+      "source": "libseccomp",
+      "licenseFile": "/usr/share/doc/libseccomp2/copyright"
+    }
+  ]
+}

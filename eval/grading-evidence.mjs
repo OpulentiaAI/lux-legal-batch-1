@@ -687,7 +687,8 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
         const item = value[field]
         if (item == null) continue
         if (field === 'path' && typeof item === 'string' && ['stdout', 'result'].includes(origin.channel) &&
-            ['ipython', 'scripted_tools', 'exec'].includes(origin.tool)) {
+            (['ipython', 'scripted_tools', 'exec'].includes(origin.tool) ||
+              origin.evidenceReplayVersion === CAPY_VISIBLE_EVIDENCE_VERSION && origin.tool === 'bash' && origin.channel === 'stdout')) {
           visibleMetadata.filesystemPath = item
           continue
         }
@@ -930,6 +931,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
   }
   function capyVisible(found, metadata, value, origin, args, depth = 0) {
     if (depth > 12 || value == null) return
+    origin = { ...origin, evidenceReplayVersion: CAPY_VISIBLE_EVIDENCE_VERSION }
     if (typeof value === 'string') {
       parentVisible(found, metadata, value, origin)
       const node = printedValue(value, value.length - value.trimStart().length)
@@ -1140,6 +1142,10 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       return
     }
     const id = value.chunk_id ?? value.id
+    if (origin.evidenceReplayVersion === CAPY_VISIBLE_EVIDENCE_VERSION && origin.tool === 'bash' && origin.channel === 'stdout' &&
+        typeof id === 'string' && /^doc-[^:]+:/.test(id) && Object.hasOwn(value, 'path') && !manifest.has(id)) {
+      throw new Error('Invalid evidence chunk ID')
+    }
     if (typeof id === 'string' && (typeof value.doc === 'string' || !Object.hasOwn(value, 'doc')) && manifest.has(id)) {
       if (Object.hasOwn(value, 'start') || Object.hasOwn(value, 'end')) {
         if (!Number.isSafeInteger(value.start) || !Number.isSafeInteger(value.end) || value.start < 0 ||
@@ -1288,7 +1294,7 @@ export function evidenceV4({ workspace, artifacts, argumentCaptures, captureMode
       const version = artifact.provenance?.evidenceReplayVersion
       if (version !== undefined && ![PARENT_VISIBLE_EVIDENCE_VERSION, CAPY_VISIBLE_EVIDENCE_VERSION].includes(version)) throw new Error('Invalid evidence replay version')
       capyPolicy = version === CAPY_VISIBLE_EVIDENCE_VERSION
-      if (capyPolicy && (artifact.provenance.instructions?.profile !== 'opulent-capy-v1' || replayVersionOverride !== undefined)) throw new Error('Invalid evidence Capy profile or replay override')
+      if (capyPolicy && (!['opulent-capy-v1', 'opulent2-fixed-v1'].includes(artifact.provenance.instructions?.profile) || replayVersionOverride !== undefined)) throw new Error('Invalid evidence Capy profile or replay override')
       if (capyPolicy && (artifact.observationPolicy !== 'completed-answerer-inputs-v1' || !Array.isArray(artifact.modelInputs) ||
           artifact.modelInputs.some(input => typeof input.id !== 'string' || !input.id ||
             typeof input.sessionId !== 'string' || input.sessionId !== artifact.rootSessionId || !['answerer', 'context_compaction'].includes(input.phase) ||

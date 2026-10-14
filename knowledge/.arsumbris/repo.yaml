@@ -1,0 +1,13 @@
+type: au.engine.repo::au-engine
+name: lux-evaluation-knowledge
+description: >
+  Metadata-only evaluation evidence and engineering documentation. Captured
+  sources, retained-run records and reviewed knowledge are separate; this is
+  not a legal answerer corpus or a grading-material export.
+deps:
+  - name: au-base-types
+    remote: git@github.com:arsumbris/au-base-types.git
+    ref: 0a0c9770ffd2672b3e9937046721811c99d1d178
+  - name: au-weave
+    remote: https://github.com/arsumbris/au-weave.git
+    ref: 24320734e2436e8c75d44a7ff9afb6a330569840

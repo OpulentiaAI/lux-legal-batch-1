@@ -1,0 +1,5 @@
+{
+  "tessdataPath": "/usr/share/tesseract-ocr/5/tessdata",
+  "ocrLanguage": "eng",
+  "ocrFailureFatal": true
+}

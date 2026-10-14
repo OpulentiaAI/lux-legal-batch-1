@@ -1,0 +1,5 @@
+extends: map::au-base-types
+fields:
+  audience: [evaluation-only, engineering]
+  source_artifacts?: lx.source-artifact*[]
+  run_records?: lx.evaluation-record*[]

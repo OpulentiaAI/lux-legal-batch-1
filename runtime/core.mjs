@@ -32,11 +32,19 @@ import { CAPY_TOOL_POLICY, CAPY_TOOL_DEFINITIONS, capyCodemodeDefinitions, capyC
 import { createCapyControlTools, capyDescendants, capyOwnedChild, capyChildPath, capySessionIsTerminal, cancelCapyWaits, tickCapyWaits } from './capy-control.mjs';
 import { createCapyFileTools } from './capy-files.mjs';
 import { createCapyProcesses } from './capy-processes.mjs';
-import { createCapySkillTools } from './capy-skills.mjs';
-import { persistCapyResult, materializeCapyResults } from './capy-results.mjs';
+import { createCapySkillTools, opulent2SkillRegistry } from './capy-skills.mjs';
+import { capyResultChars, persistCapyResult, materializeCapyResults, OPULENT2_RESULT_DELIVERY_POLICY } from './capy-results.mjs';
 import { createCapyMemoryTools, materializeCapyMemory, capyMemoryDescriptors } from './tools/capy-memory.mjs';
-import { protectSandboxFileAccess } from './sandbox-file-access.mjs';
-import { prepareCapyModelContext, CAPY_CONTEXT_POLICY_VERSION } from './capy-context.mjs';
+import { createNoNewPrivilegesRunner, protectSandboxFileAccess } from './sandbox-file-access.mjs';
+import { prepareCapyModelContext, CAPY_CONTEXT_POLICY_VERSION, OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } from './capy-context.mjs';
+import { prepareOpulent2ModelContext, OPULENT2_CONTEXT_POLICY_VERSION } from './opulent2-context.mjs';
+import { OPULENT2_PROFILE, opulent2ChildInstructions } from './instructions/opulent2.mjs';
+import { OPULENT2_TOOL_POLICY, OPULENT2_TOOL_DEFINITIONS } from './opulent2-policy.mjs';
+import { createOpulent2MachineTools } from './opulent2-machine.mjs';
+import { createOpulent2DriveTools, materializeOpulent2Drive } from './tools/opulent2-drive.mjs';
+import { prepareOpulent2Task, exportOpulent2Handoff } from './opulent2-handoff.mjs';
+import { checkOpulent2DriveReadback } from './opulent2-completion.mjs';
+import { createOpulent2SandboxLease } from './opulent2-sandbox-lease.mjs';
 
 export const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const desktopNames = ['computer', 'browser_console', 'browser_preview', 'save_browser_profile', 'recording_start', 'recording_stop', 'annotate_recording', 'view_image'];
@@ -62,18 +70,32 @@ function modelVisibleToolResult(result, overflow) {
 
 export function createRuntime(options = {}) {
   const config = { stateDir: '.runtime', workspace: '/home/user/workspace', model: 'openai/gpt-5-mini', maxSteps: 40, maxConcurrentSessions: 8, maxSessionDepth: 3, sandboxTimeoutMs: 900000, allowedRepos: [], storageBranch: 'main', ...options.config };
-  const capyEnabled = config.instructionProfile === 'opulent-capy-v1' || config.runtimeCapabilities?.includes('capy-v1');
+  const opulent2 = config.instructionProfile === OPULENT2_PROFILE;
+  if (config.opulent2ResultDeliveryPolicy !== undefined && (!opulent2 || config.opulent2ResultDeliveryPolicy !== OPULENT2_RESULT_DELIVERY_POLICY.version)) {
+    throw new Error('Unknown or misplaced Opulent2 result delivery policy');
+  }
+  if (config.opulent2ContextContinuationPolicy !== undefined && (!opulent2 || config.opulent2ContextContinuationPolicy !== OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY.version)) {
+    throw new Error('Unknown or misplaced Opulent2 context continuation policy');
+  }
+  const toolPolicy = opulent2 ? OPULENT2_TOOL_POLICY : CAPY_TOOL_POLICY;
+  const capyDefinitions = opulent2 ? OPULENT2_TOOL_DEFINITIONS : CAPY_TOOL_DEFINITIONS;
+  const codemodeListing = () => capyCodemodeListing(capyDefinitions, toolPolicy.initialTools);
+  const capyEnabled = opulent2 || config.instructionProfile === 'opulent-capy-v1' || config.runtimeCapabilities?.includes('capy-v1');
+  const skillRegistry = opulent2 ? opulent2SkillRegistry(config.capySkills) : null;
+  if (skillRegistry) config.capySkills = skillRegistry.skills;
   if (capyEnabled) {
-    if (config.allowedTools !== undefined && (!Array.isArray(config.allowedTools) || config.allowedTools.length !== CAPY_TOOL_POLICY.allowedTools.length || new Set(config.allowedTools).size !== CAPY_TOOL_POLICY.allowedTools.length || config.allowedTools.some(name => !CAPY_TOOL_POLICY.allowedTools.includes(name)))) throw new Error('Capy profile requires its exact approved tool allowlist');
-    if (config.initialTools !== undefined && (!Array.isArray(config.initialTools) || config.initialTools.length !== CAPY_TOOL_POLICY.initialTools.length || new Set(config.initialTools).size !== CAPY_TOOL_POLICY.initialTools.length || config.initialTools.some(name => !CAPY_TOOL_POLICY.initialTools.includes(name)))) throw new Error('Capy profile requires its lean initial tool definitions');
+    if (config.allowedTools !== undefined && (!Array.isArray(config.allowedTools) || config.allowedTools.length !== toolPolicy.allowedTools.length || new Set(config.allowedTools).size !== toolPolicy.allowedTools.length || config.allowedTools.some(name => !toolPolicy.allowedTools.includes(name)))) throw new Error('Capy profile requires its exact approved tool allowlist');
+    if (config.initialTools !== undefined && (!Array.isArray(config.initialTools) || config.initialTools.length !== toolPolicy.initialTools.length || new Set(config.initialTools).size !== toolPolicy.initialTools.length || config.initialTools.some(name => !toolPolicy.initialTools.includes(name)))) throw new Error('Capy profile requires its lean initial tool definitions');
     if (config.rlmHandoffPolicy || config.runtimeCapabilities?.some(name => !['capy-v1', 'browser-v1'].includes(name))) throw new Error('Capy profile cannot inherit foreign runtime capabilities or RLM bookkeeping');
-    config.allowedTools = [...CAPY_TOOL_POLICY.allowedTools];
-    config.initialTools = [...CAPY_TOOL_POLICY.initialTools];
+    config.allowedTools = [...toolPolicy.allowedTools];
+    config.initialTools = [...toolPolicy.initialTools];
     config.runtimeCapabilities = ['capy-v1'];
     config.contextCompaction ??= { enabled: true, maxInputChars: 300000, maxSummaryInputChars: 300000, maxSummaryChars: 24000, maxSummaryTokens: 8192, recentGroups: 3, maxBatches: 32 };
+    if (config.opulent2ContextContinuationPolicy && config.contextCompaction.enabled !== true) throw new Error('Opulent2 history-first continuation requires enabled context compaction');
     const prompt = config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : 'You are a Capy-derived agent. Use the owned VM and the approved tools for the assigned work. Preserve actual evidence, approvals and secrets; report limitations honestly.');
     if (/^[ \t]*<codemode>/m.test(prompt)) throw new Error('Capy codemode listing is owned by core and must not be embedded in the configured prompt');
-    config.systemPrompt = `${prompt}\n\n${capyCodemodeListing()}`;
+    if (opulent2 && /<available_skills(?:\s|>)/i.test(prompt)) throw new Error('Opulent2 available_skills inventory is owned by core and must not be embedded in the configured prompt');
+    config.systemPrompt = `${prompt}${skillRegistry ? `\n\n${skillRegistry.block}` : ''}\n\n${codemodeListing()}`;
   }
   if (!Number.isFinite(config.sandboxTimeoutMs) || config.sandboxTimeoutMs <= 0) throw new TypeError('sandboxTimeoutMs must be positive finite milliseconds');
   if (config.unrestrictedTools !== undefined && typeof config.unrestrictedTools !== 'boolean') throw new TypeError('unrestrictedTools must be a boolean');
@@ -91,13 +113,13 @@ export function createRuntime(options = {}) {
   if (config.rlmHandoffPolicy && !rlmEnabled) throw new Error('RLM handoff policy requires the resident RLM capability');
   if (rlmEnabled && (![config.maxRlmChildren ?? 16, config.maxRlmHostCallsPerCell ?? 64].every(value => Number.isSafeInteger(value) && value > 0))) throw new Error('RLM budgets must be positive integers');
   const rlmDefinitions = rlmDefinitionsFor(config);
-  const extensions = capyEnabled ? CAPY_TOOL_DEFINITIONS : { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}), ...(rlmEnabled ? rlmDefinitions : {}) };
+  const extensions = capyEnabled ? capyDefinitions : { ...(browserEnabled ? browserDefinitions : {}), ...(waitsEnabled ? waitDefinitions : {}), ...(rlmEnabled ? rlmDefinitions : {}) };
   if (!capyEnabled && Object.keys(extensions).some(name => catalog.tools[name] || EFFECTIVE_TOOL_OVERLAY[name])) throw new Error('Runtime capability collides with baseline tool catalog');
   const store = options.store ?? createStore(join(config.stateDir, 'runtime.sqlite'));
   const scriptExecutions = createScriptExecutions(store, config, (id, value) => scrub(id, value));
   const storage = options.storage ?? createStorage(config);
   const model = options.model ?? createModel(config);
-  const definitions = capyEnabled ? CAPY_TOOL_DEFINITIONS : { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}), ...extensions };
+  const definitions = capyEnabled ? capyDefinitions : { ...catalog.tools, ...EFFECTIVE_TOOL_OVERLAY, ...(config.corpusWorkspace ? legalDefinitions : {}), ...extensions };
   if (config.scriptTopLevelAwait === true) definitions.scripted_tools = { ...definitions.scripted_tools,
     description: `${definitions.scripted_tools.description}${SCRIPT_TOP_LEVEL_AWAIT_DESCRIPTION}` };
   if (config.allowedTools !== undefined && !Array.isArray(config.allowedTools)) throw new TypeError('allowedTools must be an array');
@@ -120,7 +142,8 @@ export function createRuntime(options = {}) {
       ...(config.reportRlmState === true ? { reportRlmState: true } : {}),
       ...(config.scriptTopLevelAwait === true ? { scriptTopLevelAwait: true } : {}),
       ...(config.rlmHandoffPolicy ? { rlmHandoffPolicy: config.rlmHandoffPolicy } : {}),
-      ...(capyEnabled ? { capyPolicy: CAPY_TOOL_POLICY.version, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null, contextCompaction: config.contextCompaction } : {}),
+      ...(capyEnabled ? { capyPolicy: toolPolicy.version, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null, contextCompaction: config.contextCompaction } : {}),
+      ...(config.opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
       ...(rlmEnabled ? { maxRlmChildren: config.maxRlmChildren ?? 16, maxRlmHostCallsPerCell: config.maxRlmHostCallsPerCell ?? 64,
         maxSessionDepth: config.maxSessionDepth, maxConcurrentSessions: config.maxConcurrentSessions,
         ...(unrestricted ? { effectiveRlmChildLimit: null, effectiveRlmHostCallLimit: null, effectiveSessionDepthLimit: null, effectiveConcurrentSessionLimit: null } : {}) } : {}) },
@@ -141,6 +164,23 @@ export function createRuntime(options = {}) {
   };
   const update = (id, data) => store.put('sessions', id, { ...store.get('sessions', id), ...scrub(id, data), updated_at: new Date().toISOString() });
   const event = (id, type, data) => store.put('events', randomUUID(), { session_id: id, type, data: scrub(id, data), created_at: new Date().toISOString() });
+  async function recordOpulent2Assembly(id, requestRecord, phase, messages, tools = []) {
+    if (!opulent2) return;
+    const row = store.get('sessions', id);
+    const payload = { messages, tools };
+    if (JSON.stringify(scrub(id, payload)) !== JSON.stringify(payload)) throw new Error('Opulent2 prepared model input contains credential material');
+    const receipt = { version: 'opulent2-prepared-request-v1', request_record_id: requestRecord, session_id: id,
+      parent_session_id: row.parent_session_id, role: row.parent_session_id ? 'child' : 'root', depth: row.depth,
+      phase, messages: structuredClone(messages), tools: structuredClone(tools),
+      prepared_sha256: createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
+      grants: { tool_policy: toolPolicy.version, allowed_tools: [...allowed], initial_tools: [...initial], allowed_repos: [...config.allowedRepos],
+        corpus_workspace: config.corpusWorkspace ?? null, computer_image_sha256: config.computerImageSha256 ?? null,
+        ...(config.opulent2ResultDeliveryPolicy ? { result_delivery_policy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+        ...(config.opulent2ContextContinuationPolicy ? { context_continuation_policy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) },
+      visibility: 'host-only; compares preparation to transport capture, not proof of meaningful use' };
+    store.put('opulent2_model_assemblies', requestRecord, receipt);
+    await options.onPreparedModelRequest?.(structuredClone(receipt));
+  }
   for (const row of store.list('sessions')) if (['queued', 'running', 'starting'].includes(row.status)) update(row.id, { status: 'interrupted', error: 'Control-plane restarted; explicitly resume this session.' });
   if (capyEnabled) {
     for (const row of store.list('capy_model_requests').filter(row => row.status === 'started')) store.put('capy_model_requests', row.id, { ...row, status: 'interrupted', usage_unknown: true });
@@ -169,6 +209,9 @@ export function createRuntime(options = {}) {
         if (type === 'capy_report_requested') { ctx.stopRequested = true; ctx.capyReport = data; }
         if (capyEnabled && type === 'capy_process_finished') void trackInvocation(tickCapy()).catch(error => event(id, 'capy_wait_failed', { error: safeError(error) }));
         if (type === 'message_user' && data.block_on_user) ctx.stopRequested = true;
+        if (opulent2 && type === 'opulent2_sandbox_lease_failed' && !['cancelled', 'stopped', 'terminated'].includes(store.get('sessions', id).status)) {
+          update(id, { status: 'failed', error: data.error, pending_child_completion: false });
+        }
         return result;
       },
       startSession: args => startSession({ ...args, parent_session_id: id }),
@@ -218,7 +261,7 @@ export function createRuntime(options = {}) {
         ctx.emit('capy_report_requested', { ...report, output });
       };
       ctx.capyProcesses = createCapyProcesses(ctx);
-      ctx.capyCatalog = capyCodemodeDefinitions();
+      ctx.capyCatalog = capyCodemodeDefinitions(capyDefinitions);
       ctx.capyToolImages = [];
       ctx.capyImageUsage = { images: 0, bytes: 0 };
     }
@@ -237,7 +280,7 @@ export function createRuntime(options = {}) {
     ctx.config.createAuthenticatedPreview = async ({ name, ports, path }) => ({ name, previews: await Promise.all(ports.map(port => createPreview(ctx, { sandboxId: ctx.sandbox.sandboxId, port, path, expiresAt: new Date(Date.now() + config.sandboxTimeoutMs).toISOString() }))) });
     const tools = {};
     const factories = capyEnabled
-      ? [createCapyFileTools, createCapyControlTools, createCapySkillTools, ...(config.capyMemory ? [createCapyMemoryTools] : []), ...(config.corpusWorkspace ? [legalTools] : [])]
+      ? [createCapyFileTools, createCapyControlTools, createCapySkillTools, ...(config.capyMemory ? [createCapyMemoryTools] : []), ...(opulent2 ? [createOpulent2MachineTools, createOpulent2DriveTools] : []), ...(config.corpusWorkspace ? [legalTools] : [])]
       : [fileTools, processTools, scriptTools, connectorTools, resourceTools, orchestrationTools, operationTools, ...(config.corpusWorkspace ? [legalTools] : []), ...(waitsEnabled ? [waitTools] : [])];
     for (const factory of factories) {
       for (const [name, handler] of Object.entries(factory(ctx))) {
@@ -253,7 +296,8 @@ export function createRuntime(options = {}) {
     if (capyEnabled) {
       tools.bash = args => ctx.capyProcesses.bash(args);
       tools.execute = async args => {
-        ctx.capyExecutor ??= (await import('./capy-execute.mjs')).createCapyExecutor(ctx);
+        const { createCapyExecutor } = await import('./capy-execute.mjs');
+        ctx.capyExecutor ??= createCapyExecutor(ctx);
         return ctx.capyExecutor.execute(args);
       };
       if (!config.capyMemory) tools.memory_save = async () => { throw new Error('Trusted capyMemory configuration is required; no memory backing is available'); };
@@ -301,12 +345,13 @@ export function createRuntime(options = {}) {
       if (invocationPolicy.getStore()?.blocked.has(name)) throw new Error('Script broker authorization failed');
       if (!tools[name] || catalog.excluded[name]) throw new Error(`Tool is not in the configured runtime: ${name}`);
       if (ctx.signal.aborted) throw new Error('Session is cancelled');
+      if (opulent2 && store.get('sessions', id).status === 'stopped') throw new Error('Session is stopped');
       if (name === 'report_blocker' && args?.notify === 'cognition') args = { ...args, notify: 'opulent' };
       const validate = runtimeValidators.get(name);
       if (validate && !validate(args)) throw new Error(`Invalid ${name} arguments: ${ajv.errorsText(validate.errors)}`);
-      if (capyEnabled && metadata.capyRunId && name === 'message_agent' && !args.to) throw new Error('Inside execute, message.agent requires to; report to the parent with a direct function call');
+      if (capyEnabled && metadata.capyRunId && name === 'message_agent' && (!args.to || (opulent2 && args.to === 'parent'))) throw new Error('Inside execute, message.agent requires a descendant recipient; report to the parent with a direct function call');
       if (capyEnabled && metadata.capyRunId && name === 'message_user' && args.state !== 'working') throw new Error('Inside execute, message.user only supports working; use a direct function call for terminal reports');
-      if (capyEnabled && args.machine !== undefined) {
+      if (capyEnabled && args.machine !== undefined && !(opulent2 && name === 'subagent_start')) {
         const { machine, ...request } = args;
         if (machine !== 'primary') {
           const target = capyOwnedChild(store, id, machine.subagent);
@@ -316,7 +361,7 @@ export function createRuntime(options = {}) {
       }
       const overflowRead = !capyEnabled && name === 'read' ? normalizeOverflowRead({ ctx, store, args }) : null;
       if (overflowRead) args = overflowRead.args;
-      if (capyEnabled ? ['bash', 'read', 'write', 'edit', 'apply_patch', 'skill_list', 'skill_read', 'memory_save'].includes(name) : sandboxNames.has(name)) await ensureSandbox(ctx);
+      if (capyEnabled ? ['bash', 'read', 'write', 'edit', 'apply_patch', 'skill_list', 'skill_read', 'memory_save', ...(opulent2 ? ['agrep', 'drive_list', 'drive_read', 'drive_write', 'drive_delete'] : [])].includes(name) : sandboxNames.has(name)) await ensureSandbox(ctx);
       event(id, 'tool_started', { name, ...correlation });
       try {
         const output = await tools[name](args);
@@ -330,7 +375,7 @@ export function createRuntime(options = {}) {
           ctx.capyImageUsage.images += images.usage.images;
           ctx.capyImageUsage.bytes += images.usage.bytes;
         }
-        const result = capyEnabled ? await ctx.persistCapyResult(returned) : returned;
+        const result = capyEnabled ? await ctx.persistCapyResult(returned, capyResultChars(ctx, name)) : returned;
         if (capyEnabled) store.put('capy_tool_results', randomUUID(), { session_id: id, name, ...correlation, complete_result: complete, returned_result: result, created_at: new Date().toISOString() });
         const actionFailed = (name === 'computer' || name === 'browser') && (output?.ok === false || !!output?.failure);
         event(id, 'tool_finished', actionFailed ? { name, ...correlation, invocation_ok: true, ok: false, action_outcome: 'failed' } : { name, ...correlation, ok: true });
@@ -347,6 +392,7 @@ export function createRuntime(options = {}) {
   }
 
   async function ensureSandbox(ctx, desktop = false) {
+    if (opulent2 && ctx.sandboxLease?.failure) throw ctx.sandboxLease.failure;
     if (!ctx.sandbox) {
       ctx.provisioning ??= (async () => {
         ctx.signal.throwIfAborted();
@@ -364,16 +410,7 @@ export function createRuntime(options = {}) {
           }
           ctx.signal.throwIfAborted();
           ctx.sandbox = sandbox;
-          ctx.sandboxDeadlineAt = sandboxDeadlineAt;
-          if (capyEnabled) {
-            const run = sandbox.commands.run.bind(sandbox.commands);
-            sandbox.commands.run = (command, opts = {}) => run(`setpriv --no-new-privs -- /bin/sh -c '${command.replaceAll("'", "'\\''")}'`, { ...opts, user: 'user' });
-            if (sandbox.pty?.create) {
-              const create = sandbox.pty.create.bind(sandbox.pty);
-              sandbox.pty.create = opts => create({ ...opts, user: 'user' });
-            }
-            protectSandboxFileAccess(sandbox);
-          }
+          if (!opulent2) ctx.sandboxDeadlineAt = sandboxDeadlineAt;
           for (const [api, method] of [[sandbox.commands, 'run'], [sandbox.pty, 'create']]) {
             if (!api?.[method]) continue;
             const original = api[method].bind(api);
@@ -383,6 +420,18 @@ export function createRuntime(options = {}) {
                 return original(command, { ...rest, envs: { ...(rlmNoSecrets ? {} : Object.fromEntries(ctx.secrets)), ...rest.envs } });
               }
               : (opts = {}) => original({ ...opts, envs: { ...Object.fromEntries(ctx.secrets), ...opts.envs } });
+          }
+          if (capyEnabled) {
+            sandbox.commands.run = createNoNewPrivilegesRunner(sandbox.commands.run.bind(sandbox.commands));
+            if (sandbox.pty?.create) {
+              const create = sandbox.pty.create.bind(sandbox.pty);
+              sandbox.pty.create = opts => create({ ...opts, user: 'user' });
+            }
+            protectSandboxFileAccess(sandbox);
+          }
+          if (opulent2) {
+            ctx.sandboxLease = createOpulent2SandboxLease(ctx);
+            await ctx.sandboxLease.renew();
           }
           await sandbox.files.makeDir(ctx.workspace);
           ctx.signal.throwIfAborted();
@@ -399,14 +448,17 @@ export function createRuntime(options = {}) {
           ctx.signal.throwIfAborted();
           update(ctx.sessionId, { sandbox_id: sandbox.sandboxId });
           if (capyEnabled) {
+            if (opulent2 && !row.parent_session_id) ctx.opulent2Task ??= await prepareOpulent2Task(ctx, config.opulent2Handoff);
             if (config.capyMemory) ctx.capyMemorySnapshot = await materializeCapyMemory(ctx);
+            if (opulent2) ctx.opulent2DriveSnapshot = await materializeOpulent2Drive(ctx);
             await materializeCapyResults(ctx);
           }
         } catch (error) {
           if (sandbox) {
-            ctx.sandbox = undefined;
+            if (!opulent2) ctx.sandbox = undefined;
             let cleanupError;
             try { await sandbox.kill(); } catch (failure) { cleanupError = failure; }
+            ctx.sandbox = undefined;
             if (!cleanupError) sandboxHandles.delete(ctx.sessionId);
             update(ctx.sessionId, { sandbox_id: cleanupError ? sandbox.sandboxId : null, desktop_ready: false });
             if (cleanupError) {
@@ -430,6 +482,7 @@ export function createRuntime(options = {}) {
       })();
       try { await ctx.desktopStarting; } finally { ctx.desktopStarting = undefined; }
     }
+    if (opulent2) await ctx.sandboxLease.ensure();
   }
 
   function allocate(args = {}) {
@@ -442,7 +495,7 @@ export function createRuntime(options = {}) {
     const id = randomUUID();
     const childIndex = parent && capyEnabled ? Math.max(0, ...store.list('sessions').filter(row => row.parent_session_id === parent.id).map(row => row.child_index ?? 0)) + 1 : undefined;
     return store.put('sessions', id, { title: args.title ?? 'Agent session', prompt: redact(args.prompt ?? ''), parent_session_id: parent?.id ?? null, depth, ...(childIndex ? { child_index: childIndex } : {}),
-      ...(capyEnabled ? { tool_policy: CAPY_TOOL_POLICY.version } : {}), role: args.role, repos: args.repos ?? (capyEnabled ? parent?.repos ?? [] : []), status: 'idle', tags: args.tags ?? [], schema: args.schema, created_at: new Date().toISOString() });
+      ...(capyEnabled ? { tool_policy: toolPolicy.version } : {}), role: args.role, repos: args.repos ?? (capyEnabled ? parent?.repos ?? [] : []), status: 'idle', tags: args.tags ?? [], schema: args.schema, created_at: new Date().toISOString() });
   }
 
   async function startSession(args) {
@@ -463,7 +516,7 @@ export function createRuntime(options = {}) {
       const row = store.get('sessions', id);
       const delivered = new Set(store.get('conversations', id)?.delivered ?? []);
       const queued = store.list('orchestration_messages').some(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
-      if (quiescing || !requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || row.status === 'sleeping' && !wakeFromSleep) return;
+      if (quiescing || !requested || !queued || row.status === 'cancelled' || row.status === 'terminated' || opulent2 && ['stopped', 'failed'].includes(row.status) || row.status === 'sleeping' && !wakeFromSleep) return;
       if ((row.steps ?? 0) >= config.maxSteps) {
         update(id, { status: 'failed', error: 'Agent step budget exhausted; queued messages remain undelivered.' });
         return;
@@ -476,13 +529,14 @@ export function createRuntime(options = {}) {
 
   async function run(id) {
     const ctx = context(id);
+    if (opulent2 && store.get('sessions', id).status === 'stopped') return;
     ctx.stopRequested = false;
     ctx.waitRequested = null;
     ctx.capyReport = null;
     if (capyEnabled) { ctx.capyToolImages = []; ctx.capyImageUsage = { images: 0, bytes: 0 }; }
     const row = store.get('sessions', id);
     const previous = store.get('conversations', id);
-    const childInstructions = (capyEnabled || ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile)) && row.parent_session_id
+    const childInstructions = opulent2 && row.parent_session_id ? opulent2ChildInstructions(row.depth) : (capyEnabled || ['opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(config.instructionProfile)) && row.parent_session_id
       ? '\n\n## Delegated child role and completion contract\nYou are a delegated child, not the lead coordinator. Complete only the bounded assignment in the parent-provided prompt and its requested output schema. Requirements above to produce every public-task deliverable, coordinate task-wide research and verify every final output file belong to the lead, unless the parent explicitly assigns them to you. Return the actual findings, source identities, quotations and limitations requested by the parent in your final output; a child-only file path is not transferred evidence. Use capabilities when useful to your assignment, without duplicating the lead\'s entire workflow or spawning children merely to demonstrate tool use. All evidence, authentication, approval, repository scope and secret protections still apply.'
       : '';
     let messages = previous?.messages ?? [{ role: 'system', content: `${config.systemPrompt ?? (config.instructionProfile ? renderInstructions({ profile: config.instructionProfile }).systemPrompt : DEFAULT_INSTRUCTION_PROMPT)}${childInstructions}${row.schema ? `\nReturn final output as JSON matching: ${JSON.stringify(row.schema)}` : ''}` }];
@@ -497,6 +551,10 @@ export function createRuntime(options = {}) {
       context_checkpoint: scrub(id, contextCheckpoint), pending_image_observations: scrub(id, imageObservations), pending_image_usage: imageUsage,
     });
     const queuedMessages = () => store.list('orchestration_messages').filter(message => message.session_id === id && message.source !== 'assistant' && !delivered.has(message.id));
+    const assertActive = () => {
+      ctx.signal.throwIfAborted();
+      if (opulent2 && store.get('sessions', id).status === 'stopped') throw new Error('Session stopped');
+    };
     const appendImageObservations = () => {
       messages.push(...imageObservations);
       imageObservations = [];
@@ -504,7 +562,19 @@ export function createRuntime(options = {}) {
       if (capyEnabled) ctx.capyImageUsage = { images: 0, bytes: 0 };
       checkpoint();
     };
+    const checkOpulent2Completion = async () => {
+      if (!opulent2 || row.parent_session_id) return true;
+      const readback = await checkOpulent2DriveReadback(ctx);
+      if (!readback.pending.length) return true;
+      event(id, 'opulent2_completion_deferred', readback);
+      messages.push({ role: 'user', content: `Completion was not accepted: the following saved Drive files have no verified full-content observation in a completed model request. Reading inside execute and returning only a preview, byte count or hash does not deliver the file to you. Return the complete read result, for example: return await tools.drive.read({scope: "project", path: "the exact pending path"}); then inspect that returned content and finish in this same session. Do not recreate completed work or change its substantive conclusions merely to satisfy this transport check. Existing budgets and all task requirements still apply. Pending readbacks: ${JSON.stringify(readback.pending)}` });
+      ctx.stopRequested = false;
+      ctx.capyReport = null;
+      checkpoint();
+      return false;
+    };
     try {
+      assertActive();
       update(id, { status: 'running' });
       if (capyEnabled || row.repos?.length || config.eagerChildSandbox === true && row.parent_session_id) await ensureSandbox(ctx);
       if (capyEnabled && !previous && ctx.capyMemorySnapshot) {
@@ -529,9 +599,13 @@ export function createRuntime(options = {}) {
         throw new Error('Invalid persisted tool-call checkpoint');
       }
       while ((store.get('sessions', id).steps ?? 0) < config.maxSteps) {
-        ctx.signal.throwIfAborted();
+        assertActive();
         for (const message of queuedMessages()) {
-          messages.push({ role: 'user', content: message.body });
+          const carryForward = opulent2 && !row.parent_session_id && delivered.size === 0 ? ctx.opulent2Task?.carryForward : null;
+          const content = opulent2 && message.source === 'agent'
+            ? `<opulent2_agent_message>\n${JSON.stringify({ sender_session_id: message.sender_session_id, relation: message.relation, text: message.body }).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e')}\n</opulent2_agent_message>`
+            : message.body;
+          messages.push({ role: 'user', content: `${content}${carryForward ? `\n\n${carryForward}` : ''}` });
           delivered.add(message.id);
         }
         checkpoint();
@@ -541,8 +615,9 @@ export function createRuntime(options = {}) {
           modelInputImages: config.modelInputImages, modelInputImageMaxBytes: config.modelInputImageMaxBytes,
           modelInputImageMaxCount: config.modelInputImageMaxCount, modelInputImageTotalBytes: config.modelInputImageTotalBytes,
           ...(capyEnabled ? { configuredPolicyFingerprint: config.contextCompaction?.policyFingerprint } : {}),
+          ...(config.opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
         })).digest('hex');
-        const prepare = capyEnabled ? prepareCapyModelContext : prepareModelContext;
+        const prepare = opulent2 ? prepareOpulent2ModelContext : capyEnabled ? prepareCapyModelContext : prepareModelContext;
         const prepared = await prepare({ ...(capyEnabled ? { ctx } : {}), messages, checkpoint: contextCheckpoint, config: {
           ...config, contextCompaction: config.contextCompaction && {
             ...config.contextCompaction, policyFingerprint,
@@ -551,6 +626,7 @@ export function createRuntime(options = {}) {
           const requestRecord = randomUUID();
           store.put('capy_model_requests', requestRecord, { session_id: id, phase: 'context_compaction', messages: scrub(id, input), orchestration_message_ids: [...delivered], max_tokens: request.max_tokens, status: 'started', created_at: new Date().toISOString() });
           try {
+            await recordOpulent2Assembly(id, requestRecord, 'context_compaction', input, request.tools);
             const response = await model(input, { ...request, phase: 'context_compaction', capy_request_record_id: requestRecord });
             store.put('capy_model_requests', requestRecord, { ...store.get('capy_model_requests', requestRecord), status: 'completed', response_id: response.id ?? null, usage: response.usage ?? {}, request_attempts: response.inferenceAttempts ?? [] });
             event(id, 'model_usage', { phase: 'context_compaction', response_id: response.id ?? null, request_id: response.id ?? null,
@@ -568,13 +644,16 @@ export function createRuntime(options = {}) {
         if (prepared.compacted) event(id, 'context_compacted', {
           before_chars: JSON.stringify(messages).length, after_chars: JSON.stringify(prepared.messages).length,
           prefix_digest: contextCheckpoint.prefixDigest, usage: prepared.usage,
+          ...(config.opulent2ContextContinuationPolicy ? { reason: contextCheckpoint.reason, context_continuation_policy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
         });
         checkpoint();
         update(id, { steps: (store.get('sessions', id).steps ?? 0) + 1 });
         const requestRecord = capyEnabled ? randomUUID() : null;
-        if (requestRecord) store.put('capy_model_requests', requestRecord, { session_id: id, phase: 'answerer', messages: scrub(id, prepared.messages), orchestration_message_ids: [...delivered], initial_tools: tools.map(tool => tool.function.name), context_policy: CAPY_CONTEXT_POLICY_VERSION, status: 'started', created_at: new Date().toISOString() });
+        if (requestRecord) store.put('capy_model_requests', requestRecord, { session_id: id, phase: 'answerer', messages: scrub(id, prepared.messages), orchestration_message_ids: [...delivered], initial_tools: tools.map(tool => tool.function.name), context_policy: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION,
+          ...(config.opulent2ContextContinuationPolicy ? { context_continuation_policy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}), status: 'started', created_at: new Date().toISOString() });
         let response;
         try {
+          if (requestRecord) await recordOpulent2Assembly(id, requestRecord, 'answerer', prepared.messages, tools);
           response = await model(prepared.messages, { tools, signal: ctx.signal, ...(requestRecord ? { phase: 'answerer', capy_request_record_id: requestRecord } : {}) });
           if (requestRecord) store.put('capy_model_requests', requestRecord, { ...store.get('capy_model_requests', requestRecord), status: 'completed', response_id: response.id ?? null, usage: response.usage ?? {}, request_attempts: response.inferenceAttempts ?? [] });
         } catch (error) {
@@ -587,7 +666,7 @@ export function createRuntime(options = {}) {
         for (const [key, value] of Object.entries(response.usage ?? {})) if (typeof value === 'number' && Number.isFinite(value)) usage[key] = (usage[key] ?? 0) + value;
         update(id, { usage });
         event(id, 'model_usage', { usage: response.usage ?? {}, ...(capyEnabled ? { phase: 'answerer', request_id: response.id ?? null, response_id: response.id ?? null, request_attempts: response.inferenceAttempts ?? [], capy_request_record_id: requestRecord } : {}) });
-        ctx.signal.throwIfAborted();
+        assertActive();
         const message = response.choices[0].message;
         messages.push(message);
         checkpoint();
@@ -633,16 +712,19 @@ export function createRuntime(options = {}) {
             }
           }
           if (queuedMessages().length) continue;
-          ctx.signal.throwIfAborted();
+          assertActive();
           const pendingChildren = capyEnabled && pendingCapyChildren(id).length > 0;
-          update(id, { status: pendingChildren ? 'sleeping' : 'completed', output, usage, ...(capyEnabled ? { pending_child_completion: pendingChildren, capy_completion_id: randomUUID() } : {}) });
+          if (!pendingChildren && !await checkOpulent2Completion()) continue;
+          assertActive();
+          update(id, { status: pendingChildren ? 'sleeping' : 'completed', output, usage, ...(capyEnabled ? { pending_child_completion: pendingChildren, capy_completion_id: randomUUID() } : {}),
+            ...(opulent2 ? { capy_report_audience: row.parent_session_id ? 'parent' : 'user' } : {}) });
           event(id, pendingChildren ? 'capy_final_delivered' : 'session_completed', {});
           if (capyEnabled) await deliverCapyCompletion(id);
           return;
         }
         for (const call of message.tool_calls) {
           let result;
-          ctx.signal.throwIfAborted();
+          assertActive();
           pendingToolCallId = call.id;
           checkpoint();
           let args;
@@ -670,7 +752,7 @@ export function createRuntime(options = {}) {
           const scrubbed = scrub(id, extracted.result);
           const overflow = capyEnabled ? null : await persistToolResultOverflow({ ctx, store, ensureSandbox,
             scrubbedSerialized: JSON.stringify(scrubbed) ?? 'null', canRead: (!allowed || allowed.has('read')) && !!ctx.tools.read });
-          const toolContent = modelVisibleToolResult(capyEnabled ? await ctx.persistCapyResult(scrubbed) : scrubbed, overflow);
+          const toolContent = modelVisibleToolResult(capyEnabled ? await ctx.persistCapyResult(scrubbed, capyResultChars(ctx, requestedName)) : scrubbed, overflow);
           messages.push({ role: 'tool', tool_call_id: call.id, content: toolContent });
           if (config.rlmHandoffPolicy && requestedName === 'ipython') ctx.rlm.confirmModelVisibleOutput({ toolCallId: call.id, content: toolContent });
           imageObservations.push(...extracted.observations);
@@ -688,12 +770,16 @@ export function createRuntime(options = {}) {
           }
         }
         appendImageObservations();
+        assertActive();
         if (ctx.capyReport) {
           const report = ctx.capyReport;
           const pendingChildren = report.state === 'final' && pendingCapyChildren(id).length > 0;
-          update(id, { status: report.state === 'final' ? (pendingChildren ? 'sleeping' : 'completed') : 'blocked', pending_child_completion: pendingChildren, capy_completion_id: randomUUID(), output: report.output, attachments: report.files ?? [], usage });
+          if (report.state === 'final' && !pendingChildren && !await checkOpulent2Completion()) continue;
+          assertActive();
+          update(id, { status: report.state === 'final' ? (pendingChildren ? 'sleeping' : 'completed') : 'blocked', pending_child_completion: pendingChildren, capy_completion_id: randomUUID(), output: report.output, attachments: report.files ?? [], usage,
+            ...(opulent2 ? { capy_report_audience: report.target ? 'parent' : 'user' } : {}) });
           event(id, report.state === 'final' ? (pendingChildren ? 'capy_final_delivered' : 'session_completed') : 'session_blocked', { output_channel: report.target ? 'message_agent' : 'message_user' });
-          ctx.emit('capy_user_message', { text: report.text, state: report.state, files: report.files ?? [] });
+          if (!opulent2 || !report.target) ctx.emit('capy_user_message', { text: report.text, state: report.state, files: report.files ?? [] });
           await deliverCapyCompletion(id);
           return;
         }
@@ -701,6 +787,7 @@ export function createRuntime(options = {}) {
       }
       throw new Error('Agent step budget exhausted');
     } catch (error) {
+      const failure = (opulent2 ? ctx.sandboxLease?.failure : undefined) ?? error;
       if (!capyEnabled && error.inferenceAttempts) event(id, 'model_failed', { error: safeError(error), request_attempts: error.inferenceAttempts, usage_unknown: true });
       for (const [key, value] of Object.entries(error.compactionUsage ?? {})) usage[key] = (usage[key] ?? 0) + value;
       if (error.compactionUsage) {
@@ -708,10 +795,11 @@ export function createRuntime(options = {}) {
         event(id, 'context_compaction_failed', { usage: error.compactionUsage, error: safeError(error) });
       }
       const currentStatus = store.get('sessions', id)?.status;
-      update(id, { status: ctx.signal.aborted ? (['sleeping', 'terminated', ...(capyEnabled ? ['stopped'] : [])].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(error),
-        ...(capyEnabled && !ctx.signal.aborted ? { pending_child_completion: false, capy_completion_id: randomUUID() } : {}) });
-      event(id, 'session_failed', { error: safeError(error) });
-      if (capyEnabled && !ctx.signal.aborted) await deliverCapyCompletion(id);
+      const cancelled = (ctx.signal.aborted || opulent2 && currentStatus === 'stopped') && (!ctx.sandboxLease?.failure || ['cancelled', 'stopped', 'terminated'].includes(currentStatus));
+      update(id, { status: cancelled ? (['sleeping', 'terminated', ...(capyEnabled ? ['stopped'] : [])].includes(currentStatus) ? currentStatus : 'cancelled') : 'failed', error: safeError(failure),
+        ...(capyEnabled && !cancelled ? { pending_child_completion: false, capy_completion_id: randomUUID(), ...(opulent2 ? { capy_report_audience: 'lifecycle' } : {}) } : {}) });
+      event(id, 'session_failed', { error: safeError(failure) });
+      if (capyEnabled && !cancelled) await deliverCapyCompletion(id);
     } finally {
       checkpoint();
       const livePreview = store.list('previews').some(preview => preview.session_id === id && Date.parse(preview.expires_at) > Date.now());
@@ -719,14 +807,20 @@ export function createRuntime(options = {}) {
       const liveCapyProcess = capyEnabled && store.list('capy_operations').some(operation => operation.session_id === id && operation.kind === 'process' && operation.status === 'running');
       if (ctx.sandbox && !ctx.signal.aborted && !livePreview && !liveWorkflow && !liveCapyProcess && !(rlmEnabled && ctx.rlm?.resident())) {
         try { await ctx.sandbox.pause(); ctx.sandbox = undefined; ctx.computer = undefined; }
-        catch (error) { event(id, 'sandbox_pause_failed', { error: safeError(error) }); await ctx.sandbox.kill().catch(() => {}); ctx.sandbox = undefined; update(id, { sandbox_id: null, desktop_ready: false }); }
+        catch (error) { event(id, 'sandbox_pause_failed', { error: safeError(error) }); await ctx.sandbox.kill().catch(() => {}); ctx.sandbox = undefined; update(id, { ...(!opulent2 ? { sandbox_id: null } : {}), desktop_ready: false }); }
       }
     }
   }
 
-  async function messageSession(id, body) {
+  async function messageSession(id, body, senderId = null) {
     if (quiescing) throw new Error('Runtime is quiescing');
-    if (!store.get('sessions', id) || typeof body !== 'string' || !body.trim()) throw new Error('Session and message are required');
+    const row = store.get('sessions', id);
+    if (!row || typeof body !== 'string' || !body.trim()) throw new Error('Session and message are required');
+    let sender;
+    if (opulent2 && senderId) {
+      capyOwnedChild(store, senderId, id);
+      sender = { sender_session_id: senderId, relation: row.parent_session_id === senderId ? 'parent' : 'ancestor' };
+    }
     if (capyEnabled) cancelCapyWaits(store, id);
     if (waitsEnabled) {
       cancelOperationWaits({ store }, id, 'user_continuation');
@@ -734,7 +828,7 @@ export function createRuntime(options = {}) {
         if (!store.get('conversations', id)?.delivered?.includes(wait.notification_id)) store.delete('orchestration_messages', wait.notification_id);
       }
     }
-    const message = store.put('orchestration_messages', randomUUID(), { session_id: id, source: 'user', body: redact(body), created_at: new Date().toISOString() });
+    const message = store.put('orchestration_messages', randomUUID(), { session_id: id, source: sender ? 'agent' : 'user', ...sender, body: redact(body), created_at: new Date().toISOString() });
     if (workers.has(id)) {
       continuationRequested.add(id);
       if (store.get('sessions', id).status === 'sleeping') sleepWakeRequested.add(id);
@@ -799,13 +893,16 @@ export function createRuntime(options = {}) {
   async function deliverCapyCompletion(id) {
     const row = store.get('sessions', id);
     if (!row.parent_session_id) return;
+    if (opulent2 && row.status === 'sleeping') return;
     const completionId = row.capy_completion_id ?? randomUUID();
     if (!row.capy_completion_id) update(id, { capy_completion_id: completionId });
     const owner = row.parent_session_id;
+    const parentReport = !opulent2 || row.capy_report_audience === 'parent';
     const body = await context(owner).persistCapyResult({ child: capyChildPath(store, owner, id), session_id: id, status: row.status,
-      ...(row.output !== undefined ? { output: row.output } : {}), ...(row.error ? { error: row.error } : {}),
-      ...(row.attachments?.length ? { attachments: row.attachments } : {}) });
-    await queueCapyNotification(owner, `capy-child:${id}:${completionId}`, `Owned child result: ${JSON.stringify(body)}`, 'subagent_completion');
+      ...(opulent2 ? { kind: parentReport ? 'parent_report' : 'lifecycle', parent_report_delivered: parentReport } : {}),
+      ...(parentReport && row.output !== undefined ? { output: row.output } : {}), ...(row.error ? { error: row.error } : {}),
+      ...(parentReport && row.attachments?.length ? { attachments: row.attachments } : {}) });
+    await queueCapyNotification(owner, `capy-child:${id}:${completionId}`, `Owned child ${parentReport ? 'result' : 'lifecycle'}: ${JSON.stringify(body)}`, parentReport ? 'subagent_completion' : 'subagent_lifecycle');
     event(id, 'capy_parent_notified', { parent_session_id: owner, status: row.status });
     await tickCapy();
   }
@@ -813,20 +910,33 @@ export function createRuntime(options = {}) {
   async function stopCapySession(id) {
     const row = store.get('sessions', id);
     if (!row) throw new Error('Session not found');
-    for (const child of store.list('sessions').filter(child => child.parent_session_id === id)) await stopCapySession(child.id);
-    cancelCapyWaits(store, id);
-    const ctx = contexts.get(id);
-    await ctx?.capyExecutor?.close?.();
-    await ctx?.capyProcesses?.close();
-    update(id, { status: 'stopped' });
-    ctx?.controller.abort(new Error('Session stopped'));
-    if (workers.has(id)) await workers.get(id);
-    if (ctx?.sandbox) {
-      await ctx.sandbox.pause();
-      ctx.sandbox = undefined;
-      ctx.computer = undefined;
+    const rows = opulent2 ? [row, ...capyDescendants(store, id)].reverse() : [row];
+    if (opulent2) {
+      for (const target of rows) {
+        update(target.id, { status: 'stopped' });
+        cancelCapyWaits(store, target.id);
+        continuationRequested.delete(target.id);
+        sleepWakeRequested.delete(target.id);
+      }
+    } else {
+      for (const child of store.list('sessions').filter(child => child.parent_session_id === id)) await stopCapySession(child.id);
     }
-    event(id, 'capy_session_stopped', { preserved_vm: !!store.get('sessions', id).sandbox_id });
+    for (const target of rows) {
+      cancelCapyWaits(store, target.id);
+      const ctx = contexts.get(target.id);
+      await ctx?.capyExecutor?.close?.();
+      await ctx?.capyProcesses?.close();
+      await ctx?.sandboxLease?.release(() => {});
+      update(target.id, { status: 'stopped' });
+      ctx?.controller.abort(new Error('Session stopped'));
+      if (workers.has(target.id)) await workers.get(target.id);
+      if (ctx?.sandbox) {
+        await ctx.sandbox.pause();
+        ctx.sandbox = undefined;
+        ctx.computer = undefined;
+      }
+      event(target.id, 'capy_session_stopped', { preserved_vm: !!store.get('sessions', target.id).sandbox_id });
+    }
   }
 
   async function cancelSession(id, activeOnly = false) {
@@ -857,7 +967,10 @@ export function createRuntime(options = {}) {
     const sandboxId = ownedSandbox?.sandboxId ?? store.get('sessions', id).sandbox_id;
     let cleanupError;
     try {
-      if (ownedSandbox) { if (ctx) ctx.sandbox = undefined; await ownedSandbox.kill(); }
+      if (ownedSandbox) {
+        if (ctx && !opulent2) ctx.sandbox = undefined;
+        try { await ownedSandbox.kill(); } finally { if (ctx) ctx.sandbox = undefined; }
+      }
       else if (sandboxId) {
         const sandbox = await (options.connect ?? connectSandbox)(sandboxId, { ...config, desktop: false });
         await sandbox.kill();
@@ -916,14 +1029,38 @@ export function createRuntime(options = {}) {
 
   const runtime = {
     config, store, context, allocate, startSession, messageSession, cancelSession, workflowCall,
+    ...(opulent2 ? {
+      async exportOpulent2Handoff(id) {
+        const row = store.get('sessions', id);
+        if (!row || row.parent_session_id || row.status !== 'completed') throw new Error('Only a completed Opulent2 lead can export a handoff');
+        return exportOpulent2Handoff(context(id), { status: 'completed' });
+      },
+      opulent2Snapshot(id) {
+        const root = store.get('sessions', id);
+        if (!root || root.parent_session_id) throw new Error('Opulent2 snapshot requires the lead session');
+        const sessions = [root, ...capyDescendants(store, id)];
+        const owned = new Set(sessions.map(row => row.id));
+        return { version: 'opulent2-runtime-snapshot-v1', root_session_id: id, visibility: 'host-only; observations must be established from completed model requests', sessions,
+          ...Object.fromEntries(['capy_tool_results', 'capy_model_requests', 'opulent2_model_assemblies', 'orchestration_messages', 'events', 'capy_operations', 'capy_execute_calls', 'capy_waits', 'conversations']
+            .map(name => [name, store.list(name).filter(row => owned.has(name === 'conversations' ? row.id : row.session_id))])),
+          effective_grants: sessions.map(row => ({ session_id: row.id, parent_session_id: row.parent_session_id, depth: row.depth,
+            tool_policy: toolPolicy.version, allowed_tools: [...allowed], initial_tools: [...initial], registered_tools: Object.keys(context(row.id).tools),
+            allowed_repos: [...config.allowedRepos], corpus_workspace: config.corpusWorkspace ?? null, computer_image_sha256: config.computerImageSha256 ?? null,
+            ...(config.opulent2ResultDeliveryPolicy ? { result_delivery_policy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+            ...(config.opulent2ContextContinuationPolicy ? { context_continuation_policy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}) })) };
+      },
+    } : {}),
     initialToolProvenance: initialPolicy.provenance,
     effectiveToolOverlayProvenance: EFFECTIVE_TOOL_OVERLAY_PROVENANCE,
     runtimeCapabilityProvenance: extensionProvenance,
-    ...(capyEnabled ? { capyToolProvenance: { ...CAPY_TOOL_POLICY.provenance, version: CAPY_TOOL_POLICY.version, allowedTools: [...allowed], initialTools: [...initial],
-      codemodeListingSha256: createHash('sha256').update(capyCodemodeListing()).digest('hex'), systemPromptSha256: createHash('sha256').update(config.systemPrompt).digest('hex'),
-      memory: config.capyMemory ? capyMemoryDescriptors({ config }) : { available: false }, contextCompaction: { ...config.contextCompaction, version: CAPY_CONTEXT_POLICY_VERSION } } } : {}),
+    ...(capyEnabled ? { capyToolProvenance: { ...toolPolicy.provenance, version: toolPolicy.version, allowedTools: [...allowed], initialTools: [...initial],
+      codemodeListingSha256: createHash('sha256').update(codemodeListing()).digest('hex'), systemPromptSha256: createHash('sha256').update(config.systemPrompt).digest('hex'),
+      memory: config.capyMemory ? capyMemoryDescriptors({ config }) : { available: false },
+      ...(config.opulent2ResultDeliveryPolicy ? { resultDeliveryPolicy: OPULENT2_RESULT_DELIVERY_POLICY } : {}),
+      ...(config.opulent2ContextContinuationPolicy ? { contextContinuationPolicy: OPULENT2_HISTORY_FIRST_CONTINUATION_POLICY } : {}),
+      contextCompaction: { ...config.contextCompaction, version: opulent2 ? OPULENT2_CONTEXT_POLICY_VERSION : CAPY_CONTEXT_POLICY_VERSION } } } : {}),
     tools: () => Object.values(definitions).filter(tool => (!allowed || allowed.has(tool.name)) && (!initial || initial.has(tool.name))),
-    coverage(id) { const names = new Set(Object.keys(context(id).tools)), expected = capyEnabled ? Object.keys(CAPY_TOOL_DEFINITIONS) : Object.keys(catalog.tools); return { required: expected.length, registered: expected.filter(name => names.has(name)), missing: expected.filter(name => !names.has(name)), excluded: catalog.excluded }; },
+    coverage(id) { const names = new Set(Object.keys(context(id).tools)), expected = capyEnabled ? Object.keys(capyDefinitions) : Object.keys(catalog.tools); return { required: expected.length, registered: expected.filter(name => names.has(name)), missing: expected.filter(name => !names.has(name)), excluded: catalog.excluded }; },
     async invoke(id, name, args) { return context(id).invoke(name, args); },
     async approve(id, args) {
       const ctx = context(id);
@@ -955,7 +1092,7 @@ export function createRuntime(options = {}) {
       return store.get('sessions', id);
     },
     async tick(id, now = new Date()) {
-      if (capyEnabled) { await tickCapy(now); return { version: CAPY_TOOL_POLICY.version }; }
+      if (capyEnabled) { await tickCapy(now); return { version: toolPolicy.version }; }
       const result = await tick(context(id), now);
       if (waitsEnabled) await tickOperationWaits({ store, wakeSession: wakeOperationSession }, now);
       return result;
@@ -976,6 +1113,7 @@ export function createRuntime(options = {}) {
         await Promise.allSettled([...workers.values()]);
         await Promise.allSettled([...workflowCalls.values()]);
         while (invocations.size) await Promise.allSettled([...invocations]);
+        for (const ctx of contexts.values()) await ctx.sandboxLease?.release(() => {});
         if (errors.length) throw new AggregateError(errors, 'Runtime quiescence cleanup failed');
       })();
       return quiescence;

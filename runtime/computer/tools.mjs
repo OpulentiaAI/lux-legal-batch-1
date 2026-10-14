@@ -9,22 +9,22 @@ function point(value, name) {
 
 function translate(action) {
   const { coordinate, start_coordinate, text, duration, key } = action;
-  const position = coordinate === undefined ? {} : { x: point(coordinate, 'coordinate')[0], y: coordinate[1] };
+  const position = () => coordinate === undefined ? {} : { x: point(coordinate, 'coordinate')[0], y: coordinate[1] };
   switch (action.action) {
     case 'key': return text.includes('+') ? { type: 'hotkey', keys: text.split('+').map(k => k.trim()) } : { type: 'keypress', key: text };
     case 'type': return { type: 'type', text };
-    case 'mouse_move': return { type: 'move', ...position };
+    case 'mouse_move': return { type: 'move', ...position() };
     case 'left_click': case 'right_click': case 'middle_click':
-      return { type: 'click', button: action.action.split('_')[0], ...position, ...(key ? { modifiers: [key] } : {}) };
-    case 'double_click': case 'triple_click': return { type: action.action, ...position };
+      return { type: 'click', button: action.action.split('_')[0], ...position(), ...(key ? { modifiers: [key] } : {}) };
+    case 'double_click': case 'triple_click': return { type: action.action, ...position() };
     case 'left_click_drag': {
       const [start_x, start_y] = point(start_coordinate, 'start_coordinate');
       const [end_x, end_y] = point(coordinate, 'coordinate');
       return { type: 'drag', start_x, start_y, end_x, end_y };
     }
-    case 'left_mouse_down': return { type: 'mouse_down', ...position };
-    case 'left_mouse_up': return { type: 'mouse_up', ...position };
-    case 'scroll': return { type: 'scroll', direction: action.scroll_direction, amount: action.scroll_amount, ...position };
+    case 'left_mouse_down': return { type: 'mouse_down', ...position() };
+    case 'left_mouse_up': return { type: 'mouse_up', ...position() };
+    case 'scroll': return { type: 'scroll', direction: action.scroll_direction, amount: action.scroll_amount, ...position() };
     case 'hold_key': return { type: 'hold_key', key: text, duration_ms: Math.round(duration * 1000) };
     case 'wait': return { type: 'wait', duration_ms: Math.round(duration * 1000) };
     case 'screenshot': return { type: 'screenshot' };
@@ -112,7 +112,10 @@ export function createTools(ctx) {
           const failed = await flush();
           if (failed) return failed;
           try {
-            const dom = await computer.browser.console('document.documentElement.outerHTML.slice(0, 1000000)');
+            const observed = await computer.browser.console('(() => { const html = document.documentElement.outerHTML; const content = html.slice(0, 1000000); return { content, truncated: html.length > content.length, coverage: { scope: "document-element-outer-html", source_chars: html.length, returned_chars: content.length, limit_chars: 1000000, unit: "utf16-code-units" } }; })()');
+            const value = observed?.result;
+            const dom = value && typeof value.content === 'string' && typeof value.truncated === 'boolean' && value.coverage && typeof value.coverage === 'object'
+              ? { ...observed, result: value.content, truncated: value.truncated, coverage: value.coverage } : observed;
             results.push({ dom });
             action_records.push({ index: item.index, action: item.action, ok: true, result: { dom } });
           } catch (error) {

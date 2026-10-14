@@ -8,8 +8,10 @@ import { buildManifest } from './freeze.mjs'
 import { validateSuite } from './validate.mjs'
 import { prepareJudgeRequest, JUDGE_POLICY } from './judge.mjs'
 import { extractVisibleSourceEvidence } from './grade-run.mjs'
-import { EVIDENCE_REPLAY_OVERRIDES } from '../grading-evidence.mjs'
+import { EVIDENCE_REPLAY_OVERRIDES, CAPY_VISIBLE_EVIDENCE_VERSION } from '../grading-evidence.mjs'
 import { redact } from '../../runtime/security.mjs'
+import { chunkText, loadChunks } from '../../src/tp/manifest.ts'
+import { renderInstructions } from '../../runtime/instructions/render.mjs'
 
 const workspace = fileURLToPath(new URL('../..', import.meta.url))
 const hash = value => createHash('sha256').update(value).digest('hex')
@@ -38,6 +40,26 @@ function gradingPolicy(profile) {
 }
 
 const sourceInventory = sources => sources.map(({ id, sha256, text }) => ({ id, sha256, chars: text.length }))
+
+function capyComparisonCorpus() {
+  const index = [...loadChunks(workspace)].sort(([a], [b]) => a.localeCompare(b)).map(([id, row]) =>
+    ({ id, doc: row.doc_id, path: `chunks/${id}.txt`, sha256: hash(chunkText(workspace, row)) }))
+  const documents = JSON.parse(readFileSync(join(workspace, 'corpus/index/documents.json')))
+    .map(({ doc_id, id, title, kind, authors, year, chunk_count }) => ({ id: doc_id ?? id, title, kind, authors, year, chunk_count }))
+  return { hash: hash(JSON.stringify({ version: 'comparison-corpus-v1', index, documents })), count: index.length }
+}
+
+function verifyCapyPolicy(policy, provenance, corpus, instructions) {
+  if (policy?.policy !== 'broad-legal-native-capy-v1' || policy.evidenceReplayVersion !== CAPY_VISIBLE_EVIDENCE_VERSION ||
+      policy.instructions?.profile !== 'opulent-capy-v1' || policy.instructions.manifestSha256 !== instructions.manifestSha256 ||
+      policy.instructions.sourceComposedPromptSha256 !== instructions.sourceComposedPromptSha256 ||
+      policy.instructions.sourceSpanLedgerSha256 !== instructions.sourceSpanLedgerSha256 || policy.instructions.source?.sha256 !== instructions.source.sha256 ||
+      policy.model !== provenance.model || policy.maxSteps !== provenance.maxSteps || policy.maxCompletionTokens !== provenance.maxCompletionTokens ||
+      policy.inference?.provider !== 'runanywhere' || policy.inference.providerModel !== provenance.nativeModel.providerModel ||
+      policy.inference.endpoint !== 'https://inference.runanywhere.ai/v1' || policy.toolSurface !== 'capy-lean-v1' || policy.semanticSurface !== 'toolbox' ||
+      policy.corpus?.version !== 'comparison-corpus-v1' || policy.corpus.hash !== corpus.hash || policy.corpus.count !== corpus.count ||
+      JSON.stringify(policy.retrieval) !== JSON.stringify(provenance.broadPolicy.retrieval)) throw new Error('Unexpected Capy artifact/profile/corpus/native policy')
+}
 
 export function prepareJevCriterion(bundle, outputDir, criterionId, visibleSources, { metricsProfile = 'semantic-core-v5' } = {}) {
   const policy = gradingPolicy(metricsProfile)
@@ -154,12 +176,28 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     provenance.inferenceProvider !== 'runanywhere' || provenance.nativeModel?.providerModel !== 'mimo-v2.6-pro' ||
     !Number.isSafeInteger(provenance.maxSteps) || provenance.maxSteps < 1 ||
     provenance.instructionProfile === 'opulent-context-v6' && provenance.maxSteps !== 250 ||
-    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
-  if (['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12'].includes(provenance.instructionProfile)) {
+    provenance.maxCompletionTokens !== 32768 || !['opulent-context-v6', 'opulent-capability-v7', 'opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12', 'opulent-capy-v1'].includes(provenance.instructionProfile) || provenance.semanticSurface !== 'toolbox') throw new Error('Unexpected native comparison policy')
+  const capy = provenance.instructionProfile === 'opulent-capy-v1'
+  if (capy && (metricsProfile !== 'completed-work-v6' || replayVersionOverride !== undefined)) throw new Error('Capy grading requires completed-work-v6 and automatic artifact replay')
+  if (['opulent-capability-v8', 'opulent-delivery-v9', 'opulent-delivery-v10', 'opulent-delivery-v11', 'opulent-delivery-v12', 'opulent-capy-v1'].includes(provenance.instructionProfile)) {
     const retrieval = provenance.broadPolicy?.retrieval
     if (retrieval?.profile !== 'voyage' || retrieval.embeddingModel !== 'voyage/voyage-4-large' ||
       retrieval.rerankModel !== 'voyage/rerank-2.5' || retrieval.dimensions !== 1024 || retrieval.searchBackend !== 'turbopuffer' ||
       retrieval.chunkNamespace !== 'lx-corpus-voyage4-1024' || retrieval.documentNamespace !== 'lx-documents-voyage4-1024') throw new Error('Unexpected capability-v8 retrieval policy')
+  }
+  const capyCorpus = capy ? capyComparisonCorpus() : null
+  const capyInstructions = capy ? renderInstructions({ profile: 'opulent-capy-v1' }).provenance : null
+  if (capy) {
+    const catalogue = provenance.nativeModel.catalogue
+    if (provenance.model !== 'xiaomi/mimo-v2.6-pro' || provenance.maxSteps !== 1000 || provenance.corpusHash !== capyCorpus.hash || provenance.corpusCount !== capyCorpus.count ||
+        catalogue?.endpoint !== 'https://inference.runanywhere.ai/v1/models' || !Array.isArray(catalogue.modelIds) ||
+        catalogue.modelIds.some(id => typeof id !== 'string') || !catalogue.modelIds.includes('mimo-v2.6-pro') || catalogue.sha256 !== hash(JSON.stringify(catalogue.modelIds)) ||
+        !Array.isArray(provenance.selectedTasks) || !provenance.selectedTasks.length || !Array.isArray(checkpoint.rows) ||
+        new Set(checkpoint.rows.map(row => row.taskId)).size !== checkpoint.rows.length ||
+        JSON.stringify([...provenance.selectedTasks].sort()) !== JSON.stringify(checkpoint.rows.filter(row => row.selected).map(row => row.taskId).sort())) {
+      throw new Error('Unexpected Capy native/corpus/selection binding')
+    }
+    verifyCapyPolicy(provenance.broadPolicy, provenance, capyCorpus, capyInstructions)
   }
   if (!Array.isArray(checkpoint.rows) || checkpoint.rows.some(row => row.selected && ['harvey', 'broad'].some(mode => ['planned', 'running'].includes(row[mode]?.status)))) throw new Error('Answering is not finished')
   const packets = new Map(validateSuite(join(workspace, 'eval/complex-v1/drafts')).map(packet => [packet.bundle.task.id, packet]))
@@ -187,6 +225,7 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
     }
     const directory = mkdtempSync(join(tmpdir(), 'jev-native-outputs-'))
     try {
+      if (capy && mode === 'broad') verifyCapyPolicy(attempt.audit?.provenance, provenance, capyCorpus, capyInstructions)
       for (const item of attempt.deliverables) {
         if (!packet.bundle.task.deliverables.includes(item.file) || typeof item.content !== 'string' || hash(item.content) !== item.sha256) throw new Error('Deliverable integrity mismatch')
         writeFileSync(join(directory, item.file), item.content)
@@ -194,8 +233,10 @@ export async function gradeNativeRun({ input, output, fetchImpl = fetch, concurr
       const replay = extractVisibleSourceEvidence({ ...attempt, taskId: row.taskId, mode, bundle: packet.bundle }, { replayVersionOverride })
       const visibleSources = replay.sources
       let replayProofSha256
-      if (replayVersionOverride) {
-        const proof = { version: replayVersionOverride, ...replay, visibleInventorySha256: hash(JSON.stringify(sourceInventory(visibleSources))) }
+      if (replayVersionOverride || capy && mode === 'broad') {
+        const version = replayVersionOverride ?? CAPY_VISIBLE_EVIDENCE_VERSION
+        if (capy && mode === 'broad' && replay.proof.evidenceReplayVersion !== CAPY_VISIBLE_EVIDENCE_VERSION) throw new Error('Unexpected Capy automatic evidence replay')
+        const proof = { version, ...replay, visibleInventorySha256: hash(JSON.stringify(sourceInventory(visibleSources))) }
         const proofPath = join(output, `${row.taskId}-${mode}-evidence-replay-proof.json`)
         replayProofSha256 = hash(JSON.stringify(proof))
         if (existsSync(proofPath)) {

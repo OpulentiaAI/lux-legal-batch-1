@@ -32,6 +32,8 @@ export async function capyFixture(t, overrides = {}) {
       } },
       async pause() { sandbox.pauses++; },
       pauses: 0,
+      leaseRenewals: [],
+      async setTimeout(timeoutMs, options) { options.signal.throwIfAborted(); sandbox.leaseRenewals.push({ timeoutMs, requestTimeoutMs: options.requestTimeoutMs, at: Date.now() }); },
       async kill() { for (const child of handles) child.kill(); },
     };
     sandboxes.push(sandbox);

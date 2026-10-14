@@ -1,0 +1,239 @@
+Runtime
+
+Read with initial materials; follow coverage-plan.md. Keep all 40 approved-tool gates, originals/guides/help, fixture/helper/image bytes, budgets/auth/permissions/evidence. No replay.
+
+Known schema-backed programs: describe only missing schemas; changed schema wins. Read complete computer guide and actual schemas; no rereads/narration.
+
+Each block persists every whole outcome; follow it with its individual return programs in the same response. Do not return a large aggregate or substitute counts, selected fields or a preview for the original outcomes.
+
+Same-response schedule: separate programs; independent groups/help share response. Calls serial, Promise.all concurrent; dependencies gate.
+A after first document checkpoint during delegation: early→early-scratch→early-todo; skills; steering→steering-readback; corpus→corpus-search→corpus-source; notes.
+B after A observed: checkpoint; scratch→approximate-search; corpus-approximate; memory-readback; drive-readback; disposable-readback; lifecycle if sleeping acknowledged. LAST processes→process-start-readback→process-wait immediately, no other work; waitFor ends turn/program.
+C after scheduler wake: process-resume→process-control→process-disposable→process-list→process-cancel→process-verification; drive-cleanup after disposable observed; useful-result→child-events→child-list→grandchild-result; session-state; session-events.
+D after original helper/render/source/computer observed: preview-html→preview-server if listener absent→preview-browser→preview-computer→source-reread.
+
+Overflow pending: direct read output_path, exhaust next_character_offset/next_offset; validate characters/sha256 against retained reference; return full JSON, not wrapper. Failure/mismatch visible. observed() requires the complete record.returned_result in actual completed answerer inputs. Release bindings after observation.
+
+### early
+```js
+var runtimeEarly=await Promise.allSettled([
+  tools.task.get({task_id:checkpoint.tasks[0].id}),
+  tools.capy.write({path:"analysis/connected-scratch.txt",content:"Runtime scratch draft\n"}),
+  tools.todo.write({todos:[{content:"Finish original document/pixel work",status: "pending"},{content:"Verify connected runtime",status: "in_progress"},{content:"Check child-grandchild findings/finalize",status: "pending"}]})
+]);
+return runtimeEarly[0];
+```
+### early-scratch
+```js
+return runtimeEarly[1];
+```
+### early-todo
+```js
+return runtimeEarly[2];
+```
+Keep completed todos.
+### skills
+```js
+return await tools.skill.list({});
+```
+### checkpoint
+```js
+if(runtimeEarly[0].status!=="fulfilled")return runtimeEarly[0];
+var update=await tools.task.update({updates:[{task_id:runtimeEarly[0].value.id,status:"in_progress"}]});
+return{update,get:await tools.task.get({task_id:runtimeEarly[0].value.id}),list:await tools.task.list({})};
+```
+### scratch
+```js
+if(runtimeEarly[1].status!=="fulfilled")return runtimeEarly[1];
+var draft=await tools.capy.read({path:runtimeEarly[1].value.path});
+if(draft.content!=="Runtime scratch draft\n")return{read:draft,pending:"Unexpected scratch; inspect first"};
+var edit=await tools.capy.edit({path:draft.path,old_string:draft.content,new_string:"Runtime scratch edited\n"});
+var patch=await tools.capy.applyPatch({patch_text:"*** Begin Patch\n*** Update File: "+draft.path+"\n@@\n-Runtime scratch edited\n+Runtime scratch patched\n*** End Patch"});
+var final=await tools.capy.read({path:draft.path});
+return{read:draft,edit,patch,finalRead:final};
+```
+### approximate-search
+```js
+if(typeof final==="undefined" || final?.content!=="Runtime scratch patched\n")return{pending:"Patched reread required"};
+return await tools.capy.agrep({pattern:"Runtime scratch patchex",path:final.path,max_errors:1,max_results:4});
+```
+### steering
+```js
+var steering=await Promise.all([
+  tools.message.agent({to:delegation.tasks[0].path,state:"working",text:"Keep narrow task; independently fully observe source/context. Existing grandchild only; no repeated nesting."}),
+  tools.subagent.message({path:delegation.tasks[0].path,text:"Receive/check completed grandchild findings before direct final parent report: actual IDs, quotations, checked qualifications/limits. Allocation/sleeping is not completion."})
+]);
+return steering[0];
+```
+### steering-readback
+```js
+return steering[1];
+```
+Steer once while pending.
+### corpus
+```js
+var documents=await tools.lx.documents({});
+var doc=documents.documents?.[0];
+var runtimeSearch=doc?await tools.lx.search({query:doc.title,doc_id:doc.doc_id,mode:"bm25",limit:1}):null;
+var runtimeSource=runtimeSearch?.results?.[0]?.chunk_id?await tools.lx.chunk({chunk_id:runtimeSearch.results[0].chunk_id}):null;
+return documents;
+```
+### corpus-search
+```js
+return runtimeSearch;
+```
+### corpus-source
+```js
+return runtimeSource;
+```
+Recover before derivation; observe corpus before approximate search, not scratch. Partial/skipped/no-match is not failure or completion.
+### corpus-approximate
+```js
+var word=runtimeSource?.text?.split(/\s+/).find(word=>/^[A-Za-z]{5,}$/.test(word));
+var pattern=word?(word[0]==="x"?"z":"x")+word.slice(1):null;
+return word?await tools.capy.agrep({pattern,path:"corpus",max_errors:1,max_results:4}):{pending:"No ASCII word; invent no query"};
+```
+### notes
+```js
+var note="Infrastructure rule: return full original outcomes/use actual IDs; pending/failed is not complete. No corpus answer/success claim.\n";
+var saves=await Promise.all([
+  tools.memory.save({scope:"project",file:"connected-runtime-workflow.md",title:"Connected runtime workflow",description:"Outcome-retention rule",body:note}),
+  tools.drive.write({scope:"project",path:"notes/connected-runtime.txt",content:note}),
+  tools.drive.write({scope:"project",path:"notes/connected-runtime-disposable.txt",content:"Disposable infrastructure note; fully read, then delete.\n"})
+]);
+return saves;
+```
+### memory-readback
+```js
+return await tools.capy.read({path:saves[0].topicPath});
+```
+### drive-readback
+```js
+return await tools.drive.read({scope:saves[1].scope,path:saves[1].path});
+```
+### disposable-readback
+```js
+return await tools.drive.read({scope:saves[2].scope,path:saves[2].path});
+```
+### drive-cleanup
+```js
+var before=await tools.drive.list({scope:saves[1].scope});
+var deletion=await tools.drive.delete({scope:saves[2].scope,path:saves[2].path});
+return{before,deletion,after:await tools.drive.list({scope:saves[1].scope}),kept:await tools.drive.read({scope:saves[1].scope,path:saves[1].path})};
+```
+Read existing topic first; full reads/list verify disposable absent, intended note retained.
+### processes
+```js
+var runtimeProcesses=await Promise.all([
+  tools.capy.bash({command:"sleep 4; printf '%s\\n' 'Owned short process ended'",description:"Starting short process for durable wait",execution:"background"}),
+  tools.capy.bash({command:"sleep 120",description:"Starting separate disposable cancellable process",execution:"background"})
+]);
+return runtimeProcesses[0];
+```
+### process-start-readback
+```js
+return runtimeProcesses[1];
+```
+### process-wait
+```js
+await waitFor({description:"Waiting for owned short process to settle",operation_ids:[runtimeProcesses[0].operation_id],return_when:"all"});
+```
+### process-resume
+```js
+var runtimeShortFinal=await tools.operation.get({operation_id:runtimeProcesses[0].operation_id});
+return runtimeShortFinal;
+```
+Keep ready outcomes; verify actual status/exit/output, not wait registration.
+### process-control
+```js
+var runtimeProcessControls=[runtimeShortFinal];
+runtimeProcessControls[1]=await tools.operation.get({operation_id:runtimeProcesses[1].operation_id});
+runtimeProcessControls[2]=await tools.operation.list({include_finished:true,limit:4});
+runtimeProcessControls[3]=await tools.operation.cancel({operation_id:runtimeProcesses[1].operation_id});
+runtimeProcessControls[4]=await tools.operation.get({operation_id:runtimeProcesses[1].operation_id});
+return runtimeProcessControls[0];
+```
+### process-disposable
+```js
+return runtimeProcessControls[1];
+```
+### process-list
+```js
+return runtimeProcessControls[2];
+```
+### process-cancel
+```js
+return runtimeProcessControls[3];
+```
+### process-verification
+```js
+return runtimeProcessControls[4];
+```
+Verify cancelled; cancellation_error/unknown/interrupted/failure pending. Owned IDs/cursors only.
+### lifecycle
+```js
+var ctrl=await tools.subagent.get({path:controlDraft.tasks[0].path});
+var events=await tools.subagent.events({path:ctrl.path,types:["stop_requested"],limit:4});
+var park=ctrl.status==="sleeping" && events.items.some(event=>event.type==="stop_requested")?await tools.subagent.stop({paths:[ctrl.path]}):null;
+return{before:ctrl,events,parking:park,after:park?await tools.subagent.get({path:ctrl.path}):null};
+```
+Only acknowledged disposable session_stop/sleeping permits parking; verify stopped.
+### useful-result
+```js
+var useful=await tools.subagent.get({path:delegation.tasks[0].path});
+return useful;
+```
+### child-events
+```js
+return await tools.subagent.events({path:delegation.tasks[0].path,limit:4});
+```
+### child-list
+```js
+var children=await tools.subagent.list({limit:4});
+return children;
+```
+### grandchild-result
+```js
+var review=children.items.find(child=>child.parent_session_id===useful.id);
+return review?await tools.subagent.get({path:review.path}):{pending:"Page actual list for existing grandchild"};
+```
+### session-state
+```js
+return await tools.session.get({include_transcript:false});
+```
+### session-events
+```js
+return await tools.session.events({limit:4});
+```
+Page next_cursor; require independent full source/context/direct finals/checked findings. Sleeping/pending_child_completion/queued/running/unread backing pending; callbacks only.
+
+Full original documentWorkflowBatch stdout, not envelopes; excerpt is not whole-statute consultation. No guessed metadata/refs/coordinates.
+### preview-html
+```js
+var render=documentWorkflowBatch.map(outcome=>JSON.parse(outcome.stdout)).find(report=>report.operation==="render");
+var image=render?.images?.[0];
+var analysis=runtimeEarly[1].value.path.slice(0,runtimeEarly[1].value.path.lastIndexOf("/")+1);
+if(!runtimeSource?.text || !image?.path?.startsWith(analysis))return{pending:"Observed source/render under analysis required"};
+function escaped(value){return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");}
+return await tools.capy.write({path:analysis+"connected-preview.html",content:"<!doctype html><meta charset=utf-8><p>Corpus "+escaped(runtimeSource.id)+"</p><pre>"+escaped(runtimeSource.text.slice(0,700))+"</pre><p>Rendered file "+escaped(image.path)+" SHA256 "+escaped(image.sha256)+" dimensions "+escaped(image.width)+" × "+escaped(image.height)+"</p><img alt=\"PDF page\" src=\""+image.path.slice(analysis.length).split("/").map(encodeURIComponent).join("/")+"\">"});
+```
+### preview-server
+```js
+var server=await tools.capy.bash({command:"python3 -m http.server 8765 --bind 127.0.0.1 --directory "+JSON.stringify(analysis),description:"Serving actual source and image",execution:"detached"});
+return server;
+```
+### preview-browser
+```js
+return await tools.capy.browser({actions:[{action:"navigate",url:"http://127.0.0.1:8765/connected-preview.html"},{action:"snapshot"},{action:"screenshot"}]});
+```
+### preview-computer
+```js
+return await tools.capy.computer({actions:[{action:"screenshot"}]});
+```
+### source-reread
+```js
+return await tools.lx.chunk({chunk_id:runtimeSource.id});
+```
+Actual closing DOM/browser/computer pixels, then reopen sources; failure/metadata/HTML is not pixels.
+
+Closure remains pending until the original work, useful child-grandchild checked findings, full reads/source/pixels complete. Incremental coverage.md: concise receipts/gaps; hashes programmatically from receipts, never manually transcribe hash guesses. Reread full final, settle task/todos, direct message_user. Cancel/verify owned leftovers/server; retain artifacts, never session_stop lead. VM auth/absence/native acceptance/pinning/release/grading: operator checks.

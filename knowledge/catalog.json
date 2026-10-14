@@ -1,0 +1,2923 @@
+{
+  "version": "lux-typed-source-catalog-v1",
+  "scope": "tracked eval files and non-corpus Markdown; knowledge repository excluded",
+  "sources": [
+    {
+      "path": ".agents/skills/testing-au-host/SKILL.md",
+      "git_blob_oid": "31abac90b96c8cba0832f55290ae1c8c90329ea8",
+      "bytes": 4227,
+      "note": "sources/source - SKILL.md - 33d58da5fa7b171f.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "AGENTS.md",
+      "git_blob_oid": "65c6c53ce9d81d3d885e3df4b8123b8d3ec76141",
+      "bytes": 2197,
+      "note": "sources/source - AGENTS.md - a54ff182c7e8acf5.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "README.md",
+      "git_blob_oid": "dcd4b0a00456429b94973e54003cc865fc509a63",
+      "bytes": 8701,
+      "note": "sources/source - README.md - b335630551682c19.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "dashboard/lx-at-a-glance.md",
+      "git_blob_oid": "7a0d93c5d00e270e821554841fd4440211dd77a5",
+      "bytes": 2036,
+      "note": "sources/source - lx-at-a-glance.md - 80a9a9483a2debbd.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "docs/devin-toolset.md",
+      "git_blob_oid": "6460d2a96c4c60b02d7b41d192e326c498a04737",
+      "bytes": 18418,
+      "note": "sources/source - devin-toolset.md - 65bf27b319ac4f46.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "docs/mcp-tools.md",
+      "git_blob_oid": "0b5d6b76d6e0b4284491cae75a0149f7fa0277c2",
+      "bytes": 5960,
+      "note": "sources/source - mcp-tools.md - 8a3810721323f3dd.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "docs/retrieval.md",
+      "git_blob_oid": "2da73c44edfb9d8a2601229e85a39f803825319a",
+      "bytes": 12921,
+      "note": "sources/source - retrieval.md - d6f1299c5f5d81e0.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "docs/typed-knowledge.md",
+      "git_blob_oid": "4634ce2762e1ceed2d4a90be63548d039dffe0f6",
+      "bytes": 2742,
+      "note": "sources/source - typed-knowledge.md - 5ab4ff515e5fff5f.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/ancel.md",
+      "git_blob_oid": "66e1ad8a2044755d1067ed3316eeb4a321c7b9c5",
+      "bytes": 117,
+      "note": "sources/source - ancel.md - 9666573d68105910.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/bernard-francois.md",
+      "git_blob_oid": "19bfa0e1ffdcefa87a033cd933d579249a7da05f",
+      "bytes": 129,
+      "note": "sources/source - bernard-francois.md - 7c5cd84a1015f1fe.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/collin.md",
+      "git_blob_oid": "2368b5421a88a95901d50a667aa2194db034e688",
+      "bytes": 114,
+      "note": "sources/source - collin.md - 72d366c49db46ede.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/corbisier-du-prum.md",
+      "git_blob_oid": "1342437137971fb907e08ed9105c06eb51b9793b",
+      "bytes": 153,
+      "note": "sources/source - corbisier-du-prum.md - aba7bde9e593224e.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/mbayi.md",
+      "git_blob_oid": "e85c5e414dac259264df42599ae4e4289307b976",
+      "bytes": 129,
+      "note": "sources/source - mbayi.md - f9a0559609def634.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/payen.md",
+      "git_blob_oid": "e8bd225e1ffe4be4bf46717e60aeb4aede31f48f",
+      "bytes": 114,
+      "note": "sources/source - payen.md - 14009ca730c84973.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/steichen.md",
+      "git_blob_oid": "51bef5cf3b9a996c00bfc839a4e401643b422c4c",
+      "bytes": 132,
+      "note": "sources/source - steichen.md - d8c958fe45cb6f07.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/authors/winandy.md",
+      "git_blob_oid": "cbdf8bd043fd4b16caf1a5b39ec0bf2d4309bf78",
+      "bytes": 117,
+      "note": "sources/source - winandy.md - 1592a729f0a91fbc.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-01-contrats-et-obligations-droit-luxembourg.md",
+      "git_blob_oid": "9bf6419bdf8cc47dea051bbfe692f9ffa5ce3137",
+      "bytes": 678,
+      "note": "sources/source - doc-01-contrats-et-obligations-droit-luxembourg.md - db89dd6a3bdd9e88.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-02-les-scissions-transfrontalieres.md",
+      "git_blob_oid": "5c4c4398346c1c19d5041a48562a4bb0016049e3",
+      "bytes": 629,
+      "note": "sources/source - doc-02-les-scissions-transfrontalieres.md - f219712a7c1374fb.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-03-les-commandites-en-droit-luxembourgeois.md",
+      "git_blob_oid": "13146abd6f4ffb79afa144bc5f84f56b67215bf5",
+      "bytes": 596,
+      "note": "sources/source - doc-03-les-commandites-en-droit-luxembourgeois.md - cce67b9b88785da0.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-04-precis-de-droit-comptable.md",
+      "git_blob_oid": "a9a184af81243925522e944d488efc5102531dcf",
+      "bytes": 555,
+      "note": "sources/source - doc-04-precis-de-droit-comptable.md - cd7c0d40eab5a6b5.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-05-la-reforme-belge-du-droit-des-societes-i.md",
+      "git_blob_oid": "81019b7bdc09c16b9c42270a50e6e6509481423a",
+      "bytes": 757,
+      "note": "sources/source - doc-05-la-reforme-belge-du-droit-des-societes-i.md - 0cb91eec8bb39a57.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-06-loi-du-10-aout-1915-concernant-les-socie.md",
+      "git_blob_oid": "95bbd14040dc269b23e3c34e8cf328e758b387b7",
+      "bytes": 738,
+      "note": "sources/source - doc-06-loi-du-10-aout-1915-concernant-les-socie.md - 3598ff9cb608f693.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-07-code-des-societes-cotees-luxembourg.md",
+      "git_blob_oid": "38105ff3ee8cf0133d2b5349a01a74d24c05f676",
+      "bytes": 673,
+      "note": "sources/source - doc-07-code-des-societes-cotees-luxembourg.md - b571cec7d70a41a1.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-08-precis-de-droit-des-societes.md",
+      "git_blob_oid": "f62b553bfe970fc799261deb35c62f21352ec15e",
+      "bytes": 579,
+      "note": "sources/source - doc-08-precis-de-droit-des-societes.md - 6b58aaddd9a4f6c3.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/documents/doc-09-manuel-de-droit-des-societes.md",
+      "git_blob_oid": "f3cb5b9bfa931e6cbc6c2ec65e62bd2b861de5a6",
+      "bytes": 552,
+      "note": "sources/source - doc-09-manuel-de-droit-des-societes.md - bd3deaa4b1a6d3be.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/lux-legal-corpus.md",
+      "git_blob_oid": "a76f4a1dbbf1b9f2e7c28ad0dc5701795d2d5be0",
+      "bytes": 1660,
+      "note": "sources/source - lux-legal-corpus.md - 4dd0ed85e0c32a26.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/namespaces/lx-corpus.md",
+      "git_blob_oid": "04f00461c6294dfb26ba282ee1e410e52c69e2a1",
+      "bytes": 191,
+      "note": "sources/source - lx-corpus.md - 5410c8deb92e969b.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/namespaces/lx-documents.md",
+      "git_blob_oid": "14f25779e5c7f459df7081f2160058363f258262",
+      "bytes": 200,
+      "note": "sources/source - lx-documents.md - f6ecec1921912e53.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/accounting-law.md",
+      "git_blob_oid": "4920da3c2d042af0aacfcd839682d977b05f99ed",
+      "bytes": 110,
+      "note": "sources/source - accounting-law.md - c45e377cd5162337.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/company-law.md",
+      "git_blob_oid": "27b692c586e2f0999428974361f577141abcb1dc",
+      "bytes": 106,
+      "note": "sources/source - company-law.md - c4de6b38e0335cc9.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/comparative-law.md",
+      "git_blob_oid": "5c0ea5cc5677708e9990ca93ccff255f0439ae25",
+      "bytes": 112,
+      "note": "sources/source - comparative-law.md - d918b1e1e2642109.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/cross-border-reorg.md",
+      "git_blob_oid": "58d425c53d74cfbfe0ea87202ff9ad71dcf84474",
+      "bytes": 165,
+      "note": "sources/source - cross-border-reorg.md - e49a90a4c02a5d00.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/listed-companies.md",
+      "git_blob_oid": "c5e7f8e4c5644ebf0884053e567f006e3da2e2f6",
+      "bytes": 119,
+      "note": "sources/source - listed-companies.md - d941c1cf692d95b5.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/obligations-contracts.md",
+      "git_blob_oid": "b883a08a25bd66118367196176bb3a98c45f3c07",
+      "bytes": 145,
+      "note": "sources/source - obligations-contracts.md - 361724bd07fcb81a.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/partnerships.md",
+      "git_blob_oid": "4d74753e5509547e0bc2179a7ce623f7ffef0405",
+      "bytes": 100,
+      "note": "sources/source - partnerships.md - d14cd8d6dfb1bd9a.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/primary-statute.md",
+      "git_blob_oid": "1f001f601cc689f6c6aa5f2962077c1e3a215d47",
+      "bytes": 109,
+      "note": "sources/source - primary-statute.md - f6629e200f79e211.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "entities/topics/securities-law.md",
+      "git_blob_oid": "519539b0dd114649071ac90e0b02d63321fb6faf",
+      "bytes": 124,
+      "note": "sources/source - securities-law.md - 48062afb3d194281.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "eval/ARSUMBRIS-RUNTIME.md",
+      "git_blob_oid": "4c74726e9148d7217c37f29d6b4fdd1e189a17f0",
+      "bytes": 14664,
+      "note": "sources/source - ARSUMBRIS-RUNTIME.md - 7bcea02fdf5f77ad.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/AUDIT.md",
+      "git_blob_oid": "59224246a80e8922e2ef91138d9d974b0a88405c",
+      "bytes": 12163,
+      "note": "sources/source - AUDIT.md - 0e0defb2eb37a4f6.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/GRADING-V5.md",
+      "git_blob_oid": "3ce317f6aa6668c0d0b6b92bc7b70115daa847a3",
+      "bytes": 4829,
+      "note": "sources/source - GRADING-V5.md - 4b831f6e00ca8a1d.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/GRADING-V6.md",
+      "git_blob_oid": "2d667c571ded7dc34b5b726a64707322f1a88195",
+      "bytes": 7603,
+      "note": "sources/source - GRADING-V6.md - 2c5b00b3fd47f552.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/HARVEY-COMPARISON.md",
+      "git_blob_oid": "5d16bd2108aff6bf533cd8915b6ac9d92ff77002",
+      "bytes": 12044,
+      "note": "sources/source - HARVEY-COMPARISON.md - 226a0f8292706bca.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/INSTRUCTION-ALIGNED-COMPARISON.md",
+      "git_blob_oid": "8d1a97c54d96fe5f9c0f12ce788db02717148117",
+      "bytes": 5933,
+      "note": "sources/source - INSTRUCTION-ALIGNED-COMPARISON.md - 2169662a3b153606.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/INSTRUCTION-ALIGNMENT.md",
+      "git_blob_oid": "99599ed3ab516b9828612968cd3a7080ac287b46",
+      "bytes": 6848,
+      "note": "sources/source - INSTRUCTION-ALIGNMENT.md - ca31c1b62aa35002.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/JUDGE-CALIBRATION-REPORT.md",
+      "git_blob_oid": "55eb95ece1c54aeabb8ef2c00ff30eaa20ff3a78",
+      "bytes": 12064,
+      "note": "sources/source - JUDGE-CALIBRATION-REPORT.md - ffed9406a1df8c5e.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/MIMO-V26-PRO-FIVE-REPORT.md",
+      "git_blob_oid": "f86b89ec1de2db0072c3d73bdcb1e1ea08bc4b56",
+      "bytes": 5043,
+      "note": "sources/source - MIMO-V26-PRO-FIVE-REPORT.md - 0a150fd9ca8ac7d6.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/MODAL-DEEPSEEK-COMPARISON.md",
+      "git_blob_oid": "c0c1b496336a049578f581b046e313bd6bd81fc8",
+      "bytes": 5142,
+      "note": "sources/source - MODAL-DEEPSEEK-COMPARISON.md - 65f510fec26ac22a.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/MODAL-DEEPSEEK-TEN-REPORT.md",
+      "git_blob_oid": "100431149aa6a71ad321f17b55b9fea4098c1600",
+      "bytes": 8389,
+      "note": "sources/source - MODAL-DEEPSEEK-TEN-REPORT.md - 2a548051e5ed8e97.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-CAPY-V1-COMPARISON-REPORT.md",
+      "git_blob_oid": "493ca8ca186729fed0939ebdb1357aea8f387cc8",
+      "bytes": 14548,
+      "note": "sources/source - NATIVE-CAPY-V1-COMPARISON-REPORT.md - 678b945ed4c7d6a1.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V71-PARTIAL-REPORT.md",
+      "git_blob_oid": "7d028a77a5b7a71f6f3223d1cd070126cf2583c9",
+      "bytes": 14812,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V71-PARTIAL-REPORT.md - 8a6beb1c690d8b65.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V8-CORRECTED-REPLAY-REPORT.md",
+      "git_blob_oid": "5ef10c8b57a69a26758f34956acb477204840129",
+      "bytes": 13937,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V8-CORRECTED-REPLAY-REPORT.md - d39d80a2ec4d9976.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V8-CORRECTED-REPLAY-SCORES.json",
+      "git_blob_oid": "1305e0620828a6c591174ccfa8fe09155cb13413",
+      "bytes": 77715,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V8-CORRECTED-REPLAY-SCORES.json - 744685f7cf3b1c7c.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V8-DELIVERY-RECHECK.md",
+      "git_blob_oid": "074ac1921b5497492db1473e29f0493093252ce9",
+      "bytes": 7923,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V8-DELIVERY-RECHECK.md - d36208d54732d947.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V8-VOYAGE-REPORT.md",
+      "git_blob_oid": "bc2a6e5447f52978e961d7f3c282ec20caf3dd5d",
+      "bytes": 16231,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V8-VOYAGE-REPORT.md - b8da8ccbe1ee9b30.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-CAPABILITY-V8-VOYAGE-SCORES.json",
+      "git_blob_oid": "4b9a0ae12cefad03b3a386059bc6dbea8a6f9ed0",
+      "bytes": 83255,
+      "note": "sources/source - NATIVE-MIMO-CAPABILITY-V8-VOYAGE-SCORES.json - 2cf1685f0d37d134.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-MIMO-V26-PRO-FIVE-REPORT.md",
+      "git_blob_oid": "1698a2360f034eb951a8a9fb8f00ae4bd751c6f9",
+      "bytes": 19548,
+      "note": "sources/source - NATIVE-MIMO-V26-PRO-FIVE-REPORT.md - 8961d8f06028a7bc.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/NATIVE-RLM-VM-CODEMODE-REPORT.md",
+      "git_blob_oid": "1206d7d597207781ee029f4024eb8c176c6f9496",
+      "bytes": 14374,
+      "note": "sources/source - NATIVE-RLM-VM-CODEMODE-REPORT.md - b4339f5d3314097e.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/OPULENT-CONTEXT-V6-VERIFICATION.md",
+      "git_blob_oid": "954334d0acd93ecbc6dbeb925037365b10de82d4",
+      "bytes": 8866,
+      "note": "sources/source - OPULENT-CONTEXT-V6-VERIFICATION.md - 7c2029c5ab3bcff8.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/OPULENT-SCORED-LOG-ANALYSIS.md",
+      "git_blob_oid": "b0d5f693219ce4315506df7a9d85d94aaeb2915a",
+      "bytes": 7751,
+      "note": "sources/source - OPULENT-SCORED-LOG-ANALYSIS.md - 2fd1b6f64e0ada6b.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/OPULENT-TOOL-DISTRIBUTION-AUDIT.md",
+      "git_blob_oid": "44a091ae001de3362f8e70a607f7101e44877a00",
+      "bytes": 5632,
+      "note": "sources/source - OPULENT-TOOL-DISTRIBUTION-AUDIT.md - ff61e845aef47b07.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/PREPARED-MODAL-FIFTEEN-REPORT.md",
+      "git_blob_oid": "61d1b6980eb9052d7f3e08cc1e8e10986070f06c",
+      "bytes": 9710,
+      "note": "sources/source - PREPARED-MODAL-FIFTEEN-REPORT.md - f840d25dfe772455.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/PREPARED-MODAL-TEN-REPORT.md",
+      "git_blob_oid": "e34b4591b432a5721abbf86ba185019988b4d7da",
+      "bytes": 5908,
+      "note": "sources/source - PREPARED-MODAL-TEN-REPORT.md - 90321f89ebf386f5.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/README.md",
+      "git_blob_oid": "a69995c5672449a4cbae920d7fabe5075b699b6b",
+      "bytes": 29939,
+      "note": "sources/source - README.md - 200b06e6451b0ae1.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/RETRIEVAL-LEARNING-DESIGN.md",
+      "git_blob_oid": "52737a513a0d3538928950ef8d8e77961ca7d54f",
+      "bytes": 7143,
+      "note": "sources/source - RETRIEVAL-LEARNING-DESIGN.md - 08396a55fa1f4e8c.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/RLM-V5-COMPARISON-REPORT.md",
+      "git_blob_oid": "02a0daffb35ce47224c4a4cb4f5b315a0f7367e1",
+      "bytes": 3528,
+      "note": "sources/source - RLM-V5-COMPARISON-REPORT.md - 6b2db4e8ae51b45f.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/RUBRIC-CALIBRATION.md",
+      "git_blob_oid": "a0e1ad8f147067d9a859a02e23402da18bdcf8b1",
+      "bytes": 7628,
+      "note": "sources/source - RUBRIC-CALIBRATION.md - e2104cec29422d28.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/audit-results.json",
+      "git_blob_oid": "de8402b2cdfe3b35bc053eeaec8562228b02e784",
+      "bytes": 327745,
+      "note": "sources/source - audit-results.json - 9b26db3076e7ec69.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/audit.mjs",
+      "git_blob_oid": "cfa061ca44d2db224a1e0dda9174158d977ba051",
+      "bytes": 4825,
+      "note": "sources/source - audit.mjs - f96c34b97f5a7830.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compare-harnesses.mjs",
+      "git_blob_oid": "f780348e572df1fccb68461feb3e513b15c66ba1",
+      "bytes": 11348,
+      "note": "sources/source - compare-harnesses.mjs - 9077349a5db6a12e.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/comparison-corpus.mjs",
+      "git_blob_oid": "57d701a6391897deb859aef44297fb085d112ede",
+      "bytes": 2993,
+      "note": "sources/source - comparison-corpus.mjs - e2af1ded2214b03d.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/comparison-preflight.mjs",
+      "git_blob_oid": "1508d6082017780dfb1620d7408a6314f0898917",
+      "bytes": 12667,
+      "note": "sources/source - comparison-preflight.mjs - a3fce47ef77bf8ae.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/CAPABILITY-V7-PROTOCOL.md",
+      "git_blob_oid": "0d17a0d08543b33287fec6b729d14322c142f5b2",
+      "bytes": 4045,
+      "note": "sources/source - CAPABILITY-V7-PROTOCOL.md - 80e07ccfb7aab50f.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/CAPABILITY-V8-PROTOCOL.md",
+      "git_blob_oid": "e63a4600d9777dbbf153b6ea96cdd1f97ccf4909",
+      "bytes": 13950,
+      "note": "sources/source - CAPABILITY-V8-PROTOCOL.md - 12f50fa08eb267a7.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/CAPY-V1-PROTOCOL.md",
+      "git_blob_oid": "5e78dc7db5bc9d2daa5d4a65009763f0fb85410a",
+      "bytes": 10624,
+      "note": "sources/source - CAPY-V1-PROTOCOL.md - 70bfeb7a172dd317.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/DELIVERY-V10-PROTOCOL.md",
+      "git_blob_oid": "28edb34aa0c3865e2ce59bd6da31f8faaa4d154b",
+      "bytes": 2865,
+      "note": "sources/source - DELIVERY-V10-PROTOCOL.md - 3d62ae3f931b9798.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/DELIVERY-V11-PROTOCOL.md",
+      "git_blob_oid": "87fc8a67da93132ec0767c5f8550f31e8c08efdc",
+      "bytes": 3897,
+      "note": "sources/source - DELIVERY-V11-PROTOCOL.md - e5a861e68663cafa.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/DELIVERY-V12-PROTOCOL.md",
+      "git_blob_oid": "799f20e2f97c44c50322ba0a2f2aa300d63c4941",
+      "bytes": 4505,
+      "note": "sources/source - DELIVERY-V12-PROTOCOL.md - 00553f472b027dfb.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/DELIVERY-V9-PROTOCOL.md",
+      "git_blob_oid": "bead3e9c7553754684c91d134099f82fb7ed1c11",
+      "bytes": 8401,
+      "note": "sources/source - DELIVERY-V9-PROTOCOL.md - bc39245b1bbbfbce.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/KNOWLEDGE-RUN-PLAN.md",
+      "git_blob_oid": "c9472eccebde86ce297c2ac2cf06c491c3e5f1d3",
+      "bytes": 4627,
+      "note": "sources/source - KNOWLEDGE-RUN-PLAN.md - d937596d5a8f225f.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/README.md",
+      "git_blob_oid": "72769e23e44ca07884fa8c17165168f0a22e413c",
+      "bytes": 5883,
+      "note": "sources/source - README.md - 6b905f13c8c08638.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/RUN-PLAN.md",
+      "git_blob_oid": "9965e20918ce59f8ed9836d8bc5ebc36819150b2",
+      "bytes": 13297,
+      "note": "sources/source - RUN-PLAN.md - a16cc4c05e943052.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/RUNNER.md",
+      "git_blob_oid": "c4f61f12bf5e792a13456867de9dc87e61d0ae03",
+      "bytes": 1437,
+      "note": "sources/source - RUNNER.md - f2cf6f4f91e3283b.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/SCHEMA.md",
+      "git_blob_oid": "834f64dddfdfe590398980ffe7d3fc3687b21c8c",
+      "bytes": 7498,
+      "note": "sources/source - SCHEMA.md - 535bb9433511af52.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/VERIFICATION.md",
+      "git_blob_oid": "d69ac669b15ed01fde0a7f8b272e6f4ca3d53a46",
+      "bytes": 8792,
+      "note": "sources/source - VERIFICATION.md - 0c9a946fbadec51f.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/materials/client.md",
+      "git_blob_oid": "d6d89352be88003ace95b4f8a43433ae8d80344a",
+      "bytes": 788,
+      "note": "sources/source - client.md - ee1797e31fd7e405.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/materials/funding.csv",
+      "git_blob_oid": "164e9bf8ce35a2be890fdb41e085ddf35b6fe0f3",
+      "bytes": 201,
+      "note": "sources/source - funding.csv - 3a4512df5bb4b761.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/materials/term-sheet.md",
+      "git_blob_oid": "98c553219a14b74e08d6fe27e85b8a3da40545fd",
+      "bytes": 764,
+      "note": "sources/source - term-sheet.md - e061827bbebced37.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/rubric.json",
+      "git_blob_oid": "5ffb800543629f0f3a3766339808662320182b89",
+      "bytes": 7910,
+      "note": "sources/source - rubric.json - f65be29172f36f3e.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/task.json",
+      "git_blob_oid": "50b9e6c80863eec194354ed03413bd15948830a6",
+      "bytes": 777,
+      "note": "sources/source - task.json - 97baaee3f4387cc5.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-01/task.md",
+      "git_blob_oid": "6991bcd7b0897fefe009a77668096e0d13f37616",
+      "bytes": 180,
+      "note": "sources/source - task.md - f18ab0059e4f5dba.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/materials/allocation.csv",
+      "git_blob_oid": "b9408af82401793b657789ffea56cf39b2325b90",
+      "bytes": 199,
+      "note": "sources/source - allocation.csv - 987edc8d57ad5586.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/materials/closing-log.md",
+      "git_blob_oid": "94bcb506db34ec26fd7450c5e5418912434adc08",
+      "bytes": 482,
+      "note": "sources/source - closing-log.md - 70614d937b6f8707.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/materials/instructions.md",
+      "git_blob_oid": "480a5ff29a3f59d0cf01e3aac1186c6405452113",
+      "bytes": 815,
+      "note": "sources/source - instructions.md - 51a4a12fab86f6cf.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/rubric.json",
+      "git_blob_oid": "ba35c8f701e5d8166ff479b465c1898ccf3871f6",
+      "bytes": 10118,
+      "note": "sources/source - rubric.json - 52ac09fb3eb04c9b.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/task.json",
+      "git_blob_oid": "ad6e032bd17bc23ef0c62109c80065ef2a3fd6f2",
+      "bytes": 904,
+      "note": "sources/source - task.json - 9094d32b8ba7ea50.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-02/task.md",
+      "git_blob_oid": "ddd7cba0b37f8c63919223a036694cdd457b93e9",
+      "bytes": 103,
+      "note": "sources/source - task.md - 8a07b7ad68c12376.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-03/materials/controller.md",
+      "git_blob_oid": "1155b7519149e9a255e844724c0412aa39e32d61",
+      "bytes": 637,
+      "note": "sources/source - controller.md - 3c187a4713570017.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-03/materials/events.csv",
+      "git_blob_oid": "bd43aa239531e8125b0249c2c4f0273776eb6545",
+      "bytes": 465,
+      "note": "sources/source - events.csv - a8fc0c9dae975a25.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-03/rubric.json",
+      "git_blob_oid": "947463381096adee3fdca0dd63c56d16ab74f51c",
+      "bytes": 6073,
+      "note": "sources/source - rubric.json - 06fe356528c474c4.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-03/task.json",
+      "git_blob_oid": "b31483d332ecaecb40886a2036046130d7ca4c8f",
+      "bytes": 812,
+      "note": "sources/source - task.json - 1747ca7eacc2973a.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-03/task.md",
+      "git_blob_oid": "e90406c2ab3c328d35feda4cb8778498ca6d8328",
+      "bytes": 129,
+      "note": "sources/source - task.md - 9a42086ebea363ab.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-04/materials/draft-report.md",
+      "git_blob_oid": "cb8f4fb08f26fdf576f6b54a13f5b8839fb4b7c0",
+      "bytes": 765,
+      "note": "sources/source - draft-report.md - 3a5097322096f88e.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-04/materials/secretary.md",
+      "git_blob_oid": "3460a7500d3db7c4527a0646275a970c403656a7",
+      "bytes": 583,
+      "note": "sources/source - secretary.md - 16cec0d2bfe47735.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-04/rubric.json",
+      "git_blob_oid": "8f3c23342b73f90348f414e86febc671895706d5",
+      "bytes": 7951,
+      "note": "sources/source - rubric.json - 332044ba164bf12b.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-04/task.json",
+      "git_blob_oid": "737dc22fec85ec790521ee419fad25298d488001",
+      "bytes": 692,
+      "note": "sources/source - task.json - 38ad0875de028361.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-04/task.md",
+      "git_blob_oid": "114952cc321c4266a196d7e458171581d64d7b7c",
+      "bytes": 86,
+      "note": "sources/source - task.md - 9f95989da00a8f62.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-05/materials/junior-memo.md",
+      "git_blob_oid": "a323cb638ed4d80f5bf33d15182baa67315acd68",
+      "bytes": 898,
+      "note": "sources/source - junior-memo.md - 6ec719b5b9c547ac.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-05/materials/partner.md",
+      "git_blob_oid": "ef51002846f3dd4a6d9d2b09fb2e2286bd8e1460",
+      "bytes": 517,
+      "note": "sources/source - partner.md - e455ffa6b3254511.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-05/rubric.json",
+      "git_blob_oid": "81fbb833f245bbf4bd1ae1ce935ac6d9dec0411d",
+      "bytes": 6207,
+      "note": "sources/source - rubric.json - d3835d01f0fa5eb4.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-05/task.json",
+      "git_blob_oid": "10977ed1dd4fc9b6a80ca6769f0c4764716f47ab",
+      "bytes": 933,
+      "note": "sources/source - task.json - eca7b5109f0635cb.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-05/task.md",
+      "git_blob_oid": "2e7dc300fcc281cfd2f9c2f4937a7ac31a9602ad",
+      "bytes": 106,
+      "note": "sources/source - task.md - 00659d1426dcd5a0.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-06/materials/secretary.md",
+      "git_blob_oid": "80256e627dbc1132815c35e22933e6fda9ce318a",
+      "bytes": 803,
+      "note": "sources/source - secretary.md - e6633d700d10dd4b.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-06/materials/vote-tallies.csv",
+      "git_blob_oid": "2b13cb766adbe9caaa94b1644f0603632c76c627",
+      "bytes": 278,
+      "note": "sources/source - vote-tallies.csv - dbfc3283506dbf80.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-06/rubric.json",
+      "git_blob_oid": "d63283632ee041ecde17409f1381cf25b2ba96ac",
+      "bytes": 5339,
+      "note": "sources/source - rubric.json - 7bd5f29de34c3607.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-06/task.json",
+      "git_blob_oid": "5514d8031c6b1a3dd13c866d56989fc1a2a02319",
+      "bytes": 827,
+      "note": "sources/source - task.json - d584495763f7fd3f.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-06/task.md",
+      "git_blob_oid": "5c44a812f430169bf37384c35a5c7467f0d55380",
+      "bytes": 124,
+      "note": "sources/source - task.md - 6dadd2179fc5b15a.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/materials/chair-email.md",
+      "git_blob_oid": "8a87cfde102a8911eee06b71d1f6f52e83768c58",
+      "bytes": 760,
+      "note": "sources/source - chair-email.md - 6f638cd0e8411a31.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/materials/payroll-extract.csv",
+      "git_blob_oid": "4c3dadb7c3269307247b3fa028151ea522b1ce94",
+      "bytes": 277,
+      "note": "sources/source - payroll-extract.csv - 54a3b5fbe6966993.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/materials/secretariat-record.md",
+      "git_blob_oid": "64204db1154772db7766446ad622090451e9430f",
+      "bytes": 973,
+      "note": "sources/source - secretariat-record.md - 1d68d86e350ade37.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/rubric.json",
+      "git_blob_oid": "d6f60276ce6216e640e13154a72eeb8156a166a2",
+      "bytes": 11360,
+      "note": "sources/source - rubric.json - 2dab7c743b770ebd.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/task.json",
+      "git_blob_oid": "0e57151dec16b0f955873d59b3c8a810cf22258f",
+      "bytes": 949,
+      "note": "sources/source - task.json - 9219e1b248e48d88.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-07/task.md",
+      "git_blob_oid": "bf97f04dc6e35c06b68131406e3e6fef7d261af1",
+      "bytes": 387,
+      "note": "sources/source - task.md - fd8755ec4eb43f71.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/materials/accounts-and-minutes.md",
+      "git_blob_oid": "81f2c9b7b3990e523454abeec182a2776474950f",
+      "bytes": 1146,
+      "note": "sources/source - accounts-and-minutes.md - f8444c65deb25a83.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/materials/distribution-ledger.csv",
+      "git_blob_oid": "1d57d309d6da22294d07ef51ec6876bd3bb18247",
+      "bytes": 268,
+      "note": "sources/source - distribution-ledger.csv - 2d9f41e72110fa72.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/materials/treasury-email.md",
+      "git_blob_oid": "9f6d97c40d8310f4c0e889e15e3df91773dcadb0",
+      "bytes": 806,
+      "note": "sources/source - treasury-email.md - 4d5dc7a2a153ca13.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/rubric.json",
+      "git_blob_oid": "1ed86a97b18fbdc974419c29f0ad17b6ebc95dc1",
+      "bytes": 13324,
+      "note": "sources/source - rubric.json - 2190b72a529514b0.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/task.json",
+      "git_blob_oid": "98b021b4e61396c43395577f69ee26eae7d7514f",
+      "bytes": 1004,
+      "note": "sources/source - task.json - ce8d88c96ecb3145.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-08/task.md",
+      "git_blob_oid": "df60d178d0b54cafba4e155ef133c94f7758ae22",
+      "bytes": 360,
+      "note": "sources/source - task.md - 04652d7ee97a4530.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/materials/cap-table.csv",
+      "git_blob_oid": "77d8fccd56203f6a792aa4a023813e9f5ea82a6d",
+      "bytes": 175,
+      "note": "sources/source - cap-table.csv - d79bb4e24a5462bf.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/materials/ceo-instruction.md",
+      "git_blob_oid": "67633972034181f396112abd5dc08e42dd6e5c08",
+      "bytes": 748,
+      "note": "sources/source - ceo-instruction.md - aee2393aac6e5dc6.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/materials/secretary-meeting-file.md",
+      "git_blob_oid": "d5e81a3d9882a6fc2a97a20318354352af17d7ef",
+      "bytes": 1146,
+      "note": "sources/source - secretary-meeting-file.md - b05beb8a7d334b2d.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/rubric.json",
+      "git_blob_oid": "794545c5bbd98c8277d9cf8ee65dd3ce343704e8",
+      "bytes": 10101,
+      "note": "sources/source - rubric.json - 01159e810498baef.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/task.json",
+      "git_blob_oid": "2c5b7bbfb805cfa41cfa36791d19dca75053b052",
+      "bytes": 832,
+      "note": "sources/source - task.json - e00ae81a7f2a5f7d.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-09/task.md",
+      "git_blob_oid": "e1d5dd6db61ca68a6b7c56d3eb9054ba48e57327",
+      "bytes": 374,
+      "note": "sources/source - task.md - df87caf58c81765a.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-10/materials/client.md",
+      "git_blob_oid": "fb80fa31cadb90fdf0ee18e6c4433bce8d9850bb",
+      "bytes": 1379,
+      "note": "sources/source - client.md - 6d755e0a09e65a6f.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-10/materials/workplan.md",
+      "git_blob_oid": "bc3a0112b4065a1f7a5c06bdda91907ff0236a32",
+      "bytes": 1080,
+      "note": "sources/source - workplan.md - 5ab7d6ae543c6043.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-10/rubric.json",
+      "git_blob_oid": "fcc12d76b592a16fb8117b87e7d90a00ab59cfa3",
+      "bytes": 10354,
+      "note": "sources/source - rubric.json - dd651c3b81ca2c9b.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-10/task.json",
+      "git_blob_oid": "2de5ace267d8b66e3215d6f228a7a3de29418925",
+      "bytes": 1202,
+      "note": "sources/source - task.json - 2a0c8f3edf547c19.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-10/task.md",
+      "git_blob_oid": "cc767619fa5caabf78fd9ec30ebf9ae35043979e",
+      "bytes": 359,
+      "note": "sources/source - task.md - c55ecbb6b6131c9f.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-11/materials/client.md",
+      "git_blob_oid": "1dfb514f34b70b1bad3907d95a3ae840d26d813a",
+      "bytes": 1326,
+      "note": "sources/source - client.md - 6a397f49ba63613b.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-11/materials/ledger.csv",
+      "git_blob_oid": "4467c7f128845bb6fc070c87ada7f837d32d3f46",
+      "bytes": 1660,
+      "note": "sources/source - ledger.csv - 4b89a8b5bd3e0c8c.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-11/rubric.json",
+      "git_blob_oid": "a1f5a77444c99b06899e59dd5bae338748afe10a",
+      "bytes": 10454,
+      "note": "sources/source - rubric.json - 4c19ffcdeb876a17.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-11/task.json",
+      "git_blob_oid": "cbdf08e0e1fea39c233307684f8e18590d69b522",
+      "bytes": 1448,
+      "note": "sources/source - task.json - e0879fc006cd959d.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-11/task.md",
+      "git_blob_oid": "f16ead4a32e386250e4058dd850495356adad0a8",
+      "bytes": 296,
+      "note": "sources/source - task.md - 0b532f9b03ddd090.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-12/materials/client.md",
+      "git_blob_oid": "321282d9c061c4891299341dacd315fa01cbab96",
+      "bytes": 1220,
+      "note": "sources/source - client.md - 94aba54d34ae07ee.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-12/materials/term-sheet.md",
+      "git_blob_oid": "f0cb5a8841f0efdc9ce3b0f75e81f3cf36a966fe",
+      "bytes": 1082,
+      "note": "sources/source - term-sheet.md - e7d2a07970110405.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-12/rubric.json",
+      "git_blob_oid": "384acf34f27865de96ccfeac03a59743fee94d32",
+      "bytes": 9183,
+      "note": "sources/source - rubric.json - 715af715868611ae.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-12/task.json",
+      "git_blob_oid": "236fb1aa770362ab0563fd90c42ac0080c9c5f99",
+      "bytes": 1067,
+      "note": "sources/source - task.json - ed39f9a9ccc03d94.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-12/task.md",
+      "git_blob_oid": "bbaf1cce30bc35da47d493f2546a0eeb7e8bec5a",
+      "bytes": 221,
+      "note": "sources/source - task.md - c8ed28c941bab683.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/materials/adviser-note.md",
+      "git_blob_oid": "358543e5ae57c7c1ddf031b7421246a1253c2b4e",
+      "bytes": 460,
+      "note": "sources/source - adviser-note.md - a99a7db8c3d61ce1.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/materials/client.md",
+      "git_blob_oid": "3b3696d99c2b7a6394867372e1cff95070937b72",
+      "bytes": 1016,
+      "note": "sources/source - client.md - a76f653975d07fa5.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/materials/runway.csv",
+      "git_blob_oid": "40271b14b2593342956d3dcc77e9221d63d60ad2",
+      "bytes": 269,
+      "note": "sources/source - runway.csv - 7216e4068435167f.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/rubric.json",
+      "git_blob_oid": "9101f984c5f58cc159578b9b2621c0b241bec0d1",
+      "bytes": 9621,
+      "note": "sources/source - rubric.json - 43975fafeb973cbb.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/task.json",
+      "git_blob_oid": "84c80b483007bc9d8094c7e87cc85e038a076c1a",
+      "bytes": 1258,
+      "note": "sources/source - task.json - 89acd226eeb78313.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-13/task.md",
+      "git_blob_oid": "efd2a149a53bdc7f74277b5b9d3eed8ca648ac61",
+      "bytes": 650,
+      "note": "sources/source - task.md - 43f24f67c741685d.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/materials/client.md",
+      "git_blob_oid": "c4271964c2cb52ac363dd6806deab50228303c22",
+      "bytes": 787,
+      "note": "sources/source - client.md - 9f6ddf3215e4f79c.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/materials/contributions.csv",
+      "git_blob_oid": "eea565e64cc2a8364c55415a6720985d8bd05f27",
+      "bytes": 331,
+      "note": "sources/source - contributions.csv - c4e342b138395fbd.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/materials/terms.md",
+      "git_blob_oid": "c1bb4a71eb91502e7b14b0026cbbfa43362743df",
+      "bytes": 719,
+      "note": "sources/source - terms.md - 516fb07247168019.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/rubric.json",
+      "git_blob_oid": "3a96df5e81c601fbcab16cf4a6de760758bad3b1",
+      "bytes": 10698,
+      "note": "sources/source - rubric.json - d0edd2656952991f.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/task.json",
+      "git_blob_oid": "83461270a975d083bf5297b24fbd164c885c6f00",
+      "bytes": 1073,
+      "note": "sources/source - task.json - a66ee63881c73501.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-14/task.md",
+      "git_blob_oid": "578593503da93606613a462d00e1c89e2b82c8fd",
+      "bytes": 468,
+      "note": "sources/source - task.md - df70582583587560.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/materials/chronology.csv",
+      "git_blob_oid": "bf5489ec7d8365820e77e5672f4801a7fda06c73",
+      "bytes": 400,
+      "note": "sources/source - chronology.csv - 59b5170e098ca79b.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/materials/client.md",
+      "git_blob_oid": "3532373c6fc3851ff6aa79bcfe9d783e76b8ba11",
+      "bytes": 778,
+      "note": "sources/source - client.md - df1af364bcc22d14.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/materials/draft.md",
+      "git_blob_oid": "0d32c27e2d65595597314172781369184ab013f6",
+      "bytes": 576,
+      "note": "sources/source - draft.md - 3fe92e03c63520b7.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/rubric.json",
+      "git_blob_oid": "9424dd056765deea2514c68075c9d3da887544c9",
+      "bytes": 6698,
+      "note": "sources/source - rubric.json - 47e35e96b82fd282.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/task.json",
+      "git_blob_oid": "97982e1f748ef1c0ef859a4b6b363550e3842c00",
+      "bytes": 1123,
+      "note": "sources/source - task.json - efd71cf2a95db7f2.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/drafts/task-15/task.md",
+      "git_blob_oid": "74888aaebc6d56e284347c569c02476ccd08dee2",
+      "bytes": 588,
+      "note": "sources/source - task.md - 726253861330e36e.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/freeze.mjs",
+      "git_blob_oid": "0120157180ff3ca9cb4887f65179815587b15bb6",
+      "bytes": 3058,
+      "note": "sources/source - freeze.mjs - dae9cabacee853a0.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/grade-run.mjs",
+      "git_blob_oid": "0b93ecb03be89d14e10e934ff52ee4b119aaefe8",
+      "bytes": 29437,
+      "note": "sources/source - grade-run.mjs - c3ca624a1d8745d1.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/jev-grade-run.mjs",
+      "git_blob_oid": "64ebfcc74d53552529c9d40cbcb079df45c33a7c",
+      "bytes": 29272,
+      "note": "sources/source - jev-grade-run.mjs - 589724b3f763df3e.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/judge.mjs",
+      "git_blob_oid": "9e433239d2abae6f61a9be9387ab544edc32cca6",
+      "bytes": 9631,
+      "note": "sources/source - judge.mjs - cc69b8c4d4a6120d.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/manifest.json",
+      "git_blob_oid": "b5fcdd1986d10d183c7a307348088506318179ec",
+      "bytes": 23234,
+      "note": "sources/source - manifest.json - 3e1736ada6ba1df2.md",
+      "role": "provenance",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/run.mjs",
+      "git_blob_oid": "e874ba10fb1dac88347dcdfae28eec28dd693579",
+      "bytes": 30745,
+      "note": "sources/source - run.mjs - cd2bccb41d0378ea.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/complex-v1/validate.mjs",
+      "git_blob_oid": "802ab2fa4fb26b1b09df4a70da45827c7a8ca9d5",
+      "bytes": 11720,
+      "note": "sources/source - validate.mjs - bc0c42c1cae3d3f6.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-agent-baseline.json",
+      "git_blob_oid": "ebae2c4834859432e71fb7b775600ff3d9423279",
+      "bytes": 245936,
+      "note": "sources/source - compose-agent-baseline.json - accd66b923113cb0.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-agent-gpt6-luna-baseline.json",
+      "git_blob_oid": "1b8ca872b047e736e2cd3448e2570583694f4443",
+      "bytes": 25920,
+      "note": "sources/source - compose-agent-gpt6-luna-baseline.json - 5a5523acb326dc0a.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-agent.json",
+      "git_blob_oid": "1f9fca50b25f18a9bbc632cd713a67b1ad849213",
+      "bytes": 254350,
+      "note": "sources/source - compose-agent.json - c6a9a2ec03bb537c.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-baseline-rejudge-high-10.json",
+      "git_blob_oid": "efa78eae328abed6c1c837f0bd9108ae35646978",
+      "bytes": 51870,
+      "note": "sources/source - compose-baseline-rejudge-high-10.json - 4e307d2e02b0133c.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-baseline-rejudge-high-2.json",
+      "git_blob_oid": "dd1bda83a1f3b3d97c33bef63ec6b047f45f357a",
+      "bytes": 13253,
+      "note": "sources/source - compose-baseline-rejudge-high-2.json - 355851884cc23618.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-baseline-rejudge-high-4.json",
+      "git_blob_oid": "940ecaaec027e8312a54469bdc52e4003d8bad01",
+      "bytes": 22673,
+      "note": "sources/source - compose-baseline-rejudge-high-4.json - 3a49c0da92dfd371.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-luna-voyage-10.json",
+      "git_blob_oid": "a3d92cac61634774072415eb685c5209f730433c",
+      "bytes": 53326,
+      "note": "sources/source - compose-luna-voyage-10.json - 373ba8f4161ef6af.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-luna-voyage-2.json",
+      "git_blob_oid": "22db884c77eb9e8779c350cb2195fa401f99324b",
+      "bytes": 12743,
+      "note": "sources/source - compose-luna-voyage-2.json - d3d929b6c079a6be.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-luna-voyage-4.json",
+      "git_blob_oid": "baecdfddd9b46d0fa055b5c174f0b6ee84534e8f",
+      "bytes": 23114,
+      "note": "sources/source - compose-luna-voyage-4.json - 340eff35f9f57bed.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-luna-voyage-50.json",
+      "git_blob_oid": "754dec25cae889e49bac97561718b5318715cfe1",
+      "bytes": 67506,
+      "note": "sources/source - compose-luna-voyage-50.json - 9c7ad67bf68fe335.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-rejudge-v3-10.json",
+      "git_blob_oid": "0aaf8fe53827aff110221edf70cbd6f4796f48c7",
+      "bytes": 52228,
+      "note": "sources/source - compose-rejudge-v3-10.json - 31b9549dfc136093.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-rejudge-v3-2.json",
+      "git_blob_oid": "3ca10f155a76c7833435052b01e3953984d7aa0a",
+      "bytes": 13382,
+      "note": "sources/source - compose-rejudge-v3-2.json - 43d79977c554f432.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-rejudge-v3-4.json",
+      "git_blob_oid": "6dd0fbe838f878a361127b8a9b299ef900b9f357",
+      "bytes": 22847,
+      "note": "sources/source - compose-rejudge-v3-4.json - ae9980d2ea306d47.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-results-rlm.json",
+      "git_blob_oid": "853e654b4ac6184298720dda3266f01c4527fe1c",
+      "bytes": 78615,
+      "note": "sources/source - compose-results-rlm.json - 04e2442ca3de2a92.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-results.json",
+      "git_blob_oid": "a2a4fb8f77c086d56edd809798e7687fd13df01a",
+      "bytes": 70509,
+      "note": "sources/source - compose-results.json - 9c88ca10868dc353.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-10.json",
+      "git_blob_oid": "dcf318d890ad104d49616881552d7941d02a7bcb",
+      "bytes": 71984,
+      "note": "sources/source - compose-tuned-10.json - 3a0f3e7d1a8f808f.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-2.json",
+      "git_blob_oid": "d2386dc943e52fb18302b61bb45d5434d82911f7",
+      "bytes": 18300,
+      "note": "sources/source - compose-tuned-2.json - 64de0d42ba895ccf.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-4.json",
+      "git_blob_oid": "ffd625370281d93c66e8bc7d8bdf320ae77101a1",
+      "bytes": 31448,
+      "note": "sources/source - compose-tuned-4.json - b175c19fcc7a85d5.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-high-10.json",
+      "git_blob_oid": "437602591f5cd118fe8e00834b875fb1800b1be3",
+      "bytes": 69919,
+      "note": "sources/source - compose-tuned-rejudge-high-10.json - 4d612d504be38fe8.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-high-2.json",
+      "git_blob_oid": "329be475b361b3e51cff0e81cef5b6bd5a6fef1b",
+      "bytes": 18904,
+      "note": "sources/source - compose-tuned-rejudge-high-2.json - 1c8bbd32e0761aae.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-high-4.json",
+      "git_blob_oid": "e008cde759169db08bec97d4e3f0196abd0607e1",
+      "bytes": 30998,
+      "note": "sources/source - compose-tuned-rejudge-high-4.json - c4a7b08817333ceb.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-v3-10.json",
+      "git_blob_oid": "a31664c1be2bf665ad7191a1db2307a5d90ac13c",
+      "bytes": 71182,
+      "note": "sources/source - compose-tuned-rejudge-v3-10.json - 1a96e2ae55080d35.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-v3-2.json",
+      "git_blob_oid": "a69b0c69c2990583ad80eb7e869b7be6ea238930",
+      "bytes": 18998,
+      "note": "sources/source - compose-tuned-rejudge-v3-2.json - d4be29017100c6fe.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose-tuned-rejudge-v3-4.json",
+      "git_blob_oid": "bbc8c6bd392769f9ad1e56f3a26f6d45adfb260b",
+      "bytes": 30953,
+      "note": "sources/source - compose-tuned-rejudge-v3-4.json - 1e1e5be259c0a068.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/compose.mjs",
+      "git_blob_oid": "c4e4565ed27c5b0a6623dd210df7274ea6b60042",
+      "bytes": 22024,
+      "note": "sources/source - compose.mjs - b21ecbcd706dea74.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/gold.json",
+      "git_blob_oid": "bd875fb03809221f88c4f137a818bc2b18ccadea",
+      "bytes": 24292,
+      "note": "sources/source - gold.json - 91d573bd3ac84f61.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/grading-evidence.mjs",
+      "git_blob_oid": "0be1561c3673cd22d129cf5a2928883f44a292f4",
+      "bytes": 97391,
+      "note": "sources/source - grading-evidence.mjs - c3dada2dd2270439.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/harvey-bridge.py",
+      "git_blob_oid": "96dede0a0bdc9207dd3cdc376f17dc4fe7ce0884",
+      "bytes": 40351,
+      "note": "sources/source - harvey-bridge.py - 9db355e35355f4c6.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/harvey-harness.mjs",
+      "git_blob_oid": "71b31b3a13a9b6a083e2010c36c366ad103f160b",
+      "bytes": 21684,
+      "note": "sources/source - harvey-harness.mjs - bad0fafa8fcd8423.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/harvey-modal-adapter.py",
+      "git_blob_oid": "7ec67f99d93b98bef8a33d9106683d9d50c926b9",
+      "bytes": 11342,
+      "note": "sources/source - harvey-modal-adapter.py - 58ae0f7ead3a1462.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/judge-v4.mjs",
+      "git_blob_oid": "90d7d84df15afda37ac6b26d96ab0d1cc5c5fea0",
+      "bytes": 16781,
+      "note": "sources/source - judge-v4.mjs - 8e4c25cdc1c8f7c5.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/native-capability-proof-20261003/evidence.json",
+      "git_blob_oid": "4ef789b99f43b76091e1fb6b0ebe561bd734abd4",
+      "bytes": 97612,
+      "note": "sources/source - evidence.json - bcf1e375ad5e02ee.md",
+      "role": "provenance",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/GRADING.md",
+      "git_blob_oid": "54855204f08959884a48e7b23dfbc1559a3f4a96",
+      "bytes": 11204,
+      "note": "sources/source - GRADING.md - 9d64d9ed8396ec1d.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/LUNA_PROTOCOL.md",
+      "git_blob_oid": "57ace62459316233e2e152258bb96c494a255ec5",
+      "bytes": 10431,
+      "note": "sources/source - LUNA_PROTOCOL.md - 6e4539e5f78d32b3.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/PROTOCOL.md",
+      "git_blob_oid": "ba84a766fc327cdcef9f9e5642917e00361e540d",
+      "bytes": 9032,
+      "note": "sources/source - PROTOCOL.md - b233658cbc2dd105.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/README.md",
+      "git_blob_oid": "ddc155170599a352aaf1c6e509a55e9dc0673c7c",
+      "bytes": 23791,
+      "note": "sources/source - README.md - fdbfff427a361e3d.md",
+      "role": "documentation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/budget-verification.mjs",
+      "git_blob_oid": "888119447bb87dca2abc1e1bc9305ee614c61421",
+      "bytes": 3807,
+      "note": "sources/source - budget-verification.mjs - efb96d79c4cf8de3.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/cleanup.mjs",
+      "git_blob_oid": "dd9f6a17fade7fa49b5b66ad45b97755280f3d1a",
+      "bytes": 2114,
+      "note": "sources/source - cleanup.mjs - 012ed127c4723a3d.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/context-continuation.test.mjs",
+      "git_blob_oid": "678b8bb2aa33422368db2c92384b5d1de9efce71",
+      "bytes": 16982,
+      "note": "sources/source - context-continuation.test.mjs - ec2ee0274dcbb95a.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/contract-luna.test.mjs",
+      "git_blob_oid": "75f9624fbab9643c6b894c0afc72bb26376ceb11",
+      "bytes": 43543,
+      "note": "sources/source - contract-luna.test.mjs - 70f0ec2808c35ba6.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/contract.mjs",
+      "git_blob_oid": "6ed2dc240c9cade1885e685d3c1de4d07a88d60d",
+      "bytes": 18301,
+      "note": "sources/source - contract.mjs - 215119445297e552.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-connected-runtime.test.mjs",
+      "git_blob_oid": "f027ce8a86298cd178cf7576a2f2f85f95c3328c",
+      "bytes": 45269,
+      "note": "sources/source - coverage-connected-runtime.test.mjs - 5afb5e7d3986f289.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-connected-startup.test.mjs",
+      "git_blob_oid": "d1a8af5a548533903c4820322171a0f467daf54b",
+      "bytes": 7222,
+      "note": "sources/source - coverage-connected-startup.test.mjs - b6a26beb1f50c9e2.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-critical-path.test.mjs",
+      "git_blob_oid": "07577b756979f9257891fc96677a5c515687a721",
+      "bytes": 2783,
+      "note": "sources/source - coverage-critical-path.test.mjs - 87db5bd34c1e07d3.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-delegation-order.test.mjs",
+      "git_blob_oid": "b1928eab2438bf9d14afcac0da82099cee00f128",
+      "bytes": 1201,
+      "note": "sources/source - coverage-delegation-order.test.mjs - de6a618ab6e147b6.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-documents/materials/connected-runtime.txt",
+      "git_blob_oid": "f6e1abcc9926f220590058ec7c6debdfb77bdc52",
+      "bytes": 12032,
+      "note": "sources/source - connected-runtime.txt - 9054e032709788e1.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-documents/materials/coverage-plan.md",
+      "git_blob_oid": "bb9e3b6b68077c39a100f07531c6c3c1b22ee017",
+      "bytes": 23120,
+      "note": "sources/source - coverage-plan.md - 08e9962a22aa3146.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-documents/materials/create-fixtures.txt",
+      "git_blob_oid": "adc1e6c3a29a50a9a35829fe0d9c2d2aeeda4539",
+      "bytes": 3006,
+      "note": "sources/source - create-fixtures.txt - 2ebd7e9cffc8ace1.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-documents/rubric.json",
+      "git_blob_oid": "ec1cc942d7ce994122e56c10eb31f6707bd5b6ff",
+      "bytes": 999,
+      "note": "sources/source - rubric.json - 94e24e563f66099d.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-documents/task.json",
+      "git_blob_oid": "f184b7d5c16026be8d048116568d17032c6f42d1",
+      "bytes": 6894,
+      "note": "sources/source - task.json - 8cb43ed1633c8319.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-execution-paths.test.mjs",
+      "git_blob_oid": "b0fda117a10236027deba59fe7b7bbd1238501cd",
+      "bytes": 2901,
+      "note": "sources/source - coverage-execution-paths.test.mjs - 9606f86d8e8d9386.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-native-batching.test.mjs",
+      "git_blob_oid": "6b053138ce65c03386681e208c445e3df9987d99",
+      "bytes": 2036,
+      "note": "sources/source - coverage-native-batching.test.mjs - d7ec3dc5f45e4371.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-order.test.mjs",
+      "git_blob_oid": "ddba412847b21630e87e6b1c76880936e06861d9",
+      "bytes": 1512,
+      "note": "sources/source - coverage-order.test.mjs - fe992d40921b82da.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-response-order.test.mjs",
+      "git_blob_oid": "a5f1f0546a092061b0e0bfedbcd1cb53a65df189",
+      "bytes": 2299,
+      "note": "sources/source - coverage-response-order.test.mjs - 888e027f0e8d2468.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-verification.mjs",
+      "git_blob_oid": "ed069adace3c40d070fbc82f4bb02543b3b94e49",
+      "bytes": 9103,
+      "note": "sources/source - coverage-verification.mjs - 4ae02ce2de8ea8e4.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage-verification.test.mjs",
+      "git_blob_oid": "43c4b035bad8efa915da31affd02736b641b7253",
+      "bytes": 4691,
+      "note": "sources/source - coverage-verification.test.mjs - f5dc9916e4693829.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage/materials/coverage-plan.md",
+      "git_blob_oid": "a5fc82e2747235d06c18b4688e637934c68c1c0c",
+      "bytes": 4825,
+      "note": "sources/source - coverage-plan.md - 9b0fc101c0c1f1fe.md",
+      "role": "material",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage/rubric.json",
+      "git_blob_oid": "030516fbb1a2cf01e56c6f8195872b0900e6350b",
+      "bytes": 828,
+      "note": "sources/source - rubric.json - 29cdffb694ab6254.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/coverage/task.json",
+      "git_blob_oid": "d3bf94e33428845a1e62716ef9c392bdc2b75992",
+      "bytes": 1662,
+      "note": "sources/source - task.json - d65c03ea3fea10ce.md",
+      "role": "task",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/document-coverage.test.mjs",
+      "git_blob_oid": "64279a5c5eedc67cc9883063489c0d37f8409fa5",
+      "bytes": 4876,
+      "note": "sources/source - document-coverage.test.mjs - e49c07f4ced6d691.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/document-validation-policy.test.mjs",
+      "git_blob_oid": "6c5dd28b029a24e3448ed55ffd4c6b91435b4260",
+      "bytes": 9820,
+      "note": "sources/source - document-validation-policy.test.mjs - a4726711eb9bc6d7.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/grading-pair.test.mjs",
+      "git_blob_oid": "4f343ffc364a82bf07e67100e7557261800f0d10",
+      "bytes": 48063,
+      "note": "sources/source - grading-pair.test.mjs - 3c4fdcf602b81777.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/grading.mjs",
+      "git_blob_oid": "ad10788fc5868e5d1abb16e11565bbdaee59b859",
+      "bytes": 42667,
+      "note": "sources/source - grading.mjs - 9fc767159871a7a1.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/grading.test.mjs",
+      "git_blob_oid": "eabc10ed746165b81181cf21d5fe182c9ac4893d",
+      "bytes": 36040,
+      "note": "sources/source - grading.test.mjs - c371b1c166b3bf25.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/harvey-worker.py",
+      "git_blob_oid": "54cd285ffb6fb2f9b4fca8813d7767741febf394",
+      "bytes": 39512,
+      "note": "sources/source - harvey-worker.py - a0381b30797d0ff5.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/harvey-worker.test.py",
+      "git_blob_oid": "ad23afaa6bbe3837f5e946e4d3fb89227b23b169",
+      "bytes": 4929,
+      "note": "sources/source - harvey-worker.test.py - cc3c13aaa8a92197.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/io.mjs",
+      "git_blob_oid": "55d116bc2b539792f2d6bdb5c09c25ee194a9307",
+      "bytes": 2241,
+      "note": "sources/source - io.mjs - 6da001f64844a328.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/jev-grade-run.mjs",
+      "git_blob_oid": "f93736b617257979ccd7eb2d80f2029b3d8504f0",
+      "bytes": 13024,
+      "note": "sources/source - jev-grade-run.mjs - 17029e823c492a29.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/live.mjs",
+      "git_blob_oid": "3e344db181b8af29323d5d9a3f3f76ffc02ef65d",
+      "bytes": 39538,
+      "note": "sources/source - live.mjs - 3f5903b568962dcd.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/luna-pair.test.mjs",
+      "git_blob_oid": "9517b48b8a5a5d0e71715c781765edf41c17feae",
+      "bytes": 4763,
+      "note": "sources/source - luna-pair.test.mjs - 8ebb9239113ce333.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/luna-transport.test.mjs",
+      "git_blob_oid": "7121170dd33c74b215678657aa9a5b9c18f884b6",
+      "bytes": 25109,
+      "note": "sources/source - luna-transport.test.mjs - 8c9ae266124dcd1b.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/model-budget.mjs",
+      "git_blob_oid": "80c45dde37539d05b72d6dda8bcfa5e6d637e942",
+      "bytes": 20247,
+      "note": "sources/source - model-budget.mjs - a4444d532bbbc7ac.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/model-budget.test.mjs",
+      "git_blob_oid": "5b82c48391792fbf6e2e6a6e2816cfd9eee2f8f6",
+      "bytes": 43160,
+      "note": "sources/source - model-budget.test.mjs - b0fe7083a30ff728.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/native.mjs",
+      "git_blob_oid": "59a43cf23bf6f5baf515c697178acc9e860cfc76",
+      "bytes": 27558,
+      "note": "sources/source - native.mjs - 934c8efa37f779bf.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/offline-guard.mjs",
+      "git_blob_oid": "3eb1ff4042f96482e11815df49122f485cf32b72",
+      "bytes": 391,
+      "note": "sources/source - offline-guard.mjs - 400a4e7068174fbe.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/prepare.mjs",
+      "git_blob_oid": "e419a712dffeddfc0879fa53fb0347adb9d07c2e",
+      "bytes": 16201,
+      "note": "sources/source - prepare.mjs - 2280e26cfd3e23c7.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/provision-stage.test.mjs",
+      "git_blob_oid": "28ae8b9f025d66fb297528e9ff7ef5982a9620c6",
+      "bytes": 16604,
+      "note": "sources/source - provision-stage.test.mjs - 76df74c3c294249d.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/runner.mjs",
+      "git_blob_oid": "aeee8b9413e34044606ba2b733e99bcb29ba0125",
+      "bytes": 10888,
+      "note": "sources/source - runner.mjs - a084d298cf4c9662.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/runner.test.mjs",
+      "git_blob_oid": "2c3c9105552676b918c84623290a788b4af08a93",
+      "bytes": 28810,
+      "note": "sources/source - runner.test.mjs - aa9f66c7bb26a058.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/startup.test.mjs",
+      "git_blob_oid": "655dd9ff412dc3d5bba6572b8ab11f4e3bd51294",
+      "bytes": 27830,
+      "note": "sources/source - startup.test.mjs - cdbd7d57c693ca1a.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/tasks.mjs",
+      "git_blob_oid": "dca014f1daf7b908e44e1ade885c6ad910a880bb",
+      "bytes": 8514,
+      "note": "sources/source - tasks.mjs - 0103c59fa4fff1cf.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/validate-native.test.mjs",
+      "git_blob_oid": "5a045498c8dbbb495ab01355f084f9f135c5419f",
+      "bytes": 27814,
+      "note": "sources/source - validate-native.test.mjs - a3f0dde5246c5548.md",
+      "role": "test",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/opulent2-fixed/validate.mjs",
+      "git_blob_oid": "0fd885c40093bb205ecd31df9f724c51f29742e4",
+      "bytes": 28306,
+      "note": "sources/source - validate.mjs - 818754a598789fc3.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/rejudge.mjs",
+      "git_blob_oid": "c45466fb86ce4a466cc57eeb083aabaf155ad3f7",
+      "bytes": 25839,
+      "note": "sources/source - rejudge.mjs - 7184f733ae50742f.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results.json",
+      "git_blob_oid": "9de096fe739d494228ffbf1fd1289a81f037eca2",
+      "bytes": 72849,
+      "note": "sources/source - results.json - fa8be3fffd9911b6.md",
+      "role": "result",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-capy-v1-five-task-20261004-02/comparison.json",
+      "git_blob_oid": "ac82e0b26399767d7e17d6cda1b4310bba91727d",
+      "bytes": 51174,
+      "note": "sources/source - comparison.json - d5604773e1ec28d6.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/alignment-disagreements.csv",
+      "git_blob_oid": "e5a358ebe2fbe4bae9f2ce951f0f954d3fe23ca9",
+      "bytes": 12227,
+      "note": "sources/source - alignment-disagreements.csv - 5b47738ce36b6984.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/comparison-independent.png",
+      "git_blob_oid": "75ce67a9440292cafe09c9e5d6be2d161d99b443",
+      "bytes": 234309,
+      "note": "sources/source - comparison-independent.png - e6ac0a1c601cbcff.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/comparison-independent.svg",
+      "git_blob_oid": "448595739fa96c3346e8a35f8d52d34f6993a9ed",
+      "bytes": 139885,
+      "note": "sources/source - comparison-independent.svg - 32af4fc2ffcecebf.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/comparison-partial-jev.png",
+      "git_blob_oid": "a8e97173fa8487af890694e0f7c648fd7b5cff69",
+      "bytes": 223703,
+      "note": "sources/source - comparison-partial-jev.png - 0254b621558344ae.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/comparison-partial-jev.svg",
+      "git_blob_oid": "d757f99bad57a7389c39305773a74ba348becdbd",
+      "bytes": 137597,
+      "note": "sources/source - comparison-partial-jev.svg - 9c3b7daf50b8a9af.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/independent-paired-scores.csv",
+      "git_blob_oid": "b5ebc4a2f05bc7fbb010e532cd857d150627d5af",
+      "bytes": 651,
+      "note": "sources/source - independent-paired-scores.csv - 348b922ea586e5db.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/independent-trimmed-scores.csv",
+      "git_blob_oid": "a2fa6406eb15a61e87c252ff823a24c8a8f790e6",
+      "bytes": 391,
+      "note": "sources/source - independent-trimmed-scores.csv - 63f451e9ae8746fe.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/paired-scores.csv",
+      "git_blob_oid": "a7496b13df17d764d333e573b48a165aad2b8300",
+      "bytes": 663,
+      "note": "sources/source - paired-scores.csv - 1d01c7957878b390.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/resources-all-attempts.csv",
+      "git_blob_oid": "924eecac3361bcfa3b99750f210b2a96b0eb9b5d",
+      "bytes": 2333,
+      "note": "sources/source - resources-all-attempts.csv - 569f96f97d7af5d6.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/summary.json",
+      "git_blob_oid": "b8175d8a4fe92d201701a5f1ac1659469b6ae584",
+      "bytes": 25622,
+      "note": "sources/source - summary.json - 8cf8af49637f826f.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-capability-v71-partial-20261003/trimmed-scores.csv",
+      "git_blob_oid": "ad62b958130f6f58b28bf0964993561fcc39a8de",
+      "bytes": 546,
+      "note": "sources/source - trimmed-scores.csv - 52bbcad68579f98c.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/alignment-disagreements.csv",
+      "git_blob_oid": "b50c41506aeee966cdecaa156593ab7b9eae9271",
+      "bytes": 11197,
+      "note": "sources/source - alignment-disagreements.csv - 16ab5356a6988a32.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/comparison-corrected.png",
+      "git_blob_oid": "68036c37db9deb86760653d1e6a5cbcd841c17c5",
+      "bytes": 223374,
+      "note": "sources/source - comparison-corrected.png - 46d263ed6d2d0ae8.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/comparison-corrected.svg",
+      "git_blob_oid": "1b21282ff91d45ca807868f18f661b3ecf330a31",
+      "bytes": 130526,
+      "note": "sources/source - comparison-corrected.svg - 7cf2443bcd9b3601.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/comparison-independent.png",
+      "git_blob_oid": "89bad5e0f290f3fa723dae0aa9089fae9636d1c8",
+      "bytes": 230377,
+      "note": "sources/source - comparison-independent.png - d8a17a79da428d41.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/comparison-independent.svg",
+      "git_blob_oid": "96304075b6e1be6fa78f4ac84b1cbc458cccb1cc",
+      "bytes": 132092,
+      "note": "sources/source - comparison-independent.svg - 1484cff7dec9838a.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/independent-paired-scores.csv",
+      "git_blob_oid": "15b5df60cabf258e8b12b9e777a083561ac47c37",
+      "bytes": 694,
+      "note": "sources/source - independent-paired-scores.csv - 59429b7a62a8dd35.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/independent-trimmed-scores.csv",
+      "git_blob_oid": "86d54333520e39b4925b5dffa391f3b94a82b4d0",
+      "bytes": 455,
+      "note": "sources/source - independent-trimmed-scores.csv - f505669fba1997b5.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/manifest.json",
+      "git_blob_oid": "98c3ec8e362d88df5f683658af140529de3dd16e",
+      "bytes": 1192,
+      "note": "sources/source - manifest.json - 3d6b070c8022cd19.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/paired-scores.csv",
+      "git_blob_oid": "21966bc48ee510e5d9b237627f73e7d52f8c130f",
+      "bytes": 721,
+      "note": "sources/source - paired-scores.csv - ff0c0154b8809de3.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/resources.csv",
+      "git_blob_oid": "e4cd94236d5948979e7e6396aec728052198d454",
+      "bytes": 1714,
+      "note": "sources/source - resources.csv - 8f3470678ef4716f.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/summary.json",
+      "git_blob_oid": "8ae4687feb4e6ae57b8a7ce10a96334cf2d918da",
+      "bytes": 76550,
+      "note": "sources/source - summary.json - 02e5f47e0c492fd6.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/results/native-mimo-v26-pro-five-20261003/trimmed-scores.csv",
+      "git_blob_oid": "47a9c461971ca2d8e56f573860617b4f85496f8c",
+      "bytes": 589,
+      "note": "sources/source - trimmed-scores.csv - dd316905de01a597.md",
+      "role": "publication",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/retrieval-diagnostics.mjs",
+      "git_blob_oid": "03b23fdb37e571b24aba870d8008e497f84973f9",
+      "bytes": 11994,
+      "note": "sources/source - retrieval-diagnostics.mjs - d8a10baa667903a5.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/rubrics-v4.json",
+      "git_blob_oid": "e88a021158b8863c2c011a00d45bc820ac413111",
+      "bytes": 83756,
+      "note": "sources/source - rubrics-v4.json - 59b1a8d16e2fbec7.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/rubrics-v5.json",
+      "git_blob_oid": "32c38088a548bd196c3347444dca12a009863a92",
+      "bytes": 93203,
+      "note": "sources/source - rubrics-v5.json - 44119479cdd36868.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/rubrics-v6.json",
+      "git_blob_oid": "5b312a414d38773b5b6e3f7636ddb50a29f9e4b9",
+      "bytes": 102728,
+      "note": "sources/source - rubrics-v6.json - 8bae23a30048fad5.md",
+      "role": "sealed-grading",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/run.mjs",
+      "git_blob_oid": "636140987a03a2c8e4b6e3fafbb13264782f8ee2",
+      "bytes": 5071,
+      "note": "sources/source - run.mjs - ae0625c46eedacaf.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "eval/scoring.mjs",
+      "git_blob_oid": "bf252378fc906efd4afa7e73adcd21bcda2951d9",
+      "bytes": 489,
+      "note": "sources/source - scoring.mjs - f3e5e70b42a3c5ca.md",
+      "role": "implementation",
+      "audience": "evaluation-only"
+    },
+    {
+      "path": "projections/data-grid/README.md",
+      "git_blob_oid": "1f3b803bb16fa1229c592725594821e3b26ae9c3",
+      "bytes": 926,
+      "note": "sources/source - README.md - 0f7013bc25174767.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/CAPY-LEAN-DESIGN.md",
+      "git_blob_oid": "416ee8ae054dfc0e8106cd61bab4f75307f33317",
+      "bytes": 8127,
+      "note": "sources/source - CAPY-LEAN-DESIGN.md - d5681efa83932ab7.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/CONTRACT.md",
+      "git_blob_oid": "26b97dfc234b285277e6ccdba643aba245ab83ae",
+      "bytes": 2994,
+      "note": "sources/source - CONTRACT.md - 214e956003f129e9.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/KNOWLEDGE-CAPABILITIES.md",
+      "git_blob_oid": "50266d5f8be70baa6f7e73e1a889b29f596273aa",
+      "bytes": 16189,
+      "note": "sources/source - KNOWLEDGE-CAPABILITIES.md - dcac1e086dc40051.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/PROFESSIONAL-INSTRUCTIONS.md",
+      "git_blob_oid": "d89db090ad0f6af57a0dd9e0f2a4ced089053adc",
+      "bytes": 8900,
+      "note": "sources/source - PROFESSIONAL-INSTRUCTIONS.md - 816510a272db379f.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/README.md",
+      "git_blob_oid": "7a399209518d55207b4f5fb2e5dfd81e27044fb9",
+      "bytes": 17635,
+      "note": "sources/source - README.md - 5891ec7eadfb449e.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/REFERENCE-AUDIT.md",
+      "git_blob_oid": "535d32e07dfadd7095fb4be0fa45ab651c7d2744",
+      "bytes": 8357,
+      "note": "sources/source - REFERENCE-AUDIT.md - 2e8419b4e157d83e.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/RESOURCES.md",
+      "git_blob_oid": "bfcadd335ab23020658a0b212856e2109754820b",
+      "bytes": 3982,
+      "note": "sources/source - RESOURCES.md - a52fdc8891c19a77.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/RLM-HANDOFF.md",
+      "git_blob_oid": "386465e11cfca8a97d6264c11a6fa9c8364319dc",
+      "bytes": 18899,
+      "note": "sources/source - RLM-HANDOFF.md - 781f20f0ba109e7e.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/RLM.md",
+      "git_blob_oid": "020c20e253d4079e6440b579d3fbcaa1321dbd03",
+      "bytes": 6447,
+      "note": "sources/source - RLM.md - 0a0748507b76fe7a.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/browser/README.md",
+      "git_blob_oid": "b643f430a04409a96fba3eb3540a370154924f8c",
+      "bytes": 5187,
+      "note": "sources/source - README.md - 2c9d3056a2bd9741.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/PROVENANCE-OPULENT-FULL-TOOLS-SKILLS.md",
+      "git_blob_oid": "b2af242b9549188004e80746f8b35d67b28a48fa",
+      "bytes": 3035,
+      "note": "sources/source - PROVENANCE-OPULENT-FULL-TOOLS-SKILLS.md - f7f5aae39661af5c.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/PROVENANCE-OPULENT-FULL-TOOLS.md",
+      "git_blob_oid": "726b56c6133b9041b6b81fd5bced9c6942d74dda",
+      "bytes": 3633,
+      "note": "sources/source - PROVENANCE-OPULENT-FULL-TOOLS.md - cb56525c902739d0.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/PROVENANCE-OPULENT2-DOCUMENT-TOOLS.md",
+      "git_blob_oid": "142eb3a675ce2b7c53c78c6d41fb13955c0900d2",
+      "bytes": 17284,
+      "note": "sources/source - PROVENANCE-OPULENT2-DOCUMENT-TOOLS.md - 1965cdbfc1f9530b.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/PROVENANCE-OPULENT2-MACHINE.md",
+      "git_blob_oid": "d1ad9749999d5ce79604434b603d7a9deb1b7033",
+      "bytes": 6906,
+      "note": "sources/source - PROVENANCE-OPULENT2-MACHINE.md - 4fabeebe1e564c6f.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/PROVENANCE.md",
+      "git_blob_oid": "8e13f517227d1ca87a2f36679f9dd27869d2d3ef",
+      "bytes": 2433,
+      "note": "sources/source - PROVENANCE.md - b25ac88f79c6b0ba.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/computer/README.md",
+      "git_blob_oid": "eb913b19812637ffee8ba771d0f207187db6eee5",
+      "bytes": 15445,
+      "note": "sources/source - README.md - 89a128faaea0247e.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/base-v1.md",
+      "git_blob_oid": "4e09d4f66fe927727683195ee7a9eca3ae139f92",
+      "bytes": 24542,
+      "note": "sources/source - base-v1.md - 58a93cebbe9761c3.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/capy-v1/README.md",
+      "git_blob_oid": "0335eae2827590e5c8d58486c9929d3a77ed4f7e",
+      "bytes": 2334,
+      "note": "sources/source - README.md - 641e7714c228fbbb.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/capy-v1/source-system-prompt.md",
+      "git_blob_oid": "d09d8f5e43bd0e7b5a8db7d22edcac5ba6e07e6e",
+      "bytes": 74574,
+      "note": "sources/source - source-system-prompt.md - 2a5f524d52aea647.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/knowledge-v3.md",
+      "git_blob_oid": "487b7fe5049604bcc88e20258cdce4ca44da50c4",
+      "bytes": 8740,
+      "note": "sources/source - knowledge-v3.md - d67a98e017016f07.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-capability-v7.md",
+      "git_blob_oid": "f99ce7c86a79796dd4bdd9b03bb70da3c6cf7612",
+      "bytes": 7460,
+      "note": "sources/source - opulent-capability-v7.md - 30fb14c3c5a040b9.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-capability-v8.md",
+      "git_blob_oid": "b550a670f28ba0e53803d95a05339ff0cef2e2fd",
+      "bytes": 18854,
+      "note": "sources/source - opulent-capability-v8.md - a42cccbae5cd86ba.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-context-v6.md",
+      "git_blob_oid": "c3138d999ac9c10123669f3ff2da4dc2b2d1cfb1",
+      "bytes": 6011,
+      "note": "sources/source - opulent-context-v6.md - b78b763965558829.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-delivery-v10.md",
+      "git_blob_oid": "543cd7165d1127d8744f7cde974c6ef97da2a06d",
+      "bytes": 5881,
+      "note": "sources/source - opulent-delivery-v10.md - e99aec3d31de261b.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-delivery-v11.md",
+      "git_blob_oid": "08b81e3d4e373c14be2742212ddeba5f462f5a29",
+      "bytes": 1062,
+      "note": "sources/source - opulent-delivery-v11.md - ad0803c2b8667a06.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-delivery-v12.md",
+      "git_blob_oid": "7b8921a57a463a9b3fd6e7a83df3147d227561ef",
+      "bytes": 2477,
+      "note": "sources/source - opulent-delivery-v12.md - 4111de152e8df150.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-delivery-v9.md",
+      "git_blob_oid": "14bc2794146a0122ac8c18b6829fba811ac2de83",
+      "bytes": 13112,
+      "note": "sources/source - opulent-delivery-v9.md - 57ad80b4d81023c1.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-rlm-unrestricted-v5.md",
+      "git_blob_oid": "52ec47788e36142a49437925c87ad48a7219fbf4",
+      "bytes": 1697,
+      "note": "sources/source - opulent-rlm-unrestricted-v5.md - b3e48241da569e89.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent-rlm-v4.md",
+      "git_blob_oid": "733dca47d93a7f1d3aa963031874e1791b4d99f5",
+      "bytes": 1893,
+      "note": "sources/source - opulent-rlm-v4.md - 9ab102357ab575e4.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent2-fixed-v1.md",
+      "git_blob_oid": "5f148ea8bd57ded2e11dca0312f8d7ae616dc0b5",
+      "bytes": 7121,
+      "note": "sources/source - opulent2-fixed-v1.md - 5280a1df5a4c5a0d.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/opulent2-reference-update-v1.md",
+      "git_blob_oid": "1f4a9b30533cc5bd0811c21d67efe6d7f97f9459",
+      "bytes": 7861,
+      "note": "sources/source - opulent2-reference-update-v1.md - ce72045f9a78fabb.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/prepared-v2.md",
+      "git_blob_oid": "0931c2c4a4c1f56d783ecc1eed4fe11c2fc8b65f",
+      "bytes": 2883,
+      "note": "sources/source - prepared-v2.md - c424de545798e697.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/compatibility.md",
+      "git_blob_oid": "b80e88e9f8baf10c3f7a3c49be3949b3c32cf39e",
+      "bytes": 13222,
+      "note": "sources/source - compatibility.md - 532d05a8d80603a5.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/capy-initial.md",
+      "git_blob_oid": "d154d594e1e196765a28a04aefb1475ae440f230",
+      "bytes": 49054,
+      "note": "sources/source - capy-initial.md - 255113200c70a8ea.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/capy-oct1.md",
+      "git_blob_oid": "fc699911d0d90e0b3d8e6111f80aa9aa23c98bc3",
+      "bytes": 58229,
+      "note": "sources/source - capy-oct1.md - 37dbe9f3adadb3ab.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/devin-initial.md",
+      "git_blob_oid": "e1d1066f0605892c2d9bba048f3ebee060d27ecb",
+      "bytes": 57923,
+      "note": "sources/source - devin-initial.md - f5057155cd7b9547.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/prime-core.md",
+      "git_blob_oid": "a7b3d3733881725b064f8028cc40472e5483eb86",
+      "bytes": 3419,
+      "note": "sources/source - prime-core.md - 4cc9a4ed0f1e75a5.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/prime-opinionated.md",
+      "git_blob_oid": "e05d8cc86b3c7de1f1bb6cf561fe0f099990fa7a",
+      "bytes": 2581,
+      "note": "sources/source - prime-opinionated.md - 3ec033bf2ff3d97d.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/instructions/professional-v1/modules/prime-usage.md",
+      "git_blob_oid": "1505fecf2573447d1b81f0d4ff4f2205fe45e915",
+      "bytes": 5933,
+      "note": "sources/source - prime-usage.md - 060e0d8e57190d64.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/README.md",
+      "git_blob_oid": "700aad895c3fd67c8805eb46150d120618d2e6cb",
+      "bytes": 1968,
+      "note": "sources/source - README.md - 241bb2827db1b8f1.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/analyzing-sessions/SKILL.md",
+      "git_blob_oid": "7a21a28f28b2c367f6c0999a69fcdc759ded1404",
+      "bytes": 4891,
+      "note": "sources/source - SKILL.md - be7716ce6d51775d.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/data-analysis/SKILL.md",
+      "git_blob_oid": "fa08e90e2c8a43cc5963711bf4a81a56cc46b6ee",
+      "bytes": 4356,
+      "note": "sources/source - SKILL.md - 74968a79e0f2ddc7.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/managing-automations/SKILL.md",
+      "git_blob_oid": "02cff733c7dbc9a5ebf698a4107f0047948a672e",
+      "bytes": 26223,
+      "note": "sources/source - SKILL.md - ea5a02e6e396bfc8.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/managing-child-sessions/SKILL.md",
+      "git_blob_oid": "db157bdcc45dd19432c9f86955b6b776d3d57462",
+      "bytes": 16005,
+      "note": "sources/source - SKILL.md - 68d99717d051dc94.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/managing-knowledge/SKILL.md",
+      "git_blob_oid": "52b6fb59c0701fa557ff7d3127c0e9267cbfacf1",
+      "bytes": 6596,
+      "note": "sources/source - SKILL.md - 139eb15544ee5b6a.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/managing-playbooks/SKILL.md",
+      "git_blob_oid": "037283d8798620244c6e29fec29bddeff740e64a",
+      "bytes": 10177,
+      "note": "sources/source - SKILL.md - 7088d3e74413bece.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/opulent2-child-sessions/SKILL.md",
+      "git_blob_oid": "637629cef380745f93f1cc42ee78cf50214d279f",
+      "bytes": 3648,
+      "note": "sources/source - SKILL.md - 69e1ca95ec22e896.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/opulent2-computer-use/SKILL.md",
+      "git_blob_oid": "1ef96934271c146b4b07b7a60b40d91b40f7df0e",
+      "bytes": 4249,
+      "note": "sources/source - SKILL.md - f6bc33b7215073ae.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/skills/opulent2-data-analysis/SKILL.md",
+      "git_blob_oid": "678d513d4ee09d2303b1eef69dd67d4e74bcc07b",
+      "bytes": 5820,
+      "note": "sources/source - SKILL.md - f4876bafac0fd708.md",
+      "role": "documentation",
+      "audience": "engineering"
+    },
+    {
+      "path": "runtime/tools/capy-memory.md",
+      "git_blob_oid": "849d7bd1c5c20d567b027a9c9dfcaaeb86962a06",
+      "bytes": 11098,
+      "note": "sources/source - capy-memory.md - f1e28614f680ca95.md",
+      "role": "documentation",
+      "audience": "engineering"
+    }
+  ],
+  "retained": [
+    {
+      "runId": "opulent2-fixed-proving-20261004-03",
+      "path": "retained/opulent2-fixed-proving-20261004-03.json",
+      "sha256": "9b86ff1f5f97da84235495099fd64c178c62ed6df568bdf781c326a1c49ab64b"
+    },
+    {
+      "runId": "opulent2-fixed-proving-20261004-04",
+      "path": "retained/opulent2-fixed-proving-20261004-04.json",
+      "sha256": "84421e69b8ed338ccfccff99316eed7f91a496cdf873b5a66692956198096fd4"
+    },
+    {
+      "runId": "opulent2-fixed-proving-20261004-05",
+      "path": "retained/opulent2-fixed-proving-20261004-05.json",
+      "sha256": "2ba45fe18690368322e680a861ac93df54b5448fd0685bb90f2181c532d36618"
+    },
+    {
+      "runId": "opulent2-fixed-proving-20261004-08",
+      "path": "retained/opulent2-fixed-proving-20261004-08.json",
+      "sha256": "7d473c087b08bfe8f3a0b0c0f28e5fa47fe8ec63edb423aeacffa43ee6a4ac7e"
+    },
+    {
+      "runId": "opulent2-luna-coverage-20261004-01",
+      "path": "retained/opulent2-luna-coverage-20261004-01.json",
+      "sha256": "2c31006e140819a92c79a71859c86ac73a3d1ef57c37b3bc731dafd9f566ffc2"
+    },
+    {
+      "runId": "opulent2-luna-coverage-20261005-02",
+      "path": "retained/opulent2-luna-coverage-20261005-02.json",
+      "sha256": "c4a8c59dd3b1686666a80d532fb989a54510af531ffdb79c28b770f1482f44e7"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-01",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-01.json",
+      "sha256": "88a1c899d9b97e7cd7589324149560a1181ead42abe22fd06cdaa316bca82a02"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-02",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-02.json",
+      "sha256": "81d921d4b7234c68460aabd1e2eeee3a09eaa79378a473fc7899e6bac5e55653"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-03",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-03.json",
+      "sha256": "9f85438eae3c92effd06033b5dc87c13e39986d9b7d9e76400979141799562aa"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-04",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-04.json",
+      "sha256": "604ee04bb9661ab1daf3aa953468ceb7489e499da5828c22dd27aacc3f6f8a32"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-05",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-05.json",
+      "sha256": "6b78b740cd3d109e91082acbc5bce6c9f86d2d0e179ef9e8d1a83bb948e09cf8"
+    },
+    {
+      "runId": "opulent2-luna-doc-context-coverage-20261005-07",
+      "path": "retained/opulent2-luna-doc-context-coverage-20261005-07.json",
+      "sha256": "bdc96b0aceb16b2f1a64ec24d9967be07e9579fa5918c181abce1de80b8bdca9"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-08",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-08.json",
+      "sha256": "7dedc6bdcf7bebb880a26a20387c91895b182c6e0418069b413cfe8b96cd99ec"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-09",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-09.json",
+      "sha256": "7d854d7cd0611113694944a369bfdc4e1ec7074e0394971e4a834a39ff559d91"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-10",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-10.json",
+      "sha256": "e485dc0e94988ed05650980c398f79294aa603831bb948851dc2de1339e12ef2"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-12",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-12.json",
+      "sha256": "5ade9dfdabb99cc6ea4d49f3753a21174b8eb7d8b05d585d67e7cb7b98925c84"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-13",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-13.json",
+      "sha256": "10fabd99a1efd6b08934bbdc6426311d983abc38c1d00bdac63efe76a5b3dc61"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-14",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-14.json",
+      "sha256": "f5bd0a8ec000bb6749ed79252e1125c55b7d99950a8d4d955e7476e3ab51fc33"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-15",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-15.json",
+      "sha256": "8692bdd1a1355e684047925583e349d4bdcc23dda5ba471117de586c48d9b3bb"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-16",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-16.json",
+      "sha256": "5e53b3893b168cb5fc1c1e47ee2b8fe763c39e000871834bbbeed529cbcc8a9c"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-17",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-17.json",
+      "sha256": "cf95b11c0aa912ccb302e750ca4cabc43a0b56454a802ed02f1a9f67dc33a7ee"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-18",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-18.json",
+      "sha256": "4ab1ac89181b1f8ec7345e6cf3ae75b1121d461f1c8225465b8345a28367f41f"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-19",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-19.json",
+      "sha256": "14a38bda195d5c6930bd8a1629208ee32faa7fe9b9e61170daa17268f4263000"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-20",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-20.json",
+      "sha256": "515c6263451e6eacafe1d35d37cbc2e6a7f2496209d881d90e99d6b9ef8b66ec"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-21",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-21.json",
+      "sha256": "7c7e2729fb1ae73fe534640599d1f5678494f9da33113d6e1340e58a86486bd3"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-22",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-22.json",
+      "sha256": "5b909360cbf5caa5a208d89807c92b3ce88dce34411347b5a147e95d6630e299"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-23",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-23.json",
+      "sha256": "226bfc4bc3b7c7c809196f3d67e4cb4f50de2bbbb43c6b3d030c3999b5cc645b"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-24",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-24.json",
+      "sha256": "b0071151af4dbcdffaca35a41b3ac891b7ed83ce0c25706e5b6ebac2eb984eb6"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-25",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-25.json",
+      "sha256": "c5ac15f8a929146be62d60c679d048446482a9615bd301b6102c3d7215856ddd"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-27",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-27.json",
+      "sha256": "190591913d3b651598cba81b94056a53ea24b68b367762269e25ac6a94ef4e5d"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-28",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-28.json",
+      "sha256": "9f23801a112e5cb5e19b17644bf43f685e706ab54f2337199c0a8ca21691e1a8"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-29",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-29.json",
+      "sha256": "e3ef2e96d7a8c469045518883de1dd70bb1590a0c023e1d83ea306728815f3d8"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-30",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-30.json",
+      "sha256": "b824f99713a522d9413c1775addfe784868c42bf7d5f7316ab392ed28322c1f2"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-31",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-31.json",
+      "sha256": "1144063c5f76f1f6243028770d0e95e03cc5ebb7cf4ab8a96dd10409dba83233"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-32",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-32.json",
+      "sha256": "59dacbe0eee5d6abebf72b3d640813f6b41b0a4609457e32686ea52711cee32e"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-33",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-33.json",
+      "sha256": "77487d86148b364d8ffeb689cdbed9f90999c28fba41f750387b96437627861b"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-34",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-34.json",
+      "sha256": "62a8c5b266695c01ba5de4ce02424bf8a190a0077cfa52f3fb2b14cae524612d"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-35",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-35.json",
+      "sha256": "76fd5fe03f74a16d48c755c687cb54278edcc2ca2ec5896719ebf508c67c69cd"
+    },
+    {
+      "runId": "opulent2-luna-result-delivery-coverage-20261006-36",
+      "path": "retained/opulent2-luna-result-delivery-coverage-20261006-36.json",
+      "sha256": "7bae43c77ad19ab735a7b6d0b532a10a398849d8d93b8e313ea4942fb0fb2333"
+    }
+  ]
+}

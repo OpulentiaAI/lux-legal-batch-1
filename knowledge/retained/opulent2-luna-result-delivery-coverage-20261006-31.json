@@ -1,0 +1,1105 @@
+{
+  "version": "lux-retained-run-capture-v1",
+  "runId": "opulent2-luna-result-delivery-coverage-20261006-31",
+  "checkpoint": {
+    "path": "checkpoint.json",
+    "sha256": "7da210ce7e22fcba4f5ed7c37a0d80c398aaebb4f9e521c6ddd76ae4f0596d14",
+    "bytes": 88323,
+    "supported": true,
+    "data": {
+      "version": "opulent2-fixed-checkpoint-v1",
+      "name": "Opulent2 fixed",
+      "provenance": {
+        "version": "opulent2-fixed-gateway-experiment-v1",
+        "release": {
+          "version": "opulent2-fixed-release-v1",
+          "stage": "coverage",
+          "startupPolicy": "opulent2-preflight-overlap-v1",
+          "commit": "6df7f25201de22c4f7ba58d033d1ace412046084",
+          "runId": "opulent2-luna-result-delivery-coverage-20261006-31",
+          "chainId": "opulent2-luna-result-delivery-isolated-20261006-31",
+          "experiment": "gateway-luna-context-v2",
+          "model": "openai/gpt-6-luna",
+          "inferenceProvider": "gateway",
+          "providerModel": "openai/gpt-6-luna",
+          "reasoningEffort": "max",
+          "budgets": {
+            "maxSteps": 250,
+            "maxInputTokens": null,
+            "maxContextTokens": 1050000,
+            "maxCompletionTokens": 32768,
+            "summaryMaxTokens": 8192,
+            "modelRequestTimeoutMs": 600000
+          },
+          "profile": "opulent2-fixed-v1",
+          "toolSurface": "opulent2-fixed-v1",
+          "semanticSurface": "toolbox",
+          "retrievalProfile": "voyage",
+          "corpus": {
+            "sha256": "281c1cc73167b2ef016f6d8d275172afc2cc88244a816f8bf68ddb642b625ec7",
+            "count": 8809
+          },
+          "gatewayCatalogue": {
+            "path": "external/catalogue.json",
+            "sha256": "d332384d2e6895a840a88bb8cc684bad5e6f4968987b7bb4012896e60a233275"
+          },
+          "budgetSource": {
+            "checkpoint": {
+              "path": "external/checkpoint.json",
+              "sha256": "1cc10279b48e00e24fdb196bede2852f8859deacc97a44b0c709e869c429a62e"
+            }
+          },
+          "surface": {
+            "allowedTools": [
+              "bash",
+              "read",
+              "write",
+              "edit",
+              "apply_patch",
+              "execute",
+              "wait",
+              "todo_write",
+              "message_agent",
+              "message_user",
+              "task_create",
+              "task_update",
+              "task_get",
+              "task_list",
+              "subagent_create",
+              "subagent_start",
+              "subagent_get",
+              "subagent_list",
+              "subagent_message",
+              "subagent_stop",
+              "subagent_events",
+              "session_get",
+              "session_events",
+              "session_stop",
+              "operation_get",
+              "operation_list",
+              "operation_cancel",
+              "skill_list",
+              "skill_read",
+              "memory_save",
+              "browser",
+              "computer",
+              "lx_search",
+              "lx_chunk",
+              "lx_documents",
+              "agrep",
+              "drive_list",
+              "drive_read",
+              "drive_write",
+              "drive_delete"
+            ],
+            "directToolNames": [
+              "bash",
+              "read",
+              "write",
+              "edit",
+              "apply_patch",
+              "wait",
+              "todo_write",
+              "message_agent",
+              "message_user",
+              "subagent_create",
+              "memory_save",
+              "computer",
+              "agrep",
+              "drive_write"
+            ],
+            "codemodeToolName": "execute",
+            "answererSchemaSha256": "4f891177963776347202761e623e4f228cc8cdc1b0c9c55ed0517db3f2311aa3"
+          },
+          "prompts": {
+            "runtimePromptSha256": "70cdf3f985563d4b9aa044364b80d07ccea0515f9d445f1834f66fe2aebb8d15",
+            "assembledRuntimePromptSha256": "ef6830c3207553faf0141e181c6bf2bd64677754b52d38e6d8762f98e6193f91",
+            "profileManifestSha256": "3e5b5ada7823983d0bac73d398d8bc102bff756360f1fa34bdb53665963be3b5",
+            "summarySystemMessagesSha256": "32c0491035607bdb8b4208c2429b3909fb8e5ecd0e3481dbb3d7e7abedec0433",
+            "appendixSha256": "3731b84e4eafa9e9199097805d3a9d21a9ea9fcc8679424b5a6cb8752efd4721",
+            "budgetDisclosureSha256": "56016df41e054d395cd5bff4519446fe962939bcf5d2d6c97f2000f09ff29d52",
+            "referenceUpdateSha256": "39b7ef9ea70abbf1c1e6d7804eca29397aa22aa5dfc17efb7cba9cb557eb16b3",
+            "skillsRegistrySha256": "18079a68a1442eec344adac1ec62a5c0b6c5e8bcf5397c350b928878085231f2"
+          },
+          "stateContract": {
+            "module": "runtime/opulent2-handoff.mjs",
+            "sha256": "50ee3a15ea4eab2a474bd90feb3c88f7b3c1b389b5c1392ee228ea34f1d93112",
+            "version": "opulent2-local-handoff-v1",
+            "inlineByteLimit": 33554432
+          },
+          "protocol": {
+            "path": "eval/opulent2-fixed/LUNA_PROTOCOL.md",
+            "sha256": "73c69f3e4d1413be9cc990000db3a9cf0c4cbd3285de7f98eeb349f56e046a2a"
+          },
+          "tasks": [
+            {
+              "id": "luna-tool-coverage-02",
+              "taskPath": "eval/opulent2-fixed/coverage-documents/task.json",
+              "taskSha256": "fad54aba663a4f35a20b5f6ebc90c141beaa1cef2146b1a6398c992cb3a290c2",
+              "rubricPath": "eval/opulent2-fixed/coverage-documents/rubric.json",
+              "rubricSha256": "0fab746143f51a297dafe070420a46eab1954b7d5eaff43be846335ea6b1730a",
+              "publicFingerprint": "9e23f3f261667ba690b958072ca5be3c76a9bfb5efe2db02fd8d05c84c73470e"
+            }
+          ],
+          "harnessOptions": {
+            "sandboxTemplate": "ac1jp7cq0bxwexbz9v9c",
+            "computerImageSha256": "4f5ea284553ee2cd137396a1dd3834f95c579480f614dde74b393766a1f028d6",
+            "contextCompaction": {
+              "enabled": true,
+              "maxInputChars": 300000,
+              "maxSummaryInputChars": 160000,
+              "maxSummaryChars": 24000,
+              "maxSummaryTokens": 8192,
+              "recentGroups": 3,
+              "maxBatches": 8,
+              "policyFingerprint": "2e6517849f8fb929b3f028a73387f427105d5d9bebf0a1716ad13d9692c0d5bc"
+            },
+            "opulent2ResultDeliveryPolicy": "opulent2-file-backed-result-budget-v2",
+            "opulent2ContextContinuationPolicy": "opulent2-history-first-continuation-v1"
+          }
+        },
+        "releaseFile": {
+          "path": "external/luna-result-delivery-coverage-31.release.json",
+          "sha256": "76c2979e9249773ee6fb6a6f10cd3618cb93d4546f81e9f4d6b1d1c87ca0f8c3",
+          "bytes": 70393
+        },
+        "authorization": {
+          "path": "external/luna-result-delivery-coverage-31.authorization.json",
+          "sha256": "341acb95df1639c63d5c1b786f381779150075cba63537668d7874796f15b50e",
+          "bytes": 639
+        },
+        "source": {
+          "commit": "6df7f25201de22c4f7ba58d033d1ace412046084",
+          "sourceBindingsSha256": "6fd47a0821284a5b34627b272f9d64cb20d54933c51f77aa292191df948693da"
+        },
+        "initialSnapshotSha256": null,
+        "taskSetSha256": "fb12d2c9922e616af9cc8fd8f6f1514d4aba38dd80244f01a8624bb3f6e338b7",
+        "startupPolicy": "opulent2-preflight-overlap-v1",
+        "provisionStageTiming": {
+          "version": "opulent2-provision-stage-timing-v1",
+          "enabled": true
+        }
+      },
+      "status": "running",
+      "preflight": {
+        "status": "passed",
+        "startupPolicy": "opulent2-preflight-overlap-v1",
+        "startedAt": "2026-10-06T17:29:36.196Z",
+        "endedAt": "2026-10-06T17:30:40.329Z",
+        "elapsedMs": 64133
+      },
+      "grading": {
+        "status": "ungraded"
+      },
+      "rows": [
+        {
+          "taskId": "luna-tool-coverage-02",
+          "publicFingerprint": "9e23f3f261667ba690b958072ca5be3c76a9bfb5efe2db02fd8d05c84c73470e",
+          "opulent2": {
+            "status": "running",
+            "attempts": [
+              {
+                "attempt": 1,
+                "attemptId": "opulent2-luna-tool-coverage-02-1",
+                "status": "running",
+                "startedAt": "2026-10-06T17:29:37.655Z",
+                "inputSnapshotSha256": null,
+                "grading": {
+                  "status": "ungraded"
+                }
+              }
+            ],
+            "completed": null
+          },
+          "harvey": {
+            "status": "not_selected",
+            "attempts": [],
+            "completed": null
+          }
+        }
+      ]
+    }
+  },
+  "metadata": [
+    {
+      "path": "operator-interruption-audit/aggregate-native-accounting.json",
+      "sha256": "0f11062fb73dda81c81bd78a76f3c7ac97b1ebea41a9a9101eb19de5158c7448",
+      "bytes": 10730,
+      "supported": true,
+      "data": {
+        "version": "opulent2-fixed-native-accounting-v1",
+        "calls": 20,
+        "knownCalls": 18,
+        "byPhase": {
+          "answerer": {
+            "calls": 18,
+            "prompt_tokens": 510696,
+            "completion_tokens": 25933,
+            "total_tokens": 536629
+          }
+        },
+        "byArm": {
+          "opulent2": {
+            "calls": 18,
+            "prompt_tokens": 510696,
+            "completion_tokens": 25933,
+            "total_tokens": 536629
+          }
+        },
+        "knownUsageSubtotal": {
+          "prompt_tokens": 510696,
+          "completion_tokens": 25933,
+          "total_tokens": 536629
+        },
+        "fullConsumptionUsage": null,
+        "knownCostSubtotal": 0.03707586,
+        "cost": null,
+        "unknownUsageExchanges": [
+          {
+            "captureId": "000019-8f3e06c0-d5ed-4ba0-8ebc-6a9d83d1ce74",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "usage": null
+          },
+          {
+            "captureId": "000021-98d9f8b8-7bc9-4ab9-a414-e2338800dbfa",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "usage": null
+          }
+        ],
+        "exchanges": [
+          {
+            "captureId": "000002-8efcd114-f271-4883-883a-46ff2b0ea995",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "3ab3f4a8-076f-42c6-a329-ee3e10b3607c",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M4948Z6R287YTRJ20ADA9ZK9",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 24200
+          },
+          {
+            "captureId": "000003-002f8df3-3c57-4ed1-8765-f73ef47aa312",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "97872ec3-a5a7-4fba-ae07-07540de160da",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M4949XSEV8MC99QQGGYW26KF",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 27496
+          },
+          {
+            "captureId": "000004-38800b13-831a-436d-8afc-8704f952d2c4",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "98109a83-131f-41fb-a1e2-9f2c111dc981",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494AVE37J8TG1812GASBCDG",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 5044
+          },
+          {
+            "captureId": "000005-8986b4b8-9940-468c-8d9f-0bd32a8d4871",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "5306364a-82a8-44c3-9069-f2419de3ef7b",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494B2ENWS02B2PR8BT80KJZ",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 24920
+          },
+          {
+            "captureId": "000006-9438af6e-785e-4ea5-b4ea-a54185ad6f3b",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "0aa3266b-a1bc-46f0-b146-c2618615a30a",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494C0KPDQRT5MVQHN7Z2XBM",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 22018
+          },
+          {
+            "captureId": "000007-c519027b-bc64-4449-92c9-8706ac013144",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "d354b032-ddb1-4603-ae53-5b7873bfe665",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": "gen_01M494C6XDG9R7Q3SN394CC4NX",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 6779
+          },
+          {
+            "captureId": "000008-99bb3763-2ea1-416d-83bd-a8f71c82275a",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "4543012f-a0e0-4c83-b85f-3f44db044677",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "0b624996-8e64-41c6-8006-f99eafc23247",
+            "responseBodyId": "gen_01M494C8HTD67CT0FK3TRTVY5Q",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 3502
+          },
+          {
+            "captureId": "000009-8c964c8b-617c-40ef-86e1-2f622098724e",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "52bcac4f-dd5f-4aa5-826f-4413511ca514",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": "gen_01M494CDWS00GF2B6N5TBCSZYH",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 5289
+          },
+          {
+            "captureId": "000010-5614cd9c-8701-4b27-a4eb-5e95ff843442",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "2e3fb043-3355-4945-af6f-84ca6ebe87e2",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": "gen_01M494CKC6301NK97M8CYNSV0K",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 9862
+          },
+          {
+            "captureId": "000011-cabaaa91-8e7a-4361-97de-3144415e0011",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "8b61f50b-e34e-4d94-bff4-ab845c3e3af0",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494CR7DP50QACXPQX8RM70J",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 9058
+          },
+          {
+            "captureId": "000012-3450e3e3-228d-4cbf-b5a6-0f2f1b239614",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "e3195db9-04cc-4318-a3f2-3a42f052b034",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": "gen_01M494CYDTGZS9J0Z2JEZ4PGA4",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 3201
+          },
+          {
+            "captureId": "000013-1ef68e56-e639-4aa7-a74d-f1851db565e7",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "5758b745-1515-4ce3-a487-1699e1dbfdb2",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494D6CKN53RE94ZS2M1KHNJ",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 25569
+          },
+          {
+            "captureId": "000014-55f51d3a-63d0-4b26-993b-980ef7c27a5e",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "195b9f56-67c4-4bb9-978f-ef67e5133c0d",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494E21DNKBVJH6GB873XC5T",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 10708
+          },
+          {
+            "captureId": "000015-9cb066fa-b218-4ec5-b271-e39a41449678",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "9d0433c9-b7e6-4c33-b714-5a9dc7daf34e",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+            "responseBodyId": "gen_01M494EEE2JWXYVMEP2C2E2K2X",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 5750
+          },
+          {
+            "captureId": "000016-b33842cf-52b7-4034-8c08-970103a1f74f",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "6d4d3676-fa33-4553-976e-f01bf6d40fa0",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": "gen_01M494EH6049X9KA285WXAMAX0",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 33507
+          },
+          {
+            "captureId": "000017-82ebd1e2-69ad-4549-a962-211fe9b50e3a",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "93984b6d-89f9-4c15-9fb3-770a0a0c59b3",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+            "responseBodyId": "gen_01M494EMA2TEFF8V3YF9JRD0WG",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 2745
+          },
+          {
+            "captureId": "000018-abe12b8d-b30f-4647-8ea0-c788dd6f7b7b",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "695a1406-074f-489b-92ce-a395fbf873d6",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+            "responseBodyId": "gen_01M494EQ8TXZDXN66TYYBXXAE2",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 19833
+          },
+          {
+            "captureId": "000019-8f3e06c0-d5ed-4ba0-8ebc-6a9d83d1ce74",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "06e1cee1-c244-44ba-b989-d7204f0ffef1",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+            "responseBodyId": null,
+            "status": null,
+            "usageUnknown": true,
+            "elapsedMs": null
+          },
+          {
+            "captureId": "000020-93e724e3-85df-46ae-b3a4-bdf39f069a50",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "36a48c35-b2d6-4b89-9d4e-9853c62d2601",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": "gen_01M494FNMVHSZ14JP3X7J7PVQ6",
+            "status": 200,
+            "usageUnknown": false,
+            "elapsedMs": 4577
+          },
+          {
+            "captureId": "000021-98d9f8b8-7bc9-4ab9-a414-e2338800dbfa",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "modelCallId": "067d3404-91d3-4966-bc83-aa525532e377",
+            "phase": "answerer",
+            "arm": "opulent2",
+            "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+            "responseBodyId": null,
+            "status": null,
+            "usageUnknown": true,
+            "elapsedMs": null
+          }
+        ]
+      },
+      "phase": "post-run",
+      "kind": "accounting"
+    },
+    {
+      "path": "operator-interruption-audit/interruption-audit.json",
+      "sha256": "0283e1af45c055ce21b54b59c83ddbb3cc03c40ec209a8ecca759b705f569b71",
+      "bytes": 34545,
+      "supported": true,
+      "data": {
+        "version": "opulent2-coverage31-interruption-audit-v1",
+        "sourceCommit": "6df7f25201de22c4f7ba58d033d1ace412046084",
+        "preflightPassed": true,
+        "completedModelRequests": 18,
+        "compactionRequests": 0,
+        "accounting": {
+          "version": "opulent2-fixed-native-accounting-v1",
+          "calls": 20,
+          "knownCalls": 18,
+          "byPhase": {
+            "answerer": {
+              "calls": 18,
+              "prompt_tokens": 510696,
+              "completion_tokens": 25933,
+              "total_tokens": 536629
+            }
+          },
+          "byArm": {
+            "opulent2": {
+              "calls": 18,
+              "prompt_tokens": 510696,
+              "completion_tokens": 25933,
+              "total_tokens": 536629
+            }
+          },
+          "knownUsageSubtotal": {
+            "prompt_tokens": 510696,
+            "completion_tokens": 25933,
+            "total_tokens": 536629
+          },
+          "fullConsumptionUsage": null,
+          "knownCostSubtotal": 0.03707586,
+          "cost": null,
+          "unknownUsageExchanges": [
+            {
+              "captureId": "000019-8f3e06c0-d5ed-4ba0-8ebc-6a9d83d1ce74",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "usage": null
+            },
+            {
+              "captureId": "000021-98d9f8b8-7bc9-4ab9-a414-e2338800dbfa",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "usage": null
+            }
+          ],
+          "exchanges": [
+            {
+              "captureId": "000002-8efcd114-f271-4883-883a-46ff2b0ea995",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "3ab3f4a8-076f-42c6-a329-ee3e10b3607c",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M4948Z6R287YTRJ20ADA9ZK9",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 24200
+            },
+            {
+              "captureId": "000003-002f8df3-3c57-4ed1-8765-f73ef47aa312",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "97872ec3-a5a7-4fba-ae07-07540de160da",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M4949XSEV8MC99QQGGYW26KF",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 27496
+            },
+            {
+              "captureId": "000004-38800b13-831a-436d-8afc-8704f952d2c4",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "98109a83-131f-41fb-a1e2-9f2c111dc981",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494AVE37J8TG1812GASBCDG",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 5044
+            },
+            {
+              "captureId": "000005-8986b4b8-9940-468c-8d9f-0bd32a8d4871",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "5306364a-82a8-44c3-9069-f2419de3ef7b",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494B2ENWS02B2PR8BT80KJZ",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 24920
+            },
+            {
+              "captureId": "000006-9438af6e-785e-4ea5-b4ea-a54185ad6f3b",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "0aa3266b-a1bc-46f0-b146-c2618615a30a",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494C0KPDQRT5MVQHN7Z2XBM",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 22018
+            },
+            {
+              "captureId": "000007-c519027b-bc64-4449-92c9-8706ac013144",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "d354b032-ddb1-4603-ae53-5b7873bfe665",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": "gen_01M494C6XDG9R7Q3SN394CC4NX",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 6779
+            },
+            {
+              "captureId": "000008-99bb3763-2ea1-416d-83bd-a8f71c82275a",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "4543012f-a0e0-4c83-b85f-3f44db044677",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "0b624996-8e64-41c6-8006-f99eafc23247",
+              "responseBodyId": "gen_01M494C8HTD67CT0FK3TRTVY5Q",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 3502
+            },
+            {
+              "captureId": "000009-8c964c8b-617c-40ef-86e1-2f622098724e",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "52bcac4f-dd5f-4aa5-826f-4413511ca514",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": "gen_01M494CDWS00GF2B6N5TBCSZYH",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 5289
+            },
+            {
+              "captureId": "000010-5614cd9c-8701-4b27-a4eb-5e95ff843442",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "2e3fb043-3355-4945-af6f-84ca6ebe87e2",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": "gen_01M494CKC6301NK97M8CYNSV0K",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 9862
+            },
+            {
+              "captureId": "000011-cabaaa91-8e7a-4361-97de-3144415e0011",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "8b61f50b-e34e-4d94-bff4-ab845c3e3af0",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494CR7DP50QACXPQX8RM70J",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 9058
+            },
+            {
+              "captureId": "000012-3450e3e3-228d-4cbf-b5a6-0f2f1b239614",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "e3195db9-04cc-4318-a3f2-3a42f052b034",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": "gen_01M494CYDTGZS9J0Z2JEZ4PGA4",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 3201
+            },
+            {
+              "captureId": "000013-1ef68e56-e639-4aa7-a74d-f1851db565e7",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "5758b745-1515-4ce3-a487-1699e1dbfdb2",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494D6CKN53RE94ZS2M1KHNJ",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 25569
+            },
+            {
+              "captureId": "000014-55f51d3a-63d0-4b26-993b-980ef7c27a5e",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "195b9f56-67c4-4bb9-978f-ef67e5133c0d",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494E21DNKBVJH6GB873XC5T",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 10708
+            },
+            {
+              "captureId": "000015-9cb066fa-b218-4ec5-b271-e39a41449678",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "9d0433c9-b7e6-4c33-b714-5a9dc7daf34e",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+              "responseBodyId": "gen_01M494EEE2JWXYVMEP2C2E2K2X",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 5750
+            },
+            {
+              "captureId": "000016-b33842cf-52b7-4034-8c08-970103a1f74f",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "6d4d3676-fa33-4553-976e-f01bf6d40fa0",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": "gen_01M494EH6049X9KA285WXAMAX0",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 33507
+            },
+            {
+              "captureId": "000017-82ebd1e2-69ad-4549-a962-211fe9b50e3a",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "93984b6d-89f9-4c15-9fb3-770a0a0c59b3",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+              "responseBodyId": "gen_01M494EMA2TEFF8V3YF9JRD0WG",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 2745
+            },
+            {
+              "captureId": "000018-abe12b8d-b30f-4647-8ea0-c788dd6f7b7b",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "695a1406-074f-489b-92ce-a395fbf873d6",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "69839bf0-fff3-4408-a934-44edb30efc8b",
+              "responseBodyId": "gen_01M494EQ8TXZDXN66TYYBXXAE2",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 19833
+            },
+            {
+              "captureId": "000019-8f3e06c0-d5ed-4ba0-8ebc-6a9d83d1ce74",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "06e1cee1-c244-44ba-b989-d7204f0ffef1",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "44c9eb7f-43c8-4b83-abad-881322eb959c",
+              "responseBodyId": null,
+              "status": null,
+              "usageUnknown": true,
+              "elapsedMs": null
+            },
+            {
+              "captureId": "000020-93e724e3-85df-46ae-b3a4-bdf39f069a50",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "36a48c35-b2d6-4b89-9d4e-9853c62d2601",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": "gen_01M494FNMVHSZ14JP3X7J7PVQ6",
+              "status": 200,
+              "usageUnknown": false,
+              "elapsedMs": 4577
+            },
+            {
+              "captureId": "000021-98d9f8b8-7bc9-4ab9-a414-e2338800dbfa",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "modelCallId": "067d3404-91d3-4966-bc83-aa525532e377",
+              "phase": "answerer",
+              "arm": "opulent2",
+              "sessionId": "21a606b9-b516-46b9-ba63-adf298f3f926",
+              "responseBodyId": null,
+              "status": null,
+              "usageUnknown": true,
+              "elapsedMs": null
+            }
+          ]
+        },
+        "cleanup": {
+          "version": "native-capy-v1-owned-absence-v1",
+          "verifiedAt": "2026-10-06T17:35:27.027Z",
+          "queriedOnlyFactoryOwnedIds": true,
+          "sandboxes": [
+            {
+              "sandboxId": "isazbd6jgujnfp9e5yohy",
+              "createdAt": "2026-10-06T17:29:39.800Z",
+              "phase": "preflight",
+              "arm": "opulent2",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 0,
+              "attemptId": "preflight-9759a0cc-e5bc-4bc9-b9e5-876afae481f7",
+              "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+              "absent": true,
+              "stage": "initial-owned-query",
+              "termination": null,
+              "errorClass": "SandboxNotFoundError"
+            },
+            {
+              "sandboxId": "iornfjf3okqaey661xcx8",
+              "createdAt": "2026-10-06T17:29:39.834Z",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "attemptId": "opulent2-luna-tool-coverage-02-1",
+              "arm": "opulent2",
+              "phase": "answerer",
+              "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+              "absent": true,
+              "stage": "initial-owned-query",
+              "termination": null,
+              "errorClass": "SandboxNotFoundError"
+            },
+            {
+              "sandboxId": "i5btebuuylajul0kwzet8",
+              "createdAt": "2026-10-06T17:31:42.893Z",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "attemptId": "opulent2-luna-tool-coverage-02-1",
+              "arm": "opulent2",
+              "phase": "answerer",
+              "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+              "absent": true,
+              "stage": "initial-owned-query",
+              "termination": null,
+              "errorClass": "SandboxNotFoundError"
+            },
+            {
+              "sandboxId": "ija67n050yysb3n7flbyb",
+              "createdAt": "2026-10-06T17:31:43.157Z",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "attemptId": "opulent2-luna-tool-coverage-02-1",
+              "arm": "opulent2",
+              "phase": "answerer",
+              "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+              "absent": true,
+              "stage": "initial-owned-query",
+              "termination": null,
+              "errorClass": "SandboxNotFoundError"
+            },
+            {
+              "sandboxId": "ikiwan2a3qi77gop6epfl",
+              "createdAt": "2026-10-06T17:32:51.886Z",
+              "taskId": "luna-tool-coverage-02",
+              "attempt": 1,
+              "attemptId": "opulent2-luna-tool-coverage-02-1",
+              "arm": "opulent2",
+              "phase": "answerer",
+              "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+              "absent": true,
+              "stage": "initial-owned-query",
+              "termination": null,
+              "errorClass": "SandboxNotFoundError"
+            }
+          ],
+          "allOwnedAbsent": true,
+          "sourceCommit": "6df7f25201de22c4f7ba58d033d1ace412046084",
+          "ownershipRegistry": {
+            "path": "archive/opulent2-luna-result-delivery-coverage-20261006-31/owned-vms.json",
+            "sha256": "a0537faaf8f4fb6269c7cd29c5ec800defdbf34bc3b5be2e7a79b3e688911b2f",
+            "bytes": 1933
+          },
+          "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+          "terminations": [
+            {
+              "sandboxId": "isazbd6jgujnfp9e5yohy",
+              "requested": true
+            },
+            {
+              "sandboxId": "iornfjf3okqaey661xcx8",
+              "requested": true
+            },
+            {
+              "sandboxId": "i5btebuuylajul0kwzet8",
+              "requested": true
+            },
+            {
+              "sandboxId": "ija67n050yysb3n7flbyb",
+              "requested": true
+            },
+            {
+              "sandboxId": "ikiwan2a3qi77gop6epfl",
+              "requested": true
+            }
+          ]
+        }
+      },
+      "phase": "post-run",
+      "kind": "operator-interruption"
+    },
+    {
+      "path": "operator-interruption-audit/operator-owned-absence.json",
+      "sha256": "5b502c145a7944f75df703bf546adee0ee86c65c034d9e3cc33c03def4367239",
+      "bytes": 3945,
+      "supported": true,
+      "data": {
+        "version": "native-capy-v1-owned-absence-v1",
+        "verifiedAt": "2026-10-06T17:35:27.027Z",
+        "queriedOnlyFactoryOwnedIds": true,
+        "sandboxes": [
+          {
+            "sandboxId": "isazbd6jgujnfp9e5yohy",
+            "createdAt": "2026-10-06T17:29:39.800Z",
+            "phase": "preflight",
+            "arm": "opulent2",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 0,
+            "attemptId": "preflight-9759a0cc-e5bc-4bc9-b9e5-876afae481f7",
+            "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+            "absent": true,
+            "stage": "initial-owned-query",
+            "termination": null,
+            "errorClass": "SandboxNotFoundError"
+          },
+          {
+            "sandboxId": "iornfjf3okqaey661xcx8",
+            "createdAt": "2026-10-06T17:29:39.834Z",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "attemptId": "opulent2-luna-tool-coverage-02-1",
+            "arm": "opulent2",
+            "phase": "answerer",
+            "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+            "absent": true,
+            "stage": "initial-owned-query",
+            "termination": null,
+            "errorClass": "SandboxNotFoundError"
+          },
+          {
+            "sandboxId": "i5btebuuylajul0kwzet8",
+            "createdAt": "2026-10-06T17:31:42.893Z",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "attemptId": "opulent2-luna-tool-coverage-02-1",
+            "arm": "opulent2",
+            "phase": "answerer",
+            "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+            "absent": true,
+            "stage": "initial-owned-query",
+            "termination": null,
+            "errorClass": "SandboxNotFoundError"
+          },
+          {
+            "sandboxId": "ija67n050yysb3n7flbyb",
+            "createdAt": "2026-10-06T17:31:43.157Z",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "attemptId": "opulent2-luna-tool-coverage-02-1",
+            "arm": "opulent2",
+            "phase": "answerer",
+            "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+            "absent": true,
+            "stage": "initial-owned-query",
+            "termination": null,
+            "errorClass": "SandboxNotFoundError"
+          },
+          {
+            "sandboxId": "ikiwan2a3qi77gop6epfl",
+            "createdAt": "2026-10-06T17:32:51.886Z",
+            "taskId": "luna-tool-coverage-02",
+            "attempt": 1,
+            "attemptId": "opulent2-luna-tool-coverage-02-1",
+            "arm": "opulent2",
+            "phase": "answerer",
+            "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+            "absent": true,
+            "stage": "initial-owned-query",
+            "termination": null,
+            "errorClass": "SandboxNotFoundError"
+          }
+        ],
+        "allOwnedAbsent": true,
+        "sourceCommit": "6df7f25201de22c4f7ba58d033d1ace412046084",
+        "ownershipRegistry": {
+          "path": "archive/opulent2-luna-result-delivery-coverage-20261006-31/owned-vms.json",
+          "sha256": "a0537faaf8f4fb6269c7cd29c5ec800defdbf34bc3b5be2e7a79b3e688911b2f",
+          "bytes": 1933
+        },
+        "bindingSha256": "dad2b1f6c4eb61765b52eb0a734a2545c2af342848a1d6f3e2bf984e047c0360",
+        "terminations": [
+          {
+            "sandboxId": "isazbd6jgujnfp9e5yohy",
+            "requested": true
+          },
+          {
+            "sandboxId": "iornfjf3okqaey661xcx8",
+            "requested": true
+          },
+          {
+            "sandboxId": "i5btebuuylajul0kwzet8",
+            "requested": true
+          },
+          {
+            "sandboxId": "ija67n050yysb3n7flbyb",
+            "requested": true
+          },
+          {
+            "sandboxId": "ikiwan2a3qi77gop6epfl",
+            "requested": true
+          }
+        ]
+      },
+      "phase": "post-run",
+      "kind": "cleanup"
+    },
+    {
+      "path": "resume-owned-absence.json",
+      "sha256": "eeff40337f77f65786be8c14290b289ff9c745015e394237d1779303983a9690",
+      "bytes": 316,
+      "supported": true,
+      "data": {
+        "version": "native-capy-v1-owned-absence-v1",
+        "verifiedAt": "2026-10-06T17:29:35.954Z",
+        "queriedOnlyFactoryOwnedIds": true,
+        "sandboxes": [],
+        "allOwnedAbsent": true
+      },
+      "phase": "pre-run",
+      "kind": "cleanup"
+    }
+  ],
+  "disposition": {
+    "kind": "interrupted",
+    "attestations": [
+      "operator-interruption-audit/interruption-audit.json"
+    ]
+  }
+}

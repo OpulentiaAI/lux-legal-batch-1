@@ -2,8 +2,20 @@ import { createHash, randomUUID } from 'node:crypto';
 import { posix as path } from 'node:path';
 
 export const CAPY_RESULT_CHARS = 64000;
+export const OPULENT2_RESULT_PREVIEW_POLICY = 'opulent2-file-backed-head-tail-v1';
+export const OPULENT2_RESULT_DELIVERY_POLICY = Object.freeze({ version: 'opulent2-file-backed-result-budget-v2',
+  maxResultChars: 8192, maxPreviewChars: 4096, completeResults: 'scrubbed-owned-vm-files',
+  explicitReadChars: CAPY_RESULT_CHARS, explicitReadTools: Object.freeze(['read', 'skill_read', 'drive_read', 'subagent_get']),
+  consultation: 'returned-text-only; reopen needed complete content' });
 
-export async function persistCapyResult(ctx, value, maxChars = CAPY_RESULT_CHARS) {
+export function capyResultChars(ctx, name) {
+  return ctx.config?.instructionProfile === 'opulent2-fixed-v1'
+    && ctx.config.opulent2ResultDeliveryPolicy === OPULENT2_RESULT_DELIVERY_POLICY.version
+    && !OPULENT2_RESULT_DELIVERY_POLICY.explicitReadTools.includes(name)
+    ? OPULENT2_RESULT_DELIVERY_POLICY.maxResultChars : CAPY_RESULT_CHARS;
+}
+
+export async function persistCapyResult(ctx, value, maxChars = capyResultChars(ctx)) {
   const result = ctx.scrub ? ctx.scrub(value) : value;
   const serialized = JSON.stringify(result) ?? 'null';
   if (serialized.length <= maxChars) return result;
@@ -19,11 +31,34 @@ export async function persistCapyResult(ctx, value, maxChars = CAPY_RESULT_CHARS
   } catch (error) {
     fileError = ctx.scrub ? ctx.scrub(error.message) : error.message;
   }
-  return {
-    kind: 'file_backed_result', result_id: id, truncated: true, preview: serialized.slice(0, Math.min(16000, Math.floor(maxChars / 2))),
-    characters: serialized.length, sha256, ...(fileError ? { file_error: fileError } : { output_path: outputPath }),
-    consultation: 'Only this preview was returned. The complete result is preserved; use read or VM code to select more text. Unreturned file content is not consulted evidence.',
-  };
+  let previewLimit = Math.min(16000, Math.floor(maxChars / 2));
+  const opulent2 = ctx.config?.instructionProfile === 'opulent2-fixed-v1';
+  let reference;
+  do {
+    let preview = serialized.slice(0, previewLimit);
+    if (opulent2) {
+      const markerBudget = `\n[${serialized.length} characters omitted]\n`.length;
+      if (previewLimit > markerBudget) {
+        const retained = previewLimit - markerBudget;
+        let headEnd = Math.floor(retained / 5);
+        let tailStart = serialized.length - (retained - headEnd);
+        if (serialized.charCodeAt(headEnd - 1) >= 0xd800 && serialized.charCodeAt(headEnd - 1) <= 0xdbff &&
+          serialized.charCodeAt(headEnd) >= 0xdc00 && serialized.charCodeAt(headEnd) <= 0xdfff) headEnd--;
+        if (serialized.charCodeAt(tailStart) >= 0xdc00 && serialized.charCodeAt(tailStart) <= 0xdfff &&
+          serialized.charCodeAt(tailStart - 1) >= 0xd800 && serialized.charCodeAt(tailStart - 1) <= 0xdbff) tailStart++;
+        preview = `${serialized.slice(0, headEnd)}\n[${tailStart - headEnd} characters omitted]\n${serialized.slice(tailStart)}`;
+      } else preview = '';
+    }
+    reference = {
+      kind: 'file_backed_result', result_id: id, truncated: true, preview,
+      ...(opulent2 ? { preview_policy: OPULENT2_RESULT_PREVIEW_POLICY } : {}),
+      characters: serialized.length, sha256, ...(fileError ? { file_error: fileError } : { output_path: outputPath }),
+      consultation: 'Only this preview was returned. The complete result is preserved; use read or VM code to select more text. Unreturned file content is not consulted evidence.',
+    };
+    if (JSON.stringify(reference).length <= maxChars || !previewLimit) break;
+    previewLimit = Math.floor(previewLimit / 2);
+  } while (true);
+  return reference;
 }
 
 export async function materializeCapyResults(ctx) {
@@ -31,4 +66,17 @@ export async function materializeCapyResults(ctx) {
     await ctx.sandbox.files.write(result.output_path, result.serialized);
     ctx.store.put('capy_results', result.id, { ...result, status: 'available' });
   }
+}
+
+export async function recoverCapyResultBacking(ctx, result) {
+  if (result?.kind !== 'file_backed_result') return result;
+  const backing = ctx.store.get('capy_results', result.result_id);
+  if (!backing || backing.session_id !== ctx.sessionId || backing.status !== 'available' || result.file_error ||
+      backing.output_path !== result.output_path || backing.sha256 !== result.sha256 || backing.characters !== result.characters) {
+    throw new Error('Unverified Capy result backing');
+  }
+  const serialized = await ctx.sandbox.files.read(backing.output_path);
+  if (typeof serialized !== 'string' || serialized !== backing.serialized || serialized.length !== backing.characters ||
+      createHash('sha256').update(serialized).digest('hex') !== backing.sha256) throw new Error('Capy result backing integrity mismatch');
+  return JSON.parse(serialized);
 }

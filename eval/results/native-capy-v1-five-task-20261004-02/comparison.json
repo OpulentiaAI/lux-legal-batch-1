@@ -1,0 +1,1428 @@
+{
+  "version": "native-capy-v1-five-task-independent-comparison-v1",
+  "runId": "native-capy-v1-five-task-20261004-02",
+  "candidateCommit": "ac3fb5ddccb88ab9f38a6c2c297ea827cc4f57e6",
+  "graderCommit": "701d81b419a9d37e1ed02b09d93d2de9ec5a0b41",
+  "model": "xiaomi/mimo-v2.6-pro",
+  "provider": "RunAnywhere native",
+  "tasks": [
+    "task-02",
+    "task-03",
+    "task-04",
+    "task-05",
+    "task-06"
+  ],
+  "scope": "Preserved completed Harvey outputs versus fresh completed lean Capy outputs; no historical score replacement",
+  "semanticPolicy": "0–1 scores; equal criterion weights within each task, equal task weights across all five tasks. Holistic overallPerformance is judged directly per criterion, not derived from the other dimensions. Resources and retry history are separate.",
+  "independent": {
+    "full": {
+      "harvey": {
+        "quality": 0.9270595238095238,
+        "accuracy": 0.9557500000000001,
+        "completeness": 0.9814761904761905,
+        "overallPerformance": 0.9374285714285714,
+        "criterionPass": 0.9666666666666668,
+        "passedCriteria": 30,
+        "totalCriteria": 31,
+        "completedTasks": 5
+      },
+      "broad": {
+        "quality": 0.9108095238095238,
+        "accuracy": 0.9475,
+        "completeness": 0.9848333333333334,
+        "overallPerformance": 0.9273928571428571,
+        "criterionPass": 0.9,
+        "passedCriteria": 28,
+        "totalCriteria": 31,
+        "completedTasks": 5
+      }
+    },
+    "paired": [
+      {
+        "taskId": "task-02",
+        "criteria": 7,
+        "broad": {
+          "quality": 0.9357142857142856,
+          "accuracy": 0.96,
+          "completeness": 1,
+          "overallPerformance": 0.9557142857142857,
+          "passCount": 7,
+          "criterionCount": 7,
+          "criterionPass": 1,
+          "completed": true
+        },
+        "harvey": {
+          "quality": 0.9257142857142855,
+          "accuracy": 0.97,
+          "completeness": 0.9857142857142858,
+          "overallPerformance": 0.9471428571428572,
+          "passCount": 7,
+          "criterionCount": 7,
+          "criterionPass": 1,
+          "completed": true
+        }
+      },
+      {
+        "taskId": "task-03",
+        "criteria": 6,
+        "broad": {
+          "quality": 0.8983333333333333,
+          "accuracy": 0.9550000000000001,
+          "completeness": 0.9500000000000001,
+          "overallPerformance": 0.9133333333333334,
+          "passCount": 5,
+          "criterionCount": 6,
+          "criterionPass": 0.8333333333333334,
+          "completed": true
+        },
+        "harvey": {
+          "quality": 0.8483333333333333,
+          "accuracy": 0.9166666666666666,
+          "completeness": 0.93,
+          "overallPerformance": 0.8550000000000001,
+          "passCount": 5,
+          "criterionCount": 6,
+          "criterionPass": 0.8333333333333334,
+          "completed": true
+        }
+      },
+      {
+        "taskId": "task-04",
+        "criteria": 8,
+        "broad": {
+          "quality": 0.9800000000000001,
+          "accuracy": 0.9875,
+          "completeness": 1,
+          "overallPerformance": 0.98875,
+          "passCount": 8,
+          "criterionCount": 8,
+          "criterionPass": 1,
+          "completed": true
+        },
+        "harvey": {
+          "quality": 0.99125,
+          "accuracy": 0.99375,
+          "completeness": 1,
+          "overallPerformance": 0.9950000000000001,
+          "passCount": 8,
+          "criterionCount": 8,
+          "criterionPass": 1,
+          "completed": true
+        }
+      },
+      {
+        "taskId": "task-05",
+        "criteria": 6,
+        "harvey": {
+          "quality": 0.94,
+          "accuracy": 0.9383333333333334,
+          "completeness": 0.9916666666666667,
+          "overallPerformance": 0.945,
+          "passCount": 6,
+          "criterionCount": 6,
+          "criterionPass": 1,
+          "completed": true
+        },
+        "broad": {
+          "quality": 0.85,
+          "accuracy": 0.8849999999999999,
+          "completeness": 0.9916666666666667,
+          "overallPerformance": 0.8616666666666667,
+          "passCount": 4,
+          "criterionCount": 6,
+          "criterionPass": 0.6666666666666666,
+          "completed": true
+        }
+      },
+      {
+        "taskId": "task-06",
+        "criteria": 4,
+        "harvey": {
+          "quality": 0.9299999999999999,
+          "accuracy": 0.96,
+          "completeness": 1,
+          "overallPerformance": 0.9450000000000001,
+          "passCount": 4,
+          "criterionCount": 4,
+          "criterionPass": 1,
+          "completed": true
+        },
+        "broad": {
+          "quality": 0.8899999999999999,
+          "accuracy": 0.95,
+          "completeness": 0.9825,
+          "overallPerformance": 0.9175,
+          "passCount": 4,
+          "criterionCount": 4,
+          "criterionPass": 1,
+          "completed": true
+        }
+      }
+    ],
+    "differences": {
+      "quality": -0.016249999999999987,
+      "accuracy": -0.00825000000000009,
+      "completeness": 0.0033571428571429474,
+      "overallPerformance": -0.010035714285714259,
+      "criterionPass": -0.06666666666666676
+    }
+  },
+  "jev": {
+    "policy": {
+      "version": "native-mimo-jev-completed-work-v6",
+      "model": "typesafe-ai/jev",
+      "endpoint": "https://ai-gateway.vercel.sh/v1/evaluate",
+      "providerOnly": [
+        "typesafe-ai"
+      ],
+      "scores": "interpolated Jev 0–3 scores divided by 3; equal criterion weights within each task and equal task weights in summaries",
+      "accuracy": "asserted relevant claims only; absent claims are not perfect accuracy",
+      "evidence": "full public materials, scoped deliverables and full reference chunks; complete replay-verified bodies matching reference IDs always included, with cited alternatives ranked by lexical criterion relevance up to six visible bodies; remaining IDs and a bound full-inventory digest are audit metadata, never absence proof",
+      "maxVisibleBodies": 6,
+      "references": "hidden references establish legal truth, never consultation or citation compliance",
+      "resources": "no turn, latency or token penalty in semantic scores",
+      "alignment": "satisfaction binds the complete requirement and pass condition; typed decisions require independent Capy/human review",
+      "unknowns": "unresolved judgments and judge failures remain visible; no fabricated grades",
+      "trimming": "independently remove one highest and one lowest task score per system and metric",
+      "providerVersion": "not returned by provider",
+      "timeoutMs": 120000,
+      "maxAttempts": 2,
+      "completeness": "substantive coverage of every mandatory criterion component, scored separately from correctness",
+      "completion": "final saved-deliverable completion; earlier failed attempts are audit history, not reliability scores",
+      "performance": "successful answerer-attempt latency and resource usage reported separately from semantic scores"
+    },
+    "summary": {
+      "paired": [
+        {
+          "taskId": "task-02",
+          "harvey": {
+            "quality": 0.9700000000000001,
+            "accuracy": 0.887142857142857,
+            "completeness": 0.9757142857142858,
+            "criterionPass": 1,
+            "criteria": 7,
+            "resolved": 7,
+            "accuracyCoverage": 7,
+            "unresolved": 0,
+            "failures": 0
+          },
+          "broad": {
+            "quality": 0.9747619047619047,
+            "accuracy": 0.8942857142857144,
+            "completeness": 0.9766666666666667,
+            "criterionPass": 1,
+            "criteria": 7,
+            "resolved": 7,
+            "accuracyCoverage": 7,
+            "unresolved": 0,
+            "failures": 0
+          }
+        },
+        {
+          "taskId": "task-03",
+          "harvey": {
+            "quality": 0.9344444444444444,
+            "accuracy": 0.8944444444444444,
+            "completeness": 0.9400000000000001,
+            "criterionPass": 1,
+            "criteria": 6,
+            "resolved": 6,
+            "accuracyCoverage": 6,
+            "unresolved": 0,
+            "failures": 0
+          },
+          "broad": {
+            "quality": 0.9644444444444443,
+            "accuracy": 0.8705555555555556,
+            "completeness": 0.9755555555555556,
+            "criterionPass": 1,
+            "criteria": 6,
+            "resolved": 6,
+            "accuracyCoverage": 6,
+            "unresolved": 0,
+            "failures": 0
+          }
+        },
+        {
+          "taskId": "task-04",
+          "harvey": {
+            "quality": 0.9266666666666666,
+            "accuracy": 0.9220833333333334,
+            "completeness": 0.9354166666666666,
+            "criterionPass": 1,
+            "criteria": 8,
+            "resolved": 8,
+            "accuracyCoverage": 8,
+            "unresolved": 0,
+            "failures": 0
+          },
+          "broad": {
+            "quality": 0.9045833333333333,
+            "accuracy": 0.9,
+            "completeness": 0.9312499999999999,
+            "criterionPass": 1,
+            "criteria": 8,
+            "resolved": 8,
+            "accuracyCoverage": 8,
+            "unresolved": 0,
+            "failures": 0
+          }
+        },
+        {
+          "taskId": "task-05",
+          "harvey": {
+            "quality": 0.9622222222222222,
+            "accuracy": 0.8966666666666668,
+            "completeness": 0.9672222222222221,
+            "criterionPass": 1,
+            "criteria": 6,
+            "resolved": 6,
+            "accuracyCoverage": 6,
+            "unresolved": 0,
+            "failures": 0
+          },
+          "broad": {
+            "quality": 0.9672222222222223,
+            "accuracy": 0.9144444444444444,
+            "completeness": 0.9588888888888888,
+            "criterionPass": 1,
+            "criteria": 6,
+            "resolved": 6,
+            "accuracyCoverage": 6,
+            "unresolved": 0,
+            "failures": 0
+          }
+        },
+        {
+          "taskId": "task-06",
+          "harvey": {
+            "quality": 0.9674999999999999,
+            "accuracy": 0.8391666666666666,
+            "completeness": 0.9766666666666667,
+            "criterionPass": 1,
+            "criteria": 4,
+            "resolved": 4,
+            "accuracyCoverage": 4,
+            "unresolved": 0,
+            "failures": 0
+          },
+          "broad": {
+            "quality": 0.9816666666666667,
+            "accuracy": 0.9116666666666666,
+            "completeness": 0.9858333333333335,
+            "criterionPass": 1,
+            "criteria": 4,
+            "resolved": 4,
+            "accuracyCoverage": 4,
+            "unresolved": 0,
+            "failures": 0
+          }
+        }
+      ],
+      "summaries": {
+        "harvey": {
+          "quality": {
+            "full": 0.9521666666666666,
+            "coverage": 5,
+            "trimmed": 0.9547222222222221,
+            "retained": [
+              "task-03",
+              "task-05",
+              "task-06"
+            ],
+            "dropped": [
+              "task-04",
+              "task-02"
+            ]
+          },
+          "accuracy": {
+            "full": 0.8879007936507938,
+            "coverage": 5,
+            "trimmed": 0.8927513227513227,
+            "retained": [
+              "task-02",
+              "task-03",
+              "task-05"
+            ],
+            "dropped": [
+              "task-06",
+              "task-04"
+            ]
+          },
+          "completeness": {
+            "full": 0.9590039682539683,
+            "coverage": 5,
+            "trimmed": 0.9609788359788359,
+            "retained": [
+              "task-03",
+              "task-05",
+              "task-02"
+            ],
+            "dropped": [
+              "task-04",
+              "task-06"
+            ]
+          },
+          "criterionPass": {
+            "full": 1,
+            "coverage": 5,
+            "trimmed": 1,
+            "retained": [
+              "task-03",
+              "task-04",
+              "task-05"
+            ],
+            "dropped": [
+              "task-02",
+              "task-06"
+            ]
+          }
+        },
+        "broad": {
+          "quality": {
+            "full": 0.9585357142857143,
+            "coverage": 5,
+            "trimmed": 0.9688095238095237,
+            "retained": [
+              "task-03",
+              "task-05",
+              "task-02"
+            ],
+            "dropped": [
+              "task-04",
+              "task-06"
+            ]
+          },
+          "accuracy": {
+            "full": 0.8981904761904762,
+            "coverage": 5,
+            "trimmed": 0.901984126984127,
+            "retained": [
+              "task-02",
+              "task-04",
+              "task-06"
+            ],
+            "dropped": [
+              "task-03",
+              "task-05"
+            ]
+          },
+          "completeness": {
+            "full": 0.9656388888888889,
+            "coverage": 5,
+            "trimmed": 0.9703703703703703,
+            "retained": [
+              "task-05",
+              "task-03",
+              "task-02"
+            ],
+            "dropped": [
+              "task-04",
+              "task-06"
+            ]
+          },
+          "criterionPass": {
+            "full": 1,
+            "coverage": 5,
+            "trimmed": 1,
+            "retained": [
+              "task-03",
+              "task-04",
+              "task-05"
+            ],
+            "dropped": [
+              "task-02",
+              "task-06"
+            ]
+          }
+        }
+      },
+      "alignment": "pending independent Capy/human review"
+    },
+    "alignment": {
+      "comparisons": 62,
+      "agreements": 58,
+      "disagreements": [
+        {
+          "taskId": "task-03",
+          "mode": "broad",
+          "criterionId": "03-4",
+          "rawJevPassProbability": 0.86,
+          "independentPass": false,
+          "disposition": "Independent full-criterion judgment retained separately; raw Jev response and historical scores unchanged",
+          "reason": "The memo correctly distinguishes an AG distribution of existing available reserves from the board/directoire current-results advance procedure. It does not authorize an AG to distribute C’s unapproved current earnings. It nevertheless cites the manual’s affirmative reserve-distribution passage under an unqualified Luxembourg-law framework and never identifies the underlying Belgian Court of Cassation precedent. The full supplied passage expressly identifies Belgian Cassation and Belgian jurisprudence. This is both an omitted required provenance qualification and an authority-scope presentation problem. Other supplied Luxembourg commentary supports the substantive organ distinction, so this is not scored as a wholly false substantive rule. One ancillary citation is also incorrectly identified: doc-06:s0102:c0 addresses managers and the SARL regime, not the SA article 461-3 text it is called. The correct SA text is cited alongside it."
+        },
+        {
+          "taskId": "task-03",
+          "mode": "harvey",
+          "criterionId": "03-4",
+          "rawJevPassProbability": 0.75,
+          "independentPass": false,
+          "disposition": "Independent full-criterion judgment retained separately; raw Jev response and historical scores unchanged",
+          "reason": "The framework recognizes article 461-3 as a board/directoire route and says AG intercalaires are limited to brought-forward profits or available reserves. That is meaningful partial coverage. But the memo never identifies or qualifies the Belgian precedent required by the frozen criterion. It also treats the description of current unapproved results as not being the statutory measure, although article 461-3 expressly includes realized results since the end of the last exercise whose accounts were approved and the candidate’s own commentary expressly permits current-year profits. Nonapproval of current-year accounts is not by itself a disqualifier; missing realization/quantum evidence is. The C treatment then leaves an AG resolution as an alternative without restricting it to a different reserve/carry-forward distribution. That is an underqualified route for this particular current-results proposal, not proof that the slide was approved. These distinct route/provenance defects are scored only here."
+        },
+        {
+          "taskId": "task-05",
+          "mode": "broad",
+          "criterionId": "05-3",
+          "rawJevPassProbability": 0.93,
+          "independentPass": false,
+          "disposition": "Independent full-criterion judgment retained separately; raw Jev response and historical scores unchanged",
+          "reason": "The register correctly narrows the rule to regulated-market listed shares, gives the consultative default, recognizes binding effect only by articles, and discusses the ordinary remuneration competence separately (B3.o1, B3.o2). Those propositions have genuine observed support (B3.v1–v4). But it affirmatively and repeatedly calls this the 1915 act's shareholder-rights regime, including in the executive summary (B3.o1, B3.o3). The controlling compilation places the rule in Annex II, the separate 24 May 2011 shareholder-rights law (B3.t1, B3.t2), not the 1915 act. Transposition-date references do not correct that instrument attribution. This is false law/authority attribution, not a mere omission or a bare-citation problem. Candidate-B's complete own-visible evidence contains no 2011-law title; its seen Art. 7bis text proves the default/exception consultation, but the full-corpus title cannot be substituted into its observation record. Coverage remains 1.00 because the memo substantively attempts every issue; the false instrument is assessed in accuracy, source compliance and usability, not again as missing coverage. The unchanged attribution requirement is not met, so the criterion fails even though voting effect and listed scope are substantially right."
+        },
+        {
+          "taskId": "task-05",
+          "mode": "broad",
+          "criterionId": "05-6",
+          "rawJevPassProbability": 0.73,
+          "independentPass": false,
+          "disposition": "Independent full-criterion judgment retained separately; raw Jev response and historical scores unchanged",
+          "reason": "The memo does considerably more than repeat source-log IDs: the register contains quoted, actually seen EUR 1 and planning passages, and the summary identifies the corresponding claims and statute articles (B6.o1, B6.o2, B6.v1, B6.v2). Reading the summary with its register is accepted; absence of duplicated inline chunk IDs alone is not treated as failure. All five topics and the genuine Belgian/current-vote/article gaps are covered, so completeness remains 1.00. The repaired-summary pass condition nevertheless requires relevant support for affirmative conclusions. The bottom line affirmatively clears SARL-S viability and says its natural-person rule likely decides the entity choice on its own (B6.o3), despite only a proposed subsidiary/alternative structure being supplied (B6.p1) and the statute prohibiting legal-person ownership (B6.t3, B6.v3). That is an unsupported deal-feasibility inference, not a proved false scenario fact; it cannot be sourced merely to the capital floor. The summary should condition viability on permitted natural-person ownership and the still-unknown structure, rather than announce it. Collateral citation repair is also incomplete: the reserve is mislabelled Article 720-8 instead of the continuation of Article 720-4 (B6.o4, B6.t4, B6.t5), and paragraph 7 is assigned to s0314:c0 although it is in s0314:c1 (B6.o5, B6.t6). The paragraph-7 text was actually seen in /4/text (B6.v5), so this is locator imprecision, not absence of consultation. These independent source/summary defects prevent the every-affirmative-conclusion pass; the 05-3 instrument error, 05-5 corpus-gap assertion, and other already-allocated deficiencies are not counted again."
+        }
+      ]
+    },
+    "judgeUsage": {
+      "inputTokens": 1300722,
+      "outputTokens": 7688
+    }
+  },
+  "resources": {
+    "completedPairAggregate": {
+      "tasks": [
+        "task-02",
+        "task-03",
+        "task-04",
+        "task-05",
+        "task-06"
+      ],
+      "allFiveCompleted": true,
+      "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+      "tokenUsage": {
+        "prompt_tokens": {
+          "candidate": 6713646,
+          "harvey": 11144644,
+          "difference": -4430998,
+          "relativeChange": -0.3975899095565547
+        },
+        "completion_tokens": {
+          "candidate": 297183,
+          "harvey": 418205,
+          "difference": -121022,
+          "relativeChange": -0.28938439282170225
+        },
+        "total_tokens": {
+          "candidate": 7010829,
+          "harvey": 11562849,
+          "difference": -4552020,
+          "relativeChange": -0.3936763335748828
+        }
+      },
+      "logicalModelCalls": {
+        "candidate": 181,
+        "harvey": 213,
+        "difference": -32,
+        "relativeChange": -0.15023474178403756
+      },
+      "executionLatencyMs": {
+        "candidate": 3461436,
+        "harvey": 4939489,
+        "difference": -1478053,
+        "relativeChange": -0.29923196508788663
+      }
+    },
+    "completedAttemptTotals": {
+      "attempts": 5,
+      "knownMeteredUsage": {
+        "prompt_tokens": 6713646,
+        "completion_tokens": 297183,
+        "total_tokens": 7010829
+      },
+      "summaryAttemptUsage": {
+        "accepted": {
+          "prompt_tokens": 488420,
+          "completion_tokens": 48015,
+          "total_tokens": 536435
+        },
+        "rejected": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "repair": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        }
+      },
+      "logicalModelCalls": 181,
+      "httpExchanges": 201,
+      "unknownConsumptionExchanges": 20,
+      "accountingGaps": 0,
+      "fullConsumptionUsage": null,
+      "executionLatency": {
+        "observed": 5,
+        "missing": 0,
+        "sumMs": 3461436,
+        "meanMs": 692287.2
+      },
+      "cost": null
+    },
+    "completedPhases": {
+      "answerer": {
+        "successfulResponses": 169,
+        "knownMeteredUsage": {
+          "prompt_tokens": 6225226,
+          "completion_tokens": 249168,
+          "total_tokens": 6474394
+        }
+      },
+      "context_compaction": {
+        "successfulResponses": 12,
+        "knownMeteredUsage": {
+          "prompt_tokens": 488420,
+          "completion_tokens": 48015,
+          "total_tokens": 536435
+        }
+      }
+    },
+    "failedAttemptAuditTotals": {
+      "attempts": 5,
+      "knownMeteredUsage": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0
+      },
+      "summaryAttemptUsage": {
+        "accepted": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "rejected": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "repair": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        }
+      },
+      "logicalModelCalls": 1,
+      "httpExchanges": 3,
+      "unknownConsumptionExchanges": 3,
+      "accountingGaps": 0,
+      "fullConsumptionUsage": null,
+      "executionLatency": {
+        "observed": 5,
+        "missing": 0,
+        "sumMs": 53706,
+        "meanMs": 10741.2
+      },
+      "cost": null
+    },
+    "allAttemptsConsumptionAudit": {
+      "attempts": 10,
+      "knownMeteredUsage": {
+        "prompt_tokens": 6713646,
+        "completion_tokens": 297183,
+        "total_tokens": 7010829
+      },
+      "summaryAttemptUsage": {
+        "accepted": {
+          "prompt_tokens": 488420,
+          "completion_tokens": 48015,
+          "total_tokens": 536435
+        },
+        "rejected": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "repair": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        }
+      },
+      "logicalModelCalls": 182,
+      "httpExchanges": 204,
+      "unknownConsumptionExchanges": 23,
+      "accountingGaps": 0,
+      "fullConsumptionUsage": null,
+      "executionLatency": {
+        "observed": 10,
+        "missing": 0,
+        "sumMs": 3515142,
+        "meanMs": 351514.2
+      },
+      "cost": null
+    },
+    "allAttemptPairAuditAggregate": {
+      "tasks": [
+        "task-02",
+        "task-03",
+        "task-04",
+        "task-05",
+        "task-06"
+      ],
+      "allFiveCompleted": true,
+      "tokenMeasurementDomain": "Known metered responses across all candidate attempts versus the same frozen completed Harvey arms; not a semantic comparison or an exact full-consumption delta when consumption is unknown.",
+      "tokenUsage": {
+        "prompt_tokens": {
+          "candidate": 6713646,
+          "harvey": 11144644,
+          "difference": -4430998,
+          "relativeChange": -0.3975899095565547
+        },
+        "completion_tokens": {
+          "candidate": 297183,
+          "harvey": 418205,
+          "difference": -121022,
+          "relativeChange": -0.28938439282170225
+        },
+        "total_tokens": {
+          "candidate": 7010829,
+          "harvey": 11562849,
+          "difference": -4552020,
+          "relativeChange": -0.3936763335748828
+        }
+      },
+      "logicalModelCalls": {
+        "candidate": 182,
+        "harvey": 213,
+        "difference": -31,
+        "relativeChange": -0.14553990610328638
+      },
+      "httpExchanges": {
+        "candidate": 204,
+        "harvey": 226,
+        "difference": -22,
+        "relativeChange": -0.09734513274336283
+      },
+      "executionLatencyMs": {
+        "candidate": 3515142,
+        "harvey": 4939489,
+        "difference": -1424347,
+        "relativeChange": -0.2883591804739316
+      },
+      "exactFullConsumptionComparisonAvailable": false
+    },
+    "pairedTasks": [
+      {
+        "taskId": "task-02",
+        "candidateStatus": "completed",
+        "harvey": {
+          "knownMeteredUsage": {
+            "prompt_tokens": 2319306,
+            "completion_tokens": 57039,
+            "total_tokens": 2376345
+          },
+          "logicalModelCalls": 38,
+          "httpExchanges": 40,
+          "unknownHttpConsumption": 2,
+          "executionLatencyMs": 774715,
+          "providerHttpLatency": {
+            "observed": 40,
+            "missing": 0,
+            "sumMs": 744773,
+            "meanMs": 18619.325
+          },
+          "historicalWireBytes": null,
+          "boundary": "Frozen historical provider records and metrics; no fresh Harvey run or invented historical wire-byte measurement."
+        },
+        "completedAttempt": 1,
+        "pairedCompletedAttemptDeltas": {
+          "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1905717,
+              "harvey": 2319306,
+              "difference": -413589,
+              "relativeChange": -0.178324464300959
+            },
+            "completion_tokens": {
+              "candidate": 101424,
+              "harvey": 57039,
+              "difference": 44385,
+              "relativeChange": 0.7781517908799243
+            },
+            "total_tokens": {
+              "candidate": 2007141,
+              "harvey": 2376345,
+              "difference": -369204,
+              "relativeChange": -0.15536632938399095
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 51,
+            "harvey": 38,
+            "difference": 13,
+            "relativeChange": 0.34210526315789475
+          },
+          "httpExchanges": {
+            "candidate": 56,
+            "harvey": 40,
+            "difference": 16,
+            "relativeChange": 0.4
+          },
+          "executionLatencyMs": {
+            "candidate": 1215489,
+            "harvey": 774715,
+            "difference": 440774,
+            "relativeChange": 0.5689498718883719
+          }
+        },
+        "pairedAllAttemptAuditDeltas": {
+          "tokenMeasurementDomain": "Known metered responses across completed and failed candidate attempts; unknown failed consumption remains excluded and explicit.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1905717,
+              "harvey": 2319306,
+              "difference": -413589,
+              "relativeChange": -0.178324464300959
+            },
+            "completion_tokens": {
+              "candidate": 101424,
+              "harvey": 57039,
+              "difference": 44385,
+              "relativeChange": 0.7781517908799243
+            },
+            "total_tokens": {
+              "candidate": 2007141,
+              "harvey": 2376345,
+              "difference": -369204,
+              "relativeChange": -0.15536632938399095
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 51,
+            "harvey": 38,
+            "difference": 13,
+            "relativeChange": 0.34210526315789475
+          },
+          "httpExchanges": {
+            "candidate": 56,
+            "harvey": 40,
+            "difference": 16,
+            "relativeChange": 0.4
+          },
+          "executionLatencyMs": {
+            "candidate": 1215489,
+            "harvey": 774715,
+            "difference": 440774,
+            "relativeChange": 0.5689498718883719
+          },
+          "exactFullConsumptionComparisonAvailable": false
+        }
+      },
+      {
+        "taskId": "task-03",
+        "candidateStatus": "completed",
+        "harvey": {
+          "knownMeteredUsage": {
+            "prompt_tokens": 886859,
+            "completion_tokens": 39524,
+            "total_tokens": 926383
+          },
+          "logicalModelCalls": 28,
+          "httpExchanges": 30,
+          "unknownHttpConsumption": 2,
+          "executionLatencyMs": 552727,
+          "providerHttpLatency": {
+            "observed": 30,
+            "missing": 0,
+            "sumMs": 527107,
+            "meanMs": 17570.233333333334
+          },
+          "historicalWireBytes": null,
+          "boundary": "Frozen historical provider records and metrics; no fresh Harvey run or invented historical wire-byte measurement."
+        },
+        "completedAttempt": 3,
+        "pairedCompletedAttemptDeltas": {
+          "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 779048,
+              "harvey": 886859,
+              "difference": -107811,
+              "relativeChange": -0.12156498383621298
+            },
+            "completion_tokens": {
+              "candidate": 35406,
+              "harvey": 39524,
+              "difference": -4118,
+              "relativeChange": -0.10418985932597916
+            },
+            "total_tokens": {
+              "candidate": 814454,
+              "harvey": 926383,
+              "difference": -111929,
+              "relativeChange": -0.12082367660028304
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 22,
+            "harvey": 28,
+            "difference": -6,
+            "relativeChange": -0.21428571428571427
+          },
+          "httpExchanges": {
+            "candidate": 23,
+            "harvey": 30,
+            "difference": -7,
+            "relativeChange": -0.23333333333333334
+          },
+          "executionLatencyMs": {
+            "candidate": 379141,
+            "harvey": 552727,
+            "difference": -173586,
+            "relativeChange": -0.3140537733817961
+          }
+        },
+        "pairedAllAttemptAuditDeltas": {
+          "tokenMeasurementDomain": "Known metered responses across completed and failed candidate attempts; unknown failed consumption remains excluded and explicit.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 779048,
+              "harvey": 886859,
+              "difference": -107811,
+              "relativeChange": -0.12156498383621298
+            },
+            "completion_tokens": {
+              "candidate": 35406,
+              "harvey": 39524,
+              "difference": -4118,
+              "relativeChange": -0.10418985932597916
+            },
+            "total_tokens": {
+              "candidate": 814454,
+              "harvey": 926383,
+              "difference": -111929,
+              "relativeChange": -0.12082367660028304
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 22,
+            "harvey": 28,
+            "difference": -6,
+            "relativeChange": -0.21428571428571427
+          },
+          "httpExchanges": {
+            "candidate": 23,
+            "harvey": 30,
+            "difference": -7,
+            "relativeChange": -0.23333333333333334
+          },
+          "executionLatencyMs": {
+            "candidate": 394541,
+            "harvey": 552727,
+            "difference": -158186,
+            "relativeChange": -0.28619191752890666
+          },
+          "exactFullConsumptionComparisonAvailable": false
+        }
+      },
+      {
+        "taskId": "task-04",
+        "candidateStatus": "completed",
+        "harvey": {
+          "knownMeteredUsage": {
+            "prompt_tokens": 2632295,
+            "completion_tokens": 135974,
+            "total_tokens": 2768269
+          },
+          "logicalModelCalls": 49,
+          "httpExchanges": 54,
+          "unknownHttpConsumption": 5,
+          "executionLatencyMs": 1498316,
+          "providerHttpLatency": {
+            "observed": 54,
+            "missing": 0,
+            "sumMs": 1462862,
+            "meanMs": 27090.037037037036
+          },
+          "historicalWireBytes": null,
+          "boundary": "Frozen historical provider records and metrics; no fresh Harvey run or invented historical wire-byte measurement."
+        },
+        "completedAttempt": 3,
+        "pairedCompletedAttemptDeltas": {
+          "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1897664,
+              "harvey": 2632295,
+              "difference": -734631,
+              "relativeChange": -0.27908384128678587
+            },
+            "completion_tokens": {
+              "candidate": 53960,
+              "harvey": 135974,
+              "difference": -82014,
+              "relativeChange": -0.6031594275376175
+            },
+            "total_tokens": {
+              "candidate": 1951624,
+              "harvey": 2768269,
+              "difference": -816645,
+              "relativeChange": -0.29500203918044093
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 49,
+            "harvey": 49,
+            "difference": 0,
+            "relativeChange": 0
+          },
+          "httpExchanges": {
+            "candidate": 53,
+            "harvey": 54,
+            "difference": -1,
+            "relativeChange": -0.018518518518518517
+          },
+          "executionLatencyMs": {
+            "candidate": 597818,
+            "harvey": 1498316,
+            "difference": -900498,
+            "relativeChange": -0.6010067302224631
+          }
+        },
+        "pairedAllAttemptAuditDeltas": {
+          "tokenMeasurementDomain": "Known metered responses across completed and failed candidate attempts; unknown failed consumption remains excluded and explicit.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1897664,
+              "harvey": 2632295,
+              "difference": -734631,
+              "relativeChange": -0.27908384128678587
+            },
+            "completion_tokens": {
+              "candidate": 53960,
+              "harvey": 135974,
+              "difference": -82014,
+              "relativeChange": -0.6031594275376175
+            },
+            "total_tokens": {
+              "candidate": 1951624,
+              "harvey": 2768269,
+              "difference": -816645,
+              "relativeChange": -0.29500203918044093
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 50,
+            "harvey": 49,
+            "difference": 1,
+            "relativeChange": 0.02040816326530612
+          },
+          "httpExchanges": {
+            "candidate": 56,
+            "harvey": 54,
+            "difference": 2,
+            "relativeChange": 0.037037037037037035
+          },
+          "executionLatencyMs": {
+            "candidate": 628154,
+            "harvey": 1498316,
+            "difference": -870162,
+            "relativeChange": -0.5807599998932135
+          },
+          "exactFullConsumptionComparisonAvailable": false
+        }
+      },
+      {
+        "taskId": "task-05",
+        "candidateStatus": "completed",
+        "harvey": {
+          "knownMeteredUsage": {
+            "prompt_tokens": 1651228,
+            "completion_tokens": 37436,
+            "total_tokens": 1688664
+          },
+          "logicalModelCalls": 35,
+          "httpExchanges": 37,
+          "unknownHttpConsumption": 2,
+          "executionLatencyMs": 509637,
+          "providerHttpLatency": {
+            "observed": 37,
+            "missing": 0,
+            "sumMs": 481316,
+            "meanMs": 13008.54054054054
+          },
+          "historicalWireBytes": null,
+          "boundary": "Frozen historical provider records and metrics; no fresh Harvey run or invented historical wire-byte measurement."
+        },
+        "completedAttempt": 2,
+        "pairedCompletedAttemptDeltas": {
+          "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1013357,
+              "harvey": 1651228,
+              "difference": -637871,
+              "relativeChange": -0.3863009832682101
+            },
+            "completion_tokens": {
+              "candidate": 32502,
+              "harvey": 37436,
+              "difference": -4934,
+              "relativeChange": -0.13179826904583822
+            },
+            "total_tokens": {
+              "candidate": 1045859,
+              "harvey": 1688664,
+              "difference": -642805,
+              "relativeChange": -0.38065891142346847
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 26,
+            "harvey": 35,
+            "difference": -9,
+            "relativeChange": -0.2571428571428571
+          },
+          "httpExchanges": {
+            "candidate": 31,
+            "harvey": 37,
+            "difference": -6,
+            "relativeChange": -0.16216216216216217
+          },
+          "executionLatencyMs": {
+            "candidate": 430590,
+            "harvey": 509637,
+            "difference": -79047,
+            "relativeChange": -0.15510451556696236
+          }
+        },
+        "pairedAllAttemptAuditDeltas": {
+          "tokenMeasurementDomain": "Known metered responses across completed and failed candidate attempts; unknown failed consumption remains excluded and explicit.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1013357,
+              "harvey": 1651228,
+              "difference": -637871,
+              "relativeChange": -0.3863009832682101
+            },
+            "completion_tokens": {
+              "candidate": 32502,
+              "harvey": 37436,
+              "difference": -4934,
+              "relativeChange": -0.13179826904583822
+            },
+            "total_tokens": {
+              "candidate": 1045859,
+              "harvey": 1688664,
+              "difference": -642805,
+              "relativeChange": -0.38065891142346847
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 26,
+            "harvey": 35,
+            "difference": -9,
+            "relativeChange": -0.2571428571428571
+          },
+          "httpExchanges": {
+            "candidate": 31,
+            "harvey": 37,
+            "difference": -6,
+            "relativeChange": -0.16216216216216217
+          },
+          "executionLatencyMs": {
+            "candidate": 438560,
+            "harvey": 509637,
+            "difference": -71077,
+            "relativeChange": -0.13946593359587314
+          },
+          "exactFullConsumptionComparisonAvailable": false
+        }
+      },
+      {
+        "taskId": "task-06",
+        "candidateStatus": "completed",
+        "harvey": {
+          "knownMeteredUsage": {
+            "prompt_tokens": 3654956,
+            "completion_tokens": 148232,
+            "total_tokens": 3803188
+          },
+          "logicalModelCalls": 63,
+          "httpExchanges": 65,
+          "unknownHttpConsumption": 2,
+          "executionLatencyMs": 1604094,
+          "providerHttpLatency": {
+            "observed": 65,
+            "missing": 0,
+            "sumMs": 1566525,
+            "meanMs": 24100.384615384617
+          },
+          "historicalWireBytes": null,
+          "boundary": "Frozen historical provider records and metrics; no fresh Harvey run or invented historical wire-byte measurement."
+        },
+        "completedAttempt": 1,
+        "pairedCompletedAttemptDeltas": {
+          "tokenMeasurementDomain": "Known successfully metered response usage; full consumption is unknown when failed/retried exchanges are unmetered.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1117860,
+              "harvey": 3654956,
+              "difference": -2537096,
+              "relativeChange": -0.6941522688645226
+            },
+            "completion_tokens": {
+              "candidate": 73891,
+              "harvey": 148232,
+              "difference": -74341,
+              "relativeChange": -0.5015178908737654
+            },
+            "total_tokens": {
+              "candidate": 1191751,
+              "harvey": 3803188,
+              "difference": -2611437,
+              "relativeChange": -0.6866442048092285
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 33,
+            "harvey": 63,
+            "difference": -30,
+            "relativeChange": -0.47619047619047616
+          },
+          "httpExchanges": {
+            "candidate": 38,
+            "harvey": 65,
+            "difference": -27,
+            "relativeChange": -0.4153846153846154
+          },
+          "executionLatencyMs": {
+            "candidate": 838398,
+            "harvey": 1604094,
+            "difference": -765696,
+            "relativeChange": -0.47733860983209214
+          }
+        },
+        "pairedAllAttemptAuditDeltas": {
+          "tokenMeasurementDomain": "Known metered responses across completed and failed candidate attempts; unknown failed consumption remains excluded and explicit.",
+          "tokenUsage": {
+            "prompt_tokens": {
+              "candidate": 1117860,
+              "harvey": 3654956,
+              "difference": -2537096,
+              "relativeChange": -0.6941522688645226
+            },
+            "completion_tokens": {
+              "candidate": 73891,
+              "harvey": 148232,
+              "difference": -74341,
+              "relativeChange": -0.5015178908737654
+            },
+            "total_tokens": {
+              "candidate": 1191751,
+              "harvey": 3803188,
+              "difference": -2611437,
+              "relativeChange": -0.6866442048092285
+            }
+          },
+          "logicalModelCalls": {
+            "candidate": 33,
+            "harvey": 63,
+            "difference": -30,
+            "relativeChange": -0.47619047619047616
+          },
+          "httpExchanges": {
+            "candidate": 38,
+            "harvey": 65,
+            "difference": -27,
+            "relativeChange": -0.4153846153846154
+          },
+          "executionLatencyMs": {
+            "candidate": 838398,
+            "harvey": 1604094,
+            "difference": -765696,
+            "relativeChange": -0.47733860983209214
+          },
+          "exactFullConsumptionComparisonAvailable": false
+        }
+      }
+    ],
+    "completedAttemptPayloadBytes": {
+      "exchanges": 201,
+      "originalRecoverableExchanges": 173,
+      "sanitizedDerivativeExchanges": 28,
+      "independentlyVerifiedOriginalTotals": {
+        "requestBytes": 25226820,
+        "messagesJsonBytes": 24055930,
+        "systemContentBytes": 4215073,
+        "systemJsonBytes": 4276029,
+        "schemaJsonBytes": 1159745
+      },
+      "independentlyVerifiedStoredTotals": {
+        "requestBytes": 31370508,
+        "messagesJsonBytes": 30012828,
+        "systemContentBytes": 4887537,
+        "systemJsonBytes": 4958229,
+        "schemaJsonBytes": 1344735
+      },
+      "originalCaptureAttestedTotals": {
+        "requestBytes": 31370658,
+        "messagesJsonBytes": 30012978,
+        "systemContentBytes": 4887537,
+        "systemJsonBytes": 4958229,
+        "schemaJsonBytes": 1344735
+      }
+    },
+    "finalAbsence": {
+      "receiptVerified": true,
+      "ownedVmCount": 11,
+      "authenticatedTypedQueryAttestation": true,
+      "freshProviderQueryPerformed": false,
+      "boundary": "Offline verification of recorded authenticated SDK typed-owned-ID absence produced by the bound launcher, not an independent fresh provider query."
+    },
+    "parentQueryOnlyAbsence": {
+      "verifiedAt": "2026-10-04T08:47:41.029Z",
+      "allOwnedAbsent": true,
+      "ownedVmCount": 11,
+      "proof": {
+        "file": "run02-final-owned-absence-parent.json",
+        "sha256": "e54a91c338ff033e90a956d971e2387c1c8711a6b3e0a6d92d70b59de8a7cd74"
+      }
+    },
+    "unmeteredHttpExchanges": {
+      "candidateCompletedAttempts": 20,
+      "candidateAllAttempts": 23,
+      "harveyPreservedCompletedAttempts": 13
+    }
+  },
+  "adoption": {
+    "scope": "Completed candidate attempts only; dispatcher completion is not proof that shell commands or legal answers succeeded",
+    "directTools": {
+      "bash": {
+        "modelIssued": 214,
+        "completed": 214,
+        "failed": 0,
+        "unfinished": 0
+      },
+      "execute": {
+        "modelIssued": 7,
+        "completed": 7,
+        "failed": 0,
+        "unfinished": 0
+      },
+      "todo_write": {
+        "modelIssued": 6,
+        "completed": 6,
+        "failed": 0,
+        "unfinished": 0
+      },
+      "write": {
+        "modelIssued": 5,
+        "completed": 5,
+        "failed": 0,
+        "unfinished": 0
+      },
+      "edit": {
+        "modelIssued": 7,
+        "completed": 7,
+        "failed": 0,
+        "unfinished": 0
+      },
+      "message_user": {
+        "modelIssued": 3,
+        "completed": 3,
+        "failed": 0,
+        "unfinished": 0
+      }
+    },
+    "nestedTools": {
+      "lx_search": {
+        "invoked": 8,
+        "completed": 8,
+        "failed": 0,
+        "other": 0
+      }
+    },
+    "executeRuns": 7,
+    "vmChildren": {
+      "observed": 0,
+      "withRecordedVm": 0,
+      "completed": 0,
+      "withNativeModelResponse": 0
+    }
+  },
+  "evidence": {
+    "measurement": {
+      "file": "final-run02-measurement-reconciled.json",
+      "sha256": "f85afca8f6c61bad03ebf1baea003bdb9abadd45846adebff03ee4c7a465e70f"
+    },
+    "grades": {
+      "file": "grades.json",
+      "sha256": "ae023046ed1d8b61837aed99c4959e242d41b2d4ef980ff73ee8d579b10f050e"
+    },
+    "baseline": {
+      "file": "checkpoint.json",
+      "sha256": "1cc10279b48e00e24fdb196bede2852f8859deacc97a44b0c709e869c429a62e"
+    },
+    "reviews": [
+      {
+        "taskId": "task-02",
+        "review": {
+          "file": "review.json",
+          "sha256": "cea15163996b8125ad803993727761d58a0cff8d26169f81f1cbb41b349a9df5"
+        },
+        "inputArchiveSha256": "1999d01ca52c37b81a26103e369a6b03e676e9aa1cb8de78faf63c47a1a571f4",
+        "privateBindingsSha256": "002b7495bc2fc5802607d7e6ed05569a8b9b43b9fba02ab8f6b4a9c772926c8b"
+      },
+      {
+        "taskId": "task-03",
+        "review": {
+          "file": "review.json",
+          "sha256": "da87b181b466ce2b54146be73d5033b4126a03194d6585e1e2654f01d33cf489"
+        },
+        "inputArchiveSha256": "2038073594c78bc2df3de554691cb3d314411781248a2c0c61bc30b269db33d2",
+        "privateBindingsSha256": "fbcad4e30d036aebb53d355b997e5252475c808c545ddfb6891fb80ab847d558"
+      },
+      {
+        "taskId": "task-04",
+        "review": {
+          "file": "review.json",
+          "sha256": "c59908dd8d0b599a7fc87abf4fd6b9b74f8880fb2a4cd158c738111f529844f1"
+        },
+        "inputArchiveSha256": "a0a5c4a6d1c536665cdca385a43e4dee6918509d52e7c9a98b9ea67d7f98168e",
+        "privateBindingsSha256": "c92c4679f9039bfb1fc68290756ec8d1dd6c5332c30031cb1fc9d7a05cf29e58"
+      },
+      {
+        "taskId": "task-05",
+        "review": {
+          "file": "review.json",
+          "sha256": "8eb007b9137c8f170c1cce3c0f7f6d7450261ccf22c507cd70812b94471987c9"
+        },
+        "inputArchiveSha256": "0ce0196c18f41e5f04963fae52019c07796f4140a78fd1355fe628b9fd86b790",
+        "privateBindingsSha256": "f4a89a698ae159737c8f29025122c45275bba2fe9283ed64684ae7345b145208"
+      },
+      {
+        "taskId": "task-06",
+        "review": {
+          "file": "review.json",
+          "sha256": "01a4e59019b3058312292d5ebf9bf6ffd7f687b0e0b9d8a0513136b6e566ca58"
+        },
+        "inputArchiveSha256": "3058339a15c745d795704c3ffb6f1d84a75c20a11ca3b821f6b7c05a758fb505",
+        "privateBindingsSha256": "71706085496b97753009f6cb07db821810997dab7509c7d88a5cf04e3f64549e"
+      }
+    ],
+    "frozenCandidateFileBindingsVerified": 507,
+    "recipe": {
+      "file": "post-run-native-capy-v1-five-task-20261004-02.sh",
+      "sha256": "99837a85a7494a128435018bfc90f37c03bae85ab60ff7dc24cf73c190be3d57"
+    }
+  },
+  "boundaries": [
+    "Five tasks, one completed output per harness per task; no significance or general superiority claim.",
+    "Reported token usage excludes unmetered failed HTTP consumption; unknown values and costs remain null, not zero.",
+    "Latency is summed per-task execution work and its mean, not parallel batch wall time; wrapper elapsed and grading time are separate.",
+    "Same model identifier and native provider, but preserved Harvey outputs were not contemporaneously regenerated.",
+    "Full corpus establishes legal truth, not candidate consultation. Only each candidate’s own observed fragments receive consultation credit.",
+    "Raw wire/ledger identities remain distinct from the proven reasoning-only audit redaction. No user/tool/output equality was waived.",
+    "Run01, v9–v12, superseded v13, prior failed verification reports, baseline answers, and raw Jev grades remain unchanged."
+  ]
+}
